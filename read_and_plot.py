@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python2.7
 
 # -*- coding: utf-8 -*-
 """
@@ -8,6 +8,7 @@ Created on Fri Mar 04 09:29:24 2016
 """
 import matplotlib.pyplot as plt
 import scipy
+from scipy import special
 from scipy.optimize import curve_fit
 import numpy as np
 import glob
@@ -16,7 +17,8 @@ print
 print "---------------- List Of the Files --------------"
 print choose
 TestName = raw_input("> Name of the Test? [Name Before '_Data_...'] : ")
-pos = raw_input("> Position? [0-23]: ")
+slot = raw_input("> GLIB slot used for the test? [1-12]: ")
+pos  = raw_input("> Position? [0-23]: ")
 port = raw_input("> ID of the VFAT2? : ")
 
 #Number of the channel for which the SCURVE and its fit are printed.
@@ -37,12 +39,12 @@ SCName = "S_CURVE_" + str(SCUVRE+1)
 
 #Read the file Data_GLIB_IP_192_168_0_161_VFAT2_X_ID_Y with the 2 threshold- 
 #Scans and the final Scurve by channel VFAT
-
-filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_168_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")
+print str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)
+filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")
 if filename == []:
-    print "No VFAT2 with ID " +str(port)+" at the position " + str(pos) + "with name " +str(TestName)
+    print "No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
 for k in range(0,len(filename)):
-    filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_168_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
+    filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
     threshold1x = []
     threshold1y = []
     scurvex = []
@@ -150,6 +152,7 @@ for k in range(0,len(filename)):
         plt.ylim(0,100)
         plt.plot(threshold1x, threshold1y,'bo',threshold2x, threshold2y,'ro')
         plt.show() 
+        plt.savefig("%s_VFAT%s_ID%s_thresholds.png"%(TestName,pos,port))
         if threshold2x == []:
             print "Only the TH worked for", str(filename)
             continue
@@ -158,16 +161,19 @@ for k in range(0,len(filename)):
         plt.ylim(0,255)
         plt.plot(mean,'bo')
         plt.show()
+        plt.savefig("%s_VFAT%s_ID%s_meanerfbychan.png"%(TestName,pos,port))
         plt.clf()
         
         print("---------- cov of the Erf Function by channel ----------")
         plt.plot(cov,'ro')
         plt.show()
+        plt.savefig("%s_VFAT%s_ID%s_coverfbychan.png"%(TestName,pos,port))
         plt.clf()
         
         print("---------- Histogram of the covariance of the Erf Function ----------")
         plt.hist(cov, 50, normed=1, facecolor='y', alpha = 0.8)
         plt.show()
+        plt.savefig("%s_VFAT%s_ID%s_covhisterf.png"%(TestName,pos,port))
         plt.clf()
         
 #Read and plot the SCurve before the scan       
@@ -197,6 +203,7 @@ for k in range(0,len(filename)):
         print("---------- S-Curve by channel Before the Script ----------")    
         plt.imshow(maSC)
         plt.show()
+        plt.savefig("%s_VFAT%s_ID%s_scurvebefore.png"%(TestName,pos,port))
         plt.clf()
         g.close()
         
@@ -204,6 +211,7 @@ for k in range(0,len(filename)):
         print("---------- S-Curve by channel after the Script ----------")
         plt.imshow(ma)
         plt.show()
+        plt.savefig("%s_VFAT%s_ID%s_scurveafter.png"%(TestName,pos,port))
         plt.clf()     
         
     
@@ -246,6 +254,6 @@ for k in range(0,len(filename)):
         plt.hist(mean,  bins=range(int(min(mean)), int(max(mean)) + 1, 1) , normed=1, facecolor='b', alpha = 0.8)
         
         plt.show()
+        plt.savefig("%s_VFAT%s_ID%s_hist05pointafter.png"%(TestName,pos,port))
         plt.clf()
         f.close()
-        raw_input("where are the plots??")
