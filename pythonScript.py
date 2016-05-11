@@ -184,8 +184,13 @@ if __name__ == "__main__":
     chipIDs = glib.fifoRead("ei2c_data", 24)
     
     for i in range(0, 24):
-        if ((glib.get("vfat2_" + str(i) + "_chipid0") & 0xff) != 0): presentVFAT2sSingle.append(i)
-        if ((chipIDs[i] & 0xff) != 0): presentVFAT2sFifo.append(i)
+        # missing VFAT shows 0x0003XX00 in I2C broadcast result
+        #                    0x05XX0800 in I2C single request mode
+        # XX is slot number
+        # so if ((result >> 16) & 0x3) == 0x3, chip is missing
+        # or if ((result) & 0x30000)   == 0x30000, chip is missing
+        if (((glib.get("vfat2_" + str(i) + "_chipid0") >> 24) & 0x5) != 0x5): presentVFAT2sSingle.append(i)
+        if (((chipIDs[i] >> 16)  & 0x3) != 0x3): presentVFAT2sFifo.append(i)
         pass
     
     if (presentVFAT2sSingle == presentVFAT2sFifo): Passed

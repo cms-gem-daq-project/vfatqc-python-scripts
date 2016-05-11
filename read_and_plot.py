@@ -5,6 +5,7 @@
 Created on Fri Mar 04 09:29:24 2016
 
 @author: Hugo
+@modifiedby: Jared
 """
 import matplotlib.pyplot as plt
 import scipy
