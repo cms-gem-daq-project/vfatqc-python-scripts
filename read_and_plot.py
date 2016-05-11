@@ -14,7 +14,7 @@ from scipy.optimize import curve_fit
 import numpy as np
 import glob
 choose = glob.glob("*Data_GLIB_IP_192*")
-print 
+print
 print "---------------- List Of the Files --------------"
 print choose
 TestName = raw_input("> Name of the Test? [Name Before '_Data_...'] : ")
@@ -38,14 +38,16 @@ ma = np.zeros(shape=(127,255))
 count=0
 SCName = "S_CURVE_" + str(SCUVRE+1)
 
-#Read the file Data_GLIB_IP_192_168_0_161_VFAT2_X_ID_Y with the 2 threshold- 
+#Read the file Data_GLIB_IP_192_168_0_161_VFAT2_X_ID_Y with the 2 threshold-
 #Scans and the final Scurve by channel VFAT
-print str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)
-filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")
+print "%s_Data_GLIB_IP_192_168_0_%s_VFAT2_%s_ID_%s*"%(str(TestName),str(160+int(slot)),str(pos),str(port))
+filename = glob.glob("%s_Data_GLIB_IP_192_168_0_%s_VFAT2_%s_ID_%s*"%(str(TestName),str(160+int(slot)),str(pos),str(port)))
+#filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")
 if filename == []:
     print "No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
 for k in range(0,len(filename)):
-    filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
+    filename = glob.glob("%s_Data_GLIB_IP_192_168_0_%s_VFAT2_%s_ID_%s*"%(str(TestName),str(160+int(slot)),str(pos),str(port)))[k]
+    #filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
     threshold1x = []
     threshold1y = []
     scurvex = []
@@ -68,7 +70,7 @@ for k in range(0,len(filename)):
         while (line != ""):
             threshold1x.append(float(line))
             threshold1y.append(float((f.readline()).rstrip('\n')))
-            line = (f.readline()).rstrip('\n') 
+            line = (f.readline()).rstrip('\n')
         plt.xlim(0,255)
         plt.plot(threshold1x, threshold1y,'bo')
         plt.show()
@@ -84,14 +86,14 @@ for k in range(0,len(filename)):
             return y0+(p0/2)*scipy.special.erf((np.sqrt(2)*(t-mu))/sigma)
         if line != "":
             line = (f.readline()).rstrip('\n')
-            while True:  #Read all the SCurve   
+            while True:  #Read all the SCurve
                 while ("S_CURVE" not in line or "" not in line):
                     if "second_threshold" in line:
                         break
                     scurvex.append(float(line))
                     line = (f.readline()).rstrip('\n')
                     scurvey.append(float(line))
-                    line = (f.readline()).rstrip('\n')  
+                    line = (f.readline()).rstrip('\n')
                 if "second_threshold" in line:
                     break
                 ma[count]=scurvey
@@ -113,7 +115,7 @@ for k in range(0,len(filename)):
                     fitParams, fitCovariances = curve_fit(fitFunc, scurvex2, scurvey)
                     for i in t:
                         fit.append(fitFunc(i, fitParams[0], fitParams[1],fitParams[2],fitParams[3]))
-                    print "---------- Scurve and the erf fit of channel " + str(SCUVRE) + " in the transition zone ----------"    
+                    print "---------- Scurve and the erf fit of channel " + str(SCUVRE) + " in the transition zone ----------"
                     plt.xlim(min(scurvex),max(scurvex))
                     plt.plot(scurvex, scurvey,'bo',t+min(scurvex),fit,'r')
                     plt.show()
@@ -139,20 +141,20 @@ for k in range(0,len(filename)):
                 scurvey = []
                 scurvex2 = []
                 line = (f.readline()).rstrip('\n')
-                
-            line = (f.readline()).rstrip('\n')   
+
+            line = (f.readline()).rstrip('\n')
             while (line != ""):
                 threshold2x.append(float(line))
                 threshold2y.append(float((f.readline()).rstrip('\n')))
                 line = (f.readline()).rstrip('\n')
             f.close()
-            
+
 # Plot the 2 TH Scans
-        print("---------- Threshold Scans ----------")    
+        print("---------- Threshold Scans ----------")
         plt.xlim(0,255)
         plt.ylim(0,100)
         plt.plot(threshold1x, threshold1y,'bo',threshold2x, threshold2y,'ro')
-        plt.show() 
+        plt.show()
         plt.savefig("%s_VFAT%s_ID%s_thresholds.png"%(TestName,pos,port))
         if threshold2x == []:
             print "Only the TH worked for", str(filename)
@@ -164,31 +166,32 @@ for k in range(0,len(filename)):
         plt.show()
         plt.savefig("%s_VFAT%s_ID%s_meanerfbychan.png"%(TestName,pos,port))
         plt.clf()
-        
+
         print("---------- cov of the Erf Function by channel ----------")
         plt.plot(cov,'ro')
         plt.show()
         plt.savefig("%s_VFAT%s_ID%s_coverfbychan.png"%(TestName,pos,port))
         plt.clf()
-        
+
         print("---------- Histogram of the covariance of the Erf Function ----------")
         plt.hist(cov, 50, normed=1, facecolor='y', alpha = 0.8)
         plt.show()
         plt.savefig("%s_VFAT%s_ID%s_covhisterf.png"%(TestName,pos,port))
         plt.clf()
-        
-#Read and plot the SCurve before the scan       
-        fi = glob.glob(str(TestName)+"_SCurve_by_channel_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
+
+#Read and plot the SCurve before the scan
+        fi = glob.glob("%s_SCurve_by_channel_VFAT2_%s_ID_%s*"%(str(TestName),str(pos),str(port)))[k]
+        #fi = glob.glob(str(TestName)+"_SCurve_by_channel_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
         g=open(fi)
-                
-                
+
+
         maSC = np.zeros(shape=(127,255))
         count = 0
         line = (g.readline()).rstrip('\n')
         line = (g.readline()).rstrip('\n')
         SCx = []
         SCy = []
-        while True:     
+        while True:
             while ("SCurve" not in line):
                 if not line: break
                 SCx.append(float(line))
@@ -197,63 +200,64 @@ for k in range(0,len(filename)):
                 line = (g.readline()).rstrip('\n')
             if not line: break
             maSC[count]=SCy
-            count = count+1 
+            count = count+1
             SCx = []
             SCy = []
             line = (g.readline()).rstrip('\n')
-        print("---------- S-Curve by channel Before the Script ----------")    
+        print("---------- S-Curve by channel Before the Script ----------")
         plt.imshow(maSC)
         plt.show()
         plt.savefig("%s_VFAT%s_ID%s_scurvebefore.png"%(TestName,pos,port))
         plt.clf()
         g.close()
-        
+
    # Plot the S_Curve after fitting
         print("---------- S-Curve by channel after the Script ----------")
         plt.imshow(ma)
         plt.show()
         plt.savefig("%s_VFAT%s_ID%s_scurveafter.png"%(TestName,pos,port))
-        plt.clf()     
-        
-    
+        plt.clf()
+
+
         vcal0 = []
         vcal31 = []
         vcalfinal = []
-        filename = glob.glob(str(TestName)+"_VCal_VFAT2_"+str(pos)+"_ID_" + str(port))[k]
+        filename = glob.glob("%s_VCal_VFAT2_%s_ID_%s"%(str(TestName),str(pos),str(port)))[k]
+        #filename = glob.glob(str(TestName)+"_VCal_VFAT2_"+str(pos)+"_ID_" + str(port))[k]
         f=open(filename,'r')
         line = (f.readline()).rstrip('\n')
         vcal= line.split()
         for ele in vcal:
             if ele.startswith('['):
                 ele = ele[1:]
-            ele = ele.rstrip(']') 
-            ele = ele.rstrip('L,') 
+            ele = ele.rstrip(']')
+            ele = ele.rstrip('L,')
             vcal0.append(int(ele))
-        print("---------- Histogram of the '0.5 point' for a TrimDAC of 0/31 and after the Script ----------")   
+        print("---------- Histogram of the '0.5 point' for a TrimDAC of 0/31 and after the Script ----------")
         plt.hist(vcal0, bins=range(min(vcal0), max(vcal0) + 1, 1), normed=1, facecolor='g', alpha = 0.8)
-        
+
         line = (f.readline()).rstrip('\n')
         vcal= line.split()
         for ele in vcal:
             if ele.startswith('['):
                 ele = ele[1:]
-            ele = ele.rstrip(']') 
-            ele = ele.rstrip('L,') 
+            ele = ele.rstrip(']')
+            ele = ele.rstrip('L,')
             vcal31.append(int(ele))
-        
+
         plt.hist(vcal31,  bins=range(min(vcal31), max(vcal31) + 1, 1), normed=1, facecolor='r', alpha = 0.8)
-        
+
         line = (f.readline())
         vcal= line.split()
         for ele in vcal:
             if ele.startswith('['):
                 ele = ele[1:]
-            ele = ele.rstrip(']') 
-            ele = ele.rstrip('L,') 
+            ele = ele.rstrip(']')
+            ele = ele.rstrip('L,')
             vcalfinal.append(int(ele))
-        
+
         plt.hist(mean,  bins=range(int(min(mean)), int(max(mean)) + 1, 1) , normed=1, facecolor='b', alpha = 0.8)
-        
+
         plt.show()
         plt.savefig("%s_VFAT%s_ID%s_hist05pointafter.png"%(TestName,pos,port))
         plt.clf()

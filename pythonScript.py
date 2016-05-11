@@ -23,38 +23,38 @@ if __name__ == "__main__":
     parser.add_option("-s", "--special", action="store_true", dest="special",
                       metavar="special",
                       help="[OPTIONAL] Run a special arrangement")
-    
+
 
     (options, args) = parser.parse_args()
 
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/kernel")
     from ipbus import *
-    
+
     import subprocess,datetime
     startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
     print startTime
-    
+
     # Unbuffer output
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     tee = subprocess.Popen(["tee", "%s-log.txt"%(startTime)], stdin=subprocess.PIPE)
     os.dup2(tee.stdin.fileno(), sys.stdout.fileno())
     os.dup2(tee.stdin.fileno(), sys.stderr.fileno())
-    
+
     Passed = '\033[92m   > Passed... \033[0m'
-    Failed = '\033[91m   > Failed... \033[0m' 
-    
+    Failed = '\033[91m   > Failed... \033[0m'
+
     def txtTitle(str):
         print '\033[1m' + str + '\033[0m'
         pass
-    
+
     import cProfile, pstats, StringIO
     pr = cProfile.Profile()
     pr.enable()
-    
+
     gilbIP = raw_input("> Enter the GLIB's IP address: ")
     Date = raw_input("> Enter the Name of the Test [In case of conflict, the old file will be overwrite]: ")
-    glib = GLIB(gilbIP.strip())   
-    
+    glib = GLIB(gilbIP.strip())
+
     GLIB_REG_TEST = raw_input("> Number of register tests to perform on the GLIB [100]: ")
     sys.stdout.flush()
     OH_REG_TEST = raw_input("> Number of register tests to perform on the OptoHybrid [100]: ")
@@ -65,13 +65,13 @@ if __name__ == "__main__":
     sys.stdout.flush()
     RATE_WRITE = raw_input("> Write the data to disk when testing the rate [Y/n]: ")
     sys.stdout.flush()
-    
+
     GLIB_REG_TEST = 100 if GLIB_REG_TEST == "" else int(GLIB_REG_TEST)
     OH_REG_TEST = 100 if OH_REG_TEST == "" else int(OH_REG_TEST)
     I2C_TEST = 100 if I2C_TEST == "" else int(I2C_TEST)
     TK_RD_TEST = 100 if TK_RD_TEST == "" else int(TK_RD_TEST)
     RATE_WRITE = False if (RATE_WRITE == "N" or RATE_WRITE == "n") else True
-    
+
     THRESH_ABS = 0.1
     THRESH_REL = 0.05
     THRESH_MAX = 255
@@ -88,30 +88,30 @@ if __name__ == "__main__":
     print
     sys.stdout.flush()
     ####################################################
-    
+
     txtTitle("A. Testing the GLIB's presence")
     print "   Trying to read the GLIB board ID... If this test fails, the script will stop."
-    
+
     if (glib.get("board_id") != None ):
         print Passed
     else:
         print Failed
         sys.exit()
         pass
-    
+
     testA = True
-    
+
     print
-    
+
     ####################################################
-    
+
     txtTitle("B. Testing the OH's presence")
     print "   Trying to set the OptoHybrid registers... If this test fails, the script will stop."
-    
+
     glib.set("oh_sys_clk_src", 1)
     glib.set("oh_sys_t1_src", 1)
     glib.set("oh_sys_trigger_lim", 0)
-    
+
     if (glib.get("oh_sys_t1_src") == 1):
         print Passed
     else:
@@ -120,69 +120,72 @@ if __name__ == "__main__":
         pass
 
     testB = True
-    
+
     print
-    
+
     ####################################################
-    
+
     txtTitle("C. Testing the GLIB registers")
-    print "   Performing single and FIFO reads on the GLIB counters and ensuring they increment." 
-    
+    print "   Performing single and FIFO reads on the GLIB counters and ensuring they increment."
+
     countersSingle = []
     countersFifo = []
     countersTest = True
-    
+
     for i in range(0, GLIB_REG_TEST): countersSingle.append(glib.get("glib_cnt_stb_cnt"))
     countersFifo = glib.fifoRead("glib_cnt_stb_cnt", GLIB_REG_TEST)
-    
+
     for i in range(1, GLIB_REG_TEST):
         if (countersSingle[i - 1] + 1 != countersSingle[i]): countersTest = False
         if (countersFifo[i - 1] + 1 != countersFifo[i]): countersTest = False
         pass
-    
+
     if (countersTest): print Passed
     else: print Failed
-    
+
     testC = countersTest
-    
+
     print
-    
+
     ####################################################
-    
+
     txtTitle("D. Testing the OH registers")
-    print "   Performing single and FIFO reads on the OptoHybrid counters and ensuring they increment." 
-    
+    print "   Performing single and FIFO reads on the OptoHybrid counters and ensuring they increment."
+
     countersSingle = []
     countersFifo = []
     countersTest = True
-    
+
     for i in range(0, OH_REG_TEST): countersSingle.append(glib.get("oh_cnt_wb_gtx_stb"))
     countersFifo = glib.fifoRead("oh_cnt_wb_gtx_stb", OH_REG_TEST)
-    
+
     for i in range(1, OH_REG_TEST):
         if (countersSingle[i - 1] + 1 != countersSingle[i]): countersTest = False
         if (countersFifo[i - 1] + 1 != countersFifo[i]): countersTest = False
         pass
-    
+
     if (countersTest): print Passed
     else: print Failed
-    
+
     testD = countersTest
-    
+
     print
-    
+
     ####################################################
-    
+
     txtTitle("E. Detecting the VFAT2s over I2C")
-    print "   Detecting VFAT2s on the GEM by reading out their chip ID." 
-    
+    print "   Detecting VFAT2s on the GEM by reading out their chip ID."
+
     presentVFAT2sSingle = []
     presentVFAT2sFifo = []
-    
+
     glib.set("ei2c_reset", 0)
     glib.get("vfat2_all_chipid0")
-    chipIDs = glib.fifoRead("ei2c_data", 24)
-    
+    chipID0s = glib.fifoRead("ei2c_data", 24)
+    glib.set("ei2c_reset", 0)
+    glib.get("vfat2_all_chipid1")
+    chipID1s = glib.fifoRead("ei2c_data", 24)
+    chipIDs = []
     for i in range(0, 24):
         # missing VFAT shows 0x0003XX00 in I2C broadcast result
         #                    0x05XX0800 in I2C single request mode
@@ -190,32 +193,33 @@ if __name__ == "__main__":
         # so if ((result >> 16) & 0x3) == 0x3, chip is missing
         # or if ((result) & 0x30000)   == 0x30000, chip is missing
         if (((glib.get("vfat2_" + str(i) + "_chipid0") >> 24) & 0x5) != 0x5): presentVFAT2sSingle.append(i)
-        if (((chipIDs[i] >> 16)  & 0x3) != 0x3): presentVFAT2sFifo.append(i)
+        if (((chipID0s[i] >> 16)  & 0x3) != 0x3): presentVFAT2sFifo.append(i)
+        chipIDs.append(((chipID1s[i]&0xff)<<8)+(chipID0s[i]&0xff))
         pass
-    
+
     if (presentVFAT2sSingle == presentVFAT2sFifo): Passed
     else: Failed
-    
+
     testE = True
-    
+
     print
-    
+
     for i in range(0,24):
-        if (chipIDs[i] & 0xff !=0):
-            print ("VFAT2 connected at port %s has the ID : %s" %(i, chipIDs[i] & 0xff))
+        if (chipIDs[i] & 0xffff !=0):
+            print ("VFAT2 connected at port %d has the ID : 0x%04x"%(i, chipIDs[i] & 0xffff))
         else:
-            print ("No VFAT2 connected at port %s" %i)
+            print ("No VFAT2 connected at port %d" %i)
             pass
         pass
     print
-    
+
     ####################################################
-    
+
     txtTitle("F. Testing the I2C communication with the VFAT2s")
-    print "   Performing random read/write operation on each connect VFAT2." 
-    
+    print "   Performing random read/write operation on each connect VFAT2."
+
     testF = True
-    
+
     for i in presentVFAT2sSingle:
         validOperations = 0
         for j in range(0, I2C_TEST):
@@ -226,40 +230,40 @@ if __name__ == "__main__":
             pass
         glib.set("vfat2_" + str(i) + "_ctrl3", 0)
         if (validOperations == I2C_TEST):  print Passed, "#" + str(i)
-        else: 
+        else:
             print Failed, "#" + str(i)
             testF = False
             pass
         pass
     print
-    
+
     ####################################################
-    
+
     txtTitle("G. Reading out tracking data")
     print "   Sending triggers and testing if the Event Counter adds up."
-    
+
     glib.set("ei2c_reset", 0)
     glib.set("vfat2_all_ctrl0", 0)
-    
+
     testG = True
-    
+
     for i in presentVFAT2sSingle:
         glib.set("vfat2_" + str(i) + "_ctrl0", 55)
         glib.set("oh_sys_vfat2_mask", ~(0x1 << i))
         glib.set("tk_data_rd", 0)
-        
+
         nPackets = 0
         timeOut = 0
         ecs = []
-        
+
         glib.set("t1_reset", 1)
         glib.set("t1_mode", 0)
         glib.set("t1_type", 0)
         glib.set("t1_n", TK_RD_TEST)
         glib.set("t1_interval", 600)
         glib.set("t1_toggle", 1)
-        
-        while (glib.get("tk_data_cnt") != 7 * TK_RD_TEST): 
+
+        while (glib.get("tk_data_cnt") != 7 * TK_RD_TEST):
             timeOut += 1
             if (timeOut == 10 * TK_RD_TEST): break
             pass
@@ -274,7 +278,7 @@ if __name__ == "__main__":
             ecs.append(ec)
             pass
         glib.set("vfat2_" + str(i) + "_ctrl0", 0)
-        
+
         if (nPackets != TK_RD_TEST): print Failed, "#" + str(i)
         else:
             followingECS = True
@@ -282,51 +286,51 @@ if __name__ == "__main__":
                 if (ecs[j + 1] - ecs[j] != 1): followingECS = False
                 pass
             if (followingECS): print Passed, "#" + str(i)
-            else: 
+            else:
                 print Failed, "#" + str(i)
                 testG = False
                 pass
             pass
         pass
     print
-    
+
     ####################################################
-    
+
     txtTitle("H. Reading out tracking data")
     print "   Turning on all VFAT2s and looking that all the Event Counters add up."
-    
+
     testH = True
-    
+
     if (testG):
         glib.set("ei2c_reset", 0)
         glib.set("vfat2_all_ctrl0", 55)
-        
+
         mask = 0
         for i in presentVFAT2sSingle: mask |= (0x1 << i)
         glib.set("oh_sys_vfat2_mask", ~mask)
-        
+
         glib.set("t1_reset", 1)
         glib.set("t1_mode", 0)
         glib.set("t1_type", 2)
         glib.set("t1_n", 1)
         glib.set("t1_interval", 10)
         glib.set("t1_toggle", 1)
-    
+
         glib.set("tk_data_rd", 1)
-    
+
         glib.set("t1_reset", 1)
         glib.set("t1_mode", 0)
         glib.set("t1_type", 0)
         glib.set("t1_n", TK_RD_TEST)
         glib.set("t1_interval", 400)
         glib.set("t1_toggle", 1)
-    
+
         nPackets = 0
         timeOut = 0
         ecs = []
-    
+
         while (glib.get("tk_data_cnt") != len(presentVFAT2sSingle) * TK_RD_TEST):
-            timeOut += 1 
+            timeOut += 1
             if (timeOut == 20 * TK_RD_TEST): break
             pass
         while (glib.get("tk_data_empty") != 1):
@@ -337,7 +341,7 @@ if __name__ == "__main__":
             pass
         glib.set("ei2c_reset", 0)
         glib.set("vfat2_all_ctrl0", 0)
-        
+
         if (nPackets != len(presentVFAT2sSingle) * TK_RD_TEST): print Failed, "#" + str(i)
         else:
             followingECS = True
@@ -348,7 +352,7 @@ if __name__ == "__main__":
                 if (ecs[(i + 1) * len(presentVFAT2sSingle)] - ecs[i * len(presentVFAT2sSingle)] != 1): followingECS = False
                 pass
             if (followingECS): print Passed
-            else: 
+            else:
                 print Failed
                 testH = False
                 pass
@@ -358,12 +362,13 @@ if __name__ == "__main__":
     else:
         print "   Skipping this test as the previous test did not succeed..."
         testH = False
-        
-        print 
+
+        print
         pass
+
     ########################## The Script ################################
     # For each VFAT2 Connected
-    
+
     for port in presentVFAT2sSingle:
         ## this is hacked to ignore middle column
         if options.doMiddle:
@@ -382,22 +387,25 @@ if __name__ == "__main__":
         print "--------------- Testing VFAT2 port %s" %port,"-----------------"
         print "------------------------------------------------------"
         nameIP = gilbIP.replace(".","_")
-        f = open(str(Date)+"_Data_GLIB_IP_"+ str(nameIP)+"_VFAT2_" + str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')    
-        m = open(str(Date)+"_SCurve_by_channel"+ "_VFAT2_" + str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')  
-        z = open(str(Date)+"_Setting_GLIB_IP_"+ str(nameIP)+"_VFAT2_" + str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')    
-        z.write(time.strftime("%Y/%m/%d") +"-" +time.strftime("%H:%M:%S")+"\n")    
-        z.write("chip ID: "+str(chipIDs[port])+"\n")
+        f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(nameIP),port,chipIDs[port]&0xffff),'w')
+        m = open("%s_SCurve_by_channel_VFAT2_%d_ID_0x%04x"%(str(Date),port,chipIDs[port]&0xffff),'w')
+        z = open("%s_Setting_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(nameIP),port,chipIDs[port]&0xffff),'w')
+        #f = open(str(Date)+"_Data_GLIB_IP_"+ str(nameIP)+"_VFAT2_" + str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')
+        #m = open(str(Date)+"_SCurve_by_channel"+ "_VFAT2_" + str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')
+        #z = open(str(Date)+"_Setting_GLIB_IP_"+ str(nameIP)+"_VFAT2_" + str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')
+        z.write(time.strftime("%Y/%m/%d") +"-" +time.strftime("%H:%M:%S")+"\n")
+        z.write("chip ID: 0x%04x"%(chipIDs[port])+"\n")
         TotVCal0 = []
         TotVCal31 = []
         TotFoundVCal = []
         VCal_ref0 = 0
         VCal_ref31 = 0
-        
+
         # should make sure all chips are off first?
         glib.set("vfat2_all_ctrl0", 0)
-        
+
         glib.set("oh_trigger_source", 1)
-    
+
         glib.set("vfat2_" + str(port) + "_ctrl0", 55)
         glib.set("vfat2_" + str(port) + "_ctrl1", 0)
         glib.set("vfat2_" + str(port) + "_ctrl2", 48)
@@ -416,7 +424,7 @@ if __name__ == "__main__":
         z.write("icompn: 75\n")
         glib.set("vfat2_" + str(port) + "_vthreshold2", 0)
         z.write("vthreshold2: 0\n")
-        glib.set("vfat2_" + str(port) + "_vthreshold1", 0)	 
+        glib.set("vfat2_" + str(port) + "_vthreshold1", 0)
         z.write("vthreshold1: 0\n")
         glib.set("t1_reset", 1)
         glib.set("t1_mode", 1)
@@ -424,7 +432,7 @@ if __name__ == "__main__":
         glib.set("t1_interval", 400)
         glib.set("t1_delay", 40)
         glib.set("t1_toggle", 1)
-        
+
         z.write("DACs default value: " + str(DACDef)+"\n")
         for channel in range(CHAN_MIN, CHAN_MAX):
             regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
@@ -432,9 +440,9 @@ if __name__ == "__main__":
             regValue = (1 << 6) + 16  # old version, reenabled to allow the script to work
             glib.set(regName, regValue)
             pass
-        
-    ################## Threshold Scan by VFAT2 #########################  
-            
+
+    ################## Threshold Scan by VFAT2 #########################
+
         glib.set('scan_reset', 1)
         glib.set('scan_mode', 0)
         glib.set('scan_vfat2', port)
@@ -448,26 +456,26 @@ if __name__ == "__main__":
         print "length of returned data_threshold = %d"%(len(data_threshold))
         for d in range (0,len(data_threshold)):
             print ((data_threshold[d] & 0xff000000) >> 24), " = ", (100*(data_threshold[d] & 0xffffff)/3000.0)
-            #if (d==0) 
+            #if (d==0)
             if (100*(data_threshold[d] & 0xffffff)/ 3000.0) < THRESH_ABS and ((100*(data_threshold[d-1] & 0xffffff) / N_EVENTS) - (100*(data_threshold[d] & 0xffffff) / N_EVENTS)) < THRESH_REL:
                 f.write("Threshold set to: " + str(d-1)+"\n")
-                glib.set("vfat2_" + str(port) + "_vthreshold1", int(d-1))                
-                z.write("vthreshold1: "+str(d-1)+"\n")               
+                glib.set("vfat2_" + str(port) + "_vthreshold1", int(d-1))
+                z.write("vthreshold1: "+str(d-1)+"\n")
                 break
             pass
         z.close()
         #print "---------------",int(d),"---- channel test 0-------------------"
-        if d == 0 or d == 255: 
+        if d == 0 or d == 255:
             print "ignored"
             for d in range (0,len(data_threshold)):
-                f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n") 
+                f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
                 f.write(str(100*(data_threshold[d] & 0xffffff)/3000.0)+"\n")
                 pass
             f.close()
-            continue          
+            continue
         for d in range (0,len(data_threshold)):
-            f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n") 
-            f.write(str(100*(data_threshold[d] & 0xffffff)/3000.0)+"\n")  
+            f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
+            f.write(str(100*(data_threshold[d] & 0xffffff)/3000.0)+"\n")
             pass
         # for each channel, disable the cal pulse
         for channel in range(CHAN_MIN, CHAN_MAX):
@@ -475,22 +483,22 @@ if __name__ == "__main__":
             regValue = DACDef
             glib.set(regName, regValue)
             pass
-        for channel in range(CHAN_MIN, CHAN_MAX): 
+        for channel in range(CHAN_MIN, CHAN_MAX):
             ## debug
             if options.debug:
                 if channel > 10:
                     continue
                 pass
             print "------------------- channel ", str(channel), "-------------------"
-            
-    ################## S-curve by channel ######################    
+
+    ################## S-curve by channel ######################
     #### With TRIM DAC to 0
             glib.set("vfat2_" + str(port) + "_vthreshold2", 0)
             glib.set("vfat2_" + str(port) + "_latency", 37)
             regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
             regValue = (1 << 6) # enable cal pulse to channel
             glib.set(regName, regValue)
-              
+
             glib.set('scan_reset', 1)
             glib.set('scan_mode', 3)
             glib.set('scan_channel', channel)
@@ -514,11 +522,11 @@ if __name__ == "__main__":
                     TotVCal0.append(VCal)
                     break
                 pass
-            
+
         #### With TRIM DAC to 16
             regValue = (1 << 6) + 16
             glib.set(regName, regValue) # enable cal pulse to channel
-              
+
             glib.set('scan_reset', 1)
             glib.set('scan_mode', 3)
             glib.set('scan_channel', channel)
@@ -540,7 +548,7 @@ if __name__ == "__main__":
             	m.write(str(VCal)+"\n")
             	m.write(str(Eff)+"\n")
                 pass
-            
+
     #### With TRIM DAC to 31
             regValue = (1 << 6) + 31
             glib.set(regName, regValue) # enable cal pulse to channel
@@ -571,7 +579,7 @@ if __name__ == "__main__":
                         break
                     pass
                 pass
-                
+
             except:
                 print "Error while reading the data, they will be ignored"
                 continue
@@ -580,7 +588,8 @@ if __name__ == "__main__":
         print
         print "------------------------ TrimDAC routine ------------------------"
         print
-        h=open(str(Date)+"_VCal_VFAT2_" + str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')
+        h=open("%s_VCal_VFAT2_%d_ID_0x%04x"%(str(Date),port,chipIDs[port]&0xffff),'w')
+        #h=open(str(Date)+"_VCal_VFAT2_" + str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')
         try:
             VCal_ref0 = sum(TotVCal0)/len(TotVCal0)
             h.write(str(TotVCal0)+"\n")
@@ -591,11 +600,13 @@ if __name__ == "__main__":
             print "VCal_ref31", VCal_ref31
         except:
             print "Scurve did not work"
+            # should be h.close()?
             f.close()
-            continue  
-        g=open(str(Date)+"_TRIM_DAC_value_VFAT_"+str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')
-        
-        
+            continue
+        g=open("%s_TRIM_DAC_value_VFAT_%d_ID_0x%04x"%(str(Date),port,chipIDs[port]&0xffff),'w')
+        #g=open(str(Date)+"_TRIM_DAC_value_VFAT_"+str(port)+ "_ID_" + str(chipIDs[port]&0xff),'w')
+
+
         for channel in range(CHAN_MIN, CHAN_MAX):
             if options.debug:
                 if channel > 10:
@@ -606,11 +617,11 @@ if __name__ == "__main__":
             regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
             trimDAC = 16
             foundGood = False
-            
+
             while (foundGood == False):
                 regValue = (1 << 6) + trimDAC
                 glib.set(regName, regValue) # enable cal pulse to channel
-                
+
                 glib.set('scan_reset', 1)
                 glib.set('scan_mode', 3)
                 glib.set('scan_channel', channel)
@@ -636,19 +647,19 @@ if __name__ == "__main__":
                 except:
                     print "Error while reading the data, they will be ignored"
                     continue
-                
+
                 if (foundVCal > VCal_ref and TRIM_IT < MAX_TRIM_IT and trimDAC < 31):
                     trimDAC += 1
                     TRIM_IT +=1
                 elif (foundVCal < VCal_ref and TRIM_IT < MAX_TRIM_IT and trimDAC > 0):
                     trimDAC -= 1
                     TRIM_IT +=1
-                else: 
+                else:
                     g.write(str(trimDAC)+"\n")
                     TotFoundVCal.append(foundVCal)
                     f.write("S_CURVE_"+str(channel)+"\n")
-                    for d in data_trim: 
-                        f.write(str((d & 0xff000000) >> 24)+"\n") 
+                    for d in data_trim:
+                        f.write(str((d & 0xff000000) >> 24)+"\n")
                         f.write(str((d & 0xffffff)/N_EVENTS_TRIM)+"\n")
                         pass
                     break
@@ -657,11 +668,12 @@ if __name__ == "__main__":
         m.close()
         h.write(str(TotFoundVCal)+"\n")
         h.close()
-        g.close() 
+        g.close()
         VCalList = []
         minVcal = 0
-    ################# Set all the Trim_DAC to the right value ################# 
-        g=open(str(Date)+"_TRIM_DAC_value_VFAT_"+str(port)+"_ID_"+ str(chipIDs[port]&0xff),'r')
+    ################# Set all the Trim_DAC to the right value #################
+        g=open("%s_TRIM_DAC_value_VFAT_%d_ID_0x%04x"%(str(Date),port,chipIDs[port]&0xffff),'r')
+        #g=open(str(Date)+"_TRIM_DAC_value_VFAT_"+str(port)+"_ID_"+ str(chipIDs[port]&0xff),'r')
         for channel in range(CHAN_MIN, CHAN_MAX):
             if options.debug:
                 if channel > 10:
@@ -674,9 +686,9 @@ if __name__ == "__main__":
             glib.set(regName, regValue)
             #regValue = (1 << 6) + int(trimDAC) # old version
             pass
-        
-        g.close()  
-    ########################## Final threshold by VFAT2 ###################### 
+
+        g.close()
+    ########################## Final threshold by VFAT2 ######################
         f.write("second_threshold\n")
         glib.set('scan_reset', 1)
         glib.set('scan_mode', 0)
@@ -700,4 +712,4 @@ if __name__ == "__main__":
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
     ps.print_stats()
     print s.getvalue()
-    
+
