@@ -4,9 +4,9 @@
    
 	pythong pythonScript.py
 
-	>>> GLIB IP: <your ip>, e.g. 192.168.0.171
+	>> GLIB IP: <your_ip>, e.g. 192.168.0.171
 
-	>>> QC Test Name: <your test name>, e.g. 2016_09_09_QC3
+	>> QC Test Name: <your_test_name>, e.g. 2016_09_09_QC3
 
 2. To plot each VFAT's output results: (all the output files should in the same dir)
    
@@ -22,8 +22,8 @@
    
 	python setTRIMDAC.py
 
-	>>> GLIB IP: <your ip>
+	>> GLIB IP: <your_ip>
 
-	>>> Test Name: <your test name>
+	>> Test Name: <your_test_name>
 
 
