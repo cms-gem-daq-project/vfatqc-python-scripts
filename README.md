@@ -2,28 +2,28 @@
 
 1. For VFAT2s QC test:
    
-	pythong pythonScript.py
+	> python pythonScript.py
 
-	>> GLIB IP: <your_ip>, e.g. 192.168.0.171
+	>> GLIB IP: e.g. 192.168.0.171
 
-	>> QC Test Name: <your_test_name>, e.g. 2016_09_09_QC3
+	>> QC Test Name: e.g. 2016_09_09_QC3
 
 2. To plot each VFAT's output results: (all the output files should in the same dir)
    
-	python read_and_plot.py
+	> python read_and_plot.py
 
-3. To make all VFATs' results: (all the output files should in the same dir)
+3. To plot all VFATs' results: (all the output files should in the same dir)
    
-	python read_and_plot_all.py
+	> python read_and_plot_all.py
 
 4. To set the TrimDAC values: 
    
 	First, we need to make a txt file to list all the TrimDAC files: TrimDACfiles.txt
    
-	python setTRIMDAC.py
+	> python setTRIMDAC.py
 
-	>> GLIB IP: <your_ip>
+	>> GLIB IP:  e.g. 192.168.0.171
 
-	>> Test Name: <your_test_name>
+	>> Test Name: e.g. 2016_09_09_SetTrimDAC
 
 
