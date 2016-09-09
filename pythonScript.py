@@ -24,6 +24,9 @@ if __name__ == "__main__":
                       metavar="special",
                       help="[OPTIONAL] Run a special arrangement")
 
+    parser.add_option("-e", "--QC3test", action="store_true", dest="doQC3",
+                      metavar="doQC3",
+                      help="[OPTIONAL] Run a shortened test after covers have been applied")
 
     (options, args) = parser.parse_args()
 
@@ -380,7 +383,7 @@ if __name__ == "__main__":
                 continue
             pass
         if options.special:
-            if port<19:
+            if port !=5 :
                 continue
             pass
         print "------------------------------------------------------"
@@ -523,6 +526,9 @@ if __name__ == "__main__":
                     break
                 pass
 
+            if options.doQC3:
+                continue
+
         #### With TRIM DAC to 16
             regValue = (1 << 6) + 16
             glib.set(regName, regValue) # enable cal pulse to channel
@@ -585,6 +591,9 @@ if __name__ == "__main__":
                 continue
             pass
     ################## Adjust the trim for each channel ######################
+        if options.doQC3:
+            continue
+
         print
         print "------------------------ TrimDAC routine ------------------------"
         print
