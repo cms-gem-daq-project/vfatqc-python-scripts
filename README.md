@@ -8,6 +8,8 @@
 
 	>> QC Test Name: e.g. 2016_09_09_QC3
 
+	Then hit "enter" 5 times 
+
 2. To plot each VFAT's output results: (all the output files should in the same dir)
    
 	> python read_and_plot.py
@@ -25,5 +27,8 @@
 	>> GLIB IP:  e.g. 192.168.0.171
 
 	>> Test Name: e.g. 2016_09_09_SetTrimDAC
+
+	Then hit "enter" 5 times 
+
 
 
