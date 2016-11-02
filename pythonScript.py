@@ -139,8 +139,14 @@ if __name__ == "__main__":
     countersFifo = glib.fifoRead("glib_cnt_stb_cnt", GLIB_REG_TEST)
 
     for i in range(1, GLIB_REG_TEST):
-        if (countersSingle[i - 1] + 1 != countersSingle[i]): countersTest = False
-        if (countersFifo[i - 1] + 1 != countersFifo[i]): countersTest = False
+        if (countersSingle[i - 1] + 1 != countersSingle[i]):
+            print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
+            countersTest = False
+            pass
+        if (countersFifo[i - 1] + 1 != countersFifo[i]):
+            print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersFifo[i-1], countersFifo[i])
+            countersTest = False
+            pass
         pass
 
     if (countersTest): print Passed
@@ -163,8 +169,14 @@ if __name__ == "__main__":
     countersFifo = glib.fifoRead("oh_cnt_wb_gtx_stb", OH_REG_TEST)
 
     for i in range(1, OH_REG_TEST):
-        if (countersSingle[i - 1] + 1 != countersSingle[i]): countersTest = False
-        if (countersFifo[i - 1] + 1 != countersFifo[i]): countersTest = False
+        if (countersSingle[i - 1] + 1 != countersSingle[i]):
+            print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
+            countersTest = False
+            pass
+        if (countersFifo[i - 1] + 1 != countersFifo[i]):
+            print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersFifo[i-1], countersFifo[i])
+            countersTest = False
+            pass
         pass
 
     if (countersTest): print Passed
@@ -234,7 +246,7 @@ if __name__ == "__main__":
         glib.set("vfat2_" + str(i) + "_ctrl3", 0)
         if (validOperations == I2C_TEST):  print Passed, "#" + str(i)
         else:
-            print Failed, "#" + str(i)
+            print Failed, "#%d received %d, expected %d"%(i, validOperations, I2C_TEST)
             testF = False
             pass
         pass
@@ -251,6 +263,12 @@ if __name__ == "__main__":
     testG = True
 
     for i in presentVFAT2sSingle:
+        glib.set("t1_reset", 1)
+        glib.set("t1_mode", 0)
+        glib.set("t1_type", 0)
+        glib.set("t1_n", TK_RD_TEST)
+        glib.set("t1_interval", 600)
+
         glib.set("vfat2_" + str(i) + "_ctrl0", 55)
         glib.set("oh_sys_vfat2_mask", ~(0x1 << i))
         glib.set("tk_data_rd", 0)
@@ -259,11 +277,6 @@ if __name__ == "__main__":
         timeOut = 0
         ecs = []
 
-        glib.set("t1_reset", 1)
-        glib.set("t1_mode", 0)
-        glib.set("t1_type", 0)
-        glib.set("t1_n", TK_RD_TEST)
-        glib.set("t1_interval", 600)
         glib.set("t1_toggle", 1)
 
         while (glib.get("tk_data_cnt") != 7 * TK_RD_TEST):
@@ -282,15 +295,21 @@ if __name__ == "__main__":
             pass
         glib.set("vfat2_" + str(i) + "_ctrl0", 0)
 
-        if (nPackets != TK_RD_TEST): print Failed, "#" + str(i)
+        if (nPackets != TK_RD_TEST):
+            print Failed, "#%d received %d, expected %d"%(i, nPackets, TK_RD_TEST)
         else:
             followingECS = True
             for j in range(0, TK_RD_TEST - 1):
-                if (ecs[j + 1] - ecs[j] != 1): followingECS = False
+                if (ecs[j + 1] == 0 and ecs[j] == 255):
+                    pass
+                elif (ecs[j + 1] - ecs[j] != 1):
+                    followingECS = False
+                    print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, ecs[j], ecs[j+1])
+                    pass
                 pass
             if (followingECS): print Passed, "#" + str(i)
             else:
-                print Failed, "#" + str(i)
+                print Failed, "#%d received %d, expected %d, noncontinuous ECs"%(i, nPackets, TK_RD_TEST)
                 testG = False
                 pass
             pass
@@ -345,14 +364,25 @@ if __name__ == "__main__":
         glib.set("ei2c_reset", 0)
         glib.set("vfat2_all_ctrl0", 0)
 
-        if (nPackets != len(presentVFAT2sSingle) * TK_RD_TEST): print Failed, "#" + str(i)
+        if (nPackets != len(presentVFAT2sSingle) * TK_RD_TEST):
+            print Failed, "#%d received: %d, expected: %d"%(i,nPackets, len(presentVFAT2sSingle) * TK_RD_TEST)
         else:
             followingECS = True
             for i in range(0, TK_RD_TEST - 1):
                 for j in range(0, len(presentVFAT2sSingle) - 1):
-                    if (ecs[i * len(presentVFAT2sSingle) + j + 1] != ecs[i * len(presentVFAT2sSingle) + j]): followingECS = False
+                    if (ecs[i * len(presentVFAT2sSingle) + j + 1] != ecs[i * len(presentVFAT2sSingle) + j]):
+                        print "\033[91m   > #%d saw %d, %d saw %d \033[0m"%(j+1, ecs[i * len(presentVFAT2sSingle) + j + 1],
+                                                                            j, ecs[i * len(presentVFAT2sSingle) + j])
+                        followingECS = False
+                        pass
                     pass
-                if (ecs[(i + 1) * len(presentVFAT2sSingle)] - ecs[i * len(presentVFAT2sSingle)] != 1): followingECS = False
+                if (ecs[(i + 1) * len(presentVFAT2sSingle)]  == 0 and ecs[i * len(presentVFAT2sSingle)] == 255):
+                    pass
+                elif (ecs[(i + 1) * len(presentVFAT2sSingle)] - ecs[i * len(presentVFAT2sSingle)] != 1):
+                    print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, ecs[i * len(presentVFAT2sSingle)],
+                                                                              ecs[(i+1) * len(presentVFAT2sSingle)])
+                    followingECS = False
+                    pass
                 pass
             if (followingECS): print Passed
             else:
@@ -383,7 +413,7 @@ if __name__ == "__main__":
                 continue
             pass
         if options.special:
-            if port !=5 :
+            if port !=19 :
                 continue
             pass
         print "------------------------------------------------------"

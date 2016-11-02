@@ -522,7 +522,7 @@ if __name__ == "__main__":
 #            glib.set('scan_toggle', 1)
 #            while (glib.get("scan_status") != 0): i = 1
 #            data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
-#            glib.set(regName, 0) # disable cal pulse to channel
+            glib.set(regName, glib.get(regName) & int(trimDAC)) # disable cal pulse to channel
 
             if options.debug:
                 if channel > 10:
