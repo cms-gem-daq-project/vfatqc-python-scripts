@@ -1,0 +1,12 @@
+2016/09/05-14:55:25
+chip ID: 0xfedc
+ipreampin: 168
+ipreampfeed: 80
+ipreampout: 150
+ishaper: 150
+ishaperfeed: 100
+icompn: 75
+vthreshold2: 0
+vthreshold1: 0
+DACs default value: 16
+vthreshold1: 29
