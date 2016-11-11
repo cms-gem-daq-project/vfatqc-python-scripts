@@ -489,7 +489,8 @@ if __name__ == "__main__":
         trimDACfileList = open("TrimDACfiles.txt",'r')
         trimDACfile = ""
         for line in trimDACfileList:
-            if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
+            if ("ID_0x%04x"%(chipIDs[port]&0xffff) in line) and ("TRIM_DAC" in line):
+            #if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
                 trimDACfile = (line).rstrip('\n')
         if len(trimDACfile) < 2:
             print "Chip ID: 0x%04x"%(chipIDs[port]&0xffff)
