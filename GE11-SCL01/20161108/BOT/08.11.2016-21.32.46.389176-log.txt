@@ -1,1 +1,0 @@
-> Enter the GLIB's IP address: > Enter the Name of the Test [In case of conflict, the old file will be overwrite]: > Number of register tests to perform on the GLIB [100]: > Number of register tests to perform on the OptoHybrid [100]: > Number of I2C tests to perform on the VFAT2s [100]: 

@@ -14,3 +14,13 @@
 
 # Ignore following
 *.pyc
+
+# Images
+*.png
+*.pdf
+
+# Misc
+.DS_Store
+
+# ROOT Files
+*.root
