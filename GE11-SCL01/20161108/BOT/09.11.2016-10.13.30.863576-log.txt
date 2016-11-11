@@ -1,0 +1,474 @@
+> Enter the GLIB's IP address: > Enter the Name of the Test [In case of conflict, the old file will be overwrite]: > Number of register tests to perform on the GLIB [100]: > Number of register tests to perform on the OptoHybrid [100]: > Number of I2C tests to perform on the VFAT2s [100]: > Number of tracking data packets to readout [100]: > Write the data to disk when testing the rate [Y/n]: 
+[1mA. Testing the GLIB's presence[0m
+   Trying to read the GLIB board ID... If this test fails, the script will stop.
+[92m   > Passed... [0m
+
+[1mB. Testing the OH's presence[0m
+   Trying to set the OptoHybrid registers... If this test fails, the script will stop.
+[92m   > Passed... [0m
+
+[1mC. Testing the GLIB registers[0m
+   Performing single and FIFO reads on the GLIB counters and ensuring they increment.
+[92m   > Passed... [0m
+
+[1mD. Testing the OH registers[0m
+   Performing single and FIFO reads on the OptoHybrid counters and ensuring they increment.
+[92m   > Passed... [0m
+
+[1mE. Detecting the VFAT2s over I2C[0m
+   Detecting VFAT2s on the GEM by reading out their chip ID.
+
+VFAT2 connected at port 10 has the ID : 0xf6cc
+VFAT2 connected at port 11 has the ID : 0xfe27
+VFAT2 connected at port 12 has the ID : 0xf920
+VFAT2 connected at port 13 has the ID : 0xf968
+VFAT2 connected at port 14 has the ID : 0xff90
+VFAT2 connected at port 15 has the ID : 0xff3c
+VFAT2 connected at port 16 has the ID : 0xf6ec
+VFAT2 connected at port 17 has the ID : 0xff67
+VFAT2 connected at port 18 has the ID : 0xffc7
+VFAT2 connected at port 19 has the ID : 0xf6dc
+VFAT2 connected at port 20 has the ID : 0xff20
+VFAT2 connected at port 21 has the ID : 0xf6a4
+VFAT2 connected at port 22 has the ID : 0xff58
+VFAT2 connected at port 23 has the ID : 0xffd7
+
+[1mF. Testing the I2C communication with the VFAT2s[0m
+   Performing random read/write operation on each connect VFAT2.
+[92m   > Passed... [0m #0
+[92m   > Passed... [0m #1
+[92m   > Passed... [0m #2
+[92m   > Passed... [0m #3
+[92m   > Passed... [0m #4
+[92m   > Passed... [0m #5
+[92m   > Passed... [0m #6
+[92m   > Passed... [0m #7
+[92m   > Passed... [0m #8
+[92m   > Passed... [0m #9
+[92m   > Passed... [0m #10
+[92m   > Passed... [0m #11
+[92m   > Passed... [0m #12
+[92m   > Passed... [0m #13
+[92m   > Passed... [0m #14
+[92m   > Passed... [0m #15
+[92m   > Passed... [0m #16
+[92m   > Passed... [0m #17
+[92m   > Passed... [0m #18
+[92m   > Passed... [0m #19
+[92m   > Passed... [0m #20
+[92m   > Passed... [0m #21
+[92m   > Passed... [0m #22
+[92m   > Passed... [0m #23
+
+[1mG. Reading out tracking data[0m
+   Sending triggers and testing if the Event Counter adds up.
+[91m   > Failed... [0m #0
+[92m   > Passed... [0m #1
+[92m   > Passed... [0m #2
+[92m   > Passed... [0m #3
+[92m   > Passed... [0m #4
+[92m   > Passed... [0m #5
+[92m   > Passed... [0m #6
+[92m   > Passed... [0m #7
+[92m   > Passed... [0m #8
+[92m   > Passed... [0m #9
+[91m   > Failed... [0m #10
+[92m   > Passed... [0m #11
+[92m   > Passed... [0m #12
+[92m   > Passed... [0m #13
+[92m   > Passed... [0m #14
+[92m   > Passed... [0m #15
+[92m   > Passed... [0m #16
+[92m   > Passed... [0m #17
+[92m   > Passed... [0m #18
+[92m   > Passed... [0m #19
+[92m   > Passed... [0m #20
+[92m   > Passed... [0m #21
+[92m   > Passed... [0m #22
+[92m   > Passed... [0m #23
+
+[1mH. Reading out tracking data[0m
+   Turning on all VFAT2s and looking that all the Event Counters add up.
+[91m   > Failed... [0m #23
+------------------------------------------------------
+--------------- Testing VFAT2 port 0 -----------------
+------------------------------------------------------
+length of returned data_threshold = 256
+0  =  80.1
+1  =  81.7
+2  =  85.4
+3  =  88.0
+4  =  93.8
+5  =  96.1
+6  =  98.6
+7  =  99.5
+8  =  99.8
+9  =  99.5
+10  =  97.0
+11  =  92.7
+12  =  73.8
+13  =  55.5
+14  =  39.4
+15  =  26.1
+16  =  19.7
+17  =  20.0
+18  =  13.4
+19  =  10.0
+20  =  9.3
+21  =  8.8
+22  =  4.0
+23  =  3.7
+24  =  2.4
+25  =  0.8
+26  =  1.4
+27  =  0.0
+28  =  0.0
+------------------- channel  0 -------------------
+
+---------------- s-curve data trimDAC 0 --------------------
+0  =>  0.0
+1  =>  0.0
+2  =>  0.0
+3  =>  0.0
+4  =>  0.0
+5  =>  0.0
+6  =>  0.0
+7  =>  0.0
+8  =>  0.0
+9  =>  0.0
+10  =>  0.0
+11  =>  0.0
+12  =>  0.0
+13  =>  0.0
+14  =>  0.0
+15  =>  0.0
+16  =>  0.0
+17  =>  0.0
+18  =>  0.0
+19  =>  0.0
+20  =>  0.0
+21  =>  0.0
+22  =>  0.0
+23  =>  0.0
+24  =>  0.0
+25  =>  0.0
+26  =>  0.0
+27  =>  0.0
+28  =>  0.0
+29  =>  0.0
+30  =>  0.0
+31  =>  0.0
+32  =>  0.0
+33  =>  0.0
+34  =>  0.0
+35  =>  0.0
+36  =>  0.0
+37  =>  0.0
+38  =>  0.0
+39  =>  0.0
+40  =>  0.0
+41  =>  0.0
+42  =>  0.0
+43  =>  0.0
+44  =>  0.004
+45  =>  0.0
+46  =>  0.009
+47  =>  0.014
+48  =>  0.013
+49  =>  0.025
+50  =>  0.015
+51  =>  0.065
+52  =>  0.059
+53  =>  0.095
+54  =>  0.166
+55  =>  0.179
+56  =>  0.304
+57  =>  0.362
+58  =>  0.426
+59  =>  0.547
+59  =>  0.547
+
+---------------- s-curve data trimDAC 16 --------------------
+
+---------------- s-curve data trimDAC 31 --------------------
+38  =>  0.586
+------------------- channel  1 -------------------
+
+---------------- s-curve data trimDAC 0 --------------------
+0  =>  0.0
+1  =>  0.0
+2  =>  0.0
+3  =>  0.0
+4  =>  0.0
+5  =>  0.0
+6  =>  0.0
+7  =>  0.0
+8  =>  0.0
+9  =>  0.0
+10  =>  0.0
+11  =>  0.0
+12  =>  0.0
+13  =>  0.0
+14  =>  0.0
+15  =>  0.0
+16  =>  0.0
+17  =>  0.0
+18  =>  0.0
+19  =>  0.0
+20  =>  0.0
+21  =>  0.0
+22  =>  0.0
+23  =>  0.0
+24  =>  0.0
+25  =>  0.0
+26  =>  0.0
+27  =>  0.0
+28  =>  0.0
+29  =>  0.0
+30  =>  0.0
+31  =>  0.0
+32  =>  0.0
+33  =>  0.0
+34  =>  0.0
+35  =>  0.0
+36  =>  0.0
+37  =>  0.0
+38  =>  0.0
+39  =>  0.0
+40  =>  0.0
+41  =>  0.0
+42  =>  0.0
+43  =>  0.001
+44  =>  0.004
+45  =>  0.0
+46  =>  0.006
+47  =>  0.002
+48  =>  0.003
+49  =>  0.011
+50  =>  0.002
+51  =>  0.019
+52  =>  0.019
+53  =>  0.032
+54  =>  0.055
+55  =>  0.036
+56  =>  0.094
+57  =>  0.094
+58  =>  0.135
+59  =>  0.212
+60  =>  0.252
+61  =>  0.375
+62  =>  0.417
+63  =>  0.521
+63  =>  0.521
+
+---------------- s-curve data trimDAC 16 --------------------
+
+---------------- s-curve data trimDAC 31 --------------------
+47  =>  0.52
+------------------- channel  2 -------------------
+
+---------------- s-curve data trimDAC 0 --------------------
+0  =>  0.0
+1  =>  0.0
+2  =>  0.0
+3  =>  0.0
+4  =>  0.0
+5  =>  0.0
+6  =>  0.0
+7  =>  0.0
+8  =>  0.0
+9  =>  0.0
+10  =>  0.0
+11  =>  0.0
+12  =>  0.0
+13  =>  0.0
+14  =>  0.0
+15  =>  0.0
+16  =>  0.0
+17  =>  0.0
+18  =>  0.0
+19  =>  0.0
+20  =>  0.0
+21  =>  0.0
+22  =>  0.0
+23  =>  0.0
+24  =>  0.0
+25  =>  0.0
+26  =>  0.0
+27  =>  0.0
+28  =>  0.0
+29  =>  0.0
+30  =>  0.0
+31  =>  0.0
+32  =>  0.0
+33  =>  0.0
+34  =>  0.0
+35  =>  0.0
+36  =>  0.0
+37  =>  0.0
+38  =>  0.0
+39  =>  0.0
+40  =>  0.0
+41  =>  0.0
+42  =>  0.001
+43  =>  0.001
+44  =>  0.001
+45  =>  0.0
+46  =>  0.007
+47  =>  0.006
+48  =>  0.009
+49  =>  0.025
+50  =>  0.01
+51  =>  0.061
+52  =>  0.054
+53  =>  0.076
+54  =>  0.154
+55  =>  0.153
+56  =>  0.277
+57  =>  0.323
+58  =>  0.402
+59  =>  0.529
+59  =>  0.529
+
+---------------- s-curve data trimDAC 16 --------------------
+
+---------------- s-curve data trimDAC 31 --------------------
+38  =>  0.56
+------------------- channel  3 -------------------
+
+---------------- s-curve data trimDAC 0 --------------------
+0  =>  0.0
+1  =>  0.0
+2  =>  0.0
+3  =>  0.0
+4  =>  0.0
+5  =>  0.0
+6  =>  0.0
+7  =>  0.0
+8  =>  0.0
+9  =>  0.0
+10  =>  0.0
+11  =>  0.0
+12  =>  0.0
+13  =>  0.0
+14  =>  0.0
+15  =>  0.0
+16  =>  0.0
+17  =>  0.0
+18  =>  0.0
+19  =>  0.0
+20  =>  0.0
+21  =>  0.0
+22  =>  0.0
+23  =>  0.0
+24  =>  0.0
+25  =>  0.0
+26  =>  0.0
+27  =>  0.0
+28  =>  0.0
+29  =>  0.0
+30  =>  0.0
+31  =>  0.002
+32  =>  0.001
+33  =>  0.003
+34  =>  0.001
+35  =>  0.005
+36  =>  0.008
+37  =>  0.01
+38  =>  0.01
+39  =>  0.014
+40  =>  0.013
+41  =>  0.012
+42  =>  0.015
+43  =>  0.016
+44  =>  0.019
+45  =>  0.019
+46  =>  0.019
+47  =>  0.018
+48  =>  0.019
+49  =>  0.021
+50  =>  0.02
+51  =>  0.026
+52  =>  0.022
+53  =>  0.035
+54  =>  0.036
+55  =>  0.029
+56  =>  0.062
+57  =>  0.06
+58  =>  0.106
+59  =>  0.128
+60  =>  0.178
+61  =>  0.278
+62  =>  0.326
+63  =>  0.476
+64  =>  0.527
+64  =>  0.527
+
+---------------- s-curve data trimDAC 16 --------------------
+
+---------------- s-curve data trimDAC 31 --------------------
+49  =>  0.531
+------------------- channel  4 -------------------
+
+---------------- s-curve data trimDAC 0 --------------------
+0  =>  0.0
+1  =>  0.0
+2  =>  0.0
+3  =>  0.0
+4  =>  0.0
+5  =>  0.0
+6  =>  0.0
+7  =>  0.0
+8  =>  0.0
+9  =>  0.0
+10  =>  0.0
+11  =>  0.0
+12  =>  0.0
+13  =>  0.0
+14  =>  0.0
+15  =>  0.0
+16  =>  0.0
+17  =>  0.0
+18  =>  0.0
+19  =>  0.0
+20  =>  0.0
+21  =>  0.0
+22  =>  0.0
+23  =>  0.0
+24  =>  0.0
+25  =>  0.0
+26  =>  0.0
+27  =>  0.0
+28  =>  0.0
+29  =>  0.0
+30  =>  0.0
+31  =>  0.0
+32  =>  0.0
+33  =>  0.0
+34  =>  0.0
+35  =>  0.0
+36  =>  0.0
+37  =>  0.0
+38  =>  0.0
+39  =>  0.001
+40  =>  0.0
+41  =>  0.002
+42  =>  0.001
+43  =>  0.0
+44  =>  0.006
+45  =>  0.001
+46  =>  0.021
+47  =>  0.016
+48  =>  0.024
+49  =>  0.054
+50  =>  0.054
+51  =>  0.118
+52  =>  0.154
+53  =>  0.169
+54  =>  0.282
+55  =>  0.318
+56  =>  0.439
+57  =>  0.51
+57  =>  0.51
+
+---------------- s-curve data trimDAC 16 --------------------

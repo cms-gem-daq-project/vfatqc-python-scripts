@@ -4,13 +4,15 @@
 """
 Created on Fri Mar 04 09:29:24 2016
 
-@author: Hugo, Geng
+@author: Hugo, Geng, Brian
 """
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import scipy
 from scipy import special
 from scipy.optimize import curve_fit
+from ROOT import gROOT, TGraph, TH1F, TH2F, TFile, TDirectory #Classes
+from ROOT import kBlue, kRed #Colors
 import numpy as np
 import os
 import glob
@@ -20,6 +22,18 @@ themean=[]
 thesigma=[]
 Tmean=[]
 Tsigma=[]
+
+#Declare the file
+file_Output = TFile("SCurveOutput.root","RECREATE","",1)
+
+dir_SCurveCovariance = file_Output.mkdir("SCurveCovariance")
+dir_SCurveExample = file_Output.mkdir("SCurveExample")
+dir_SCurveMeanByChan = file_Output.mkdir("SCurveMeanByChan")
+dir_SCurveSeparation = file_Output.mkdir("SCurveSeparation")
+dir_SCurveSigmaByChan = file_Output.mkdir("SCurvesSigmaByChan")
+dir_SCurveByChan = file_Output.mkdir("SCurveByChan")
+dir_Threshold = file_Output.mkdir("Threshold")
+
 print 
 print "---------------- List Of the Files --------------"
 for path, subdirs, files in os.walk(r'./'):
@@ -141,6 +155,12 @@ for path, subdirs, files in os.walk(r'./'):
                                     #    line = "S_CURVE_" + str(128)
                                     scurvex3 = []
                                     fit=[]
+
+                                    if scurvex2==[]:
+                                        print " Error in " + str(SCName)
+                                        print len(scurvex)
+                                        print len(scurvex2)
+                                        
                                     t = np.linspace(min(scurvex2), max(scurvex2), 250)
                                     fitParams, fitCovariances = curve_fit(fitFunc, scurvex2, scurvey)
                                     for i in t:
@@ -223,6 +243,33 @@ for path, subdirs, files in os.walk(r'./'):
                         plt.savefig("%s_VFAT%s_ID_%s_thresholds.png"%(TestName,pos,port))
                         #plt.show() 
                         plt.clf()
+                        
+                        #Make & store threshold TGraph before Trim
+                        gThresh_PreTrim = TGraph(len(threshold1x))
+                        gThresh_PreTrim.SetName( "%s_VFAT%s_ID_%s_thresholdsBefore"%(TestName,pos,port) )
+                        gThresh_PreTrim.SetLineColor(kBlue)
+                        gThresh_PreTrim.SetMarkerColor(kBlue)
+                        gThresh_PreTrim.SetMarkerStyle(20)
+                        
+                        for iPos in range(0,len(threshold1x)):
+                            gThresh_PreTrim.SetPoint(iPos,threshold1x[iPos],threshold1y[iPos])
+                                
+                        dir_Threshold.cd()
+                        gThresh_PreTrim.Write()
+                        
+                        #Make & store threshold TGraph after Trim
+                        gThresh_PostTrim = TGraph(len(threshold2x))
+                        gThresh_PostTrim.SetName( "%s_VFAT%s_ID_%s_thresholdsAfter"%(TestName,pos,port) )
+                        gThresh_PostTrim.SetLineColor(kRed)
+                        gThresh_PostTrim.SetMarkerColor(kRed)
+                        gThresh_PostTrim.SetMarkerStyle(21)
+                            
+                        for iPos in range(0,len(threshold2x)):
+                            gThresh_PreTrim.SetPoint(iPos,threshold2x[iPos],threshold2y[iPos])
+                                
+                        dir_Threshold.cd()
+                        gThresh_PostTrim.Write()
+
                         if threshold2x == []:
                             print "Only the TH worked for", str(filename)
                             continue
@@ -235,12 +282,38 @@ for path, subdirs, files in os.walk(r'./'):
                         #plt.show()
                         plt.clf()
                         
+                        #Make & store Mean of Erf by Channel TGraph
+                        gErfMeanByChan = TGraph(len(mean))
+                        gErfMeanByChan.SetName( "%s_VFAT%s_ID_%s_meanerfbychan"%(TestName,pos,port) )
+                        gErfMeanByChan.SetLineColor(kBlue)
+                        gErfMeanByChan.SetMarkerColor(kBlue)
+                        gErfMeanByChan.SetMarkerStyle(20)
+                        
+                        for iPos in range(0,len(mean)):
+                            gErfMeanByChan.SetPoint(iPos,iPos,mean[iPos])
+                        
+                        dir_SCurveMeanByChan.cd()
+                        gErfMeanByChan.Write()
+
                         print("---------- cov of the Erf Function by channel ----------")
                         plt.suptitle("%s_VFAT%s_ID_%s_coverfbychan"%(TestName,pos,port), fontsize=14, fontweight='bold')
                         plt.plot(cov,'ro')
                         plt.savefig("%s_VFAT%s_ID_%s_coverfbychan.png"%(TestName,pos,port))
                         #plt.show()
                         plt.clf()
+                        
+                        #Make & store Cov of Erf by Channel TGraph
+                        gErfCovByChan = TGraph(len(cov))
+                        gErfCovByChan.SetName( "%s_VFAT%s_ID_%s_coverfbychan"%(TestName,pos,port) )
+                        gErfCovByChan.SetLineColor(kRed)
+                        gErfCovByChan.SetMarkerColor(kRed)
+                        gErfCovByChan.SetMarkerStyle(20)
+                        
+                        for iPos in range(0,len(cov)):
+                            gErfCovByChan.SetPoint(iPos,iPos,cov[iPos])
+                        
+                        dir_SCurveCovariance.cd()
+                        gErfCovByChan.Write()
                         
                         print("---------- Histogram of the covariance of the Erf Function ----------")
                         plt.hist(cov, 50, normed=1, facecolor='y', alpha = 0.8)
@@ -249,7 +322,16 @@ for path, subdirs, files in os.walk(r'./'):
                         #plt.show()
                         plt.clf()
                         
-#Read and plot the SCurve before the scan                       
+                        #Make & store Cov of Erf by Channel Histogram
+                        hCovHistogram = TH1F( "%s_VFAT%s_ID_%s_coverfbychan"%(TestName,pos,port), "", 500,0,250 )
+                        
+                        for iPos in range(0,len(cov)):
+                            hCovHistogram.Fill(cov[iPos])
+                        
+                        dir_SCurveCovariance.cd()
+                        hCovHistogram.Write()
+                        
+                        #Read and plot the SCurve before the scan
                         fi = glob.glob(str(TestName)+"_SCurve_by_channel_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
                         g=open(fi)
                                 
@@ -281,7 +363,16 @@ for path, subdirs, files in os.walk(r'./'):
                         #plt.show()
                         plt.clf()
                         g.close()
-                        
+
+                        #Make & store SCurves by Chan No. Before Trimming
+                        h2DSCurveByChanPreTrim = TH2F( "%s_VFAT%s_ID_%s_scurvebefore"%(TestName,pos,port), "", 255,0,255, 127, 0, 127)
+
+                        for index, valSCurve in np.ndenumerate(maSC):
+                            h2DSCurveByChanPreTrim.SetBinContent(index[1]+1,index[0]+1, valSCurve )
+                            
+                        dir_SCurveByChan.cd()
+                        h2DSCurveByChanPreTrim.Write()
+
    # Plot the S_Curve after fitting
                         print("---------- S-Curve by channel after the Script ----------")
                         plt.suptitle("%s_VFAT%s_ID_%s_scurveafter"%(TestName,pos,port), fontsize=14, fontweight='bold')
@@ -289,8 +380,16 @@ for path, subdirs, files in os.walk(r'./'):
                         plt.savefig("%s_VFAT%s_ID_%s_scurveafter.png"%(TestName,pos,port))
                         #plt.show()
                         plt.clf()     
-                        
-                    
+
+                        #Make & store SCurves by Chan No. Before Trimming
+                        h2DSCurveByChanPostTrim = TH2F( "%s_VFAT%s_ID_%s_scurveafter"%(TestName,pos,port), "", 255,0,255, 127, 0, 127)
+                            
+                        for index, valSCurve in np.ndenumerate(ma):
+                            h2DSCurveByChanPostTrim.SetBinContent(index[1]+1,index[0]+1, valSCurve )
+                                    
+                        dir_SCurveByChan.cd()
+                        h2DSCurveByChanPostTrim.Write()
+
                         vcal0 = []
                         vcal31 = []
                         vcalfinal = []
@@ -334,6 +433,9 @@ for path, subdirs, files in os.walk(r'./'):
                         #plt.show()
                         plt.clf()
                         f.close()
+
+#Close Output ROOT File
+file_Output.Close()
 '''
     print("---------- Mean of the Erf Function for all channels of all chips ----------")
     plt.hist(meanALL, 50, facecolor='b')    
