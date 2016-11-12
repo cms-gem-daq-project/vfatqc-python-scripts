@@ -7,6 +7,7 @@ Created on Thu Mar 31 09:28:14 2016
 @author: Hugo
 @modifiedby: Jared
 @modifiedby: Christine
+@modifiedby: Reyer
 """
 
 import sys, os, random, time
@@ -440,48 +441,63 @@ if __name__ == "__main__":
             glib.set(regName, regValue)
             pass
 
-    ################## Threshold Scan by VFAT2 #########################
+    ################## Set Threshold From File #########################
+        DatafileList = open("Datafiles.txt",'r')
+        Datafile = ""
+        for line in DatafileList:
+            if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
+                Datafile = (line).rstrip('\n')
+        if len(Datafile) < 2:
+            print "Chip ID: 0x%04x"%(chipIDs[port]&0xffff)
+            Datafile = raw_input("> Enter Data file to read in: ")
 
-        glib.set('scan_reset', 1)
-        glib.set('scan_mode', 0)
-        glib.set('scan_vfat2', port)
-        glib.set('scan_min', 0)
-        glib.set('scan_max', 255)
-        glib.set('scan_step', 1)
-        glib.set('scan_n', 3000)
-        glib.set('scan_toggle', 1)
-        while (glib.get("scan_status") != 0): r = 1
-        data_threshold = glib.fifoRead('scan_data', 256)
-        print "length of returned data_threshold = %d"%(len(data_threshold))
-        for d in range (0,len(data_threshold)):
-            print ((data_threshold[d] & 0xff000000) >> 24), " = ", (100*(data_threshold[d] & 0xffffff)/3000.0)
-            #if (d==0)
-            if (100*(data_threshold[d] & 0xffffff)/ 3000.0) < THRESH_ABS and ((100*(data_threshold[d-1] & 0xffffff) / N_EVENTS) - (100*(data_threshold[d] & 0xffffff) / N_EVENTS)) < THRESH_REL:
-                f.write("Threshold set to: " + str(d-1)+"\n")
-                glib.set("vfat2_" + str(port) + "_vthreshold1", int(d-1))
-                z.write("vthreshold1: "+str(d-1)+"\n")
-                break
-            pass
-        z.close()
-        #print "---------------",int(d),"---- channel test 0-------------------"
-        if d == 0 or d == 255:
-            print "ignored"
-            for d in range (0,len(data_threshold)):
-                f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
-                f.write(str(100*(data_threshold[d] & 0xffffff)/3000.0)+"\n")
-                pass
-            f.close()
-            continue
-        for d in range (0,len(data_threshold)):
-            f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
-            f.write(str(100*(data_threshold[d] & 0xffffff)/3000.0)+"\n")
-            pass
-        # for each channel, disable the cal pulse
-        for channel in range(CHAN_MIN, CHAN_MAX):
-            regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
-            regValue = DACDef
-            glib.set(regName, regValue)
-            pass
+        DatafileList.close()
+
+        l=open(Datafile,'r')
+        threshold = ((l.readline())[18:]).rstrip('\n')
+        print threshold
+        glib.set("vfat2_" + str(port) + "_vthreshold1", int(threshold))
+
+#        glib.set('scan_reset', 1)
+#        glib.set('scan_mode', 0)
+#        glib.set('scan_vfat2', port)
+#        glib.set('scan_min', 0)
+#        glib.set('scan_max', 255)
+#        glib.set('scan_step', 1)
+#        glib.set('scan_n', 3000)
+#        glib.set('scan_toggle', 1)
+#        while (glib.get("scan_status") != 0): r = 1
+#        data_threshold = glib.fifoRead('scan_data', 256)
+#        print "length of returned data_threshold = %d"%(len(data_threshold))
+#        for d in range (0,len(data_threshold)):
+#            print ((data_threshold[d] & 0xff000000) >> 24), " = ", (100*(data_threshold[d] & 0xffffff)/3000.0)
+#            #if (d==0)
+#            if (100*(data_threshold[d] & 0xffffff)/ 3000.0) < THRESH_ABS and ((100*(data_threshold[d-1] & 0xffffff) / N_EVENTS) - (100*(data_threshold[d] & 0xffffff) / N_EVENTS)) < THRESH_REL:
+#                f.write("Threshold set to: " + str(d-1)+"\n")
+#                glib.set("vfat2_" + str(port) + "_vthreshold1", int(d-1))
+#                z.write("vthreshold1: "+str(d-1)+"\n")
+#                break
+#            pass
+#        z.close()
+#        #print "---------------",int(d),"---- channel test 0-------------------"
+#        if d == 0 or d == 255:
+#            print "ignored"
+#            for d in range (0,len(data_threshold)):
+#                f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
+#                f.write(str(100*(data_threshold[d] & 0xffffff)/3000.0)+"\n")
+#                pass
+#            f.close()
+#            continue
+#        for d in range (0,len(data_threshold)):
+#            f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
+#            f.write(str(100*(data_threshold[d] & 0xffffff)/3000.0)+"\n")
+#            pass
+#        # for each channel, disable the cal pulse
+#        for channel in range(CHAN_MIN, CHAN_MAX):
+#            regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
+#            regValue = DACDef
+#            glib.set(regName, regValue)
+#            pass
 
     ################# Set all the Trim_DAC to the right value and perform S-curve by channel #################
 
@@ -489,8 +505,7 @@ if __name__ == "__main__":
         trimDACfileList = open("TrimDACfiles.txt",'r')
         trimDACfile = ""
         for line in trimDACfileList:
-            if ("ID_0x%04x"%(chipIDs[port]&0xffff) in line) and ("TRIM_DAC" in line):
-            #if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
+            if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
                 trimDACfile = (line).rstrip('\n')
         if len(trimDACfile) < 2:
             print "Chip ID: 0x%04x"%(chipIDs[port]&0xffff)
@@ -504,43 +519,49 @@ if __name__ == "__main__":
             
             print "------------------- channel ", str(channel), "-------------------"
 
+            glib.set("vfat2_" + str(port) + "_vthreshold2", 0)
+            glib.set("vfat2_" + str(port) + "_latency", 37)
             regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
             trimDAC = (g.readline()).rstrip('\n')
             print trimDAC
-#            regValue = int(trimDAC) #correct version?
-            regValue = (1 << 6) + int(trimDAC) #old version?
+            regValue = (1 << 6) + int(trimDAC) #(1 << 6) Sets the 6th bit to 1 (Which turns on the cal pulse)
             #print regValue
             glib.set(regName, regValue)
-#We should make the S-curve optional, generally not a necessary check 
-#            glib.set('scan_reset', 1)
-#            glib.set('scan_mode', 3)
-#            glib.set('scan_channel', channel)
-#            glib.set('scan_vfat2', port)
-#            glib.set('scan_min', VCAL_MIN)
-#            glib.set('scan_max', VCAL_MAX)
-#            glib.set('scan_step', 1)
-#            glib.set('scan_n', int(N_EVENTS_SCURVE))
-#            glib.set('scan_toggle', 1)
-#            while (glib.get("scan_status") != 0): i = 1
-#            data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
-            glib.set(regName, glib.get(regName) & int(trimDAC)) # disable cal pulse to channel
+
+            glib.set('scan_reset', 1)
+            glib.set('scan_mode', 3)
+            glib.set('scan_channel', channel)
+            glib.set('scan_vfat2', port)
+            glib.set('scan_min', VCAL_MIN)
+            glib.set('scan_max', VCAL_MAX)
+            glib.set('scan_step', 1)
+            glib.set('scan_n', int(N_EVENTS_SCURVE))
+            glib.set('scan_toggle', 1)
+            while (glib.get("scan_status") != 0): i = 1
+            data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
+            glib.set(regName, 0) # disable cal pulse to channel
 
             if options.debug:
                 if channel > 10:
                     continue
                 pass
 
-#            print
-#            print "---------------- s-curve data trimDAC " + str(glib.get("vfat2_" + str(port) + "_channel" + str(channel + 1))) + " --------------------"
-#            for d0 in data_scurve:
-#                Eff = (d0 & 0xffffff) / N_EVENTS_SCURVE
-#                VCal = (d0 & 0xff000000) >> 24
-#                print VCal, " => ",Eff
-#                if (Eff >= 0.48):
-#                    print VCal, " => ",Eff
-#                    TotVCal0.append(VCal)
-#                    break
-#                pass
+            print
+            print "---------------- s-curve data trimDAC " + str(glib.get("vfat2_" + str(port) + "_channel" + str(channel + 1))) + " --------------------"+"\n"
+            for d0 in data_scurve:
+                Eff = (d0 & 0xffffff) / N_EVENTS_SCURVE
+                VCal = (d0 & 0xff000000) >> 24
+                print VCal, " => ",Eff
+                if (Eff >= 0.48):
+                    print VCal, " => ",Eff
+                    TotVCal0.append(VCal)
+                    break
+                pass
+            f.write("S_CURVE_"+str(channel)+"\n")
+            for d in data_scurve:
+                f.write(str((d & 0xff000000) >> 24)+"\n")
+                f.write(str((d & 0xffffff)/N_EVENTS_TRIM)+"\n")
+                pass
 
 
             #regValue = (1 << 6) + int(trimDAC) # old version

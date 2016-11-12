@@ -7,6 +7,7 @@ Created on Thu Mar 31 09:28:14 2016
 @author: Hugo
 @modifiedby: Jared
 @modifiedby: Christine
+@modifiedby: Reyer
 """
 
 import sys, os, random, time
@@ -489,8 +490,7 @@ if __name__ == "__main__":
         trimDACfileList = open("TrimDACfiles.txt",'r')
         trimDACfile = ""
         for line in trimDACfileList:
-            if ("ID_0x%04x"%(chipIDs[port]&0xffff) in line) and ("TRIM_DAC" in line):
-            #if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
+            if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
                 trimDACfile = (line).rstrip('\n')
         if len(trimDACfile) < 2:
             print "Chip ID: 0x%04x"%(chipIDs[port]&0xffff)
@@ -504,43 +504,50 @@ if __name__ == "__main__":
             
             print "------------------- channel ", str(channel), "-------------------"
 
+            glib.set("vfat2_" + str(port) + "_vthreshold2", 0)
+            glib.set("vfat2_" + str(port) + "_latency", 37)
             regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
             trimDAC = (g.readline()).rstrip('\n')
             print trimDAC
-#            regValue = int(trimDAC) #correct version?
-            regValue = (1 << 6) + int(trimDAC) #old version?
+            regValue = (1 << 6) + int(trimDAC) #(1 << 6) Sets the 6th bit to 1 (Which turns on the cal pulse)
             #print regValue
             glib.set(regName, regValue)
-#We should make the S-curve optional, generally not a necessary check 
-#            glib.set('scan_reset', 1)
-#            glib.set('scan_mode', 3)
-#            glib.set('scan_channel', channel)
-#            glib.set('scan_vfat2', port)
-#            glib.set('scan_min', VCAL_MIN)
-#            glib.set('scan_max', VCAL_MAX)
-#            glib.set('scan_step', 1)
-#            glib.set('scan_n', int(N_EVENTS_SCURVE))
-#            glib.set('scan_toggle', 1)
-#            while (glib.get("scan_status") != 0): i = 1
-#            data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
-            glib.set(regName, glib.get(regName) & int(trimDAC)) # disable cal pulse to channel
+
+            glib.set('scan_reset', 1)
+            glib.set('scan_mode', 3)
+            glib.set('scan_channel', channel)
+            glib.set('scan_vfat2', port)
+            glib.set('scan_min', VCAL_MIN)
+            glib.set('scan_max', VCAL_MAX)
+            glib.set('scan_step', 1)
+            glib.set('scan_n', int(N_EVENTS_SCURVE))
+            glib.set('scan_toggle', 1)
+            while (glib.get("scan_status") != 0): i = 1
+            data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
+            #glib.set(regName, 0) # disable cal pulse to channel
+            glib.set(regName, glib.get(regName) & int(trimDAC)) # 
 
             if options.debug:
                 if channel > 10:
                     continue
                 pass
 
-#            print
-#            print "---------------- s-curve data trimDAC " + str(glib.get("vfat2_" + str(port) + "_channel" + str(channel + 1))) + " --------------------"
-#            for d0 in data_scurve:
-#                Eff = (d0 & 0xffffff) / N_EVENTS_SCURVE
-#                VCal = (d0 & 0xff000000) >> 24
-#                print VCal, " => ",Eff
-#                if (Eff >= 0.48):
-#                    print VCal, " => ",Eff
-#                    TotVCal0.append(VCal)
-#                    break
-#                pass
+            print
+            print "---------------- s-curve data trimDAC " + str(glib.get("vfat2_" + str(port) + "_channel" + str(channel + 1))) + " --------------------"+"\n"
+            for d0 in data_scurve:
+                Eff = (d0 & 0xffffff) / N_EVENTS_SCURVE
+                VCal = (d0 & 0xff000000) >> 24
+                print VCal, " => ",Eff
+                if (Eff >= 0.48):
+                    print VCal, " => ",Eff
+                    TotVCal0.append(VCal)
+                    break
+                pass
+            f.write("S_CURVE_"+str(channel)+"\n")
+            for d in data_scurve:
+                f.write(str((d & 0xff000000) >> 24)+"\n")
+                f.write(str((d & 0xffffff)/N_EVENTS_TRIM)+"\n")
+                pass
 
 
             #regValue = (1 << 6) + int(trimDAC) # old version
