@@ -413,7 +413,7 @@ if __name__ == "__main__":
                 continue
             pass
         if options.special:
-            if port !=19 :
+            if port !=5 :
                 continue
             pass
         print "------------------------------------------------------"

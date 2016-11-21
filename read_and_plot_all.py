@@ -35,6 +35,7 @@ for path, subdirs, files in os.walk(r'./'):
             if city == 'Data':
                 #print fname
                 TestName = str(cities[0]+"_"+cities[1]+"_"+cities[2]+"_"+cities[3])
+                TName    = str(cities[0]+"_"+cities[1]+"_"+cities[2])
                 slot     = int(cities[10])-160
                 pos      = cities[12]
                 port     = cities[14]
@@ -146,15 +147,13 @@ for path, subdirs, files in os.walk(r'./'):
                                     for i in t:
                                         fit.append(fitFunc(i, fitParams[0], fitParams[1],fitParams[2],fitParams[3]))
                                     #print "---------- Scurve and the erf fit of channel " + str(line) + "-1 in the transition zone ----------"    
-                                    print "---------- Scurve and the erf fit of channel " + str(SCUVRE) + " in the transition zone ----------"    
+                                    #print "---------- Scurve and the erf fit of channel " + str(SCUVRE) + " in the transition zone ----------"    
                                     #print str(line) + "-1 ----- " + str(fitParams[0]+min(scurvex)) + " ----- " + str(fitParams[1]) + " ----- " + str(fitParams[2]) + " ----- " + str(fitParams[3])    
                                     plt.xlim(min(scurvex),max(scurvex))
-                                    plt.ylabel('Efficiency')
-                                    plt.xlabel('Calibration pulse ')
                                     plt.suptitle("%s_VFAT%s_ID_%s_ScurveAndErfFit"%(TestName,pos,port), fontsize=14, fontweight='bold')
                                     plt.plot(scurvex, scurvey,'bo',t+min(scurvex),fit,'r')
                                     #plt.savefig("%s_VFAT%s_ID_%s_ScurveAndErfFit.png"%(TestName,pos,port))
-                                    plt.savefig("%s_VFAT%s_ID_%s_14_ScurveAndErfFit.png"%(TestName,pos,port))
+                                    #plt.savefig("%s_VFAT%s_ID_%s_%s-1_ScurveAndErfFit.png"%(TestName,pos,port,line))
                                     #plt.show()
                                     plt.clf()
                                     scurvex3 = []
@@ -216,12 +215,67 @@ for path, subdirs, files in os.walk(r'./'):
                                 threshold2y.append(float((f.readline()).rstrip('\n')))
                                 line = (f.readline()).rstrip('\n')
                             f.close()
+    print("---------- Vcal turn on vs Threshold for channel 14 of all chips ----------")
+    plt.ylim(0,120)
+    plt.xlim(0,100)
+    plt.plot(thresholdALL,VCALmean14, 'yo')
+    plt.ylabel('Calibration pulse turn-on height [VFAT2 units]')
+    plt.xlabel('Threshold [VFAT2 units]')
+    plt.suptitle("VFAT2 VCal turn-on Value vs Threshold - Channel 14", fontsize=14, fontweight='bold')
+    plt.savefig("goodVFAT2ThresholdAndVcalChannel14" + TName + ".png")
+    #plt.show()
+    plt.clf()
+
+    print("---------- Mean of the Erf Function for all channels of all chips ----------")
+    plt.hist(meanALL, 50, facecolor='b')    
+    plt.ylabel('Number of Strip Channels')
+    plt.xlabel('Calibration pulse turn-on height')
+    plt.suptitle("VFAT2 Final VCal Value - All Channels", fontsize=14, fontweight='bold')
+    plt.savefig("goodVFAT2meanErfAllChannels_" + TName + ".png")
+    #plt.savefig("goodVFAT2meanErfAllChannels.png")
+    #plt.show()
+    plt.clf()
+
+    print("---------- Mean of the Erf Function for channel 14 of all chips ----------")
+    plt.hist(VCALmean14, 50, facecolor='b')    
+    plt.ylabel('Number of VFAT2 Chips')
+    plt.xlabel('Calibration pulse turn-on height')
+    plt.suptitle("VFAT2 Final VCal Value - Channel 14", fontsize=14, fontweight='bold')
+    plt.savefig("goodVFAT2meanErfChannel14_" + TName + ".png")
+    #plt.show()
+    plt.clf()
+
+    print("---------- Cov of the Erf Function for all channels of all chips ----------")
+    plt.hist(covALL, 50, facecolor='b')    
+    plt.ylabel('Number of Strip Channels')
+    plt.xlabel('S-curve Sigma')
+    plt.suptitle("VFAT2 Final S-curve Sigma - All Channels", fontsize=14, fontweight='bold')
+    plt.savefig("goodVFAT2sigmaErfAllChannels_" + TName +".png")
+    #plt.show()
+    plt.clf()
+
+    print("---------- Cov of the Erf Function for channel 14 of all chips ----------")
+    plt.hist(VCALcov14, 50, facecolor='b')    
+    plt.ylabel('Number of VFAT2 Chips')
+    plt.xlabel('S-curve Sigma')
+    plt.suptitle("VFAT2 Final S-curve Sigma - Channel 14", fontsize=14, fontweight='bold')
+    plt.savefig("goodVFAT2sigmaErfChannel14_" + TName + ".png")
+    #plt.show()
+    plt.clf()
+
+    print("---------- Threshold for all chips ----------")
+    plt.hist(thresholdALL, 50, facecolor='b')    
+    plt.ylabel('Number of VFAT2 Chips')
+    plt.xlabel('Thresholds')
+    plt.suptitle("VFAT2 Threshold Value", fontsize=14, fontweight='bold')
+    plt.savefig("goodVFAT2threshold_" + TName + ".png")
+    #plt.show()
+    plt.clf()
+'''
 # Plot the 2 TH Scans
                         print("---------- Threshold Scans ----------")    
                         plt.xlim(0,255)
                         plt.ylim(0,100)
-                        plt.ylabel('Noise')
-                        plt.xlabel('Threshold')
                         plt.suptitle("%s_VFAT%s_ID_%s_thresholds"%(TestName,pos,port), fontsize=14, fontweight='bold')
                         plt.plot(threshold1x, threshold1y,'bo',threshold2x, threshold2y,'ro')
                         plt.savefig("%s_VFAT%s_ID_%s_thresholds.png"%(TestName,pos,port))
@@ -233,8 +287,6 @@ for path, subdirs, files in os.walk(r'./'):
 
                         print("---------- Mean of the Erf Function by channel ----------")
                         plt.ylim(0,255)
-                        plt.ylabel('Calibration pulse [per Channel]')
-                        plt.xlabel('128 Strip Channels')
                         plt.suptitle("%s_VFAT%s_ID_%s_meanerfbychan"%(TestName,pos,port), fontsize=14, fontweight='bold')
                         plt.plot(mean,'bo')
                         plt.savefig("%s_VFAT%s_ID_%s_meanerfbychan.png"%(TestName,pos,port))
@@ -242,8 +294,6 @@ for path, subdirs, files in os.walk(r'./'):
                         plt.clf()
                         
                         print("---------- cov of the Erf Function by channel ----------")
-                        plt.ylabel('S-curve Sigma of the Erf Function by Channel [per Channel]')
-                        plt.xlabel('128 Strip Channels')
                         plt.suptitle("%s_VFAT%s_ID_%s_coverfbychan"%(TestName,pos,port), fontsize=14, fontweight='bold')
                         plt.plot(cov,'ro')
                         plt.savefig("%s_VFAT%s_ID_%s_coverfbychan.png"%(TestName,pos,port))
@@ -251,8 +301,6 @@ for path, subdirs, files in os.walk(r'./'):
                         plt.clf()
                         
                         print("---------- Histogram of the covariance of the Erf Function ----------")
-                        plt.ylabel('Covariance of the Erf Function')
-                        plt.xlabel('S-curve Sigma')
                         plt.hist(cov, 50, normed=1, facecolor='y', alpha = 0.8)
                         plt.suptitle("%s_VFAT%s_ID_%s_covhisterf"%(TestName,pos,port), fontsize=14, fontweight='bold')
                         plt.savefig("%s_VFAT%s_ID_%s_covhisterf.png"%(TestName,pos,port))
@@ -285,8 +333,6 @@ for path, subdirs, files in os.walk(r'./'):
                             SCy = []
                             line = (g.readline()).rstrip('\n')
                         print("---------- S-Curve by channel Before the Script ----------")    
-                        plt.ylabel('128 Strip Channels')
-                        plt.xlabel('Calibration Pulse')
                         plt.suptitle("%s_VFAT%s_ID_%s_scurvebefore"%(TestName,pos,port), fontsize=14, fontweight='bold')
                         plt.imshow(maSC)
                         plt.savefig("%s_VFAT%s_ID_%s_scurvebefore.png"%(TestName,pos,port))
@@ -296,8 +342,6 @@ for path, subdirs, files in os.walk(r'./'):
                         
    # Plot the S_Curve after fitting
                         print("---------- S-Curve by channel after the Script ----------")
-                        plt.ylabel('128 Strip Channels')
-                        plt.xlabel('Calibration Pulse')
                         plt.suptitle("%s_VFAT%s_ID_%s_scurveafter"%(TestName,pos,port), fontsize=14, fontweight='bold')
                         plt.imshow(ma)
                         plt.savefig("%s_VFAT%s_ID_%s_scurveafter.png"%(TestName,pos,port))
@@ -348,3 +392,40 @@ for path, subdirs, files in os.walk(r'./'):
                         #plt.show()
                         plt.clf()
                         f.close()
+'''
+
+'''
+print("---------- Mean of the Erf Function by VFAT ----------")
+#plt.ylim(0,6000)
+#plt.xlim(0,120)
+plt.suptitle("Mean of Final VCal Value - All chips", fontsize=14, fontweight='bold')
+plt.hist(Tmean,50,facecolor='b')
+plt.savefig("VCal_distribution_by_VFAT_" + TName + ".png")
+#plt.show()
+plt.clf()
+
+print("---------- Mean of the Erf Function by channel ----------")
+#plt.ylim(0,6000)
+plt.xlim(0,120)
+plt.suptitle("VCal distribution by channel", fontsize=14, fontweight='bold')
+plt.hist(themean,120)
+plt.savefig("VCal_distribution_by_channel.png")
+#plt.show()
+plt.clf()
+
+print("---------- cov of the Erf Function by channel ----------")
+plt.xlim(1.5,5.0)
+plt.suptitle("sigma distribution by channel", fontsize=14, fontweight='bold')
+plt.hist(thesigma,35)
+plt.savefig("sigma_distribution_by_channel.png")
+#plt.show()
+plt.clf()
+
+print("---------- cov of the Erf Function by VFAT ----------")
+plt.xlim(1.5,5.0)
+plt.suptitle("sigma distribution by VFAT", fontsize=14, fontweight='bold')
+plt.hist(Tsigma,35)
+plt.savefig("sigma_distribution_by_VFAT.png")
+#plt.show()
+plt.clf()
+'''

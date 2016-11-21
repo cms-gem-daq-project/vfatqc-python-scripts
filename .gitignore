@@ -1,12 +1,16 @@
-# Ignore everything
-*
-
 # Don't ignore git settings
 !*.gitignore
 !*.gitattributes
 
 # Don't ignore subdirectories
 !*/
+!*.*
 
 # Don't ignore python
 !*.py
+
+# Don't ignore output files
+!*_VFAT*_ID*
+
+# Ignore following
+*.pyc
