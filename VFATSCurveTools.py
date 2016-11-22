@@ -429,6 +429,9 @@ class VFATSCurveTools:
 
         self.f.close()
 
+        ##################### Stop local T1 controller ######################
+        resetLocalT1(self.glib,self.gtx)
+
         return
 
 
