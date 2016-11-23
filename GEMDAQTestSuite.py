@@ -145,10 +145,17 @@ class GEMDAQTestSuite:
             sys.exit()
             pass
 
-        if (getReferenceClock(self.glib,self.gtx) == 1):
+        # if (getReferenceClock(self.glib,self.gtx) == 1):
+        #     print Passed
+        # else:
+        #     print Failed, "oh_clk_src %d"%(getReferenceClock(self.glib,self.gtx))
+        #     sys.exit()
+        #     pass
+
+        if (getTriggerThrottle(self.glib,self.gtx) == 0):
             print Passed
         else:
-            print Failed, "oh_clk_src %d"%(getReferenceClock(self.glib,self.gtx))
+            print Failed, "oh_trg_throttle %d"%(getTriggerThrottle(self.glib,self.gtx))
             sys.exit()
             pass
 
@@ -224,8 +231,8 @@ class GEMDAQTestSuite:
         txtTitle("E. Detecting the VFAT2s over I2C")
         print "   Detecting VFAT2s on the GEM by reading out their chip ID."
 
-        writeRegister(self.glib,"%s.GEB.Broadcast.Reset"%(self.oh_basenode), 0)
-        readRegister(self.glib,"%s.GEB.Broadcast.Request.ChipID0"%(self.oh_basenode))
+        # writeRegister(self.glib,"%s.GEB.Broadcast.Reset"%(self.oh_basenode), 0)
+        # readRegister(self.glib,"%s.GEB.Broadcast.Request.ChipID0"%(self.oh_basenode))
         self.chipIDs = getAllChipIDs(self.glib,self.gtx)
 
         for i in range(0, 24):
@@ -292,8 +299,7 @@ class GEMDAQTestSuite:
         txtTitle("G. Reading out tracking data")
         print "   Sending triggers and testing if the Event Counter adds up."
 
-        writeRegister(self.glib,"%s.GEB.Broadcast.Reset"%(self.oh_basenode), 0)
-        writeRegister(self.glib,"%s.GEB.Broadcast.Request.ContReg0"%(self.oh_basenode), 0)
+        broadcastWrite(self.glib,self.gtx,"ContReg0", 0x36)
 
         self.test["G"] = True
 
@@ -368,14 +374,13 @@ class GEMDAQTestSuite:
         self.test["H"] = True
 
         if (self.test["G"]):
-            writeRegister(self.glib,"%s.GEB.Broadcast.Reset"%(self.oh_basenode), 0)
-            writeRegister(self.glib,"%s.GEB.Broadcast.Request.ContReg0"%(self.oh_basenode), 55)
+            broadcastWrite(self.glib,self.gtx,"ContReg0", 0x37)
 
             mask = 0
             for i in self.presentVFAT2sSingle:
                 mask |= (0x1 << i)
                 pass
-            writeRegister(self.glib,"%s.CONTROL.VFAT.MASK"%(self.oh_basenode), ~(mask))
+            writeRegister(self.glib,"%s.CONTROL.VFAT.TRK_MASK"%(self.oh_basenode), ~(mask))
 
             sendResync(self.glib,self.gtx, 10, 1)
 
@@ -403,8 +408,7 @@ class GEMDAQTestSuite:
                 nPackets += 1
                 ecs.append(ec)
                 pass
-            writeRegister(self.glib,"%s.GEB.Broadcast.Reset"%(self.oh_basenode), 0)
-            writeRegister(self.glib,"%s.GEB.Broadcast.Request.ContReg0"%(self.oh_basenode), 0)
+            broadcastWrite(self.glib,self.gtx,"ContReg0", 0x36)
 
             if (nPackets != len(self.presentVFAT2sSingle) * self.test_params.TK_RD_TEST):
                 print Failed, "#%d received: %d, expected: %d"%(i,nPackets, len(self.presentVFAT2sSingle) * self.test_params.TK_RD_TEST)
@@ -448,8 +452,7 @@ class GEMDAQTestSuite:
         txtTitle("I. Testing the tracking data readout rate")
         print "   Sending triggers at a given rate and looking at the maximum readout rate that can be achieved."
 
-        writeRegister(self.glib,"%s.GEB.Broadcast.Reset"%(self.oh_basenode), 0)
-        writeRegister(self.glib,"%s.GEB.Broadcast.Request.ContReg0"%(self.oh_basenode), 0)
+        broadcastWrite(self.glib,self.gtx,"ContReg0", 0x36)
 
         writeVFAT(self.glib,self.gtx,self.presentVFAT2sSingle[0],"ContReg0",0x37)
         writeRegister(self.glib,"%s.CONTROL.VFAT.MASK"%(self.oh_basenode), ~(0x1 << self.presentVFAT2sSingle[0]))
