@@ -17,9 +17,12 @@ def txtTitle(str):
     return
 
 class VFAT_SCAN_PARAMS:
+    """
+    """
+
     def __init__(self,
                  thresh_abs=0.1,thresh_rel=0.05,thresh_min=0,thresh_max=254,
-                 lat_abs=0.7,lat_min=0,lat_max=254,
+                 lat_abs=90.,lat_min=0,lat_max=254,
                  nev_thresh=3000,nev_lat=3000,
                  nev_scurve=1000,nev_trim=1000,
                  vcal_min=0,vcal_max=254,
@@ -30,21 +33,47 @@ class VFAT_SCAN_PARAMS:
         self.THRESH_REL      = thresh_rel
         self.THRESH_MIN      = thresh_min
         self.THRESH_MAX      = thresh_max
+        self.N_EVENTS_THRESH = nev_thresh
+
         self.LAT_ABS         = lat_abs
         self.LAT_MIN         = lat_min
         self.LAT_MAX         = lat_max
-        self.N_EVENTS_THRESH = nev_thresh
         self.N_EVENTS_LAT    = nev_lat
-        self.N_EVENTS_SCURVE = nev_scurve
-        self.N_EVENTS_TRIM   = nev_trim
+
         self.VCAL_MIN        = vcal_min
         self.VCAL_MAX        = vcal_max
+        self.N_EVENTS_SCURVE = nev_scurve
+        self.N_EVENTS_TRIM   = nev_trim
         self.MAX_TRIM_IT     = max_trim_it
         self.CHAN_MIN        = chan_min
         self.CHAN_MAX        = chan_max
         self.DAC_DEF         = def_dac
 
         return
+
+    def printAll(self):
+        print self.THRESH_ABS
+        print self.THRESH_REL
+        print self.THRESH_MIN
+        print self.THRESH_MAX
+        print self.N_EVENTS_THRESH
+        print
+        print self.LAT_ABS
+        print self.LAT_MIN
+        print self.LAT_MAX
+        print self.N_EVENTS_LAT
+        print
+        print self.VCAL_MIN
+        print self.VCAL_MAX
+        print self.N_EVENTS_SCURVE
+        print self.N_EVENTS_TRIM
+        print self.MAX_TRIM_IT
+        print self.CHAN_MIN
+        print self.CHAN_MAX
+        print self.DAC_DEF
+
+        return
+
 
 class VFATSCurveTools:
     """
@@ -56,7 +85,7 @@ class VFATSCurveTools:
 
     uhal.setLogLevelTo( uhal.LogLevel.FATAL )
 
-    def __init__(self, glib, slot, gtx, vfat, chipID, params, debug=False):
+    def __init__(self, glib, slot, gtx, vfat, chipID, scan_params, doLatency=False,debug=False):
         """
         """
         self.glib   = glib
@@ -64,7 +93,59 @@ class VFATSCurveTools:
         self.gtx    = gtx
         self.vfat   = vfat
         self.chipID = chipID
-        self.params = params
+        self.scan_params = scan_params
+        self.doLatency = doLatency
+
+        self.THRESH_ABS      = scan_params.THRESH_ABS
+        self.THRESH_REL      = scan_params.THRESH_REL
+        self.THRESH_MIN      = scan_params.THRESH_MIN
+        self.THRESH_MAX      = scan_params.THRESH_MAX
+        self.LAT_ABS         = scan_params.LAT_ABS
+        self.LAT_MIN         = scan_params.LAT_MIN
+        self.LAT_MAX         = scan_params.LAT_MAX
+        self.N_EVENTS_THRESH = scan_params.N_EVENTS_THRESH
+        self.N_EVENTS_LAT    = scan_params.N_EVENTS_LAT
+        self.N_EVENTS_SCURVE = scan_params.N_EVENTS_SCURVE
+        self.N_EVENTS_TRIM   = scan_params.N_EVENTS_TRIM
+        self.VCAL_MIN        = scan_params.VCAL_MIN
+        self.VCAL_MAX        = scan_params.VCAL_MAX
+        self.MAX_TRIM_IT     = scan_params.MAX_TRIM_IT
+        self.CHAN_MIN        = scan_params.CHAN_MIN
+        self.CHAN_MAX        = scan_params.CHAN_MAX
+        self.DAC_DEF         = scan_params.DAC_DEF
+
+        if debug:
+            print "struct printAll"
+            scan_params.printAll()
+            print
+
+            print "member struct printAll"
+            self.scan_params.printAll()
+            print
+
+            print "member variables"
+            print self.THRESH_ABS
+            print self.THRESH_REL
+            print self.THRESH_MIN
+            print self.THRESH_MAX
+            print self.N_EVENTS_THRESH
+            print
+            print self.LAT_ABS
+            print self.LAT_MIN
+            print self.LAT_MAX
+            print self.N_EVENTS_LAT
+            print
+            print self.VCAL_MIN
+            print self.VCAL_MAX
+            print self.N_EVENTS_SCURVE
+            print self.N_EVENTS_TRIM
+            print self.MAX_TRIM_IT
+            print self.CHAN_MIN
+            print self.CHAN_MAX
+            print self.DAC_DEF
+            print
+            pass
+
         self.debug  = debug
 
         if vfat not in range(0,24):
@@ -126,73 +207,54 @@ class VFATSCurveTools:
         sendL1ACalPulse(self.glib,self.gtx,t1_delay,t1_interval,t1_n)
         stopLocalT1(self.glib,self.gtx)
 
-        self.z.write("DACs default value: %s\n"%(self.params.DAC_DEF))
-        for channel in range(self.params.CHAN_MIN, self.params.CHAN_MAX):
+        self.z.write("DACs default value: %s\n"%(self.DAC_DEF))
+        for channel in range(self.CHAN_MIN, self.CHAN_MAX):
             ## old script had *all* channels set up to receive a pulse at this point, why?
             setChannelRegister(self.glib,self.gtx,self.vfat,channel,
-                               mask=0x0,pulse=0x0,trim=self.params.DAC_DEF)
+                               mask=0x0,pulse=0x0,trim=self.DAC_DEF)
             pass
+
         return
 
     def scanThresholdByVFAT(self,debug=False):
         """
         """
 
-        # writeVFAT(self.glib,self.gtx,self.vfat,"ContReg0",0x37)
-
         configureScanModule(self.glib,self.gtx,0,self.vfat,
-                            scanmin=0,scanmax=254,stepsize=1,
-                            numtrigs=self.params.N_EVENTS_THRESH,
+                            scanmin=3,#self.THRESH_MIN,
+                            scanmax=254,#self.THRESH_MIN,
+                            stepsize=1,numtrigs=self.N_EVENTS_THRESH,
                             debug=debug)
-        if debug:
-           raw_input("enter to continue")
-           pass
-        if debug:
-            printScanConfiguration(self.glib,self.gtx)
-            raw_input("enter to continue")
-            pass
         startScanModule(self.glib,self.gtx)
-        if debug:
-            printScanConfiguration(self.glib,self.gtx)
-            raw_input("enter to continue")
-            pass
-        data_threshold = getScanResults(self.glib,self.gtx,255,debug=debug)
-
-        # writeVFAT(self.glib,self.gtx,self.vfat,"ContReg0",0x36)
+        data_threshold = getScanResults(self.glib,self.gtx,
+                                        254-0,
+                                        debug=debug)
 
         return data_threshold
 
     def scanLatencyByVFAT(self,debug=False):
         """
         """
+
         channel = 10
         setChannelRegister(self.glib,self.gtx,self.vfat,channel,
-                           mask=0x0,pulse=0x1,trim=self.params.DAC_DEF)
+                           mask=0x0,pulse=0x1,trim=self.DAC_DEF)
         writeVFAT(self.glib,self.gtx,self.vfat,"VCal",0xff)
-        # writeVFAT(self.glib,self.gtx,self.vfat,"ContReg0",0x37)
 
         configureScanModule(self.glib,self.gtx,2,self.vfat,
-                            scanmin=0,scanmax=254,stepsize=1,
-                            numtrigs=self.params.N_EVENTS_LAT,
+                            scanmin=0,#self.LAT_MIN,
+                            scanmax=254,#self.LAT_MIN,
+                            stepsize=1,numtrigs=self.N_EVENTS_LAT,
                             debug=debug)
-        if debug:
-           raw_input("enter to continue")
-           pass
-        if debug:
-            printScanConfiguration(self.glib,self.gtx)
-            raw_input("enter to continue")
-            pass
         startScanModule(self.glib,self.gtx)
-        if debug:
-            printScanConfiguration(self.glib,self.gtx)
-            raw_input("enter to continue")
-            pass
-        data_latency = getScanResults(self.glib,self.gtx,255,debug=debug)
+        data_latency = getScanResults(self.glib,self.gtx,
+                                      #self.LAT_MIN - self.LAT_MIN,
+                                      254-0,
+                                      debug=debug)
 
         setChannelRegister(self.glib,self.gtx,self.vfat,channel,
-                           mask=0x0,pulse=0x0,trim=self.params.DAC_DEF)
+                           mask=0x0,pulse=0x0,trim=self.DAC_DEF)
         writeVFAT(self.glib,self.gtx,self.vfat,"VCal",0x0)
-        # writeVFAT(self.glib,self.gtx,self.vfat,"ContReg0",0x36)
 
         return data_latency
 
@@ -202,31 +264,20 @@ class VFATSCurveTools:
 
         setChannelRegister(self.glib,self.gtx,self.vfat,channel,
                            mask=0x0,pulse=0x1,trim=trim)
-        # writeVFAT(self.glib,self.gtx,self.vfat,"ContReg0",0x37)
 
         configureScanModule(self.glib,self.gtx,3,self.vfat,
-                            scanmin=self.params.VCAL_MIN,
-                            scanmax=self.params.VCAL_MAX,
-                            stepsize=1,
-                            numtrigs=ntrigs,
+                            scanmin=0,#self.VCAL_MIN,
+                            scanmax=254,#self.VCAL_MAX,
+                            stepsize=1,numtrigs=ntrigs,
                             debug=debug)
-        if debug:
-           raw_input("enter to continue")
-           pass
-        if debug:
-            printScanConfiguration(self.glib,self.gtx)
-            raw_input("enter to continue")
-            pass
         startScanModule(self.glib,self.gtx)
-        if debug:
-            printScanConfiguration(self.glib,self.gtx)
-            raw_input("enter to continue")
-            pass
-        data_scurve = getScanResults(self.glib,self.gtx,255,debug=debug)
+        data_scurve = getScanResults(self.glib,self.gtx,
+                                     #self.VCAL_MIN - self.VCAL_MIN,
+                                     254-0,
+                                     debug=debug)
 
         setChannelRegister(self.glib,self.gtx,self.vfat,channel,
                            mask=0x0,pulse=0x0,trim=trim,debug=True)
-        # writeVFAT(self.glib,self.gtx,self.vfat,"ContReg0",0x36)
 
         return data_scurve
 
@@ -234,12 +285,12 @@ class VFATSCurveTools:
         """
         """
         # for each channel, disable the cal pulse
-        for channel in range(self.params.CHAN_MIN, self.params.CHAN_MAX):
+        for channel in range(self.CHAN_MIN, self.CHAN_MAX):
             setChannelRegister(self.glib,self.gtx,self.vfat,channel,
-                               mask=0x0,pulse=0x0,trim=self.params.DAC_DEF)
+                               mask=0x0,pulse=0x0,trim=self.DAC_DEF)
             pass
 
-        for channel in range(self.params.CHAN_MIN, self.params.CHAN_MAX):
+        for channel in range(self.CHAN_MIN, self.CHAN_MAX):
             if self.debug:
                 if channel > 10:
                     continue
@@ -252,9 +303,6 @@ class VFATSCurveTools:
                 pass
             pass
 
-        # if self.doQC3:
-        #     return
-
         return
 
     def scanChannel(self,channel,debug=False):
@@ -262,21 +310,22 @@ class VFATSCurveTools:
         """
         for trim in [0,16,31]:
             print "---------------- s-curve data trimDAC %2d --------------------"%(trim)
-            data_scurve = self.scanVCalByVFAT(channel,trim,ntrigs=self.params.N_EVENTS_SCURVE,debug=debug)
+            data_scurve = self.scanVCalByVFAT(channel,trim,ntrigs=self.N_EVENTS_SCURVE,debug=debug)
             if (trim == 16):
                 self.m.write("SCurve_%d\n"%(channel))
                 pass
             try:
-                if self.debug:
-                    print "length of returned data_scurve = %d"%(len(data_scurve))
-                    for d in range (0,len(data_scurve)):
-                        "%d ==> %f"%((data_scurve[d] & 0xff000000) >> 24,
-                                     (data_scurve[d] & 0xffffff) / (1.*self.params.N_EVENTS_SCURVE))
-                        pass
-                    pass
+                # if self.debug:
+                #     print "length of returned data_scurve = %d"%(len(data_scurve))
+                #     for d in range (0,len(data_scurve)):
+                #         "%d ==> %f"%((data_scurve[d] & 0xff000000) >> 24,
+                #                      (data_scurve[d] & 0xffffff) / (1.*self.N_EVENTS_SCURVE))
+                #         pass
+                #     pass
+                print "0x%08x"%(data_scurve[0])
                 for d in data_scurve:
                     VCal = (d & 0xff000000) >> 24
-                    Eff  = (d & 0xffffff) / (1.*self.params.N_EVENTS_SCURVE)
+                    Eff  = (d & 0xffffff) / (1.*self.N_EVENTS_SCURVE)
                     if self.debug:
                         print "%d => %f"%(VCal,Eff)
                         pass
@@ -320,7 +369,7 @@ class VFATSCurveTools:
             self.h.close() # changed from self.f.close()
             return False
 
-        for channel in range(self.params.CHAN_MIN, self.params.CHAN_MAX):
+        for channel in range(self.CHAN_MIN, self.CHAN_MAX):
             if self.debug:
                 if channel > 10:
                     continue
@@ -346,11 +395,12 @@ class VFATSCurveTools:
         foundGood = False
 
         while (foundGood == False):
-            data_trim = self.scanVCalByVFAT(channel,trimDAC,ntrigs=self.params.N_EVENTS_SCURVE,debug=debug)
+            data_trim = self.scanVCalByVFAT(channel,trimDAC,ntrigs=self.N_EVENTS_SCURVE,debug=debug)
             try:
+                print "0x%08x"%(data_trim[0])
                 for d in data_trim:
                     VCal = (d & 0xff000000) >> 24
-                    Eff  = (d & 0xffffff) / (1.*self.params.N_EVENTS_SCURVE)
+                    Eff  = (d & 0xffffff) / (1.*self.N_EVENTS_SCURVE)
                     if (Eff >= 0.48):
                         print "%d => %f"%(VCal,Eff)
                         foundVCal = VCal
@@ -361,19 +411,20 @@ class VFATSCurveTools:
                 print "Error while reading the data, they will be ignored"
                 continue
 
-            if (foundVCal > VCal_ref["avg"] and TRIM_IT < self.params.MAX_TRIM_IT and trimDAC < 31):
+            if (foundVCal > VCal_ref["avg"] and TRIM_IT < self.MAX_TRIM_IT and trimDAC < 31):
                 trimDAC += 1
                 TRIM_IT +=1
-            elif (foundVCal < VCal_ref["avg"] and TRIM_IT < self.params.MAX_TRIM_IT and trimDAC > 0):
+            elif (foundVCal < VCal_ref["avg"] and TRIM_IT < self.MAX_TRIM_IT and trimDAC > 0):
                 trimDAC -= 1
                 TRIM_IT +=1
             else:
                 self.g.write("%d\n"%(trimDAC))
                 self.TotFoundVCal.append(foundVCal)
                 self.f.write("S_CURVE_%d\n"%(channel))
+                print "0x%08x"%(data_trim[0])
                 for d in data_trim:
                     self.f.write("%f\n"%((d & 0xff000000) >> 24))
-                    self.f.write("%f\n"%((d & 0xffffff)/self.params.N_EVENTS_TRIM))
+                    self.f.write("%f\n"%((d & 0xffffff)/self.N_EVENTS_TRIM))
                     pass
                 break
             pass
@@ -383,7 +434,7 @@ class VFATSCurveTools:
         """
         """
         self.g = open("%s_TRIM_DAC_value_%s"%(self.startTime,self.subname),'r')
-        for channel in range(self.params.CHAN_MIN, self.params.CHAN_MAX):
+        for channel in range(self.CHAN_MIN, self.CHAN_MAX):
             if self.debug:
                 if channel > 10:
                     continue
@@ -402,17 +453,20 @@ class VFATSCurveTools:
         """
         """
         ########################## Setup the VFAT         ######################
+        print "Setup the VFAT"
         self.setupVFAT()
 
         ########################## Initial threshold scan ######################
+        print "Initial threshold scan"
         data_threshold = self.scanThresholdByVFAT(self.debug)
-
         print "length of returned data_threshold = %d"%(len(data_threshold))
+        d = 0
+        print "0x%08x"%(data_threshold[0])
         for d in range (0,len(data_threshold)):
-            noiselevel     = 100*(data_threshold[d  ] & 0xffffff)/(1.*self.params.N_EVENTS_THRESH)
-            lastnoiselevel = 100*(data_threshold[d-1] & 0xffffff)/(1.*self.params.N_EVENTS_THRESH)
+            noiselevel     = 100*(data_threshold[d  ] & 0xffffff)/(1.*self.N_EVENTS_THRESH)
+            lastnoiselevel = 100*(data_threshold[d-1] & 0xffffff)/(1.*self.N_EVENTS_THRESH)
             print "%d = %f"%(((data_threshold[d] & 0xff000000) >> 24), noiselevel)
-            if (noiselevel) < self.params.THRESH_ABS and (lastnoiselevel - noiselevel) < self.params.THRESH_REL:
+            if (noiselevel) < self.THRESH_ABS and (lastnoiselevel - noiselevel) < self.THRESH_REL:
                 setVFATThreshold(self.glib,self.gtx,self.vfat,vt1=(d-1),vt2=0)
                 print "Threshold set to: %d"%(d-1)
                 self.f.write("Threshold set to: %d\n"%(d-1))
@@ -425,83 +479,108 @@ class VFATSCurveTools:
             print "ignored"
             for d in range (0,len(data_threshold)):
                 self.f.write("%f\n"%((data_threshold[d] & 0xff000000) >> 24))
-                self.f.write("%f\n"%(100*(data_threshold[d] & 0xffffff)/(1.*self.params.N_EVENTS_THRESH)))
+                self.f.write("%f\n"%(100*(data_threshold[d] & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
                 pass
             self.f.close()
             return
 
         for d in range (0,len(data_threshold)):
             self.f.write("%f\n"%((data_threshold[d] & 0xff000000) >> 24))
-            self.f.write("%f\n"%(100*(data_threshold[d] & 0xffffff)/(1.*self.params.N_EVENTS_THRESH)))
+            self.f.write("%f\n"%(100*(data_threshold[d] & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
             pass
 
         ##################Parts of the routine require the L1A+CalPulse ######################
         startLocalT1(self.glib,self.gtx)
 
         ########################## Initial latency scan ######################
-        data_latency = self.scanLatencyByVFAT(self.debug)
+        if self.doLatency:
+            print "Initial latency scan"
 
-        print "length of returned data_latency = %d"%(len(data_latency))
-        if not len(data_latency):
-            print "data_latency is empty"
-            return
-        eff     = 100*(data_latency[0]   & 0xffffff)/(1.*self.params.N_EVENTS_LAT)
-        print "%d = %f"%(((data_latency[0] & 0xff000000) >> 24), eff)
-        for d in range (1,len(data_latency)):
-            eff     = 100*(data_latency[d]   & 0xffffff)/(1.*self.params.N_EVENTS_LAT)
-            lasteff = 100*(data_latency[d-1] & 0xffffff)/(1.*self.params.N_EVENTS_LAT)
-            nexteff = 100*(data_latency[d+1] & 0xffffff)/(1.*self.params.N_EVENTS_LAT)
-            print "%d = %f"%(((data_latency[d] & 0xff000000) >> 24), eff)
-            if (eff) > self.params.LAT_ABS and (nexteff) > self.params.LAT_ABS and (lasteff) <= self.params.LAT_ABS:
-                writeVFAT(self.glib,self.gtx,self.vfat,"Latency",(d+1))
-                print "Latency set to: %d"%(d+1)
-                self.f.write("Latency set to: %d\n"%(d+1))
-                self.z.write("latency: %d\n"%(d+1))
-                break
+            data_latency = self.scanLatencyByVFAT(self.debug)
+
+            print "length of returned data_latency = %d"%(len(data_latency))
+            if not len(data_latency):
+                print "data_latency is empty"
+                return
+            print "0x%08x"%(data_latency[0])
+            eff     = 100*(data_latency[0]   & 0xffffff)/(1.*self.N_EVENTS_LAT)
+            print "%d = %f"%(((data_latency[0] & 0xff000000) >> 24), eff)
+            for d in range (1,len(data_latency)-1):
+                eff     = 100*(data_latency[d]   & 0xffffff)/(1.*self.N_EVENTS_LAT)
+                lasteff = 100*(data_latency[d-1] & 0xffffff)/(1.*self.N_EVENTS_LAT)
+                nexteff = 100*(data_latency[d+1] & 0xffffff)/(1.*self.N_EVENTS_LAT)
+                print "%d = %f"%(((data_latency[d] & 0xff000000) >> 24), eff)
+                if (eff) > self.LAT_ABS and (nexteff) > self.LAT_ABS and (lasteff) <= self.LAT_ABS:
+                    writeVFAT(self.glib,self.gtx,self.vfat,"Latency",(d+1))
+                    print "Latency set to: %d"%(d+1)
+                    self.f.write("Latency set to: %d\n"%(d+1))
+                    self.z.write("latency: %d\n"%(d+1))
+                    break
+                pass
+            pass
+        else:
+            writeVFAT(self.glib,self.gtx,self.vfat,"Latency",(37))
+            print "Latency set to: %d"%(d+1)
+            self.f.write("Latency set to: %d\n"%(d+1))
+            self.z.write("latency: %d\n"%(d+1))
             pass
         self.z.close()
 
         ################## Run S-Curves on all channels ######################
+        print "Run S-Curves on all channels"
         self.runAllChannels(self.debug)
 
+        # if self.doQC3:
+        #     return
+
         ################## Adjust the trim for each channel ######################
+        print "Adjust the trim for each channel"
         if self.adjustTrims(self.debug):
 
             ################# Set all the TrimDACs to the right value #################
+            print "Set all the TrimDACs to the right value"
             self.setAllTrims(self.debug)
             pass
 
         ########################## Final threshold scan ######################
+        print "Final threshold scan"
         stopLocalT1(self.glib,self.gtx)
         self.f.write("second_threshold\n")
         data_threshold = self.scanThresholdByVFAT()
         if not len(data_threshold):
             print "data_threshold is empty"
             return
+        print "0x%08x"%(data_threshold[0])
         for d in data_threshold:
             self.f.write("%d\n"%((d & 0xff000000) >> 24))
-            self.f.write("%f\n"%(100*(d & 0xffffff)/(1.*self.params.N_EVENTS_THRESH)))
+            self.f.write("%f\n"%(100*(d & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
             pass
 
         ########################## Final latency scan ######################
-        startLocalT1(self.glib,self.gtx)
-        data_latency = self.scanLatencyByVFAT()
+        if self.doLatency:
+            print "Final latency scan"
+            startLocalT1(self.glib,self.gtx)
+            data_latency = self.scanLatencyByVFAT()
 
-        print "length of returned data_latency = %d"%(len(data_latency))
-        if not len(data_latency):
-            print "data_latency is empty"
-            return
-        eff     = 100*(data_latency[0]   & 0xffffff)/(1.*self.params.N_EVENTS_LAT)
-        print "%d = %f"%(((data_latency[0] & 0xff000000) >> 24), eff)
-        for d in range (1,len(data_latency)):
-            eff     = 100*(data_latency[d]   & 0xffffff)/(1.*self.params.N_EVENTS_LAT)
-            lasteff = 100*(data_latency[d-1] & 0xffffff)/(1.*self.params.N_EVENTS_LAT)
-            nexteff = 100*(data_latency[d+1] & 0xffffff)/(1.*self.params.N_EVENTS_LAT)
-            print "%d = %f"%(((data_latency[d] & 0xff000000) >> 24), eff)
-            if (eff) > self.params.LAT_ABS and (nexteff) > self.params.LAT_ABS and (lasteff) <= self.params.LAT_ABS:
-                writeVFAT(self.glib,self.gtx,self.vfat,"Latency",(d+1))
-                print "Latency set to: %d"%(d+1)
-                break
+            print "length of returned data_latency = %d"%(len(data_latency))
+            if not len(data_latency):
+                print "data_latency is empty"
+                return
+            print "0x%08x"%(data_latency[0])
+            eff     = 100*(data_latency[0]   & 0xffffff)/(1.*self.N_EVENTS_LAT)
+            print "%d = %f"%(((data_latency[0] & 0xff000000) >> 24), eff)
+            for d in range (1,len(data_latency)-1):
+                eff     = 100*(data_latency[d]   & 0xffffff)/(1.*self.N_EVENTS_LAT)
+                lasteff = 100*(data_latency[d-1] & 0xffffff)/(1.*self.N_EVENTS_LAT)
+                nexteff = 100*(data_latency[d+1] & 0xffffff)/(1.*self.N_EVENTS_LAT)
+                print "%d = %f"%(((data_latency[d] & 0xff000000) >> 24), eff)
+                if (eff) > self.LAT_ABS and (nexteff) > self.LAT_ABS and (lasteff) <= self.LAT_ABS:
+                    writeVFAT(self.glib,self.gtx,self.vfat,"Latency",(d+1))
+                    print "Latency set to: %d"%(d+1)
+                    break
+                pass
+            pass
+        else:
             pass
 
         self.f.close()
@@ -520,9 +599,6 @@ if __name__ == "__main__":
     parser.add_option("-d", "--debug", action="store_true", dest="debug",
                       metavar="debug",
                       help="[OPTIONAL] Run in debug mode")
-    parser.add_option("-m", "--middle", action="store_true", dest="doMiddle",
-                      metavar="doMiddle",
-                      help="[OPTIONAL] Use the middle column")
     parser.add_option("-s", "--slot", type="int", dest="slot",
                       help="slot in uTCA crate", metavar="slot", default=10)
     parser.add_option("-g", "--gtx", type="int", dest="gtx",
@@ -539,9 +615,9 @@ if __name__ == "__main__":
     parser.add_option("--writeout", action="store_true", dest="writeout",
                       help="Write the data to disk when testing the rate", metavar="writeout")
 
-    parser.add_option("--special", action="store_true", dest="special",
-                      metavar="special",
-                      help="[OPTIONAL] Run a special arrangement")
+    parser.add_option("--doLatency", action="store_true", dest="doLatency",
+                      metavar="doLatency",
+                      help="[OPTIONAL] Run latency scan to determine the latency value")
 
     parser.add_option("--QC3test", action="store_true", dest="doQC3",
                       metavar="doQC3",
@@ -561,9 +637,9 @@ if __name__ == "__main__":
     os.dup2(tee.stdin.fileno(), sys.stdout.fileno())
     os.dup2(tee.stdin.fileno(), sys.stderr.fileno())
 
-    import cProfile, pstats, StringIO
-    pr = cProfile.Profile()
-    pr.enable()
+    # import cProfile, pstats, StringIO
+    # pr = cProfile.Profile()
+    # pr.enable()
 
     from GEMDAQTestSuite import *
 
@@ -578,7 +654,7 @@ if __name__ == "__main__":
         thresh_rel=0.05,
         thresh_min=0,
         thresh_max=254,
-        lat_abs=0.7,
+        lat_abs=94.,
         lat_min=0,
         lat_max=254,
         nev_thresh=100000,
@@ -603,12 +679,12 @@ if __name__ == "__main__":
     testSuite = GEMDAQTestSuite(slot=options.slot,
                                 gtx=options.gtx,
                                 tests=testsToRun,
-                                params=test_params,
-                                debug=options.debug)
+                                test_params=test_params)#,
+                                #debug=options.debug)
 
     testSuite.runSelectedTests()
 
-    vfat = 15
+    vfat = 2
     if vfat not in testSuite.presentVFAT2sSingle:
         print "VFAT not found in previous test"
         sys.exit(1)
@@ -618,7 +694,8 @@ if __name__ == "__main__":
                                   gtx=testSuite.gtx,
                                   vfat=vfat,
                                   chipID=testSuite.chipIDs[vfat],
-                                  params=scan_params,
+                                  scan_params=scan_params,
+                                  doLatency=options.doLatency,
                                   debug=options.debug)
 
     print "AMC%02d  OH%02d  VFAT%02d  0x%04x"%(testSuite.slot,testSuite.gtx,vfat,testSuite.chipIDs[vfat])
@@ -626,9 +703,9 @@ if __name__ == "__main__":
 
     sCurveTests.runScanRoutine()
 
-    pr.disable()
-    s = StringIO.StringIO()
-    sortby = 'cumulative'
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print s.getvalue()
+    # pr.disable()
+    # s = StringIO.StringIO()
+    # sortby = 'cumulative'
+    # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    # ps.print_stats()
+    # print s.getvalue()
