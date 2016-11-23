@@ -35,7 +35,7 @@ test_params = TEST_PARAMS(nglib=options.nglib,
 testSuite = GEMDAQTestSuite(slot=options.slot,
                             gtx=options.gtx,
                             tests=options.tests,
-                            params=test_params,
+                            test_params=test_params,
                             debug=options.debug)
 
 testSuite.runSelectedTests()
