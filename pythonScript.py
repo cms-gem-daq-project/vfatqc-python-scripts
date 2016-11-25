@@ -541,6 +541,16 @@ if __name__ == "__main__":
             glib.set('scan_step', 1)
             glib.set('scan_n', int(N_EVENTS_SCURVE))
             glib.set('scan_toggle', 1)
+
+            print "FW scan mode       : %d"%(glib.get('scan_mode'))
+            print "FW scan min        : %d"%(glib.get('scan_min'))
+            print "FW scan max        : %d"%(glib.get('scan_max'))
+            print "FW scan VFAT       : %d"%(glib.get('scan_vfat2'))
+            print "FW scan channel    : %d"%(glib.get('scan_channel'))
+            print "FW scan step size  : %d"%(glib.get('scan_step'))
+            print "FW scan n_triggers : %d"%(glib.get('scan_n'))
+            print "FW scan status     : %d"%(glib.get("scan_status"))
+
             while (glib.get("scan_status") != 0): i = 1
             data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
             glib.set(regName, 0) # disable cal pulse to channel
@@ -572,6 +582,16 @@ if __name__ == "__main__":
             glib.set('scan_step', 1)
             glib.set('scan_n', int(N_EVENTS_SCURVE))
             glib.set('scan_toggle', 1)
+
+            print "FW scan mode       : %d"%(glib.get('scan_mode'))
+            print "FW scan min        : %d"%(glib.get('scan_min'))
+            print "FW scan max        : %d"%(glib.get('scan_max'))
+            print "FW scan VFAT       : %d"%(glib.get('scan_vfat2'))
+            print "FW scan channel    : %d"%(glib.get('scan_channel'))
+            print "FW scan step size  : %d"%(glib.get('scan_step'))
+            print "FW scan n_triggers : %d"%(glib.get('scan_n'))
+            print "FW scan status     : %d"%(glib.get("scan_status"))
+
             while (glib.get("scan_status") != 0): i = 1
             data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
             glib.set(regName, 0) # disable cal pulse to channel
