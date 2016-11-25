@@ -133,7 +133,7 @@ class GEMDAQTestSuite:
         txtTitle("B. Testing the OH's presence")
         print "   Trying to set the OptoHybrid registers... If this test fails, the script will stop."
 
-        setReferenceClock( self.glib, self.gtx, 1)
+        # setReferenceClock( self.glib, self.gtx, 1)
         setTriggerSource(  self.glib, self.gtx, 1)
         setTriggerThrottle(self.glib, self.gtx, 0)
 
