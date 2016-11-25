@@ -9,7 +9,3 @@
 
 # Don't ignore python
 !*.py
-
-# Ignore following
-*.pyc
-*#*
