@@ -346,7 +346,9 @@ class VFATSCurveTools:
                                         (data_scurve[d] & 0xffffff) / (1.*self.N_EVENTS_SCURVE))
                         pass
                     pass
-                print "0x%08x"%(data_scurve[0])
+                if debug:
+                    print "0x%08x"%(data_scurve[0])
+                    pass
                 for d in data_scurve:
                     VCal = (d & 0xff000000) >> 24
                     Eff  = (d & 0xffffff) / (1.*self.N_EVENTS_SCURVE)
@@ -420,8 +422,10 @@ class VFATSCurveTools:
 
         while (foundGood == False):
             data_trim = self.scanVCalByVFAT(vfat,channel,trimDAC,ntrigs=self.N_EVENTS_SCURVE,debug=debug)
-            try:
+            if debug:
                 print "0x%08x"%(data_trim[0])
+                pass
+            try:
                 for d in data_trim:
                     VCal = (d & 0xff000000) >> 24
                     Eff  = (d & 0xffffff) / (1.*self.N_EVENTS_SCURVE)
@@ -445,7 +449,6 @@ class VFATSCurveTools:
                 self.g.write("%d\n"%(trimDAC))
                 self.TotFoundVCal.append(foundVCal)
                 self.f.write("S_CURVE_%d\n"%(channel))
-                print "0x%08x"%(data_trim[0])
                 for d in data_trim:
                     self.f.write("%f\n"%((d & 0xff000000) >> 24))
                     self.f.write("%f\n"%((d & 0xffffff)/self.N_EVENTS_TRIM))
@@ -490,8 +493,10 @@ class VFATSCurveTools:
         data_threshold = self.scanThresholdByVFAT(vfat,debug=debug)
         print "length of returned data_threshold = %d"%(len(data_threshold))
         threshold = 0
-        print "0x%08x"%(data_threshold[0])
         noise = 100*(data_threshold[0] & 0xffffff)/(1.*self.N_EVENTS_THRESH)
+        if debug:
+            print "0x%08x"%(data_threshold[0])
+            pass
         print "%d = %3.4f"%(((data_threshold[0] & 0xff000000) >> 24), noise)
         for d in range (1,len(data_threshold)-1):
             noise     = 100*(data_threshold[d  ] & 0xffffff)/(1.*self.N_EVENTS_THRESH)
@@ -541,7 +546,9 @@ class VFATSCurveTools:
             if not len(data_latency):
                 print "data_latency is empty"
                 return
-            print "0x%08x"%(data_latency[0])
+            if debug:
+                print "0x%08x"%(data_latency[0])
+                pass
             eff     = 100*(data_latency[0]   & 0xffffff)/(1.*self.N_EVENTS_LAT)
             print "%d = %3.4f"%(((data_latency[0] & 0xff000000) >> 24), eff)
             for d in range (1,len(data_latency)-1):
@@ -592,7 +599,9 @@ class VFATSCurveTools:
         if not len(data_threshold):
             print "data_threshold is empty"
             return
-        print "0x%08x"%(data_threshold[0])
+        if debug:
+            print "0x%08x"%(data_threshold[0])
+            pass
         for d in data_threshold:
             self.f.write("%d\n"%((d & 0xff000000) >> 24))
             self.f.write("%f\n"%(100*(d & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
@@ -608,7 +617,9 @@ class VFATSCurveTools:
             if not len(data_latency):
                 print "data_latency is empty"
                 return
-            print "0x%08x"%(data_latency[0])
+            if debug:
+                print "0x%08x"%(data_latency[0])
+                pass
             eff     = 100*(data_latency[0]   & 0xffffff)/(1.*self.N_EVENTS_LAT)
             print "%d = %3.4f"%(((data_latency[0] & 0xff000000) >> 24), eff)
             for d in range (1,len(data_latency)-1):
