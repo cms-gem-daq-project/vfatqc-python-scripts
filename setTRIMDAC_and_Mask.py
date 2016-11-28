@@ -7,6 +7,7 @@ Created on Thu Mar 31 09:28:14 2016
 @author: Hugo
 @modifiedby: Jared
 @modifiedby: Christine
+@modifiedby: Reyer
 """
 
 import sys, os, random, time
@@ -497,33 +498,22 @@ if __name__ == "__main__":
             trimDACfile = raw_input("> Enter Trim DAC file to read in: ")
 
         trimDACfileList.close()
-
-        badChannelList = open("BadChannels.txt", 'r')
-        badChannelfile = ""
-        for line in badChannelList:
-            if ("ID_0x%04x"%(chipIDs[port]&0xffff) in line) and ("BadChannel" in line):
-                badChannelfile = (line).rstrip('\n')
-
         g=open(trimDACfile,'r')
-
-        x=open(badChannelfile, 'r')
         #g=open(str(Date)+"_TRIM_DAC_value_VFAT_"+str(port)+"_ID_"+ str(chipIDs[port]&0xff),'r')
         for channel in range(CHAN_MIN, CHAN_MAX):
             
             print "------------------- channel ", str(channel), "-------------------"
 
             regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
-            trimDAC = (g.readline()).rstrip('\n')
-            channelinfo = (x.readline()).rstrip('\n')
-            cc = channelinfo.split('\t\t\t')
+            regline = (g.readline()).rstrip('\n')
+            cc = regline.split('\t\t\t')
             chan_num = cc[0]
-            trim = cc[1]
+            trimDAC = cc[1]
             mask_yes = cc[2]
-            print trimDAC
+            print chan_num, trimDAC
             regValue = (1 << 6) + int(trimDAC) #
-            if (badChannelfile != ''):
-                if (int(channel) == int(chan_num)):
-                    regValue+= (1 << 7)
+            if (mask_yes == 1):
+                regValue+= (1 << 7)
             #print regValue
             glib.set(regName, regValue)
 #We should make the S-curve optional, generally not a necessary check 
