@@ -7,13 +7,10 @@ Created on Wed Nov 23 19:02:34 2016
 
 """
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import scipy
-from scipy import special
-from scipy.optimize import curve_fit
 from ROOT import gROOT, gDirectory, TMultiGraph, TNamed, TLegend, TCanvas, TGraph, TH1F, TH2F, TFile, TDirectory #Classes
 from ROOT import kGreen, kYellow, kBlue, kRed #Colors
+import ROOT as rt
+rt.gROOT.SetBatch(True)
 import numpy as np
 import os
 import glob
