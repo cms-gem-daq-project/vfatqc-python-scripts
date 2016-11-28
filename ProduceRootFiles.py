@@ -6,13 +6,13 @@ Created on Fri Mar 04 09:29:24 2016
 
 @author: Hugo, Geng, Brian
 """
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import scipy
 from scipy import special
 from scipy.optimize import curve_fit
 from ROOT import gROOT, gDirectory, TNamed, TLegend, TCanvas, TGraph, TH1F, TH2F, TFile, TDirectory #Classes
 from ROOT import kGreen, kYellow, kBlue, kRed #Colors
+import ROOT as rt
+rt.gROOT.SetBatch(True)
 import numpy as np
 import os
 import glob
@@ -132,9 +132,9 @@ for path, subdirs, files in os.walk(r'./'):
                             threshold1x.append(float(line))
                             threshold1y.append(float((f.readline()).rstrip('\n')))
                             line = (f.readline()).rstrip('\n') 
-                        plt.xlim(0,255)
-                        plt.plot(threshold1x, threshold1y,'bo')
-                        plt.show()
+                        #plt.xlim(0,255)
+                        #plt.plot(threshold1x, threshold1y,'bo')
+                        #plt.show()
                     else :
                         line = (f.readline()).rstrip('\n')
                         while ("S_CURVE" not in line): #Read the first TH Scan
