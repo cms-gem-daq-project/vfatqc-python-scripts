@@ -80,10 +80,9 @@ for i in range(0,8):
 ## Read TrimDAC Values
 gDirectory.cd('../TrimDACValues')
 for iPos in range(24):
-    if port[iPos] is 'False':
-        continue
     VFAT2s_T = gDirectory.Get('%s_ID_%s_TrimDAC'%(pos[iPos], port[iPos]))
     if bool(VFAT2s_T) is False:
+        TrimFiles.append(VFAT2s_T)
         port[iPos]='False'
         continue
     TrimFiles.append(VFAT2s_T)
