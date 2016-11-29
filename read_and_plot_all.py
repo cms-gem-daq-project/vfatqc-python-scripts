@@ -14,7 +14,7 @@ from scipy.optimize import curve_fit
 import numpy as np
 import os
 import glob
-choose = glob.glob("*Data_GLIB_IP_192*")
+choose = glob.glob("*Data_*")
 print
 themean=[]
 thesigma=[]
