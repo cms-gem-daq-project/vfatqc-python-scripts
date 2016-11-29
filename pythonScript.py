@@ -601,6 +601,12 @@ if __name__ == "__main__":
             for d16 in data_scurve:
             	Eff = (d16 & 0xffffff) / N_EVENTS_SCURVE
             	VCal = (d16 & 0xff000000) >> 24
+                if options.debug:
+                    print VCal, " => ",Eff
+                    pass
+                if (Eff >= 0.48):
+                    print VCal, " => ",Eff
+                    pass
             	m.write(str(VCal)+"\n")
             	m.write(str(Eff)+"\n")
                 pass
@@ -677,6 +683,7 @@ if __name__ == "__main__":
             trimDAC = 16
             foundGood = False
 
+            foundVCal = None
             while (foundGood == False):
                 regValue = (1 << 6) + trimDAC
                 glib.set(regName, regValue) # enable cal pulse to channel
