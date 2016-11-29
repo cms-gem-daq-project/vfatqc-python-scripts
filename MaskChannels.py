@@ -41,6 +41,7 @@ for iPos in range(24):
     VFAT2s = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[iPos], port[iPos]))
     if bool(VFAT2s) is False:
         VFAT.append(VFAT2s)
+        port[iPos]='False'
         continue
     VFAT.append(VFAT2s)
 for i in range(0,8):
@@ -48,22 +49,34 @@ for i in range(0,8):
     Canvas = TCanvas("Canvas", "Canvas")
     mg = TMultiGraph("mg","S-curve on Channel 15 of iEta %s; Calibration pulse; "%(ieta))
     legend = TLegend(0.72, 0.11, 0.89, 0.23)
-    if i !=  10: ## iPhi = 3
-        VFAT[i]    = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i], port[i]))
+    ## iPhi = 3
+    VFAT[i]    = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i], port[i]))
+    if bool(VFAT[i]) is False:
+        port[iPos]='False'
+        continue
+    else:
         VFAT[i].SetLineColor(kRed)
         VFAT[i].SetMarkerColor(kRed)
         VFAT[i].SetMarkerStyle(20)
         mg.Add(VFAT[i],"lp")
         legend.AddEntry(VFAT[i], "%s  : %s"%(pos[i], port[i+0]),"lP")
-    if i !=  10: ## iPhi = 2
-        VFAT[i+8]  = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i+8], port[i+8]))
+    ## iPhi = 2
+    VFAT[i+8]  = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i+8], port[i+8]))
+    if bool(VFAT[i+8]) is False:
+        port[iPos]='False'
+        continue
+    else:
         VFAT[i+8].SetLineColor(kBlue)
         VFAT[i+8].SetMarkerColor(kBlue)
         VFAT[i+8].SetMarkerStyle(22)
         mg.Add(VFAT[i+8],"lp")
         legend.AddEntry(VFAT[i+8], "%s  : %s"%(pos[i+8], port[i+8]),"lP")
-    if i !=  10: ## iPhi = 1
-        VFAT[i+16] = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i+16], port[i+16]))
+    ## iPhi = 1
+    VFAT[i+16] = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i+16], port[i+16]))
+    if bool(VFAT[i+16]) is False:
+        port[iPos]='False'
+        continue
+    else:
         VFAT[i+16].SetLineColor(kGreen)
         VFAT[i+16].SetMarkerColor(kGreen)
         VFAT[i+16].SetMarkerStyle(24)
@@ -77,9 +90,11 @@ for i in range(0,8):
 gDirectory.cd('../TrimDACValues')
 for iPos in range(24):
     if port[iPos] is 'False':
-        TrimFiles.append('False')
         continue
     VFAT2s_T = gDirectory.Get('%s_ID_%s_TrimDAC'%(pos[iPos], port[iPos]))
+    if bool(VFAT2s_T) is False:
+        port[iPos]='False'
+        continue
     TrimFiles.append(VFAT2s_T)
 ## Read S-curve sigma Values
 gDirectory.cd('../SCurvesSigma')
