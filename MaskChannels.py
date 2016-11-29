@@ -51,37 +51,31 @@ for i in range(0,8):
     legend = TLegend(0.72, 0.11, 0.89, 0.23)
     ## iPhi = 3
     VFAT[i]    = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i], port[i]))
-    if bool(VFAT[i]) is False:
-        port[iPos]='False'
-        continue
-    else:
+    while bool(VFAT[i]) is True:
         VFAT[i].SetLineColor(kRed)
         VFAT[i].SetMarkerColor(kRed)
         VFAT[i].SetMarkerStyle(20)
         mg.Add(VFAT[i],"lp")
         legend.AddEntry(VFAT[i], "%s  : %s"%(pos[i], port[i+0]),"lP")
+        break
     ## iPhi = 2
     VFAT[i+8]  = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i+8], port[i+8]))
-    if bool(VFAT[i+8]) is False:
-        port[iPos]='False'
-        continue
-    else:
+    while bool(VFAT[i+8]) is True:
         VFAT[i+8].SetLineColor(kBlue)
         VFAT[i+8].SetMarkerColor(kBlue)
         VFAT[i+8].SetMarkerStyle(22)
         mg.Add(VFAT[i+8],"lp")
         legend.AddEntry(VFAT[i+8], "%s  : %s"%(pos[i+8], port[i+8]),"lP")
+        break
     ## iPhi = 1
     VFAT[i+16] = gDirectory.Get('%s_ID_%s_Scurve15'%(pos[i+16], port[i+16]))
-    if bool(VFAT[i+16]) is False:
-        port[iPos]='False'
-        continue
-    else:
+    while bool(VFAT[i+16]) is True:
         VFAT[i+16].SetLineColor(kGreen)
         VFAT[i+16].SetMarkerColor(kGreen)
         VFAT[i+16].SetMarkerStyle(24)
         mg.Add(VFAT[i+16],"lp")
         legend.AddEntry(VFAT[i+16], "%s: %s"%(pos[i+16], port[i+16]),"lP")
+        break
     mg.Draw("SAME")
     legend.Draw('SAME')
     Canvas.Print('iEta_%s_ScurveAF.pdf'%(ieta))
