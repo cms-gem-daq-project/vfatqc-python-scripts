@@ -490,7 +490,7 @@ if __name__ == "__main__":
         trimDACfileList = open("TrimDACfiles.txt",'r')
         trimDACfile = ""
         for line in trimDACfileList:
-            if ("ID_0x%04x"%(chipIDs[port]&0xffff) in line) and ("TRIM_DAC" in line):
+            if ("ID_0x%04x"%(chipIDs[port]&0xffff) in line) and ("Mask_TRIM_DAC" in line):
             #if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
                 trimDACfile = (line).rstrip('\n')
         if len(trimDACfile) < 2:
@@ -510,10 +510,10 @@ if __name__ == "__main__":
             chan_num = cc[0]
             trimDAC = cc[1]
             mask_yes = cc[2]
-            print chan_num, trimDAC
-            regValue = (1 << 6) + int(trimDAC) #
-            if (mask_yes == 1):
-                regValue+= (1 << 7)
+            print chan_num, trimDAC, mask_yes
+            regValue = int(trimDAC) #
+            if (int(mask_yes) == 1):
+                regValue+= (1 << 5)
             #print regValue
             glib.set(regName, regValue)
 #We should make the S-curve optional, generally not a necessary check 
@@ -528,7 +528,7 @@ if __name__ == "__main__":
 #            glib.set('scan_toggle', 1)
 #            while (glib.get("scan_status") != 0): i = 1
 #            data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
-            glib.set(regName, glib.get(regName) & int(trimDAC)) # disable cal pulse to channel
+#            glib.set(regName, glib.get(regName) & int(trimDAC)) # disable cal pulse to channel
 
             if options.debug:
                 if channel > 10:
