@@ -27,11 +27,11 @@ class VFAT_SCAN_PARAMS:
     """
 
     def __init__(self,
-                 thresh_abs=0.1,thresh_rel=0.05,thresh_min=0,thresh_max=254,
-                 lat_abs=90.,lat_min=0,lat_max=254,
+                 thresh_abs=0.1,thresh_rel=0.05,thresh_min=0,thresh_max=255,
+                 lat_abs=90.,lat_min=0,lat_max=255,
                  nev_thresh=3000,nev_lat=3000,
                  nev_scurve=1000,nev_trim=1000,
-                 vcal_min=0,vcal_max=254,
+                 vcal_min=0,vcal_max=255,
                  max_trim_it=26,
                  chan_min=0,chan_max=128,
                  def_dac=16,
@@ -182,21 +182,25 @@ class VFATSCurveTools:
 
         import datetime
         self.startTime = datetime.datetime.now().strftime("%d_%m_%Y_%Hh%M")
+
         chipID = getChipID(self.glib,self.gtx,vfat)
+        self.subname = "AMC_%02d_OH_%02d_VFAT2_%d_ID_0x%04x"%(self.slot,self.gtx,vfat,chipID)
 
-        subname = "AMC%02d_OH%02d_VFAT2_%d_ID_0x%04x"%(self.slot,self.gtx,vfat,chipID)
+        self.f = open("%s_Data_%s"%(self.startTime,self.subname),'w')
+        self.m = open("%s_SCurve_by_channel_%s"%(self.startTime,self.subname),'w')
+        self.z = open("%s_Setting_%s"%(self.startTime,self.subname),'w')
+        self.h = open("%s_VCal_%s"%(self.startTime,self.subname),'w')
+        self.g = open("%s_TRIM_DAC_value_%s"%(self.startTime,self.subname),'w')
 
-        self.f = open("%s_Data_%s"%(self.startTime,subname),'w')
-        self.m = open("%s_SCurve_by_channel_%s"%(self.startTime,subname),'w')
-        self.z = open("%s_Setting_%s"%(self.startTime,subname),'w')
-        self.h = open("%s_VCal_%s"%(self.startTime,subname),'w')
-        self.g = open("%s_TRIM_DAC_value_%s"%(self.startTime,subname),'w')
+        self.m.close()
+        self.h.close()
+        self.g.close()
 
         self.z.write("%s-%s\n"%(time.strftime("%Y/%m/%d"),time.strftime("%H:%M:%S")))
         self.z.write("chip ID: 0x%04x\n"%(chipID))
 
         # should make sure all chips are off first?
-        writeAllVFATs(self.glib,self.gtx,mask=0xff000000,reg="ContReg0",value=0x0)
+        writeAllVFATs(self.glib,self.gtx,reg="ContReg0",value=0x0,mask=0xff000000)
 
         setTriggerSource(self.glib,self.gtx,1)
 
@@ -284,7 +288,7 @@ class VFATSCurveTools:
         setChannelRegister(self.glib,self.gtx,vfat,channel,
                            mask=0x0,pulse=0x1,trim=trim)
         if debug:
-            print "channel %d register 0x%08x"%(channel,getChannelRegister(self.glib,self.gtx,vfat,channel))
+            print "Channel %d register 0x%08x"%(channel,getChannelRegister(self.glib,self.gtx,vfat,channel))
             pass
         configureScanModule(self.glib,self.gtx,SCAN_VCAL,vfat,
                             channel=channel,
@@ -304,7 +308,7 @@ class VFATSCurveTools:
         setChannelRegister(self.glib,self.gtx,vfat,channel,
                            mask=0x0,pulse=0x0,trim=trim,debug=True)
         if debug:
-            print "channel %d register 0x%08x"%(channel,getChannelRegister(self.glib,self.gtx,vfat,channel))
+            print "Channel %d register 0x%08x"%(channel,getChannelRegister(self.glib,self.gtx,vfat,channel))
             pass
         return data_scurve
 
@@ -318,12 +322,8 @@ class VFATSCurveTools:
             pass
 
         for channel in range(self.CHAN_MIN, self.CHAN_MAX):
-            if self.debug:
-                print channel
-                if channel > 10:
-                    continue
-                pass
-            print "--------------------- channel %03d ---------------------------"%(channel)
+            if self.debug and (channel > 10):
+                continue
             self.scanChannel(vfat,channel,debug=debug)
             pass
 
@@ -332,46 +332,55 @@ class VFATSCurveTools:
     def scanChannel(self,vfat,channel,debug=False):
         """
         """
+        print "--------------------- Channel %03d ---------------------------"%(channel)
+
+        self.m = open("%s_SCurve_by_channel_%s"%(self.startTime,self.subname),'a')
         for trim in [0,16,31]:
-            print "---------------- s-curve data trimDAC %2d --------------------"%(trim)
+            print "---------------- S-Curve data trimDAC %2d --------------------"%(trim)
             data_scurve = self.scanVCalByVFAT(vfat,channel,trim,ntrigs=self.N_EVENTS_SCURVE,debug=debug)
             if (trim == 16):
                 self.m.write("SCurve_%d\n"%(channel))
                 pass
             try:
                 if debug:
-                    print "length of returned data_scurve = %d"%(len(data_scurve))
+                    print "Length of returned data_scurve = %d"%(len(data_scurve))
+                    print "First data word: 0x%08x"%(data_scurve[0])
                     for d in range (0,len(data_scurve)):
                         "%d ==> %3.4f"%((data_scurve[d] & 0xff000000) >> 24,
                                         (data_scurve[d] & 0xffffff) / (1.*self.N_EVENTS_SCURVE))
                         pass
                     pass
-                if debug:
-                    print "0x%08x"%(data_scurve[0])
-                    pass
+                passed = False
                 for d in data_scurve:
                     VCal = (d & 0xff000000) >> 24
                     Eff  = (d & 0xffffff) / (1.*self.N_EVENTS_SCURVE)
                     if self.debug:
                         print "%d => %3.4f"%(VCal,Eff)
                         pass
-                    if (Eff >= 0.48):
-                        print "%d => %3.4f"%(VCal,Eff)
-                        self.TotVCal["%s"%(trim)].append(VCal)
-                        if (trim == 16):
-                            self.m.write("%f\n"%(VCal))
-                            self.m.write("%f\n"%(Eff))
+                    if (Eff >= 0.48 and not passed):
+                        if not passed:
+                            print "%d => %3.4f"%(VCal,Eff)
+                            self.TotVCal["%s"%(trim)].append(VCal)
                             pass
-                        break
+                        passed = True
+                        if trim in [0,31]:
+                            break # stop scanning for high and low trim values
+                        pass
+                    if (trim == 16):
+                        self.m.write("%d\t%f\n"%(VCal,Eff))  # write to file for trim == 16
+                        pass
                     pass
 
                 # if self.doQC3:
                 #     return
             except:
+                ex = sys.exc_info()[0]
+                print "Caught exception: %s"%(ex)
                 print "Error while reading the data, they will be ignored"
+                self.m.close()
                 pass
             pass
-
+        self.m.close()
         return
 
     def adjustTrims(self,vfat,debug=False):
@@ -381,34 +390,44 @@ class VFATSCurveTools:
         print "------------------------ TrimDAC routine ------------------------"
         print
 
+        self.h = open("%s_VCal_%s"%(self.startTime,self.subname),'a')
+        if debug:
+            for trim in [0,16,31]:
+                print "TotVCal[%d](length = %d) = %s"%(trim,
+                                                       len(self.TotVCal["%d"%(trim)]),
+                                                       self.TotVCal["%d"%(trim)])
+                pass
+            pass
+
         try:
-            VCal_ref["0"] = sum(TotVCal["0"])/len(TotVCal["0"])
-            self.h.write("%d\n"%(TotVCal0))
-            VCal_ref["31"] = sum(TotVCal["31"])/len(TotVCal["31"])
-            self.h.write("%d\n"%(TotVCal["31"]))
-            VCal_ref["avg"] = (VCal_ref["0"] + VCal_ref["31"])/2
-            print "%d VCal_ref[0]   %d"%(VCal_ref["0"])
-            print "%d VCal_ref[31]  %d"%(VCal_ref["31"])
-            print "%d VCal_ref[avg] %d"%(VCal_ref["avg"])
+            self.VCal_ref["0"]  = sum(self.TotVCal["0"])/len(self.TotVCal["0"])
+            print "VCal_ref[0]   %d"%(self.VCal_ref["0"])
+            self.VCal_ref["31"] = sum(self.TotVCal["31"])/len(self.TotVCal["31"])
+            print "VCal_ref[31]  %d"%(self.VCal_ref["31"])
+            self.VCal_ref["avg"] = (self.VCal_ref["0"] + self.VCal_ref["31"])/2
+            print "VCal_ref[avg] %d"%(self.VCal_ref["avg"])
+            self.h.write("%s\n"%(self.TotVCal["0"]))
+            self.h.write("%s\n"%(self.TotVCal["31"]))
         except:
+            ex = sys.exc_info()[0]
+            print "Caught exception: %s"%(ex)
             print "S-Curve did not work"
             self.h.close() # changed from self.f.close()
             return False
 
+        self.g = open("%s_TRIM_DAC_value_%s"%(self.startTime,self.subname),'a')
         for channel in range(self.CHAN_MIN, self.CHAN_MAX):
-            if self.debug:
-                if channel > 10:
-                    continue
-                pass
+            if self.debug and (channel > 10):
+                continue
             self.adjustChannelTrims(vfat,channel,debug)
             pass
 
-        self.m.close()
-        self.h.write("%d\n"%(TotFoundVCal))
-        self.h.close()
-        self.g.close()
+        self.h.write("%s\n"%(self.TotFoundVCal))
         # VCalList = [] ## where is this used???
         # minVcal = 0   ## where is this used???
+
+        self.h.close()
+        self.g.close()
 
         return True
 
@@ -420,10 +439,11 @@ class VFATSCurveTools:
         trimDAC = 16
         foundGood = False
 
+        foundVCal = None # this was not properly scoped previosly, where do we want to initialize it?
         while (foundGood == False):
             data_trim = self.scanVCalByVFAT(vfat,channel,trimDAC,ntrigs=self.N_EVENTS_SCURVE,debug=debug)
             if debug:
-                print "0x%08x"%(data_trim[0])
+                print "First data word: 0x%08x"%(data_trim[0])
                 pass
             try:
                 for d in data_trim:
@@ -436,13 +456,15 @@ class VFATSCurveTools:
                     pass
                 pass
             except:
+                ex = sys.exc_info()[0]
+                print "Caught exception: %s"%(ex)
                 print "Error while reading the data, they will be ignored"
                 continue
 
-            if (foundVCal > VCal_ref["avg"] and TRIM_IT < self.MAX_TRIM_IT and trimDAC < 31):
+            if (foundVCal > self.VCal_ref["avg"] and TRIM_IT < self.MAX_TRIM_IT and trimDAC < 31):
                 trimDAC += 1
                 TRIM_IT +=1
-            elif (foundVCal < VCal_ref["avg"] and TRIM_IT < self.MAX_TRIM_IT and trimDAC > 0):
+            elif (foundVCal < self.VCal_ref["avg"] and TRIM_IT < self.MAX_TRIM_IT and trimDAC > 0):
                 trimDAC -= 1
                 TRIM_IT +=1
             else:
@@ -450,8 +472,7 @@ class VFATSCurveTools:
                 self.TotFoundVCal.append(foundVCal)
                 self.f.write("S_CURVE_%d\n"%(channel))
                 for d in data_trim:
-                    self.f.write("%f\n"%((d & 0xff000000) >> 24))
-                    self.f.write("%f\n"%((d & 0xffffff)/self.N_EVENTS_TRIM))
+                    self.f.write("%d\t%f\n"%((d & 0xff000000) >> 24,(d & 0xffffff)/(1.*self.N_EVENTS_TRIM)))
                     pass
                 break
             pass
@@ -460,20 +481,16 @@ class VFATSCurveTools:
     def setAllTrims(self,vfat,debug=False):
         """
         """
-        chipID = getChipID(self.glib,self.gtx,vfat)
-        subname = "AMC%02d_OH%02d_VFAT2_%d_ID_0x%04x"%(self.slot,self.gtx,vfat,chipID)
-        self.g = open("%s_TRIM_DAC_value_%s"%(self.startTime),'r')
+
+        self.g = open("%s_TRIM_DAC_value_%s"%(self.startTime,self.subname),'r')
         for channel in range(self.CHAN_MIN, self.CHAN_MAX):
-            if self.debug:
-                if channel > 10:
-                    continue
-                pass
+            if self.debug and (channel > 10):
+                continue
             trimDAC = (self.g.readline()).rstrip('\n')
             print "Setting channel %d trimDAC to %s"%(channel,trimDAC)
             setChannelRegister(self.glib,self.gtx,vfat,channel,
                                mask=0x0,pulse=0x0,trim=int(trimDAC))
             pass
-
         self.g.close()
         return
 
@@ -491,11 +508,11 @@ class VFATSCurveTools:
         ########################## Initial threshold scan ######################
         print "Initial threshold scan"
         data_threshold = self.scanThresholdByVFAT(vfat,debug=debug)
-        print "length of returned data_threshold = %d"%(len(data_threshold))
+        print "Length of returned data_threshold = %d"%(len(data_threshold))
         threshold = 0
         noise = 100*(data_threshold[0] & 0xffffff)/(1.*self.N_EVENTS_THRESH)
         if debug:
-            print "0x%08x"%(data_threshold[0])
+            print "First data word: 0x%08x"%(data_threshold[0])
             pass
         print "%d = %3.4f"%(((data_threshold[0] & 0xff000000) >> 24), noise)
         for d in range (1,len(data_threshold)-1):
@@ -510,7 +527,7 @@ class VFATSCurveTools:
             print "%d = %3.4f"%(((data_threshold[d] & 0xff000000) >> 24), noise)
             if passAbs and passLastRel and passNextRel:
                 # why is the threshold set to the previous value?
-                threshold = (data_threshold[d-1] >> 24 )
+                threshold = (data_threshold[d] >> 24 )
                 setVFATThreshold(self.glib,self.gtx,vfat,vt1=(threshold),vt2=0)
                 print "Threshold set to: %d"%(threshold)
                 self.f.write("Threshold set to: %d\n"%(threshold))
@@ -522,15 +539,15 @@ class VFATSCurveTools:
         if threshold == 0 or threshold == 255:
             print "ignored"
             for d in range (0,len(data_threshold)):
-                self.f.write("%f\n"%((data_threshold[d] & 0xff000000) >> 24))
-                self.f.write("%f\n"%(100*(data_threshold[d] & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
+                self.f.write("%d\t%f\n"%((data_threshold[d] & 0xff000000) >> 24,
+                                         100*(data_threshold[d] & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
                 pass
             self.f.close()
             return
 
         for d in range (0,len(data_threshold)):
-            self.f.write("%f\n"%((data_threshold[d] & 0xff000000) >> 24))
-            self.f.write("%f\n"%(100*(data_threshold[d] & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
+            self.f.write("%d\t%f\n"%((data_threshold[d] & 0xff000000) >> 24,
+                                     100*(data_threshold[d] & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
             pass
 
         ##################Parts of the routine require the L1A+CalPulse ######################
@@ -542,12 +559,12 @@ class VFATSCurveTools:
 
             data_latency = self.scanLatencyByVFAT(vfat,debug=debug)
 
-            print "length of returned data_latency = %d"%(len(data_latency))
+            print "Length of returned data_latency = %d"%(len(data_latency))
             if not len(data_latency):
                 print "data_latency is empty"
                 return
             if debug:
-                print "0x%08x"%(data_latency[0])
+                print "First data word: 0x%08x"%(data_latency[0])
                 pass
             eff     = 100*(data_latency[0]   & 0xffffff)/(1.*self.N_EVENTS_LAT)
             print "%d = %3.4f"%(((data_latency[0] & 0xff000000) >> 24), eff)
@@ -600,11 +617,11 @@ class VFATSCurveTools:
             print "data_threshold is empty"
             return
         if debug:
-            print "0x%08x"%(data_threshold[0])
+            print "First data word: 0x%08x"%(data_threshold[0])
             pass
         for d in data_threshold:
-            self.f.write("%d\n"%((d & 0xff000000) >> 24))
-            self.f.write("%f\n"%(100*(d & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
+            self.f.write("%d\t%f\n"%((d & 0xff000000) >> 24,
+                                     100*(d & 0xffffff)/(1.*self.N_EVENTS_THRESH)))
             pass
 
         ########################## Final latency scan ######################
@@ -613,12 +630,12 @@ class VFATSCurveTools:
             startLocalT1(self.glib,self.gtx)
             data_latency = self.scanLatencyByVFAT(vfat,debug=debug)
 
-            print "length of returned data_latency = %d"%(len(data_latency))
+            print "Length of returned data_latency = %d"%(len(data_latency))
             if not len(data_latency):
                 print "data_latency is empty"
                 return
             if debug:
-                print "0x%08x"%(data_latency[0])
+                print "First data word: 0x%08x"%(data_latency[0])
                 pass
             eff     = 100*(data_latency[0]   & 0xffffff)/(1.*self.N_EVENTS_LAT)
             print "%d = %3.4f"%(((data_latency[0] & 0xff000000) >> 24), eff)
@@ -637,7 +654,6 @@ class VFATSCurveTools:
             pass
 
         self.f.close()
-
         self.cleanup()
 
         if debug:
@@ -714,9 +730,9 @@ if __name__ == "__main__":
         lat_min=0,
         lat_max=255,
         nev_thresh=100000,
-        nev_lat=3000,
-        nev_scurve=1000,
-        nev_trim=1000,
+        nev_lat=1000,
+        nev_scurve=250,
+        nev_trim=250,
         vcal_min=0,
         vcal_max=255,
         max_trim_it=26,
@@ -724,8 +740,8 @@ if __name__ == "__main__":
         chan_max=128,
         def_dac=16,
         t1_n=0,
-        t1_interval=300,
-        t1_delay=40
+        t1_interval=150,
+        t1_delay=10
         )
 
     sys.stdout.flush()
