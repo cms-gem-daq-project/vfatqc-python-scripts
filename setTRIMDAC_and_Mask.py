@@ -510,7 +510,7 @@ if __name__ == "__main__":
             chan_num = cc[0]
             trimDAC = cc[1]
             mask_yes = cc[2]
-            print chan_num, trimDAC, mask_yes
+#            print chan_num, trimDAC, mask_yes
             regValue = int(trimDAC) #
             if (int(mask_yes) == 1):
                 regValue+= (1 << 5)
