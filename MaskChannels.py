@@ -11,9 +11,6 @@ from ROOT import gROOT, gDirectory, TMultiGraph, TNamed, TLegend, TCanvas, TGrap
 from ROOT import kGreen, kYellow, kBlue, kRed #Colors
 import ROOT as rt
 rt.gROOT.SetBatch(True)
-import numpy as np
-import os
-import glob
 
 pos  = []
 port = []
