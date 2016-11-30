@@ -4,33 +4,26 @@
 """
 Created on Fri Mar 04 09:29:24 2016
 
-@author: Hugo, Geng, Brian
+@author: Hugo, Geng, Brian, Jared
+
 """
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import scipy
 from scipy import special
 from scipy.optimize import curve_fit
 from ROOT import gROOT, gDirectory, TNamed, TLegend, TCanvas, TGraph, TH1F, TH2F, TFile, TDirectory #Classes
 from ROOT import kGreen, kYellow, kBlue, kRed #Colors
+import ROOT as rt
+rt.gROOT.SetBatch(True)
 import numpy as np
-import os
+import sys, os
 import glob
-choose = glob.glob("*Data_GLIB_IP_192*")
-print
-themean=[]
-thesigma=[]
-Tmean=[]
-Tsigma=[]
-print 
-print "---------------- List Of the Files --------------"
-for path, subdirs, files in os.walk(r'./'):
-    meanALL = [] #to plot VCal means for all channels on all chips
-    VCALmean14 = [] #to plot VCal means for one channel (14) for all chips
-    covALL = [] #to plot VCal covs for all channels on all chips
-    VCALcov14 = [] #to plot VCal covs for one channel (14) for all chips
-    thresholdALL = [] #to plot thresholds for all chips
+def fitFunc(t, mu, sigma, y0, p0): # Def of the erf function for the fit
+    return y0+(p0/2)*scipy.special.erf((np.sqrt(2)*(t-mu))/sigma)
 
+choose = glob.glob("*Data_*")
+print "---------------- List Of the Files --------------"
+# print choose
+for path, subdirs, files in os.walk(r'./'):
     file_Output_A = TFile("ScurveOutput.root","RECREATE","",1)
     dir_A_ChipID            = file_Output_A.mkdir("ChipID")
     dir_A_Thresholds        = file_Output_A.mkdir("Thresholds")
@@ -44,23 +37,38 @@ for path, subdirs, files in os.walk(r'./'):
         cities = fname.split("_")
         for city in cities:
             if city == 'Data':
-                #print fname
-                TestName = str(cities[0]+"_"+cities[1]+"_"+cities[2]+"_"+cities[3])
-                slot     = int(cities[10])-160
-                pos      = cities[12]
-                port     = cities[14]
-                #Declare the file
-                #TFile file_Output_A = Open("%s_ScurveOutput.root"%(TestName), "w")
-                #if file_Output_A is 0: 
-                #file_Output_A = TFile("%s_ScurveOutput.root"%(TestName),"RECREATE","",1)
+                nameIt = fname.find("Data")
+                slotIt = fname.find("GLIB")
+                newFormat = False
+                if slotIt < 0:
+                    slotIt = fname.find("AMC")
+                    newFormat = True
+                    pass                 
+                linkIt = fname.find("OH")
+                vfatIt = fname.find("VFAT2")
+                chipIt = fname.find("ID")
+                # print nameIt,slotIt,linkIt,vfatIt,chipIt
+                nameS = fname[0:nameIt-1]
+                slotS = fname[slotIt:linkIt-1]
+                linkS = fname[linkIt:vfatIt-1]
+                vfatS = fname[vfatIt:chipIt-1]
+                chipS = fname[chipIt:]
+                # print nameS,slotS,linkS,vfatS,chipS
+                # print len(cities),cities
+                # print fname
+                TestName = nameS
+                slot = -1
+                if slotS[0] == "AMC":
+                    slot     = int(slotS.split('_')[1])
+                elif slotS[0] == "GLIB":
+                    slot     = int(slotS.split('_')[4])-160
+                else:
+                    pass
+                pos      = vfatS.split('_')[1]
+                port     = chipS.split('_')[1]
+
+                # Declare the file
                 file_Output_S = TFile("%s_VFAT%s_ID_%s_ScurveOutput.root"%(TestName,pos,port),"RECREATE","",1)
-                #dir_A_ChipID            = file_Output_A.mkdir("ChipID")
-                #dir_A_Thresholds        = file_Output_A.mkdir("Thresholds")
-                #dir_A_TrimDACValues     = file_Output_A.mkdir("TrimDACValues")
-                #dir_A_SCurveMeanByChan  = file_Output_A.mkdir("SCurveMeanByChannel")
-                #dir_A_SCurveSigma       = file_Output_A.mkdir("SCurvesSigma")
-                #dir_A_SCurveByChan      = file_Output_A.mkdir("SCurveByChannel")
-                #dir_A_SCurveSeparation  = file_Output_A.mkdir("SCurveSeparation")
                 dir_S_ChipID            = file_Output_S.mkdir("ChipID")
                 dir_S_Thresholds        = file_Output_S.mkdir("Thresholds")
                 dir_S_TrimDACValues     = file_Output_S.mkdir("TrimDACValues")
@@ -81,39 +89,33 @@ for path, subdirs, files in os.walk(r'./'):
 #pos  = raw_input("> Position? [0-23]: ")
 #port = raw_input("> ID of the VFAT2? : ")
 
-#Number of the channel for which the SCURVE and its fit are printed.
+                #Number of the example channel for which the SCURVE and its fit are printed.
                 SCUVRE = 15
-# build a rectangle in axes coords
-
+                # build a rectangle in axes coords
+                VCALmean14 = [] #to plot VCal means for one channel (SCUVRE) for all chips
+                VCALcov14 = [] #to plot VCal covs for one channel (SCUVRE) for all chips
 
                 threshold1x = []
                 threshold1y = []
-                scurvex = []
-                scurvey = []
                 threshold2x = []
                 threshold2y = []
                 mean = []
                 cov = []
                 ma = np.zeros(shape=(128,255))
                 count=0
-                meanthreshold=0
-                meanthreshold1=0
-                sigmathreshold=0
-                sigmathreshold1=0
                 SCName = "S_CURVE_" + str(SCUVRE+1)
 
-#Read the file Data_GLIB_IP_192_168_0_161_VFAT2_X_ID_Y with the 2 threshold- 
-#Scans and the final Scurve by channel VFAT
-                print str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)
-                filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")
+                # Scans and the final Scurve by channel VFAT
+                if newFormat:
+                    print "%s_Data_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                else: print fname
+                filename = glob.glob("%s*"%(fname))
                 if filename == []:
-                    print "No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
+                    print "!!!!!! No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
                 for k in range(0,len(filename)):
-                    filename = glob.glob(str(TestName)+"_Data_GLIB_IP_192_168_0_"+str(160+int(slot))+"_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
+                    filename = glob.glob("%s*"%(fname))[k]
                     threshold1x = []
                     threshold1y = []
-                    scurvex = []
-                    scurvey = []
                     threshold2x = []
                     threshold2y = []
                     mean = []
@@ -124,37 +126,56 @@ for path, subdirs, files in os.walk(r'./'):
 
                     line = (f.readline()).rstrip('\n')
                     thresholdValue = (float(line.strip('Threshold set to: ')))
-                    thresholdALL.append(thresholdValue)
-                    print line
-                    if line == "0": #If no threshold have been set, VFAT2 is all 0 or all 1
-                        print "Broken VFAT"
+                    if line == "0": # If no threshold have been set, VFAT2 is all 0 or all 1
+                        print "!!!!!! chip "+str(port)+" is a Broken VFAT, no threshold have been set, VFAT2 is all 0 or all 1 !!!!!!"
                         while (line != ""):
-                            threshold1x.append(float(line))
-                            threshold1y.append(float((f.readline()).rstrip('\n')))
+                            if newFormat:
+                                vals = line.split("\t")
+                                threshold1x.append(float(vals[0]))
+                                threshold1y.append(float(vals[1]))
+                            else:
+                                threshold1x.append(float(line))
+                                threshold1y.append(float((f.readline()).rstrip('\n')))
+                                pass
                             line = (f.readline()).rstrip('\n') 
-                        plt.xlim(0,255)
-                        plt.plot(threshold1x, threshold1y,'bo')
-                        plt.show()
                     else :
                         line = (f.readline()).rstrip('\n')
-                        while ("S_CURVE" not in line): #Read the first TH Scan
+                        while ("S_CURVE" not in line): # Read the first TH Scan
+                            if "Latency" in line:
+                                line = (f.readline()).rstrip('\n')
+                                continue
                             if line == "":
                                 break
-                            threshold1x.append(float(line))
-                            threshold1y.append(float((f.readline()).rstrip('\n')))
+                            if newFormat:
+                                vals = line.split("\t")
+                                threshold1x.append(float(vals[0]))
+                                threshold1y.append(float(vals[1]))
+                            else:
+                                threshold1x.append(float(line))
+                                threshold1y.append(float((f.readline()).rstrip('\n')))
+                                pass
+                            sys.stdout.flush()
                             line = (f.readline()).rstrip('\n')
-                        def fitFunc(t, mu, sigma, y0, p0): #Def of the erf function for the fit
-                            return y0+(p0/2)*scipy.special.erf((np.sqrt(2)*(t-mu))/sigma)
+                            pass
                         if line != "":
                             line = (f.readline()).rstrip('\n')
-                            while True:  #Read all the SCurve   
+                            while True:  # Read all the SCurve   
+                                scurvex = []
+                                scurvey = []
                                 while ("S_CURVE" not in line or "" not in line):
-                                    if "second_threshold" in line:
+                                    if "second_threshold" in line or "Latency" in line:
                                         break
-                                    scurvex.append(float(line))
-                                    line = (f.readline()).rstrip('\n')
-                                    scurvey.append(float(line))
+                                    if newFormat:
+                                        vals = line.split("\t")
+                                        scurvex.append(float(vals[0]))
+                                        scurvey.append(float(vals[1]))
+                                    else:
+                                        scurvex.append(float(line))
+                                        scurvey.append(float((f.readline()).rstrip('\n')))
+                                        pass
+                                    sys.stdout.flush()
                                     line = (f.readline()).rstrip('\n')  
+                                    pass
                                 ma[count]=scurvey
                                 count = count+1
                                 while 0 in scurvey:
@@ -166,14 +187,42 @@ for path, subdirs, files in os.walk(r'./'):
                                 scurvex2 = []
                                 for i in scurvex:
                                     scurvex2.append(i-min(scurvex))
+                                if scurvey==[]: # If the SCURVE of a channel was only 1 or 0
+                                    if "second_threshold" in line:
+                                        print "!!!!!! the " + "S_CURVE_127" + " is broken, this channel was only  0 or 1 !!!!!!"
+                                        break
+                                    else: 
+                                        channels = line.split("_")
+                                        print "!!!!!! the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel was only 0 or 1 !!!!!!"
+                                    if SCName in line: 
+                                        SCUVRE = SCUVRE + 1
+                                        SCName = "S_CURVE_" + str(SCUVRE+1)
+                                    mean.append(0) # If the channel is broken, the mean and covariance of the are set to 0
+                                    cov.append(0)
+                                    scurvex  = []
+                                    scurvey  = []
+                                    scurvex2 = []
+                                    line = (f.readline()).rstrip('\n')
+                                    continue
+                                try: # Fit the SCurve with the erf function
+                                    fitParams, fitCovariances = curve_fit(fitFunc, scurvex2, scurvey)
+                                    mean.append(fitParams[0]+min(scurvex))
+                                    cov.append(fitParams[1])
+                                except: # If the SCURVE of a channel can not be fit
+                                    channels = line.split("_")
+                                    print "!!!!!! the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel can not be fit !!!!!!"
+                                    if SCName in line: 
+                                        SCUVRE = SCUVRE + 1
+                                        SCName = "S_CURVE_" + str(SCUVRE+1)
+                                    mean.append(0) # If the channel is broken, the mean and covariance of the are set to 0
+                                    cov.append(0)
                                 if SCName in line:
-                                    scurvex3 = []
                                     fit=[]
                                     t = np.linspace(min(scurvex2), max(scurvex2), 250)
                                     fitParams, fitCovariances = curve_fit(fitFunc, scurvex2, scurvey)
                                     for i in t:
                                         fit.append(fitFunc(i, fitParams[0], fitParams[1],fitParams[2],fitParams[3]))
-                                    #print "---------- Scurve and the erf fit of channel " + str(SCUVRE) + " in the transition zone ----------"    
+                                    # "---------- Scurve and the erf fit of channel " + str(SCUVRE) + " in the transition zone ----------"    
                                     gScurveExample = TGraph(len(scurvex))
                                     for iPos in range(0,len(scurvex)):
                                         gScurveExample.SetPoint(iPos,scurvex[iPos],scurvey[iPos])
@@ -197,60 +246,33 @@ for path, subdirs, files in os.walk(r'./'):
                                     dir_S_SCurveExample.cd()
                                     gScurveExample.Write()
                                     Canvas.Write("VFAT%s_ID_%s_Scurve15Fit"%(pos,port))
-                                    scurvex3 = []
                                     VCALmean14.append(fitParams[0]+min(scurvex))
                                     VCALcov14.append(fitParams[1])
-                                if scurvey==[]: #If the SCURVE of a channel was only 1 or 0
-                                    print "line " + str(line) + "-1 is broken"
-                                    mean.append(0) #If the channel is broken, the mean and covariance of the are set to 0
-                                    meanALL.append(0)
-                                    cov.append(0)
-                                    covALL.append(0)
-                                    scurvex = []
-                                    scurvey = []
-                                    scurvex2 = []
-                                    line = (f.readline()).rstrip('\n')
-                                    continue
-                                try: # Fit the SCurve with the erf function
-                                    fitParams, fitCovariances = curve_fit(fitFunc, scurvex2, scurvey)
-                                    mean.append(fitParams[0]+min(scurvex))
-                                    meanALL.append(fitParams[0]+min(scurvex))
-                                    cov.append(fitParams[1])
-                                    covALL.append(fitParams[1])
-                                    themean.append(fitParams[0]+min(scurvex))
-                                    thesigma.append(fitParams[1])
-                                    meanthreshold1 = meanthreshold + fitParams[0]+min(scurvex)
-                                    meanthreshold = meanthreshold1
-                                    sigmathreshold1 = sigmathreshold + fitParams[1]
-                                    sigmathreshold = sigmathreshold1
-                                except: #If the SCURVE of a channel can not be fit
-                                    print "line" + str(line) + "-1 is broken"
-                                    mean.append(0) #If the channel is broken, the mean and covariance of the are set to 0
-                                    meanALL.append(0)
-                                    cov.append(0)
-                                    covALL.append(0)
-                                if "S_CURVE_128" in line:
-                                    break
                                 if "second_threshold" in line:
-                                    Tmean.append(meanthreshold/128.)
-                                    Tsigma.append(sigmathreshold/128.)
                                     break
                                 scurvex = []
                                 scurvey = []
                                 scurvex2 = []
                                 line = (f.readline()).rstrip('\n')
-                                
+                                pass  # closes while true
                             line = (f.readline()).rstrip('\n')   
                             while (line != ""):
-                                threshold2x.append(float(line))
-                                threshold2y.append(float((f.readline()).rstrip('\n')))
+                                if newFormat:
+                                    vals = line.split("\t")
+                                    threshold2x.append(float(vals[0]))
+                                    threshold2y.append(float(vals[1]))
+                                else:
+                                    threshold2x.append(float(line))
+                                    threshold2y.append(float((f.readline()).rstrip('\n')))
+                                    pass
                                 line = (f.readline()).rstrip('\n')
+                                pass # close while loop
                             f.close()
-# Plot the 2 TH Scans
-                        #print("---------- Threshold Scans ----------")    
-                        #Make & store threshold TGraph before Trim
+                            pass # close if line != ""
+                        # Plot the 2 TH Scans
+                        # "---------- Threshold Scans ----------"    
+                        # Make & store threshold TGraph before Trim
                         gThresh_PreTrim = TGraph(len(threshold1x))
-                        #gThresh_PreTrim = TGraph(len(threshold1x), threshold1x, threshold1y)
                         for iPos in range(0,len(threshold1x)):
                             gThresh_PreTrim.SetPoint(iPos,threshold1x[iPos],threshold1y[iPos])
                         gThresh_PreTrim.SetName( "VFAT%s_ID_%s_thresholdsBefore"%(pos,port) )
@@ -267,12 +289,11 @@ for path, subdirs, files in os.walk(r'./'):
                         dir_S_Thresholds.cd()
                         gThresh_PreTrim.Write()
                         
-                        #Make & store threshold TGraph after Trim
+                        # Make & store threshold TGraph after Trim
                         if threshold2x == []:
-                            print "Only the TH worked for", str(filename)
+                            print "!!!!!! No 2nd Threshold, only the 1st TH worked for", str(filename), " !!!!!!"
                             continue
                         gThresh_PostTrim = TGraph(len(threshold2x))
-                        #gThresh_PostTrim = TGraph(len(threshold2x), threshold2x, threshold2y)
                         for iPos in range(0,len(threshold2x)):
                             gThresh_PostTrim.SetPoint(iPos,threshold2x[iPos],threshold2y[iPos])
                         gThresh_PostTrim.SetName( "VFAT%s_ID_%s_thresholdsAfter"%(pos,port) )
@@ -304,8 +325,8 @@ for path, subdirs, files in os.walk(r'./'):
                         legend.Clear()
                         Canvas.Clear()
 
-                        #print("---------- Mean of the Erf Function by channel ----------")
-                        #Make & store Mean of Erf by Channel TGraph
+                        # "---------- Mean of the Erf Function by channel ----------"
+                        # Make & store Mean of Erf by Channel TGraph
                         gErfMeanByChan = TGraph(len(mean))
                         for iPos in range(0,len(mean)):
                             gErfMeanByChan.SetPoint(iPos,iPos,mean[iPos])
@@ -323,8 +344,8 @@ for path, subdirs, files in os.walk(r'./'):
                         dir_S_SCurveMeanByChan.cd()
                         gErfMeanByChan.Write()
                         
-                        #print("---------- cov of the Erf Function by channel ----------")
-                        #Make & store Cov of Erf by Channel TGraph
+                        # "---------- cov of the Erf Function by channel ----------"
+                        # Make & store Cov of Erf by Channel TGraph
                         gErfCovByChan = TGraph(len(cov))
                         for iPos in range(0,len(cov)):
                             gErfCovByChan.SetPoint(iPos,iPos,cov[iPos])
@@ -341,8 +362,8 @@ for path, subdirs, files in os.walk(r'./'):
                         dir_S_SCurveSigma.cd()
                         gErfCovByChan.Write()
                         
-                        #print("---------- Histogram of the covariance of the Erf Function ----------")
-                        #Make & store Cov of Erf by Channel Histogram
+                        # "---------- Histogram of the covariance of the Erf Function ----------"
+                        # Make & store Cov of Erf by Channel Histogram
                         hCovHistogram = TH1F("VFAT%s_ID_%s_coverfHist"%(pos,port), "", 500,0,100 )
                         for iPos in range(0,len(cov)):
                             hCovHistogram.Fill(cov[iPos])
@@ -356,10 +377,14 @@ for path, subdirs, files in os.walk(r'./'):
                         hCovHistogram.Write()
                         Canvas.Clear()
                         
-                        #Read and plot the SCurve before the scan                       
-                        fi = glob.glob(str(TestName)+"_SCurve_by_channel_VFAT2_"+str(pos)+"_ID_"+str(port)+"*")[k]
+                        # Read and plot the SCurve before the scan                       
+                        fileN = "%s_SCurve_by_channel_%s_%s"%(nameS,vfatS,chipS)
+                        if newFormat:
+                            fileN = "%s_SCurve_by_channel_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                            pass
+                        # print fileN
+                        fi = glob.glob("%s"%(fileN))[k]
                         g=open(fi)
-                                
                         maSC = np.zeros(shape=(128,255))
                         count = 0
                         line = (g.readline()).rstrip('\n')
@@ -369,19 +394,28 @@ for path, subdirs, files in os.walk(r'./'):
                         while True:     
                             while ("SCurve" not in line):
                                 if not line: break
-                                SCx.append(float(line))
+                                if newFormat:
+                                    vals = line.split("\t")
+                                    SCx.append(float(vals[0]))
+                                    SCy.append(float(vals[1]))
+                                else:
+                                    SCx.append(float(line))
+                                    SCy.append(float((g.readline()).rstrip('\n')))
+                                    pass
                                 line = (g.readline()).rstrip('\n')
-                                SCy.append(float(line))
-                                line = (g.readline()).rstrip('\n')
+                                pass # closes while ("SCurve" not in line):
                             if not line: break
+                            # print "SCy",SCy
+                            # print "SCx",SCx
                             maSC[count]=SCy
                             count = count+1 
                             SCx = []
                             SCy = []
                             line = (g.readline()).rstrip('\n')
+                            pass # closes while True
                         g.close()
-                        #print("---------- S-Curve by channel Before the Script ----------")    
-                        #Make & store SCurves by Chan No. Before Trimming
+                        # "---------- S-Curve by channel Before the Script ----------"    
+                        # Make & store SCurves by Chan No. Before Trimming
                         h2DSCurveByChanPreTrim = TH2F( "VFAT%s_ID_%s_scurvebefore"%(pos,port), "", 255,0,255, 127, 0, 127)
                         for index, valSCurve in np.ndenumerate(maSC):
                             h2DSCurveByChanPreTrim.SetBinContent(index[1]+1,index[0]+1, valSCurve )
@@ -399,8 +433,8 @@ for path, subdirs, files in os.walk(r'./'):
                         Canvas.Clear()
                         
                         # Plot the S_Curve after fitting
-                        #print("---------- S-Curve by channel after the Script ----------")
-                        #Make & store SCurves by Chan No. After Trimming
+                        # "---------- S-Curve by channel after the Script ----------"
+                        # Make & store SCurves by Chan No. After Trimming
                         h2DSCurveByChanPostTrim = TH2F( "VFAT%s_ID_%s_scurveafter"%(pos,port), "", 255,0,255, 127, 0, 127)
                         for index, valSCurve in np.ndenumerate(ma):
                             h2DSCurveByChanPostTrim.SetBinContent(index[1]+1,index[0]+1, valSCurve )
@@ -418,14 +452,19 @@ for path, subdirs, files in os.walk(r'./'):
                         Canvas.Clear()
                         
                         
-                        #Read and plot the TrimDAC values                       
-                        fi = glob.glob(str(TestName)+"_TRIM_DAC_value_VFAT_"+str(pos)+"_ID_"+str(port)+"*")[k]
-                        g=open(fi)
+                        # Read and plot the TrimDAC values                       
+                        fileN = "%s_TRIM_DAC_value_VFAT_%s_%s"%(nameS,pos,chipS)
+                        if newFormat:
+                            fileN = "%s_TRIM_DAC_value_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                            pass
+                        filename = glob.glob("%s"%(fileN))[k]
+                        g=open(filename)
                         trim = []
                         while True:     
                             line = (g.readline()).rstrip('\n')
                             if not line: break
                             trim.append(int(line))
+                        pass # closes while True
                         g.close()
                         gTrimDAC = TGraph(len(trim))
                         for iPos in range(0,len(trim)):
@@ -445,11 +484,15 @@ for path, subdirs, files in os.walk(r'./'):
                         gTrimDAC.Write()
                     
                     
-                        #print("---------- Histogram of the '0.5 point' for a TrimDAC of 0/31 and after the Script ----------")   
+                        # "---------- Histogram of the '0.5 point' for a TrimDAC of 0/31 and after the Script ----------" 
                         vcal0 = []
                         vcal31 = []
                         vcalfinal = []
-                        filename = glob.glob(str(TestName)+"_VCal_VFAT2_"+str(pos)+"_ID_" + str(port))[k]
+                        fileN = "%s_VCal_%s_%s"%(nameS,vfatS,chipS)
+                        if newFormat:
+                            fileN = "%s_VCal_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                            pass
+                        filename = glob.glob("%s"%(fileN))[k]
                         f=open(filename,'r')
                         line = (f.readline()).rstrip('\n')
                         vcal= line.split()
@@ -506,7 +549,6 @@ for path, subdirs, files in os.walk(r'./'):
                         dir_S_SCurveSeparation.cd()
                         Canvas.Write("VFAT%s_ID_%s_0.5PointHist"%(pos,port))
                         Canvas.Close()
-#Close Output ROOT File
+    # Close Output ROOT File
                 file_Output_S.Close()
-                #file_Output_A.Close()
     file_Output_A.Close()
