@@ -39,7 +39,7 @@ class GEMDAQTestSuite:
 
     allTests = ["A","B","C","D","E","F","G","H","I","J"]
 
-    def __init__(self, slot,gtx,tests,test_params,debug=False):
+    def __init__(self, slot,gtx,tests="",test_params=TEST_PARAMS(),debug=False):
         """
         """
         self.slot   = slot
