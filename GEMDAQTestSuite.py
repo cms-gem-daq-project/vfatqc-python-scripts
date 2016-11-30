@@ -39,7 +39,7 @@ class GEMDAQTestSuite:
 
     allTests = ["A","B","C","D","E","F","G","H","I","J"]
 
-    def __init__(self, slot,gtx,tests,test_params,debug=False):
+    def __init__(self, slot,gtx,tests="",test_params=TEST_PARAMS(),debug=False):
         """
         """
         self.slot   = slot
@@ -98,7 +98,8 @@ class GEMDAQTestSuite:
 
         self.presentVFAT2sSingle = []
         self.presentVFAT2sFifo   = []
-        self.chipIDs = None
+        self.chipIDs  = None
+        self.vfatmask = 0xff000000
 
         self.test = {}
         self.test["A"] = False
@@ -260,6 +261,8 @@ class GEMDAQTestSuite:
         print "   Detected", str(len(self.presentVFAT2sSingle)), "VFAT2s:", str(self.presentVFAT2sSingle)
         print
 
+        self.vfatmask = setVFATTrackingMask(self.glib,self.gtx)
+
         return
 
     ####################################################
@@ -310,7 +313,7 @@ class GEMDAQTestSuite:
             t1_interval =  400
             resetLocalT1(self.glib,self.gtx) 
             writeVFAT(self.glib,self.gtx,i,"ContReg0",0x37)
-            writeRegister(self.glib,"%s.CONTROL.VFAT.MASK"%(self.oh_basenode), ~(0x1 << i))
+            setVFATTrackingMask(self.glib,self.gtx, ~(0x1 << i))
             flushTrackingFIFO(self.glib,self.gtx)
 
             nPackets = 0
@@ -333,7 +336,7 @@ class GEMDAQTestSuite:
                 nPackets += 1
                 ecs.append(ec)
                 pass
-            writeVFAT(self.glib,self.gtx,i,"ContReg0",0)
+            writeVFAT(self.glib,self.gtx,i,"ContReg0",0x36)
 
             if (nPackets != self.test_params.TK_RD_TEST):
                 print Failed, "#%d received %d, expected %d"%(i, nPackets, self.test_params.TK_RD_TEST)
@@ -380,7 +383,7 @@ class GEMDAQTestSuite:
             for i in self.presentVFAT2sSingle:
                 mask |= (0x1 << i)
                 pass
-            writeRegister(self.glib,"%s.CONTROL.VFAT.TRK_MASK"%(self.oh_basenode), ~(mask))
+            setVFATTrackingMask(self.glib,self.gtx, ~(mask))
 
             sendResync(self.glib,self.gtx, 10, 1)
 
@@ -455,7 +458,7 @@ class GEMDAQTestSuite:
         broadcastWrite(self.glib,self.gtx,"ContReg0", 0x36)
 
         writeVFAT(self.glib,self.gtx,self.presentVFAT2sSingle[0],"ContReg0",0x37)
-        writeRegister(self.glib,"%s.CONTROL.VFAT.MASK"%(self.oh_basenode), ~(0x1 << self.presentVFAT2sSingle[0]))
+        setVFATTrackingMask(self.glib,self.gtx, ~(0x1 << self.presentVFAT2sSingle[0]))
 
         f = open('out.log', 'w')
 
@@ -516,11 +519,11 @@ class GEMDAQTestSuite:
         f.close()
 
         resetLocalT1(self.glib,self.gtx)
-        writeVFAT(self.glib,self.gtx,self.presentVFAT2sSingle[0], 0)
+        writeVFAT(self.glib,self.gtx,self.presentVFAT2sSingle[0],"ContReg0",0x36)
 
         self.test["I"] = True
 
-        writeRegister(self.glib,"%s.CONTROL.VFAT.MASK"%(self.oh_basenode), 0)
+        setVFATTrackingMask(self.glib,self.gtx,self.vfatmask)
 
         print
 
