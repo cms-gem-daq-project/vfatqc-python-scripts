@@ -18,11 +18,11 @@
 
 	Then hit "enter" 5 times 
 
-3. To save VFAT's output results as root files: (all the output files should in the same dir)
+3. To save VFAT's output (QC2/3) results as root files: (all the output files should in the same dir)
    
 	Each VFAT has a rootfile: e.g. 2016_11_10_OnDetNoVoltageSCurveBot_VFAT0_ID_0xf6e7_ScurveOutput.root
 	
-	All VFATs from one detector will have a combined rootfile: ScurveOutput.root
+	All VFATs from one detector will have a combined rootfile: ScurveOutput.root 
 	
 	> #python ProduceRootFiles.py
 	
@@ -40,11 +40,9 @@
 	
 	L41-77: plotting s-curve for different ieat region, e.g. iEta_1_ScurveAF.pdf
 	
-	For the failed VFAT, modify L68 or L61 or L54.
-	
 	In case you only need to mask the channels, please comment L41-77.
 	
-	Channles masking: e.g. Mask_TRIM_DAC_value_VFAT0_ID_0xf6e7
+	Channles masking for each VFAT: e.g. Mask_TRIM_DAC_value_VFAT0_ID_0xf6e7
 	
 	Colllection of all bad channels: All_Bad_Channels_to_Mask
 	
