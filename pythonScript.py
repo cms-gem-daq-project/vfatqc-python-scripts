@@ -541,6 +541,16 @@ if __name__ == "__main__":
             glib.set('scan_step', 1)
             glib.set('scan_n', int(N_EVENTS_SCURVE))
             glib.set('scan_toggle', 1)
+
+            print "FW scan mode       : %d"%(glib.get('scan_mode'))
+            print "FW scan min        : %d"%(glib.get('scan_min'))
+            print "FW scan max        : %d"%(glib.get('scan_max'))
+            print "FW scan VFAT       : %d"%(glib.get('scan_vfat2'))
+            print "FW scan channel    : %d"%(glib.get('scan_channel'))
+            print "FW scan step size  : %d"%(glib.get('scan_step'))
+            print "FW scan n_triggers : %d"%(glib.get('scan_n'))
+            print "FW scan status     : %d"%(glib.get("scan_status"))
+
             while (glib.get("scan_status") != 0): i = 1
             data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
             glib.set(regName, 0) # disable cal pulse to channel
@@ -572,6 +582,16 @@ if __name__ == "__main__":
             glib.set('scan_step', 1)
             glib.set('scan_n', int(N_EVENTS_SCURVE))
             glib.set('scan_toggle', 1)
+
+            print "FW scan mode       : %d"%(glib.get('scan_mode'))
+            print "FW scan min        : %d"%(glib.get('scan_min'))
+            print "FW scan max        : %d"%(glib.get('scan_max'))
+            print "FW scan VFAT       : %d"%(glib.get('scan_vfat2'))
+            print "FW scan channel    : %d"%(glib.get('scan_channel'))
+            print "FW scan step size  : %d"%(glib.get('scan_step'))
+            print "FW scan n_triggers : %d"%(glib.get('scan_n'))
+            print "FW scan status     : %d"%(glib.get("scan_status"))
+
             while (glib.get("scan_status") != 0): i = 1
             data_scurve = glib.fifoRead('scan_data', VCAL_MAX - VCAL_MIN)
             glib.set(regName, 0) # disable cal pulse to channel
@@ -581,6 +601,12 @@ if __name__ == "__main__":
             for d16 in data_scurve:
             	Eff = (d16 & 0xffffff) / N_EVENTS_SCURVE
             	VCal = (d16 & 0xff000000) >> 24
+                if options.debug:
+                    print VCal, " => ",Eff
+                    pass
+                if (Eff >= 0.48):
+                    print VCal, " => ",Eff
+                    pass
             	m.write(str(VCal)+"\n")
             	m.write(str(Eff)+"\n")
                 pass
@@ -657,6 +683,7 @@ if __name__ == "__main__":
             trimDAC = 16
             foundGood = False
 
+            foundVCal = None
             while (foundGood == False):
                 regValue = (1 << 6) + trimDAC
                 glib.set(regName, regValue) # enable cal pulse to channel
