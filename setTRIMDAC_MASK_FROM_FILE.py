@@ -8,10 +8,12 @@ parser.add_option("-s", "--slot", type="int", dest="slot",
                   help="slot in uTCA crate", metavar="slot", default=10)
 parser.add_option("-g", "--gtx", type="int", dest="gtx",
                   help="GTX on the GLIB", metavar="gtx", default=0)
+parser.add_option("-f", "--file", type="string", dest="trimfilelist",
+                  help="File containing paths to MASK_TrimDACs", metavar="trimfilelist", default="")
 
 (options, args) = parser.parse_args()
 
-
+trimfilelist = options.trimfilelist
 
 testSuite = GEMDAQTestSuite(slot=options.slot,
                             gtx=options.gtx
@@ -22,11 +24,14 @@ testSuite.VFAT2DetectionTest()
 print testSuite.chipIDs
 
 for port in testSuite.presentVFAT2sSingle:
-    try:
-        trimDACfileList = open("TrimDACfiles.txt",'r')
-    except:
-        print "No TrimDACfiles.txt to specify paths to TRIM_DACS"
-        break
+    if len(trimfilelist) < 2:
+        try:
+            trimDACfileList = open("TrimDACfiles.txt",'r')
+        except:
+            print "No TrimDACfiles.txt to specify paths to TRIM_DACS"
+            break
+    else:
+        trimDACfileList = open(trimfilelist, 'r')
     trimDACfile = ""
     for line in trimDACfileList:
         if ("ID_0x%04x"%(testSuite.chipIDs[port]&0xffff) in line) and ("Mask_TRIM_DAC" in line):
