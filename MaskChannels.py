@@ -111,7 +111,7 @@ for iPos in range(24):
         else: 
             #print str(iP)+"\t\t\t"+str(TrimValue[iP])+"\t\t\t"+"0" 
             MaskValue = 0 
-        g.write('%d\t\t\t%d\t\t\t%d\n'%(int(iP),int(TrimValue[iP]),int(MaskValue)))
+        g.write('%d\t%d\t%d\n'%(int(iP),int(TrimValue[iP]),int(MaskValue)))
         #g.write(str(iP)+'\t\t\t'+str(int(TrimValue[iP]))+'\t\t\t'+str(MaskValue)+'\n')
 
 
