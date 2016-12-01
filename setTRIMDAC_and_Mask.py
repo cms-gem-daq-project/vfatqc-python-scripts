@@ -23,12 +23,13 @@ testSuite = GEMDAQTestSuite(slot=options.slot,
 testSuite.VFAT2DetectionTest()
 print testSuite.chipIDs
 
+try:
+    trimDACfileList = open(trimfilelist,'r')
+except:
+    print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
+    sys.exit()
+
 for port in testSuite.presentVFAT2sSingle:
-    try:
-        trimDACfileList = open(trimfilelist,'r')
-    except:
-        print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
-        break
     trimDACfile = ""
     for line in trimDACfileList:
         if ("ID_0x%04x"%(testSuite.chipIDs[port]&0xffff) in line) and ("Mask_TRIM_DAC" in line):
