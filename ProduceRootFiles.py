@@ -197,7 +197,7 @@ for path, subdirs, files in os.walk(r'./'):
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
-                                    mean.append(0) # If the channel is broken, the mean and covariance of the are set to 0
+                                    mean.append(0) # If the channel is broken, the mean and covariance are set to 0
                                     cov.append(0)
                                     scurvex  = []
                                     scurvey  = []
@@ -214,7 +214,7 @@ for path, subdirs, files in os.walk(r'./'):
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
-                                    mean.append(0) # If the channel is broken, the mean and covariance of the are set to 0
+                                    mean.append(0) # If the channel is broken, the mean and covariance are set to 0
                                     cov.append(0)
                                 if SCName in line:
                                     fit=[]

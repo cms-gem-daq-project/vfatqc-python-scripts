@@ -34,13 +34,9 @@
    
 	> python read_and_plot_all.py
 
-4. To mask the channels and plot 1 s-curve for each VFAT in different ieat region 
+4. To mask the channels and plotting s-curves for each VFAT in different ieat region 
    
 	The only input file: ScurveOutput.root
-	
-	L41-77: plotting s-curve for different ieat region, e.g. iEta_1_ScurveAF.pdf
-	
-	In case you only need to mask the channels, please comment L41-77.
 	
 	Channles masking for each VFAT: e.g. Mask_TRIM_DAC_value_VFAT0_ID_0xf6e7
 	
