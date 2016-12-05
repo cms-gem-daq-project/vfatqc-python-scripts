@@ -197,7 +197,7 @@ for path, subdirs, files in os.walk(r'./'):
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
-                                    mean.append(0) # If the channel is broken, the mean and covariance of the are set to 0
+                                    mean.append(0) # If the channel is broken, the mean and covariance are set to 0
                                     cov.append(0)
                                     scurvex  = []
                                     scurvey  = []
@@ -214,7 +214,7 @@ for path, subdirs, files in os.walk(r'./'):
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
-                                    mean.append(0) # If the channel is broken, the mean and covariance of the are set to 0
+                                    mean.append(0) # If the channel is broken, the mean and covariance are set to 0
                                     cov.append(0)
                                 if SCName in line:
                                     fit=[]
@@ -416,12 +416,12 @@ for path, subdirs, files in os.walk(r'./'):
                         g.close()
                         # "---------- S-Curve by channel Before the Script ----------"    
                         # Make & store SCurves by Chan No. Before Trimming
-                        h2DSCurveByChanPreTrim = TH2F( "VFAT%s_ID_%s_scurvebefore"%(pos,port), "", 255,0,255, 127, 0, 127)
+                        h2DSCurveByChanPreTrim = TH2F( "VFAT%s_ID_%s_scurvebefore"%(pos,port), "", 127,0,127, 255, 0, 255)
                         for index, valSCurve in np.ndenumerate(maSC):
-                            h2DSCurveByChanPreTrim.SetBinContent(index[1]+1,index[0]+1, valSCurve )
+                            h2DSCurveByChanPreTrim.SetBinContent(index[0]+1,index[1]+1, valSCurve)
                         h2DSCurveByChanPreTrim.SetTitle("Initial S-curve of Chip %s at Position %s"%(port,pos))
-                        h2DSCurveByChanPreTrim.GetXaxis().SetTitle("S-curve: Calibration Pulse")
-                        h2DSCurveByChanPreTrim.GetYaxis().SetTitle("128 Strip Channels")
+                        h2DSCurveByChanPreTrim.GetYaxis().SetTitle("S-curve: Calibration Pulse")
+                        h2DSCurveByChanPreTrim.GetXaxis().SetTitle("128 Strip Channels")
                         h2DSCurveByChanPreTrim.SetStats(0)
                         h2DSCurveByChanPreTrim.Draw('colz')
                         dir_A_SCurveByChan.cd()
@@ -435,12 +435,12 @@ for path, subdirs, files in os.walk(r'./'):
                         # Plot the S_Curve after fitting
                         # "---------- S-Curve by channel after the Script ----------"
                         # Make & store SCurves by Chan No. After Trimming
-                        h2DSCurveByChanPostTrim = TH2F( "VFAT%s_ID_%s_scurveafter"%(pos,port), "", 255,0,255, 127, 0, 127)
+                        h2DSCurveByChanPostTrim = TH2F( "VFAT%s_ID_%s_scurveafter"%(pos,port), "", 127,0,127, 255, 0, 255)
                         for index, valSCurve in np.ndenumerate(ma):
-                            h2DSCurveByChanPostTrim.SetBinContent(index[1]+1,index[0]+1, valSCurve )
+                            h2DSCurveByChanPostTrim.SetBinContent(index[0]+1,index[1]+1,valSCurve)
                         h2DSCurveByChanPostTrim.SetTitle("After setting TrimDAC Values S-curve of Chip %s at Position %s"%(port,pos))
-                        h2DSCurveByChanPostTrim.GetXaxis().SetTitle("S-curve: Calibration Pulse")
-                        h2DSCurveByChanPostTrim.GetYaxis().SetTitle("128 Strip Channels")
+                        h2DSCurveByChanPostTrim.GetYaxis().SetTitle("S-curve: Calibration Pulse")
+                        h2DSCurveByChanPostTrim.GetXaxis().SetTitle("128 Strip Channels")
                         h2DSCurveByChanPostTrim.SetStats(0)
                         h2DSCurveByChanPostTrim.Draw('colz')
                         dir_A_SCurveByChan.cd()
