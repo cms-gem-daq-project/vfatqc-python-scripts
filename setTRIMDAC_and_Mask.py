@@ -44,6 +44,12 @@ except:
     print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
     exit(1)
 
+try:
+    trimDACfileList = open(trimfilelist,'r')
+except:
+    print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
+    sys.exit()
+
 for port in testSuite.presentVFAT2sSingle:
     trimDACfile = ""
     for line in trimDACfileList:
