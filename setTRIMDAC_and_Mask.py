@@ -67,8 +67,7 @@ for port in testSuite.presentVFAT2sSingle:
     trimDACfileList.close()
     g=open(trimDACfile,'r') #will break here if ''
 
-    for channel in range(0, 127):
-        
+    for channel in range(0, 128):
         print "------------------- channel ", str(channel), "-------------------"
         
         regline = (g.readline()).rstrip('\n')
