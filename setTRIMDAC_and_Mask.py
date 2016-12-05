@@ -10,24 +10,84 @@ parser.add_option("-g", "--gtx", type="int", dest="gtx",
                   help="GTX on the GLIB", metavar="gtx", default=0)
 parser.add_option("-f", "--file", type="string", dest="trimfilelist",
                   help="File containing paths to MASK_TrimDACs", metavar="trimfilelist", default="TrimDACfiles.txt")
+parser.add_option("-t", "--thresh", type="string", dest= "do_thresh",
+                  help="Do a threshold scan before/after setting trim", metavar="do_thresh", default="no")
 
 (options, args) = parser.parse_args()
+
+
+import subprocess,datetime
+startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+Date = startTime
+print startTime
+
 
 trimfilelist = options.trimfilelist
 
 testSuite = GEMDAQTestSuite(slot=options.slot,
-                            gtx=options.gtx
-                            
+                            gtx=options.gtx                            
                            )
 
 testSuite.VFAT2DetectionTest()
 print testSuite.chipIDs
+
+
 
 try:
     trimDACfileList = open(trimfilelist,'r')
 except:
     print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
     sys.exit()
+
+if (options.do_thresh == "yes"):
+    N_EVENTS = 3000
+    configureScanModule(testSuite.glib, options.gtx, 0, 0, useUltra = True)
+    printScanConfiguration(testSuite.glib, options.gtx, useUltra = True)
+    startScanModule(testSuite.glib, options.gtx, useUltra = True)
+    UltraResults = getUltraScanResults(testSuite.glib, options.gtx, 256)
+    print
+    print "Starting Preliminary Threshold Scan"
+    print
+    for n in range (0, 24):
+        f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
+        z = open("%s_Setting_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
+        f.write("First Threshold Scan \n")
+        data_threshold = UltraResults[n]
+        for d in range (0,len(data_threshold)):
+            print "length of returned data_threshold = %d"%(len(data_threshold))
+#            f.write("length of returned data_threshold = %d"%(len(data_threshold)))
+            print ((data_threshold[d] & 0xff000000) >> 24), " = ", (100*(data_threshold[d] & 0xffffff)/N_EVENTS)
+            if (100*(data_threshold[d] & 0xffffff)/ N_EVENTS) < THRESH_ABS and ((100*(data_threshold[d-1] & 0xffffff) / N_EVENTS) - (100*(data_threshold[d] & 0xffffff) / N_EVENTS)) < THRESH_REL:
+                f.write("Threshold set to: " + str(d-1)+"\n")
+                setVFATThreshold(testSuite.device, options.gtx, port, d-1)
+                z.write("vthreshold1: "+str(d-1)+"  "+str(0xff&glib.get("vfat2_" + str(n) + "_vthreshold1"))+"\n")
+                break
+            pass
+        z.close()
+        if d == 0 or d == 255:
+            print "ignored"
+            f.write("Ignored \n")
+            for d in range (0,len(data_threshold)):
+                f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
+                f.write(str(100*(data_threshold[d] & 0xffffff)/N_EVENTS)+"\n")
+                pass
+                #f.close()
+            continue
+        for d in range (0,len(data_threshold)):
+            f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
+            f.write(str(100*(data_threshold[d] & 0xffffff)/N_EVENTS)+"\n")
+            pass
+        for channel in range(CHAN_MIN, CHAN_MAX):
+            regName = "vfat2_" + str(n) + "_channel" + str(channel + 1)
+            regValue = DACDef
+            glib.set(regName, regValue)
+            pass
+        
+        f.close()
+        z.close()
+        pass
+        
+
 
 for port in testSuite.presentVFAT2sSingle:
     trimDACfile = ""
@@ -44,7 +104,7 @@ for port in testSuite.presentVFAT2sSingle:
     trimDACfileList.close()
     g=open(trimDACfile,'r') #will break here if ''
 
-    for channel in range(0, 127):
+    for channel in range(0, 128):
         
         print "------------------- channel ", str(channel), "-------------------"
         
@@ -56,3 +116,49 @@ for port in testSuite.presentVFAT2sSingle:
         mask_yes = int(cc[2])
         setChannelRegister(testSuite.glib, options.gtx, port, channel, mask_yes, 0x0, trimDAC, debug = False)
         pass
+
+if (options.do_thresh == "yes"):
+    configureScanModule(testSuite.glib, options.gtx, 0, useUltra = True)
+    printScanConfiguration(testSuite.glib, options.gtx, useUltra = True)
+    startScanModule(testSuite.glib, options.gtx, useUltra = True)
+    UltraResults = getUltraScanResults(testSuite.glib, options.gtx, 256)
+    print
+    print "Starting Preliminary Threshold Scan"
+    print
+    for n in range (0, 24):
+        f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'a')
+        z = open("%s_Setting_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'a')
+        data_threshold = UltraResults[n]
+        for d in range (0,len(data_threshold)):
+            print "length of returned data_threshold = %d"%(len(data_threshold))
+            f.write("Threshold Scan 2 \n")
+            print ((data_threshold[d] & 0xff000000) >> 24), " = ", (100*(data_threshold[d] & 0xffffff)/N_EVENTS)
+            if (100*(data_threshold[d] & 0xffffff)/ N_EVENTS) < THRESH_ABS and ((100*(data_threshold[d-1] & 0xffffff) / N_EVENTS) - (100*(data_threshold[d] & 0xffffff) / N_EVENTS)) < THRESH_REL:
+                f.write("Threshold set to: " + str(d-1)+"\n")
+                setVFATThreshold(testSuite.device, options.gtx, port, d-1)
+                z.write("vthreshold1: "+str(d-1)+"  "+str(0xff&glib.get("vfat2_" + str(n) + "_vthreshold1"))+"\n")
+                break
+            pass
+        z.close()
+        if d == 0 or d == 255:
+            print "ignored"
+            f.write("Ignored \n")
+            for d in range (0,len(data_threshold)):
+                f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
+                f.write(str(100*(data_threshold[d] & 0xffffff)/N_EVENTS)+"\n")
+                pass
+            f.close()
+            continue
+        for d in range (0,len(data_threshold)):
+            f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
+            f.write(str(100*(data_threshold[d] & 0xffffff)/N_EVENTS)+"\n")
+            pass
+        for channel in range(CHAN_MIN, CHAN_MAX):
+            regName = "vfat2_" + str(n) + "_channel" + str(channel + 1)
+            regValue = DACDef
+            glib.set(regName, regValue)
+            pass
+
+        f.close()
+        pass
+
