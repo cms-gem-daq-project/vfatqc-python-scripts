@@ -38,6 +38,9 @@ if __name__ == "__main__":
                       metavar="doQC3",
                       help="[OPTIONAL] Run a shortened test after covers have been applied")
 
+    parser.add_option("-d", "--debug", action="store_true", dest="debug",
+                      help="print extra debugging information", metavar="debug")
+
     (options, args) = parser.parse_args()
 
     import subprocess,datetime
