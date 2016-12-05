@@ -7,8 +7,7 @@ Created on Wed Nov 23 19:02:34 2016
 
 """
 from ROOT import *
-import ROOT as rt
-rt.gROOT.SetBatch(True)
+gROOT.SetBatch(True)
 
 pos  = []
 port = []
