@@ -44,6 +44,12 @@ except:
     print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
     exit(1)
 
+try:
+    trimDACfileList = open(trimfilelist,'r')
+except:
+    print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
+    sys.exit()
+
 for port in testSuite.presentVFAT2sSingle:
     trimDACfile = ""
     for line in trimDACfileList:
@@ -61,8 +67,7 @@ for port in testSuite.presentVFAT2sSingle:
     trimDACfileList.close()
     g=open(trimDACfile,'r') #will break here if ''
 
-    for channel in range(0, 127):
-        
+    for channel in range(0, 128):
         print "------------------- channel ", str(channel), "-------------------"
         
         regline = (g.readline()).rstrip('\n')
