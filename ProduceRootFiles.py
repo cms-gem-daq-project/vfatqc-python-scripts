@@ -83,11 +83,6 @@ for path, subdirs, files in os.walk(r'./'):
                 dir_S_ChipID.cd()
                 chipID.Write()
                 Canvas = TCanvas()
-#print choose
-#TestName = raw_input("> Name of the Test? [Name Before '_Data_...'] : ")
-#slot = raw_input("> GLIB slot used for the test? [1-12]: ")
-#pos  = raw_input("> Position? [0-23]: ")
-#port = raw_input("> ID of the VFAT2? : ")
 
                 #Number of the example channel for which the SCURVE and its fit are printed.
                 SCUVRE = 15
@@ -95,6 +90,7 @@ for path, subdirs, files in os.walk(r'./'):
                 VCALmean14 = [] #to plot VCal means for one channel (SCUVRE) for all chips
                 VCALcov14 = [] #to plot VCal covs for one channel (SCUVRE) for all chips
 
+                Mask = False
                 threshold1x = []
                 threshold1y = []
                 threshold2x = []
@@ -144,6 +140,9 @@ for path, subdirs, files in os.walk(r'./'):
                             if "Latency" in line:
                                 line = (f.readline()).rstrip('\n')
                                 continue
+                            if "second_threshold" in line:
+                                Mask = True
+                                break
                             if line == "":
                                 break
                             if newFormat:
@@ -157,7 +156,23 @@ for path, subdirs, files in os.walk(r'./'):
                             sys.stdout.flush()
                             line = (f.readline()).rstrip('\n')
                             pass
-                        if line != "":
+                        if Mask is True and line != "":  # this line should be "second_threshold"
+                            # print "!!!!!! The data is collected after channels' masking, only 2 thresholds scanning !!!!!! "
+                            line = (f.readline()).rstrip('\n')
+                            while (line != ""):
+                                if newFormat:
+                                    vals = line.split("\t")
+                                    threshold2x.append(float(vals[0]))
+                                    threshold2y.append(float(vals[1]))
+                                else:
+                                    threshold2x.append(float(line))
+                                    threshold2y.append(float((f.readline()).rstrip('\n')))
+                                    pass
+                                line = (f.readline()).rstrip('\n')
+                                pass
+                            f.close()
+                            pass
+                        if Mask is False and line != "":  # this line should be "S_CURVE_0"
                             line = (f.readline()).rstrip('\n')
                             while True:  # Read all the SCurve   
                                 scurvex = []
@@ -325,57 +340,178 @@ for path, subdirs, files in os.walk(r'./'):
                         legend.Clear()
                         Canvas.Clear()
 
-                        # "---------- Mean of the Erf Function by channel ----------"
-                        # Make & store Mean of Erf by Channel TGraph
-                        gErfMeanByChan = TGraph(len(mean))
-                        for iPos in range(0,len(mean)):
-                            gErfMeanByChan.SetPoint(iPos,iPos,mean[iPos])
-                        gErfMeanByChan.SetName( "VFAT%s_ID_%s_meanerfbychan"%(pos,port) )
-                        gErfMeanByChan.SetLineColor(kBlue)
-                        gErfMeanByChan.SetMarkerColor(kBlue)
-                        gErfMeanByChan.SetMarkerStyle(20)
-                        gErfMeanByChan.SetTitle("S-curve Mean Values of Chip %s at Position %s"%(port,pos))
-                        gErfMeanByChan.GetXaxis().SetTitle("128 Strip Channels")
-                        gErfMeanByChan.GetYaxis().SetTitle("Calibration pulse 50% Turn-on Point [per Channel]")
-                        gErfMeanByChan.GetXaxis().SetRangeUser(0,127)
-                        gErfMeanByChan.GetYaxis().SetRangeUser(0,255)
-                        dir_A_SCurveMeanByChan.cd()
-                        gErfMeanByChan.Write()
-                        dir_S_SCurveMeanByChan.cd()
-                        gErfMeanByChan.Write()
+                        if Mask is False:  
+                            # "---------- Mean of the Erf Function by channel ----------"
+                            # Make & store Mean of Erf by Channel TGraph
+                            gErfMeanByChan = TGraph(len(mean))
+                            for iPos in range(0,len(mean)):
+                                gErfMeanByChan.SetPoint(iPos,iPos,mean[iPos])
+                            gErfMeanByChan.SetName( "VFAT%s_ID_%s_meanerfbychan"%(pos,port) )
+                            gErfMeanByChan.SetLineColor(kBlue)
+                            gErfMeanByChan.SetMarkerColor(kBlue)
+                            gErfMeanByChan.SetMarkerStyle(20)
+                            gErfMeanByChan.SetTitle("S-curve Mean Values of Chip %s at Position %s"%(port,pos))
+                            gErfMeanByChan.GetXaxis().SetTitle("128 Strip Channels")
+                            gErfMeanByChan.GetYaxis().SetTitle("Calibration pulse 50% Turn-on Point [per Channel]")
+                            gErfMeanByChan.GetXaxis().SetRangeUser(0,127)
+                            gErfMeanByChan.GetYaxis().SetRangeUser(0,255)
+                            dir_A_SCurveMeanByChan.cd()
+                            gErfMeanByChan.Write()
+                            dir_S_SCurveMeanByChan.cd()
+                            gErfMeanByChan.Write()
+                            
+                            # "---------- cov of the Erf Function by channel ----------"
+                            # Make & store Cov of Erf by Channel TGraph
+                            gErfCovByChan = TGraph(len(cov))
+                            for iPos in range(0,len(cov)):
+                                gErfCovByChan.SetPoint(iPos,iPos,cov[iPos])
+                            gErfCovByChan.SetName( "VFAT%s_ID_%s_coverfbychan"%(pos,port) )
+                            gErfCovByChan.SetLineColor(kRed)
+                            gErfCovByChan.SetMarkerColor(kRed)
+                            gErfCovByChan.SetMarkerStyle(20)
+                            gErfCovByChan.SetTitle("S-curve Sigma of Chip %s at Position %s"%(port,pos))
+                            gErfCovByChan.GetXaxis().SetTitle("128 Strip Channels")
+                            gErfCovByChan.GetYaxis().SetTitle("S-curve Sigma of the Erf Function by Channel [per Channel]")
+                            gErfCovByChan.GetXaxis().SetRangeUser(0,127)
+                            dir_A_SCurveSigma.cd()
+                            gErfCovByChan.Write()
+                            dir_S_SCurveSigma.cd()
+                            gErfCovByChan.Write()
+                            
+                            # "---------- Histogram of the covariance of the Erf Function ----------"
+                            # Make & store Cov of Erf by Channel Histogram
+                            hCovHistogram = TH1F("VFAT%s_ID_%s_coverfHist"%(pos,port), "", 500,0,100 )
+                            for iPos in range(0,len(cov)):
+                                hCovHistogram.Fill(cov[iPos])
+                            hCovHistogram.SetFillColor(kGreen)
+                            hCovHistogram.SetTitle("S-curve Sigma Histogram  of Chip %s at Position %s; S-curve Sigma; "%(port,pos))
+                            hCovHistogram.GetXaxis().SetRangeUser(min(cov)*0.8,max(cov)*1.2)
+                            hCovHistogram.Draw('H')
+                            dir_A_SCurveSigma.cd()
+                            hCovHistogram.Write()
+                            dir_S_SCurveSigma.cd()
+                            hCovHistogram.Write()
+                            Canvas.Clear()
+                            
+                            
+                            # Plot the S_Curve after fitting
+                            # "---------- S-Curve by channel after the Script ----------"
+                            # Make & store SCurves by Chan No. After Trimming
+                            h2DSCurveByChanPostTrim = TH2F( "VFAT%s_ID_%s_scurveafter"%(pos,port), "", 127,0,127, 255, 0, 255)
+                            for index, valSCurve in np.ndenumerate(ma):
+                                h2DSCurveByChanPostTrim.SetBinContent(index[0]+1,index[1]+1,valSCurve)
+                            h2DSCurveByChanPostTrim.SetTitle("After setting TrimDAC Values S-curve of Chip %s at Position %s"%(port,pos))
+                            h2DSCurveByChanPostTrim.GetYaxis().SetTitle("S-curve: Calibration Pulse")
+                            h2DSCurveByChanPostTrim.GetXaxis().SetTitle("128 Strip Channels")
+                            h2DSCurveByChanPostTrim.SetStats(0)
+                            h2DSCurveByChanPostTrim.Draw('colz')
+                            dir_A_SCurveByChan.cd()
+                            h2DSCurveByChanPostTrim.Write()
+                            Canvas.Write("VFAT%s_ID_%s_ScurveAF"%(pos,port))
+                            dir_S_SCurveByChan.cd()
+                            h2DSCurveByChanPostTrim.Write()
+                            Canvas.Write("VFAT%s_ID_%s_ScurveAF"%(pos,port))
+                            Canvas.Clear()
+                            
+                            
+                            # Read and plot the TrimDAC values                       
+                            fileN = "%s_TRIM_DAC_value_VFAT_%s_%s"%(nameS,pos,chipS)
+                            if newFormat:
+                                fileN = "%s_TRIM_DAC_value_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                                pass
+                            filename = glob.glob("%s"%(fileN))[k]
+                            g=open(filename)
+                            trim = []
+                            while True:     
+                                line = (g.readline()).rstrip('\n')
+                                if not line: break
+                                trim.append(int(line))
+                            pass # closes while True
+                            g.close()
+                            gTrimDAC = TGraph(len(trim))
+                            for iPos in range(0,len(trim)):
+                                gTrimDAC.SetPoint(iPos,iPos,trim[iPos])
+                            gTrimDAC.SetName( "VFAT%s_ID_%s_TrimDAC"%(pos,port) )
+                            gTrimDAC.SetMarkerColor(kBlue)
+                            gTrimDAC.SetLineColor(kBlue)
+                            gTrimDAC.SetMarkerStyle(20)
+                            gTrimDAC.SetTitle("TrimDAC Values of Chip %s at Position %s"%(port,pos))
+                            gTrimDAC.GetXaxis().SetTitle("128 Strip Channels")
+                            gTrimDAC.GetYaxis().SetTitle("TrimDAC Value")
+                            gTrimDAC.GetXaxis().SetRangeUser(0,127)
+                            gTrimDAC.GetYaxis().SetRangeUser(0,max(trim)*1.5)
+                            dir_A_TrimDACValues.cd()
+                            gTrimDAC.Write()
+                            dir_S_TrimDACValues.cd()
+                            gTrimDAC.Write()
                         
-                        # "---------- cov of the Erf Function by channel ----------"
-                        # Make & store Cov of Erf by Channel TGraph
-                        gErfCovByChan = TGraph(len(cov))
-                        for iPos in range(0,len(cov)):
-                            gErfCovByChan.SetPoint(iPos,iPos,cov[iPos])
-                        gErfCovByChan.SetName( "VFAT%s_ID_%s_coverfbychan"%(pos,port) )
-                        gErfCovByChan.SetLineColor(kRed)
-                        gErfCovByChan.SetMarkerColor(kRed)
-                        gErfCovByChan.SetMarkerStyle(20)
-                        gErfCovByChan.SetTitle("S-curve Sigma of Chip %s at Position %s"%(port,pos))
-                        gErfCovByChan.GetXaxis().SetTitle("128 Strip Channels")
-                        gErfCovByChan.GetYaxis().SetTitle("S-curve Sigma of the Erf Function by Channel [per Channel]")
-                        gErfCovByChan.GetXaxis().SetRangeUser(0,127)
-                        dir_A_SCurveSigma.cd()
-                        gErfCovByChan.Write()
-                        dir_S_SCurveSigma.cd()
-                        gErfCovByChan.Write()
                         
-                        # "---------- Histogram of the covariance of the Erf Function ----------"
-                        # Make & store Cov of Erf by Channel Histogram
-                        hCovHistogram = TH1F("VFAT%s_ID_%s_coverfHist"%(pos,port), "", 500,0,100 )
-                        for iPos in range(0,len(cov)):
-                            hCovHistogram.Fill(cov[iPos])
-                        hCovHistogram.SetFillColor(kGreen)
-                        hCovHistogram.SetTitle("S-curve Sigma Histogram  of Chip %s at Position %s; S-curve Sigma; "%(port,pos))
-                        hCovHistogram.GetXaxis().SetRangeUser(min(cov)*0.8,max(cov)*1.2)
-                        hCovHistogram.Draw('H')
-                        dir_A_SCurveSigma.cd()
-                        hCovHistogram.Write()
-                        dir_S_SCurveSigma.cd()
-                        hCovHistogram.Write()
-                        Canvas.Clear()
+                            # "---------- Histogram of the '0.5 point' for a TrimDAC of 0/31 and after the Script ----------" 
+                            vcal0 = []
+                            vcal31 = []
+                            vcalfinal = []
+                            fileN = "%s_VCal_%s_%s"%(nameS,vfatS,chipS)
+                            if newFormat:
+                                fileN = "%s_VCal_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                                pass
+                            filename = glob.glob("%s"%(fileN))[k]
+                            f=open(filename,'r')
+                            line = (f.readline()).rstrip('\n')
+                            vcal= line.split()
+                            for ele in vcal:
+                                if ele.startswith('['):
+                                    ele = ele[1:]
+                                ele = ele.rstrip(']') 
+                                ele = ele.rstrip('L,') 
+                                vcal0.append(int(ele))
+                            line = (f.readline()).rstrip('\n')
+                            vcal= line.split()
+                            for ele in vcal:
+                                if ele.startswith('['):
+                                    ele = ele[1:]
+                                ele = ele.rstrip(']') 
+                                ele = ele.rstrip('L,') 
+                                vcal31.append(int(ele))
+                            
+                            line = (f.readline())
+                            vcal= line.split()
+                            for ele in vcal:
+                                if ele.startswith('['):
+                                    ele = ele[1:]
+                                ele = ele.rstrip(']') 
+                                ele = ele.rstrip('L,') 
+                                vcalfinal.append(int(ele))
+                            
+                            vcal0Hist = TH1F("VFAT%s_ID_%s_0.5PointHist0"%(pos,port), "", 255,0,255 )
+                            for iPos in range(0,len(vcal0)):
+                                vcal0Hist.Fill(vcal0[iPos])
+                            vcal0Hist.SetStats(0)
+                            vcal0Hist.SetFillColor(kGreen)
+                            vcal0Hist.SetTitle("Histogram of the '0.5 point' for a TrimDAC of 0/31 and True Value; ; ")
+                            vcal0Hist.GetXaxis().SetRangeUser(min(vcal0)*0.5,max(vcal0)*1.5)
+                            vcal0Hist.Draw('H')
+                            vcal31Hist = TH1F("VFAT%s_ID_%s_0.5PointHist31"%(pos,port), "", 255,0,255 )
+                            for iPos in range(0,len(vcal31)):
+                                vcal31Hist.Fill(vcal31[iPos])
+                            vcal31Hist.SetStats(0)
+                            vcal31Hist.SetFillColor(kBlue)
+                            vcal31Hist.Draw('H SAME')
+                            vcalHist = TH1F("VFAT%s_ID_%s_0.5PointHist"%(pos,port), "", 255,0,255 )
+                            for iPos in range(0,len(vcalfinal)):
+                                vcalHist.Fill(vcalfinal[iPos])
+                            vcalHist.SetStats(0)
+                            vcalHist.SetFillColor(kRed)
+                            vcalHist.Draw('H SAME')
+                            legend.AddEntry(vcal0Hist, " TrimDAC 0","F")
+                            legend.AddEntry(vcal31Hist, " TrimDAC 31","F")
+                            legend.AddEntry(vcalHist, " TrimDAC Values","F")
+                            legend.Draw('SAME')
+                            dir_A_SCurveSeparation.cd()
+                            Canvas.Write("VFAT%s_ID_%s_0.5PointHist"%(pos,port))
+                            dir_S_SCurveSeparation.cd()
+                            Canvas.Write("VFAT%s_ID_%s_0.5PointHist"%(pos,port))
+                            Canvas.Clear()
+                            pass
                         
                         # Read and plot the SCurve before the scan                       
                         fileN = "%s_SCurve_by_channel_%s_%s"%(nameS,vfatS,chipS)
@@ -430,124 +566,6 @@ for path, subdirs, files in os.walk(r'./'):
                         dir_S_SCurveByChan.cd()
                         h2DSCurveByChanPreTrim.Write()
                         Canvas.Write("VFAT%s_ID_%s_ScurveBF"%(pos,port))
-                        Canvas.Clear()
-                        
-                        # Plot the S_Curve after fitting
-                        # "---------- S-Curve by channel after the Script ----------"
-                        # Make & store SCurves by Chan No. After Trimming
-                        h2DSCurveByChanPostTrim = TH2F( "VFAT%s_ID_%s_scurveafter"%(pos,port), "", 127,0,127, 255, 0, 255)
-                        for index, valSCurve in np.ndenumerate(ma):
-                            h2DSCurveByChanPostTrim.SetBinContent(index[0]+1,index[1]+1,valSCurve)
-                        h2DSCurveByChanPostTrim.SetTitle("After setting TrimDAC Values S-curve of Chip %s at Position %s"%(port,pos))
-                        h2DSCurveByChanPostTrim.GetYaxis().SetTitle("S-curve: Calibration Pulse")
-                        h2DSCurveByChanPostTrim.GetXaxis().SetTitle("128 Strip Channels")
-                        h2DSCurveByChanPostTrim.SetStats(0)
-                        h2DSCurveByChanPostTrim.Draw('colz')
-                        dir_A_SCurveByChan.cd()
-                        h2DSCurveByChanPostTrim.Write()
-                        Canvas.Write("VFAT%s_ID_%s_ScurveAF"%(pos,port))
-                        dir_S_SCurveByChan.cd()
-                        h2DSCurveByChanPostTrim.Write()
-                        Canvas.Write("VFAT%s_ID_%s_ScurveAF"%(pos,port))
-                        Canvas.Clear()
-                        
-                        
-                        # Read and plot the TrimDAC values                       
-                        fileN = "%s_TRIM_DAC_value_VFAT_%s_%s"%(nameS,pos,chipS)
-                        if newFormat:
-                            fileN = "%s_TRIM_DAC_value_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
-                            pass
-                        filename = glob.glob("%s"%(fileN))[k]
-                        g=open(filename)
-                        trim = []
-                        while True:     
-                            line = (g.readline()).rstrip('\n')
-                            if not line: break
-                            trim.append(int(line))
-                        pass # closes while True
-                        g.close()
-                        gTrimDAC = TGraph(len(trim))
-                        for iPos in range(0,len(trim)):
-                            gTrimDAC.SetPoint(iPos,iPos,trim[iPos])
-                        gTrimDAC.SetName( "VFAT%s_ID_%s_TrimDAC"%(pos,port) )
-                        gTrimDAC.SetMarkerColor(kBlue)
-                        gTrimDAC.SetLineColor(kBlue)
-                        gTrimDAC.SetMarkerStyle(20)
-                        gTrimDAC.SetTitle("TrimDAC Values of Chip %s at Position %s"%(port,pos))
-                        gTrimDAC.GetXaxis().SetTitle("128 Strip Channels")
-                        gTrimDAC.GetYaxis().SetTitle("TrimDAC Value")
-                        gTrimDAC.GetXaxis().SetRangeUser(0,127)
-                        gTrimDAC.GetYaxis().SetRangeUser(0,max(trim)*1.5)
-                        dir_A_TrimDACValues.cd()
-                        gTrimDAC.Write()
-                        dir_S_TrimDACValues.cd()
-                        gTrimDAC.Write()
-                    
-                    
-                        # "---------- Histogram of the '0.5 point' for a TrimDAC of 0/31 and after the Script ----------" 
-                        vcal0 = []
-                        vcal31 = []
-                        vcalfinal = []
-                        fileN = "%s_VCal_%s_%s"%(nameS,vfatS,chipS)
-                        if newFormat:
-                            fileN = "%s_VCal_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
-                            pass
-                        filename = glob.glob("%s"%(fileN))[k]
-                        f=open(filename,'r')
-                        line = (f.readline()).rstrip('\n')
-                        vcal= line.split()
-                        for ele in vcal:
-                            if ele.startswith('['):
-                                ele = ele[1:]
-                            ele = ele.rstrip(']') 
-                            ele = ele.rstrip('L,') 
-                            vcal0.append(int(ele))
-                        line = (f.readline()).rstrip('\n')
-                        vcal= line.split()
-                        for ele in vcal:
-                            if ele.startswith('['):
-                                ele = ele[1:]
-                            ele = ele.rstrip(']') 
-                            ele = ele.rstrip('L,') 
-                            vcal31.append(int(ele))
-                        
-                        line = (f.readline())
-                        vcal= line.split()
-                        for ele in vcal:
-                            if ele.startswith('['):
-                                ele = ele[1:]
-                            ele = ele.rstrip(']') 
-                            ele = ele.rstrip('L,') 
-                            vcalfinal.append(int(ele))
-                        
-                        vcal0Hist = TH1F("VFAT%s_ID_%s_0.5PointHist0"%(pos,port), "", 255,0,255 )
-                        for iPos in range(0,len(vcal0)):
-                            vcal0Hist.Fill(vcal0[iPos])
-                        vcal0Hist.SetStats(0)
-                        vcal0Hist.SetFillColor(kGreen)
-                        vcal0Hist.SetTitle("Histogram of the '0.5 point' for a TrimDAC of 0/31 and True Value; ; ")
-                        vcal0Hist.GetXaxis().SetRangeUser(min(vcal0)*0.5,max(vcal0)*1.5)
-                        vcal0Hist.Draw('H')
-                        vcal31Hist = TH1F("VFAT%s_ID_%s_0.5PointHist31"%(pos,port), "", 255,0,255 )
-                        for iPos in range(0,len(vcal31)):
-                            vcal31Hist.Fill(vcal31[iPos])
-                        vcal31Hist.SetStats(0)
-                        vcal31Hist.SetFillColor(kBlue)
-                        vcal31Hist.Draw('H SAME')
-                        vcalHist = TH1F("VFAT%s_ID_%s_0.5PointHist"%(pos,port), "", 255,0,255 )
-                        for iPos in range(0,len(vcalfinal)):
-                            vcalHist.Fill(vcalfinal[iPos])
-                        vcalHist.SetStats(0)
-                        vcalHist.SetFillColor(kRed)
-                        vcalHist.Draw('H SAME')
-                        legend.AddEntry(vcal0Hist, " TrimDAC 0","F")
-                        legend.AddEntry(vcal31Hist, " TrimDAC 31","F")
-                        legend.AddEntry(vcalHist, " TrimDAC Values","F")
-                        legend.Draw('SAME')
-                        dir_A_SCurveSeparation.cd()
-                        Canvas.Write("VFAT%s_ID_%s_0.5PointHist"%(pos,port))
-                        dir_S_SCurveSeparation.cd()
-                        Canvas.Write("VFAT%s_ID_%s_0.5PointHist"%(pos,port))
                         Canvas.Close()
     # Close Output ROOT File
                 file_Output_S.Close()
