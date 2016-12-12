@@ -90,7 +90,8 @@ for path, subdirs, files in os.walk(r'./'):
                 VCALmean14 = [] #to plot VCal means for one channel (SCUVRE) for all chips
                 VCALcov14 = [] #to plot VCal covs for one channel (SCUVRE) for all chips
 
-                Mask = False
+                Threshold_2 = False
+                SCurve_2    = False
                 threshold1x = []
                 threshold1y = []
                 threshold2x = []
@@ -107,7 +108,7 @@ for path, subdirs, files in os.walk(r'./'):
                 else: print fname
                 filename = glob.glob("%s*"%(fname))
                 if filename == []:
-                    print "!!!!!! No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
+                    print "!!!!!! >>>>>> No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
                 for k in range(0,len(filename)):
                     filename = glob.glob("%s*"%(fname))[k]
                     threshold1x = []
@@ -121,29 +122,33 @@ for path, subdirs, files in os.walk(r'./'):
                     f=open(filename)
 
                     line = (f.readline()).rstrip('\n')
-                    thresholdValue = (float(line.strip('Threshold set to: ')))
-                    if line == "0": # If no threshold have been set, VFAT2 is all 0 or all 1
-                        print "!!!!!! chip "+str(port)+" is a Broken VFAT, no threshold have been set, VFAT2 is all 0 or all 1 !!!!!!"
-                        while (line != ""):
-                            if newFormat:
-                                vals = line.split("\t")
-                                threshold1x.append(float(vals[0]))
-                                threshold1y.append(float(vals[1]))
-                            else:
-                                threshold1x.append(float(line))
-                                threshold1y.append(float((f.readline()).rstrip('\n')))
-                                pass
-                            line = (f.readline()).rstrip('\n') 
+                    if "Threshold set to:" not in line: # 1. 1st check:   If no threshold have been set, VFAT2 is all 0 or all 1
+                        print "!!!!!! >>>>>> chip "+str(port)+" is a Broken VFAT, no threshold have been set, VFAT2 is all 0 or all 1 !!!!!!"
+                        break
                     else :
+                        thresholdValue = (float(line.strip('Threshold set to: ')))
+                        if thresholdValue == "-1":  # 2. 2nd check:   
+                            print "!!!!!! >>>>>> chip "+str(port)+" is a Broken VFAT, the threshold is -1 !!!!!!"
+                            while (line != ""): # Read the first TH Scan
+                                if newFormat:
+                                    vals = line.split("\t")
+                                    threshold1x.append(float(vals[0]))
+                                    threshold1y.append(float(vals[1]))
+                                else:
+                                    threshold1x.append(float(line))
+                                    threshold1y.append(float((f.readline()).rstrip('\n')))
+                                    pass
+                                line = (f.readline()).rstrip('\n') 
+                                pass
+                            break
                         line = (f.readline()).rstrip('\n')
                         while ("S_CURVE" not in line): # Read the first TH Scan
-                            if "Latency" in line:
+                            if "second_threshold" in line:  # 3. 3rd check:  
+                                break
+                            if "Latency" in line:  # end of the 1st threshold  
                                 line = (f.readline()).rstrip('\n')
                                 continue
-                            if "second_threshold" in line:
-                                Mask = True
-                                break
-                            if line == "":
+                            if line == "":  # 4. 4th check: if there is nothing but 1st threshold 
                                 break
                             if newFormat:
                                 vals = line.split("\t")
@@ -156,10 +161,11 @@ for path, subdirs, files in os.walk(r'./'):
                             sys.stdout.flush()
                             line = (f.readline()).rstrip('\n')
                             pass
-                        if Mask is True and line != "":  # this line should be "second_threshold"
-                            # print "!!!!!! The data is collected after channels' masking, only 2 thresholds scanning !!!!!! "
+                        if "second_threshold" in line:  # 3. 3rd check: no S_CURVE at all !!!!!!
+                            print "!!!!!! >>>>>> NO S_CURVE found, only 2 thresholds scanning !!!!!! "
                             line = (f.readline()).rstrip('\n')
                             while (line != ""):
+                                Threshold_2 = True
                                 if newFormat:
                                     vals = line.split("\t")
                                     threshold2x.append(float(vals[0]))
@@ -172,7 +178,8 @@ for path, subdirs, files in os.walk(r'./'):
                                 pass
                             f.close()
                             pass
-                        if Mask is False and line != "":  # this line should be "S_CURVE_0"
+                        if "S_CURVE" in line:  # this line should be "S_CURVE_0"
+                            SCurve_2 = True
                             line = (f.readline()).rstrip('\n')
                             while True:  # Read all the SCurve   
                                 scurvex = []
@@ -204,11 +211,11 @@ for path, subdirs, files in os.walk(r'./'):
                                     scurvex2.append(i-min(scurvex))
                                 if scurvey==[]: # If the SCURVE of a channel was only 1 or 0
                                     if "second_threshold" in line:
-                                        print "!!!!!! the " + "S_CURVE_127" + " is broken, this channel was only  0 or 1 !!!!!!"
+                                        print "!!!!!! >>>>>> the " + "S_CURVE_127" + " is broken, this channel was only  0 or 1 !!!!!!"
                                         break
                                     else: 
                                         channels = line.split("_")
-                                        print "!!!!!! the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel was only 0 or 1 !!!!!!"
+                                        print "!!!!!! >>>>>> the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel was only 0 or 1 !!!!!!"
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
@@ -225,7 +232,7 @@ for path, subdirs, files in os.walk(r'./'):
                                     cov.append(fitParams[1])
                                 except: # If the SCURVE of a channel can not be fit
                                     channels = line.split("_")
-                                    print "!!!!!! the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel can not be fit !!!!!!"
+                                    print "!!!!!! >>>>>> the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel can not be fit !!!!!!"
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
@@ -272,6 +279,7 @@ for path, subdirs, files in os.walk(r'./'):
                                 pass  # closes while true
                             line = (f.readline()).rstrip('\n')   
                             while (line != ""):
+                                Threshold_2 = True
                                 if newFormat:
                                     vals = line.split("\t")
                                     threshold2x.append(float(vals[0]))
@@ -283,7 +291,7 @@ for path, subdirs, files in os.walk(r'./'):
                                 line = (f.readline()).rstrip('\n')
                                 pass # close while loop
                             f.close()
-                            pass # close if line != ""
+                            pass # close
                         # Plot the 2 TH Scans
                         # "---------- Threshold Scans ----------"    
                         # Make & store threshold TGraph before Trim
@@ -305,42 +313,101 @@ for path, subdirs, files in os.walk(r'./'):
                         gThresh_PreTrim.Write()
                         
                         # Make & store threshold TGraph after Trim
-                        if threshold2x == []:
-                            print "!!!!!! No 2nd Threshold, only the 1st TH worked for", str(filename), " !!!!!!"
-                            continue
-                        gThresh_PostTrim = TGraph(len(threshold2x))
-                        for iPos in range(0,len(threshold2x)):
-                            gThresh_PostTrim.SetPoint(iPos,threshold2x[iPos],threshold2y[iPos])
-                        gThresh_PostTrim.SetName( "VFAT%s_ID_%s_thresholdsAfter"%(pos,port) )
-                        gThresh_PostTrim.SetLineColor(kRed)
-                        gThresh_PostTrim.SetMarkerColor(kRed)
-                        gThresh_PostTrim.SetMarkerStyle(21)
-                        gThresh_PostTrim.SetTitle("Threshold Scan After Setting TrimDAC Values of Chip %s at Position %s"%(port,pos))
-                        gThresh_PostTrim.GetXaxis().SetTitle("Threshold")
-                        gThresh_PostTrim.GetYaxis().SetTitle("Noise")
-                        gThresh_PostTrim.GetXaxis().SetRangeUser(min(threshold2x),max(threshold2x))
-                        gThresh_PostTrim.GetYaxis().SetRangeUser(0,max(threshold2y))
-                        dir_A_Thresholds.cd()
-                        gThresh_PostTrim.Write()
-                        dir_S_Thresholds.cd()
-                        gThresh_PostTrim.Write()
+                        if Threshold_2 is True:
+                            if threshold2x == []:
+                                print "!!!!!! >>>>>> No 2nd Threshold, only the 1st TH worked for", str(filename), " !!!!!!"
+                                continue
+                            gThresh_PostTrim = TGraph(len(threshold2x))
+                            for iPos in range(0,len(threshold2x)):
+                                gThresh_PostTrim.SetPoint(iPos,threshold2x[iPos],threshold2y[iPos])
+                            gThresh_PostTrim.SetName( "VFAT%s_ID_%s_thresholdsAfter"%(pos,port) )
+                            gThresh_PostTrim.SetLineColor(kRed)
+                            gThresh_PostTrim.SetMarkerColor(kRed)
+                            gThresh_PostTrim.SetMarkerStyle(21)
+                            gThresh_PostTrim.SetTitle("Threshold Scan After Setting TrimDAC Values of Chip %s at Position %s"%(port,pos))
+                            gThresh_PostTrim.GetXaxis().SetTitle("Threshold")
+                            gThresh_PostTrim.GetYaxis().SetTitle("Noise")
+                            gThresh_PostTrim.GetXaxis().SetRangeUser(min(threshold2x),max(threshold2x))
+                            gThresh_PostTrim.GetYaxis().SetRangeUser(0,max(threshold2y))
+                            dir_A_Thresholds.cd()
+                            gThresh_PostTrim.Write()
+                            dir_S_Thresholds.cd()
+                            gThresh_PostTrim.Write()
+                            
+                            gThresh_PreTrim.SetTitle("Threshold Scan of Chip %s at Position %s"%(port,pos))
+                            gThresh_PreTrim.GetYaxis().SetRangeUser(0,max(threshold2y))
+                            gThresh_PreTrim.Draw('AP')
+                            gThresh_PostTrim.Draw('P SAME')
+                            legend = TLegend(0.60, 0.70, 0.89, 0.89)
+                            legend.AddEntry(gThresh_PreTrim, "Initial Threshold Scan","P")
+                            legend.AddEntry(gThresh_PostTrim, "Second Threshold Scan","P")
+                            legend.Draw('SAME')
+                            dir_A_Thresholds.cd()
+                            Canvas.Write("VFAT%s_ID_%s_thresholds"%(pos,port))
+                            dir_S_Thresholds.cd()
+                            Canvas.Write("VFAT%s_ID_%s_thresholds"%(pos,port))
+                            legend.Clear()
+                            Canvas.Clear()
+                        else:
+                            print "!!!!!! >>>>>> No 2nd Threshold, only the 1st TH worked for", str(filename), " !!!!!!"
                         
-                        gThresh_PreTrim.SetTitle("Threshold Scan of Chip %s at Position %s"%(port,pos))
-                        gThresh_PreTrim.GetYaxis().SetRangeUser(0,max(threshold2y))
-                        gThresh_PreTrim.Draw('AP')
-                        gThresh_PostTrim.Draw('P SAME')
-                        legend = TLegend(0.60, 0.70, 0.89, 0.89)
-                        legend.AddEntry(gThresh_PreTrim, "Initial Threshold Scan","P")
-                        legend.AddEntry(gThresh_PostTrim, "Second Threshold Scan","P")
-                        legend.Draw('SAME')
-                        dir_A_Thresholds.cd()
-                        Canvas.Write("VFAT%s_ID_%s_thresholds"%(pos,port))
-                        dir_S_Thresholds.cd()
-                        Canvas.Write("VFAT%s_ID_%s_thresholds"%(pos,port))
-                        legend.Clear()
-                        Canvas.Clear()
+                        # Read and plot the SCurve before the scan                       
+                        fileN = "%s_SCurve_by_channel_%s_%s"%(nameS,vfatS,chipS)
+                        if newFormat:
+                            fileN = "%s_SCurve_by_channel_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                            pass
+                        # print fileN
+                        fi = glob.glob("%s"%(fileN))[k]
+                        g=open(fi)
+                        maSC = np.zeros(shape=(128,255))
+                        count = 0
+                        line = (g.readline()).rstrip('\n')
+                        if line == "": 
+                            print "!!!!!! >>>>>> Empty file: "+fileN+" !!!!!!"
+                        else: 
+                            line = (g.readline()).rstrip('\n')
+                            SCx = []
+                            SCy = []
+                            while True:     
+                                while ("SCurve" not in line):
+                                    if not line: break
+                                    if newFormat:
+                                        vals = line.split("\t")
+                                        SCx.append(float(vals[0]))
+                                        SCy.append(float(vals[1]))
+                                    else:
+                                        SCx.append(float(line))
+                                        SCy.append(float((g.readline()).rstrip('\n')))
+                                        pass
+                                    line = (g.readline()).rstrip('\n')
+                                    pass # closes while ("SCurve" not in line):
+                                if not line: break
+                                maSC[count]=SCy
+                                count = count+1 
+                                SCx = []
+                                SCy = []
+                                line = (g.readline()).rstrip('\n')
+                                pass # closes while True
+                            g.close()
+                            # "---------- S-Curve by channel Before the Script ----------"    
+                            # Make & store SCurves by Chan No. Before Trimming
+                            h2DSCurveByChanPreTrim = TH2F( "VFAT%s_ID_%s_scurvebefore"%(pos,port), "", 127,0,127, 255, 0, 255)
+                            for index, valSCurve in np.ndenumerate(maSC):
+                                h2DSCurveByChanPreTrim.SetBinContent(index[0]+1,index[1]+1, valSCurve)
+                            h2DSCurveByChanPreTrim.SetTitle("Initial S-curve of Chip %s at Position %s"%(port,pos))
+                            h2DSCurveByChanPreTrim.GetYaxis().SetTitle("S-curve: Calibration Pulse")
+                            h2DSCurveByChanPreTrim.GetXaxis().SetTitle("128 Strip Channels")
+                            h2DSCurveByChanPreTrim.SetStats(0)
+                            h2DSCurveByChanPreTrim.Draw('colz')
+                            dir_A_SCurveByChan.cd()
+                            h2DSCurveByChanPreTrim.Write()
+                            Canvas.Write("VFAT%s_ID_%s_ScurveBF"%(pos,port))
+                            dir_S_SCurveByChan.cd()
+                            h2DSCurveByChanPreTrim.Write()
+                            Canvas.Write("VFAT%s_ID_%s_ScurveBF"%(pos,port))
+                            Canvas.Clear()
 
-                        if Mask is False:  
+                        if SCurve_2 is True:  
                             # "---------- Mean of the Erf Function by channel ----------"
                             # Make & store Mean of Erf by Channel TGraph
                             gErfMeanByChan = TGraph(len(mean))
@@ -393,7 +460,6 @@ for path, subdirs, files in os.walk(r'./'):
                             hCovHistogram.Write()
                             Canvas.Clear()
                             
-                            
                             # Plot the S_Curve after fitting
                             # "---------- S-Curve by channel after the Script ----------"
                             # Make & store SCurves by Chan No. After Trimming
@@ -413,20 +479,23 @@ for path, subdirs, files in os.walk(r'./'):
                             Canvas.Write("VFAT%s_ID_%s_ScurveAF"%(pos,port))
                             Canvas.Clear()
                             
-                            
-                            # Read and plot the TrimDAC values                       
-                            fileN = "%s_TRIM_DAC_value_VFAT_%s_%s"%(nameS,pos,chipS)
-                            if newFormat:
-                                fileN = "%s_TRIM_DAC_value_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
-                                pass
-                            filename = glob.glob("%s"%(fileN))[k]
-                            g=open(filename)
-                            trim = []
+                        # Read and plot the TrimDAC values                       
+                        fileN = "%s_TRIM_DAC_value_VFAT_%s_%s"%(nameS,pos,chipS)
+                        if newFormat:
+                            fileN = "%s_TRIM_DAC_value_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                            pass
+                        filename = glob.glob("%s"%(fileN))[k]
+                        g=open(filename)
+                        trim = []
+                        line = (g.readline()).rstrip('\n')
+                        if line == "": 
+                            print "!!!!!! >>>>>> Empty file: "+fileN+" !!!!!!"
+                        else: 
                             while True:     
-                                line = (g.readline()).rstrip('\n')
                                 if not line: break
                                 trim.append(int(line))
-                            pass # closes while True
+                                line = (g.readline()).rstrip('\n')
+                                pass # closes while True
                             g.close()
                             gTrimDAC = TGraph(len(trim))
                             for iPos in range(0,len(trim)):
@@ -445,18 +514,20 @@ for path, subdirs, files in os.walk(r'./'):
                             dir_S_TrimDACValues.cd()
                             gTrimDAC.Write()
                         
-                        
-                            # "---------- Histogram of the '0.5 point' for a TrimDAC of 0/31 and after the Script ----------" 
-                            vcal0 = []
-                            vcal31 = []
-                            vcalfinal = []
-                            fileN = "%s_VCal_%s_%s"%(nameS,vfatS,chipS)
-                            if newFormat:
-                                fileN = "%s_VCal_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
-                                pass
-                            filename = glob.glob("%s"%(fileN))[k]
-                            f=open(filename,'r')
-                            line = (f.readline()).rstrip('\n')
+                        # "---------- Histogram of the '0.5 point' for a TrimDAC of 0/31 and after the Script ----------" 
+                        vcal0 = []
+                        vcal31 = []
+                        vcalfinal = []
+                        fileN = "%s_VCal_%s_%s"%(nameS,vfatS,chipS)
+                        if newFormat:
+                            fileN = "%s_VCal_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
+                            pass
+                        filename = glob.glob("%s"%(fileN))[k]
+                        f=open(filename,'r')
+                        line = (f.readline()).rstrip('\n')
+                        if line == "": 
+                            print "!!!!!! >>>>>> Empty file: "+fileN+" !!!!!!"
+                        else: 
                             vcal= line.split()
                             for ele in vcal:
                                 if ele.startswith('['):
@@ -481,6 +552,7 @@ for path, subdirs, files in os.walk(r'./'):
                                 ele = ele.rstrip(']') 
                                 ele = ele.rstrip('L,') 
                                 vcalfinal.append(int(ele))
+                            f.close()
                             
                             vcal0Hist = TH1F("VFAT%s_ID_%s_0.5PointHist0"%(pos,port), "", 255,0,255 )
                             for iPos in range(0,len(vcal0)):
@@ -510,63 +582,7 @@ for path, subdirs, files in os.walk(r'./'):
                             Canvas.Write("VFAT%s_ID_%s_0.5PointHist"%(pos,port))
                             dir_S_SCurveSeparation.cd()
                             Canvas.Write("VFAT%s_ID_%s_0.5PointHist"%(pos,port))
-                            Canvas.Clear()
-                            pass
-                        
-                        # Read and plot the SCurve before the scan                       
-                        fileN = "%s_SCurve_by_channel_%s_%s"%(nameS,vfatS,chipS)
-                        if newFormat:
-                            fileN = "%s_SCurve_by_channel_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
-                            pass
-                        # print fileN
-                        fi = glob.glob("%s"%(fileN))[k]
-                        g=open(fi)
-                        maSC = np.zeros(shape=(128,255))
-                        count = 0
-                        line = (g.readline()).rstrip('\n')
-                        line = (g.readline()).rstrip('\n')
-                        SCx = []
-                        SCy = []
-                        while True:     
-                            while ("SCurve" not in line):
-                                if not line: break
-                                if newFormat:
-                                    vals = line.split("\t")
-                                    SCx.append(float(vals[0]))
-                                    SCy.append(float(vals[1]))
-                                else:
-                                    SCx.append(float(line))
-                                    SCy.append(float((g.readline()).rstrip('\n')))
-                                    pass
-                                line = (g.readline()).rstrip('\n')
-                                pass # closes while ("SCurve" not in line):
-                            if not line: break
-                            # print "SCy",SCy
-                            # print "SCx",SCx
-                            maSC[count]=SCy
-                            count = count+1 
-                            SCx = []
-                            SCy = []
-                            line = (g.readline()).rstrip('\n')
-                            pass # closes while True
-                        g.close()
-                        # "---------- S-Curve by channel Before the Script ----------"    
-                        # Make & store SCurves by Chan No. Before Trimming
-                        h2DSCurveByChanPreTrim = TH2F( "VFAT%s_ID_%s_scurvebefore"%(pos,port), "", 127,0,127, 255, 0, 255)
-                        for index, valSCurve in np.ndenumerate(maSC):
-                            h2DSCurveByChanPreTrim.SetBinContent(index[0]+1,index[1]+1, valSCurve)
-                        h2DSCurveByChanPreTrim.SetTitle("Initial S-curve of Chip %s at Position %s"%(port,pos))
-                        h2DSCurveByChanPreTrim.GetYaxis().SetTitle("S-curve: Calibration Pulse")
-                        h2DSCurveByChanPreTrim.GetXaxis().SetTitle("128 Strip Channels")
-                        h2DSCurveByChanPreTrim.SetStats(0)
-                        h2DSCurveByChanPreTrim.Draw('colz')
-                        dir_A_SCurveByChan.cd()
-                        h2DSCurveByChanPreTrim.Write()
-                        Canvas.Write("VFAT%s_ID_%s_ScurveBF"%(pos,port))
-                        dir_S_SCurveByChan.cd()
-                        h2DSCurveByChanPreTrim.Write()
-                        Canvas.Write("VFAT%s_ID_%s_ScurveBF"%(pos,port))
-                        Canvas.Close()
+                            Canvas.Close()
     # Close Output ROOT File
                 file_Output_S.Close()
     file_Output_A.Close()
