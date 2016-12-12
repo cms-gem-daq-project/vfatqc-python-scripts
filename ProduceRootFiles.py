@@ -108,7 +108,7 @@ for path, subdirs, files in os.walk(r'./'):
                 else: print fname
                 filename = glob.glob("%s*"%(fname))
                 if filename == []:
-                    print "!!!!!! >>>>>> No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
+                    print "!!!!!! WARNING:  No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
                 for k in range(0,len(filename)):
                     filename = glob.glob("%s*"%(fname))[k]
                     threshold1x = []
@@ -123,12 +123,12 @@ for path, subdirs, files in os.walk(r'./'):
 
                     line = (f.readline()).rstrip('\n')
                     if "Threshold set to:" not in line: # 1. 1st check:   If no threshold have been set, VFAT2 is all 0 or all 1
-                        print "!!!!!! >>>>>> chip "+str(port)+" is a Broken VFAT, no threshold have been set, VFAT2 is all 0 or all 1 !!!!!!"
+                        print "!!!!!! WARNING:  chip "+str(port)+" is a Broken VFAT, no threshold have been set, VFAT2 is all 0 or all 1 !!!!!!"
                         break
                     else :
                         thresholdValue = (float(line.strip('Threshold set to: ')))
                         if thresholdValue == "-1":  # 2. 2nd check:   
-                            print "!!!!!! >>>>>> chip "+str(port)+" is a Broken VFAT, the threshold is -1 !!!!!!"
+                            print "!!!!!! WARNING:  chip "+str(port)+" is a Broken VFAT, the threshold is -1 !!!!!!"
                             while (line != ""): # Read the first TH Scan
                                 if newFormat:
                                     vals = line.split("\t")
@@ -162,7 +162,7 @@ for path, subdirs, files in os.walk(r'./'):
                             line = (f.readline()).rstrip('\n')
                             pass
                         if "second_threshold" in line:  # 3. 3rd check: no S_CURVE at all !!!!!!
-                            print "!!!!!! >>>>>> NO S_CURVE found, only 2 thresholds scanning !!!!!! "
+                            print "!!!!!! WARNING:  NO S_CURVE found, only 2 thresholds scanning !!!!!! "
                             line = (f.readline()).rstrip('\n')
                             while (line != ""):
                                 Threshold_2 = True
@@ -211,11 +211,11 @@ for path, subdirs, files in os.walk(r'./'):
                                     scurvex2.append(i-min(scurvex))
                                 if scurvey==[]: # If the SCURVE of a channel was only 1 or 0
                                     if "second_threshold" in line:
-                                        print "!!!!!! >>>>>> the " + "S_CURVE_127" + " is broken, this channel was only  0 or 1 !!!!!!"
+                                        print "!!!!!! WARNING:  the " + "S_CURVE_127" + " is broken, this channel was only  0 or 1 !!!!!!"
                                         break
                                     else: 
                                         channels = line.split("_")
-                                        print "!!!!!! >>>>>> the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel was only 0 or 1 !!!!!!"
+                                        print "!!!!!! WARNING:  the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel was only 0 or 1 !!!!!!"
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
@@ -232,7 +232,7 @@ for path, subdirs, files in os.walk(r'./'):
                                     cov.append(fitParams[1])
                                 except: # If the SCURVE of a channel can not be fit
                                     channels = line.split("_")
-                                    print "!!!!!! >>>>>> the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel can not be fit !!!!!!"
+                                    print "!!!!!! WARNING:  the S_CURVE_" + str(int(channels[2])-1) + " is broken, this channel can not be fit !!!!!!"
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
@@ -315,7 +315,7 @@ for path, subdirs, files in os.walk(r'./'):
                         # Make & store threshold TGraph after Trim
                         if Threshold_2 is True:
                             if threshold2x == []:
-                                print "!!!!!! >>>>>> No 2nd Threshold, only the 1st TH worked for", str(filename), " !!!!!!"
+                                print "!!!!!! WARNING:  No 2nd Threshold, only the 1st TH worked for", str(filename), " !!!!!!"
                                 continue
                             gThresh_PostTrim = TGraph(len(threshold2x))
                             for iPos in range(0,len(threshold2x)):
@@ -349,7 +349,7 @@ for path, subdirs, files in os.walk(r'./'):
                             legend.Clear()
                             Canvas.Clear()
                         else:
-                            print "!!!!!! >>>>>> No 2nd Threshold, only the 1st TH worked for", str(filename), " !!!!!!"
+                            print "!!!!!! WARNING:  No 2nd Threshold, only the 1st TH worked for", str(filename), " !!!!!!"
                         
                         # Read and plot the SCurve before the scan                       
                         fileN = "%s_SCurve_by_channel_%s_%s"%(nameS,vfatS,chipS)
@@ -363,7 +363,7 @@ for path, subdirs, files in os.walk(r'./'):
                         count = 0
                         line = (g.readline()).rstrip('\n')
                         if line == "": 
-                            print "!!!!!! >>>>>> Empty file: "+fileN+" !!!!!!"
+                            print "!!!!!! WARNING:  Empty file: "+fileN+" !!!!!!"
                         else: 
                             line = (g.readline()).rstrip('\n')
                             SCx = []
@@ -489,7 +489,7 @@ for path, subdirs, files in os.walk(r'./'):
                         trim = []
                         line = (g.readline()).rstrip('\n')
                         if line == "": 
-                            print "!!!!!! >>>>>> Empty file: "+fileN+" !!!!!!"
+                            print "!!!!!! WARNING:  Empty file: "+fileN+" !!!!!!"
                         else: 
                             while True:     
                                 if not line: break
@@ -526,7 +526,7 @@ for path, subdirs, files in os.walk(r'./'):
                         f=open(filename,'r')
                         line = (f.readline()).rstrip('\n')
                         if line == "": 
-                            print "!!!!!! >>>>>> Empty file: "+fileN+" !!!!!!"
+                            print "!!!!!! WARNING:  Empty file: "+fileN+" !!!!!!"
                         else: 
                             vcal= line.split()
                             for ele in vcal:
