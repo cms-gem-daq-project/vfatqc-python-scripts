@@ -14,6 +14,9 @@ parser.add_option("-t", "--thresh", action="store_true", dest= "do_thresh",
                   help="Do a threshold scan before/after setting trim", metavar="do_thresh")
 parser.add_option("-d", "--debug", action="store_true", dest= "debug",
                   help="Debugging mode", metavar="debug")
+parser.add_option("--save", action="store_true", dest= "save",
+                  help="Save Threshold Scan", metavar="save")
+
 (options, args) = parser.parse_args()
 
 
@@ -86,9 +89,11 @@ if (options.do_thresh):
     print "Starting Preliminary Threshold Scan"
     print
     for n in testSuite.presentVFAT2sSingle:
-        f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
-        z = open("%s_Setting_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
-        f.write("First Threshold Scan \n")
+        if options.save:
+            f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
+            z = open("%s_Setting_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
+            f.write("First Threshold Scan \n")
+            pass
         data_threshold = UltraResults[n]
         print "On Slot Number %d"%n
         print data_threshold
@@ -107,27 +112,35 @@ if (options.do_thresh):
                 threshold = (data_threshold[d] >> 24 )
                 setVFATThreshold(testSuite.glib,options.gtx,n,vt1=(threshold),vt2=0)
                 print "Threshold set to: %d"%(threshold)
-                f.write("Threshold set to: %d\n"%(threshold))
-                z.write("vthreshold1: %d\n"%(threshold))
+                if options.save:
+                    f.write("Threshold set to: %d\n"%(threshold))
+                    z.write("vthreshold1: %d\n"%(threshold))
+                    pass
                 break
-
+            
             pass
-        z.close()
+        if options.save:
+            z.close()
+            pass
         if d == 0 or d == 255:
             print "ignored"
-            f.write("Ignored \n")
+            if options.save:
+                f.write("Ignored \n")
+                for d in range (0,len(data_threshold)):
+                    f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
+                    f.write(str(100*(data_threshold[d] & 0xffffff)/N_EVENTS)+"\n")
+                    pass
+                #f.close()                                                                                                                                       
+                pass                                                
+            continue
+        if options.save:
             for d in range (0,len(data_threshold)):
                 f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
                 f.write(str(100*(data_threshold[d] & 0xffffff)/N_EVENTS)+"\n")
                 pass
-                #f.close()                                                                                                                                                                                        
-            continue
-        for d in range (0,len(data_threshold)):
-            f.write(str((data_threshold[d] & 0xff000000) >> 24)+"\n")
-            f.write(str(100*(data_threshold[d] & 0xffffff)/N_EVENTS)+"\n")
+            f.close()
+            z.close()
             pass
-        f.close()
-        z.close()
         pass
 
 
