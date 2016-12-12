@@ -107,8 +107,6 @@ for path, subdirs, files in os.walk(r'./'):
                     print "%s_Data_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
                 else: print fname
                 filename = glob.glob("%s*"%(fname))
-                if filename == []:
-                    print "!!!!!! WARNING:  No VFAT2 with ID " +str(port)+" at the position " + str(pos) + " with name " +str(TestName)
                 for k in range(0,len(filename)):
                     filename = glob.glob("%s*"%(fname))[k]
                     threshold1x = []
@@ -356,7 +354,9 @@ for path, subdirs, files in os.walk(r'./'):
                         if newFormat:
                             fileN = "%s_SCurve_by_channel_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
                             pass
-                        # print fileN
+                        if glob.glob("%s"%(fileN)) == []: 
+                            print "!!!!!! WARNING:  No file with name "+fileN+" !!!!!!"
+                            continue
                         fi = glob.glob("%s"%(fileN))[k]
                         g=open(fi)
                         maSC = np.zeros(shape=(128,255))
@@ -484,6 +484,9 @@ for path, subdirs, files in os.walk(r'./'):
                         if newFormat:
                             fileN = "%s_TRIM_DAC_value_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
                             pass
+                        if glob.glob("%s"%(fileN)) == []: 
+                            print "!!!!!! WARNING:  No file with name "+fileN+" !!!!!!"
+                            continue
                         filename = glob.glob("%s"%(fileN))[k]
                         g=open(filename)
                         trim = []
@@ -522,6 +525,9 @@ for path, subdirs, files in os.walk(r'./'):
                         if newFormat:
                             fileN = "%s_VCal_%s_%s_%s_%s"%(nameS,slotS,linkS,vfatS,chipS)
                             pass
+                        if glob.glob("%s"%(fileN)) == []: 
+                            print "!!!!!! WARNING:  No file with name "+fileN+" !!!!!!"
+                            continue
                         filename = glob.glob("%s"%(fileN))[k]
                         f=open(filename,'r')
                         line = (f.readline()).rstrip('\n')
