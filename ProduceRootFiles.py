@@ -217,8 +217,8 @@ for path, subdirs, files in os.walk(r'./'):
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
-                                    mean.append(0) # If the channel is broken, the mean and covariance are set to 0
-                                    cov.append(0)
+                                    mean.append(-1) # If the channel is broken, the mean and covariance are set to -1
+                                    cov.append(-1)
                                     scurvex  = []
                                     scurvey  = []
                                     scurvex2 = []
@@ -234,8 +234,8 @@ for path, subdirs, files in os.walk(r'./'):
                                     if SCName in line: 
                                         SCUVRE = SCUVRE + 1
                                         SCName = "S_CURVE_" + str(SCUVRE+1)
-                                    mean.append(0) # If the channel is broken, the mean and covariance are set to 0
-                                    cov.append(0)
+                                    mean.append(-1) # If the channel is broken, the mean and covariance are set to -1
+                                    cov.append(-1)
                                 if SCName in line:
                                     fit=[]
                                     t = np.linspace(min(scurvex2), max(scurvex2), 250)
@@ -421,7 +421,7 @@ for path, subdirs, files in os.walk(r'./'):
                             gErfMeanByChan.GetXaxis().SetTitle("128 Strip Channels")
                             gErfMeanByChan.GetYaxis().SetTitle("Calibration pulse 50% Turn-on Point [per Channel]")
                             gErfMeanByChan.GetXaxis().SetRangeUser(0,127)
-                            gErfMeanByChan.GetYaxis().SetRangeUser(0,255)
+                            gErfMeanByChan.GetYaxis().SetRangeUser(-1,255)
                             dir_A_SCurveMeanByChan.cd()
                             gErfMeanByChan.Write()
                             dir_S_SCurveMeanByChan.cd()
@@ -447,12 +447,12 @@ for path, subdirs, files in os.walk(r'./'):
                             
                             # "---------- Histogram of the covariance of the Erf Function ----------"
                             # Make & store Cov of Erf by Channel Histogram
-                            hCovHistogram = TH1F("VFAT%s_ID_%s_coverfHist"%(pos,port), "", 500,0,100 )
+                            hCovHistogram = TH1F("VFAT%s_ID_%s_coverfHist"%(pos,port), "", 512,-1,255 )
                             for iPos in range(0,len(cov)):
                                 hCovHistogram.Fill(cov[iPos])
                             hCovHistogram.SetFillColor(kGreen)
                             hCovHistogram.SetTitle("S-curve Sigma Histogram  of Chip %s at Position %s; S-curve Sigma; "%(port,pos))
-                            hCovHistogram.GetXaxis().SetRangeUser(min(cov)*0.8,max(cov)*1.2)
+                            hCovHistogram.GetXaxis().SetRangeUser(-1,max(cov)*1.3)
                             hCovHistogram.Draw('H')
                             dir_A_SCurveSigma.cd()
                             hCovHistogram.Write()
