@@ -45,7 +45,7 @@ for iPos in range(24):
         continue
     Canvas = TCanvas("Canvas", "Canvas")
     frame = TH1F("frame","S-curve Mean Values of Chip %s at Position %s; 128 Strip Channels; Calibration pulse 50 percent Turn-on Point [per Channel];"%(port[iPos],pos[iPos]),127,0.,127)
-    frame.SetAxisRange(0,255,"Y")
+    frame.SetAxisRange(-1,255,"Y")
     frame.SetStats(kFALSE)
     frame.Draw()
     mg = TMultiGraph("mg","Mean")
@@ -53,7 +53,7 @@ for iPos in range(24):
     Line_p0 = TLine(0,2,127,2)
     Line_p0.SetLineColor(4)
     Line_p0.Draw("SAME")
-    legend.AddEntry(Line_p0, "cut if mean=0","L")
+    legend.AddEntry(Line_p0, "cut if mean = -1","L")
     VFAT2s_H  = gDirectory.Get('%s_ID_%s_meanerfbychan'%(pos[iPos], port[iPos]))
     mg.Add(VFAT2s_H,"pl")
     mg.Draw("P")
@@ -67,18 +67,36 @@ for iPos in range(24):
     gg_M.write("chipID_"+port[iPos]+'\n')
     #print pos[iPos]+" : \nMean   = "+str(M_Mean)+"  RMS   = "+str(M_RMS)
     MaskValue = []
+    test_Y_00 = []
+    for iP in range(0,128):
+        ## Method to define the bad channels:   
+        ### (Channel_Mean == -1) 
+        if ((MeanValue[iP] == -1)):   
+            gg_M.write(str(iP)+'\n')
+            MaskValue.append(1) 
+        else: 
+            test_Y_00.append(MeanValue[iP])
+            MaskValue.append(0) 
+    test_M_00 = 0.
+    test_S_00 = 0.
+    test_C_00 = len(test_Y_00)
+    for iP in range(0,test_C_00):
+        test_S_00 = test_S_00 + test_Y_00[iP]*test_Y_00[iP]
+        test_M_00 = test_M_00 + test_Y_00[iP]
+    Mean_00   = test_M_00/test_C_00
+    RMS_00    = TMath.Sqrt(test_S_00/test_C_00 - TMath.Power(Mean_00,2))
+    #print "Mean_00= "+str(Mean_00)+"  RMS_00= "+str(RMS_00)
+
     test_Y_25 = []
     for iP in range(0,128):
         ## Method to define the bad channels:   
-        ### (Channel_Mean > Mean*1.25) or ( Mean == 0) 
-        if ((MeanValue[iP] > M_Mean*1.25) or (MeanValue[iP] == 0)):   
+        ### (Channel_Mean > Mean*1.25) 
+        if (MeanValue[iP] > Mean_00*1.25):   
             gg_M.write(str(iP)+'\n')
-            MaskValue.append(1) 
-        elif (MeanValue[iP] < M_Mean*0.75):   
-            MaskValue.append(0) 
+            MaskValue[iP] = 1 
+        elif (MeanValue[iP] < Mean_00*0.75): 1  
         else: 
             test_Y_25.append(MeanValue[iP])
-            MaskValue.append(0) 
         g_25.write('%d\t%d\t%d\n'%(int(iP),int(TrimValue[iP]),int(MaskValue[iP])))
     test_M_25 = 0.
     test_S_25 = 0.
@@ -97,11 +115,9 @@ for iPos in range(24):
         if (MeanValue[iP]> Mean_25*1.15):   
             gg_M.write(str(iP)+'\n')
             MaskValue[iP] = 1 
-        elif (MeanValue[iP] < Mean_25*0.85):   
-            MaskValue[iP] = 0 
+        elif (MeanValue[iP] < Mean_25*0.85): 1  
         else: 
             test_Y_15.append(MeanValue[iP])
-            MaskValue[iP] = 0 
         g_15.write('%d\t%d\t%d\n'%(int(iP),int(TrimValue[iP]),int(MaskValue[iP])))
     test_M_15 = 0.
     test_S_15 = 0.
@@ -120,11 +136,9 @@ for iPos in range(24):
         if (MeanValue[iP] > Mean_15*1.10):   
             gg_M.write(str(iP)+'\n')
             MaskValue[iP] = 1 
-        elif (MeanValue[iP] < Mean_15*0.90):   
-            MaskValue[iP] = 0 
+        elif (MeanValue[iP] < Mean_15*0.90): 1  
         else: 
             test_Y_10.append(MeanValue[iP])
-            MaskValue[iP] = 0 
         g_10.write('%d\t%d\t%d\n'%(int(iP),int(TrimValue[iP]),int(MaskValue[iP])))
     test_M_10 = 0.
     test_S_10 = 0.
@@ -136,14 +150,14 @@ for iPos in range(24):
     RMS_10    = TMath.Sqrt(test_S_10/test_C_10 - TMath.Power(Mean_10,2))
     #print "Mean_10= "+str(Mean_10)+"  RMS_10= "+str(RMS_10)
 
-    Line_p25 = TLine(0,M_Mean*1.25,127,M_Mean*1.25)
+    Line_p25 = TLine(0,Mean_00*1.25,127,Mean_00*1.25)
     Line_p25.SetLineColor(2)
     Line_p25.Draw("SAME")
-    Line_m25 = TLine(0,M_Mean*0.75,127,M_Mean*0.75)
+    Line_m25 = TLine(0,Mean_00*0.75,127,Mean_00*0.75)
     Line_m25.SetLineColor(2)
     Line_m25.SetLineStyle(2)
     Line_m25.Draw("SAME")
-    legend.AddEntry(Line_p25, "25% cut0","L")
+    legend.AddEntry(Line_p25, "+25% cut0","L")
     Line_p15 = TLine(0,Mean_25*1.15,127,Mean_25*1.15)
     Line_p15.SetLineColor(6)
     Line_p15.Draw("SAME")
@@ -151,7 +165,7 @@ for iPos in range(24):
     Line_m15.SetLineColor(6)
     Line_m15.SetLineStyle(2)
     Line_m15.Draw("SAME")
-    legend.AddEntry(Line_p15, "15% cut1","L")
+    legend.AddEntry(Line_p15, "+15% cut1","L")
     Line_p10 = TLine(0,Mean_15*1.10,127,Mean_15*1.10)
     Line_p10.SetLineColor(3)
     Line_p10.Draw("SAME")
@@ -159,7 +173,7 @@ for iPos in range(24):
     Line_m10.SetLineColor(3)
     Line_m10.SetLineStyle(2)
     Line_m10.Draw("SAME")
-    legend.AddEntry(Line_p10, "10% cut2","L")
+    legend.AddEntry(Line_p10, "+10% cut2","L")
 
     legend.Draw('SAME')
     Canvas.Print('%s_Mean_cut_%s.pdf'%(pos[iPos],port[iPos]))
@@ -167,29 +181,83 @@ for iPos in range(24):
     Canvas.Close()
 
 ## Read S-curve sigma Values
-MaskValue_S = 0
 gDirectory.cd('../SCurvesSigma')
 gg_S=open("All_Bad_Channels_to_Mask_by_SIGMA",'w')
 for iPos in range(24):
     if port[iPos] is 'False':
         continue
+    Canvas = TCanvas("Canvas", "Canvas")
+    legend = TLegend(0.72, 0.72, 0.89, 0.89)
     VFAT2s_H = gDirectory.Get('%s_ID_%s_coverfHist'%(pos[iPos], port[iPos]))
     VFAT2s_S = gDirectory.Get('%s_ID_%s_coverfbychan'%(pos[iPos], port[iPos]))
+    VFAT2s_H.SetStats(kFALSE)
+    VFAT2s_H.Draw('H SAME')
+    Line_p0 = TLine(0,0,0,VFAT2s_H.GetMaximum())
+    Line_p0.SetLineColor(4)
+    Line_p0.Draw("SAME")
+    legend.AddEntry(Line_p0, "cut if sigma = -1","L")
+
     CovMean  = VFAT2s_H.GetMean()
     CovSigma = VFAT2s_H.GetStdDev()
     sigmaY   = VFAT2s_S.GetY()
     TrimValue = TrimFiles[iPos].GetY()
-    g_S=open("Mask_TRIM_DAC_value_by_SIGMA_%s_ID_%s"%(pos[iPos], port[iPos]),'w')
     gg_S.write("chipID_"+port[iPos]+'\n')
+    #print pos[iPos]+" : \nMean    = "+str(CovMean)+" StdDev= "+str(CovSigma)
+    MaskValue_S = []
+    test_Y_00 = []
     for iP in range(0,128):
         ## Method to define the bad channels:   
-        ### (sigma > CovMean+2.5*CovSigma) or ( sigma == 0) 
-        if ( sigmaY[iP] > (CovMean+2.5*CovSigma) ) or ( sigmaY[iP]==0  ): 
+        ### (Channel_Sigma == -1) 
+        if (sigmaY[iP] == -1):   
             gg_S.write(str(iP)+'\n')
-            MaskValue_S = 1 
+            MaskValue_S.append(1) 
         else: 
-            MaskValue_S = 0 
-        g_S.write('%d\t%d\t%d\n'%(int(iP),int(TrimValue[iP]),int(MaskValue_S)))
+            test_Y_00.append(sigmaY[iP])
+            MaskValue_S.append(0) 
+    test_M_00 = 0.
+    test_S_00 = 0.
+    test_C_00 = len(test_Y_00)
+    for iP in range(0,test_C_00):
+        test_S_00 = test_S_00 + test_Y_00[iP]*test_Y_00[iP]
+        test_M_00 = test_M_00 + test_Y_00[iP]
+    Mean_00   = test_M_00/test_C_00
+    RMS_00    = TMath.Sqrt(test_S_00/test_C_00 - TMath.Power(Mean_00,2))
+    #print "Mean_00 = "+str(Mean_00)+" RMS_00= "+str(RMS_00)
+
+    if (RMS_00 > 1.):
+        test_Y_25 = []
+        for iP in range(0,128):
+            ## Method to define the bad channels:  
+            ### when RMS > 1.0: 
+            ### (Channel_Sigma > rest_Mean+2.5*rest_Sigma) 
+            if ( sigmaY[iP] > (Mean_00+2.5*RMS_00) ): 
+                gg_S.write(str(iP)+'\n')
+                MaskValue_S[iP] = 1
+            elif (sigmaY[iP] == -1): 1 
+            else: 
+                test_Y_25.append(sigmaY[iP])
+        test_M_25 = 0.
+        test_S_25 = 0.
+        test_C_25 = len(test_Y_25)
+        for iP in range(0,test_C_25):
+            test_S_25 = test_S_25 + test_Y_25[iP]*test_Y_25[iP]
+            test_M_25 = test_M_25 + test_Y_25[iP]
+        Mean_25   = test_M_25/test_C_25
+        RMS_25    = TMath.Sqrt(test_S_25/test_C_25 - TMath.Power(Mean_25,2))
+        #print "Mean_25 = "+str(Mean_25)+" RMS_25= "+str(RMS_25)
+        Line_p25 = TLine(Mean_00+2.5*RMS_00,0,Mean_00+2.5*RMS_00,VFAT2s_H.GetMaximum())
+        Line_p25.SetLineColor(2)
+        Line_p25.Draw("SAME")
+        legend.AddEntry(Line_p25, "+2.5#sigma cut ","L")
+        pass
+
+    g_S=open("Mask_TRIM_DAC_value_by_SIGMA_%s_ID_%s"%(pos[iPos], port[iPos]),'w')
+    for iP in range(0,128):
+        g_S.write('%d\t%d\t%d\n'%(int(iP),int(TrimValue[iP]),int(MaskValue_S[iP])))
+
+    legend.Draw('SAME')
+    Canvas.Print('%s_Sigma_cut_%s.pdf'%(pos[iPos],port[iPos]))
+    Canvas.Close()
 
 file_Read_A.Close()
 
