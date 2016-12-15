@@ -76,19 +76,6 @@ MAX_TRIM_IT = 20
 TotVCal = {}
 VCal_ref  = {}
 
-for port in testSuite.presentVFAT2sSingle:
-    TotVCal[str(port)+"0"] = []
-    TotVCal[str(port)+"16"] = []
-    TotVCal[str(port)+"31"] = []
-    TotFoundVCal = []
-
-    VCal_ref[str(port)+"0"]   = 0
-    VCal_ref[str(port)+"31"]  = 0
-    VCal_ref[str(port)+"avg"] = 0
-
-
-pass
-
 
 
 print "------------------------------------------------------"
@@ -171,6 +158,17 @@ configureLocalT1(testSuite.glib, options.gtx, 1, 0, 40, 200, 0, options.debug)
 startLocalT1(testSuite.glib, options.gtx)
     #### With TRIM DAC to 0
 for channel in range(CHAN_MIN, CHAN_MAX):
+    for port in testSuite.presentVFAT2sSingle:
+        TotVCal[str(port)+"0"] = []
+        TotVCal[str(port)+"16"] = []
+        TotVCal[str(port)+"31"] = []
+        TotFoundVCal = []
+        
+        VCal_ref[str(port)+"0"]   = 0
+        VCal_ref[str(port)+"31"]  = 0
+        VCal_ref[str(port)+"avg"] = 0
+        pass
+
     if ((options.debug) and (channel == 1)):
         break
     for trim in [0,16,31]:
@@ -227,15 +225,12 @@ for channel in range(CHAN_MIN, CHAN_MAX):
             pass
         writeAllVFATs(testSuite.glib, options.gtx, "VFATChannels.ChanReg%d"%(channel+1), 0)
         pass
-    pass
-print "------Second Debug ----" + str(channel)
     ################## Adjust the trim for each channel ######################
     #    if options.doQC3:
     #        continue
-print
-print "------------------------ TrimDAC routine ------------------------"
-print
-for channel in range(CHAN_MIN, CHAN_MAX):
+    print
+    print "------------------------ TrimDAC routine ------------------------"
+    print
 #    if options.debug:
 #        for trim in [0,16,31]:
 #            print "TotVCal[%d](length = %d) = %s"%(trim,
@@ -246,8 +241,6 @@ for channel in range(CHAN_MIN, CHAN_MAX):
     if ((options.debug) and (channel == 1)):
         break
     for n in testSuite.presentVFAT2sSingle:
-        if ((options.debug) and (n == 1)):
-            break
         h=open("%s_VCal_VFAT2_%d_ID_0x%04x"%(str(Date),n,testSuite.chipIDs[n]&0xffff),'a')
         try:
             VCal_ref[str(n)+"0"] = sum(TotVCal[str(n)+"0"])/len(TotVCal[str(n)+"0"])
@@ -280,8 +273,8 @@ for channel in range(CHAN_MIN, CHAN_MAX):
         SCurve_Ultra_Results = getUltraScanResults(testSuite.glib, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
         bool_it = True
         for n in testSuite.presentVFAT2sSingle:
-            print "On Chip %d"%n
             if not (foundGood[n]):
+                print "On Chip %d"%n
                 writeVFAT(testSuite.glib, options.gtx, n, "VFATChannels.ChanReg%d"%(channel+1), 64+trimDAC[n])
                 f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'a')
                 g = open("%s_TRIM_DAC_value_VFAT_%d_ID_0x%04x"%(str(Date),n,testSuite.chipIDs[n]&0xffff),'a')
@@ -312,16 +305,16 @@ for channel in range(CHAN_MIN, CHAN_MAX):
                     TotFoundVCal.append(foundVCal)
                     f.write("S_CURVE_"+str(channel)+"\n")
                     foundGood[n] = True
+                    h.write(str(TotFoundVCal)+"\n")
                     for d in data_trim:
                         f.write(str((d & 0xff000000) >> 24)+"\n")
                         f.write(str((d & 0xffffff)/N_EVENTS_SCURVE)+"\n")
                         pass
                     #break
                     pass
+                h.close()
                 pass
             print TotFoundVCal
-            h.write(str(TotFoundVCal)+"\n")
-            h.close()
             g.close()
             f.close()
             bool_it = bool_it & foundGood[n]
@@ -331,50 +324,37 @@ for channel in range(CHAN_MIN, CHAN_MAX):
     #    VCalList = []
     #    minVcal = 0
     pass
-pass
 stopLocalT1(testSuite.glib, options.gtx)
     ################# Set all the Trim_DAC to the right value #################
-for port in presentVFAT2Single:
+for port in testSuite.presentVFAT2sSingle:
     g=open("%s_TRIM_DAC_value_VFAT_%d_ID_0x%04x"%(str(Date),port,testSuite.chipIDs[port]&0xffff),'r')
         #g=open(str(Date)+"_TRIM_DAC_value_VFAT_"+str(port)+"_ID_"+ str(testSuite.chipIDs[port]&0xff),'r')
     for channel in range(CHAN_MIN, CHAN_MAX):
         if options.debug:
-            if channel > 10:
+            if channel > 0:
                 continue
             pass
-        regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
         trimDAC = (g.readline()).rstrip('\n')
         print trimDAC
         regValue = int(trimDAC)
-        glib.set(regName, regValue)
+        writeVFAT(testSuite.glib, options.gtx, port, "VFATChannels.ChanReg%d"%(channel+1), regValue)
         pass
     g.close()
     pass
-sys.exit()
     ########################## Final threshold by VFAT2 ######################
     #        f.write("second_threshold\n")
-glib.set('ultra_reset', 1)
-glib.set('ultra_mode', 0)
-glib.set('ultra_min', 0)
-glib.set('ultra_max', 255)
-glib.set('ultra_step', 1)
-glib.set('ultra_n', N_EVENTS)
-glib.set('ultra_toggle', 1)
-while (glib.get("ultra_status") != 0): r = 1
+writeAllVFATs(testSuite.glib, options.gtx, "Latency", 37)
+configureScanModule(testSuite.glib, options.gtx, 0, 0, scanmin = THRESH_MIN, scanmax = THRESH_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
+printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
+startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
+UltraResults = getUltraScanResults(testSuite.glib, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
 for n in range(0, 24):
     f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'a')
     f.write("second_threshold\n")
-    data = glib.fifoRead('ultra_data'+str(n), 255)
+    data = UltraResults[n]
     for d in data:
         f.write(str((d & 0xff000000) >> 24)+"\n")
         f.write(str(100*(d & 0xffffff)/N_EVENTS)+"\n")
         pass
     f.close()
     pass
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print s.getvalue()
-
