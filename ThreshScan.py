@@ -29,6 +29,8 @@ if __name__ == "__main__":
                       help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
     parser.add_option("--writeout", action="store_true", dest="writeout",
                       help="Write the data to disk when testing the rate", metavar="writeout")
+    parser.add_option("-d", "--debug", action="store_true", dest="debug",
+                      help="Write the data to disk when testing the rate", metavar="debug")
 
     parser.add_option("--doLatency", action="store_true", dest="doLatency",
                       metavar="doLatency",
@@ -89,46 +91,55 @@ if __name__ == "__main__":
     sys.stdout.flush()
     ####################################################
 
-    testsToRun = "A,B,C,D,E,F,G,H"
+    testsToRun = "E"
 
     print "Running %s on AMC%02d  OH%02d"%(testsToRun,options.slot,options.gtx)
 
     testSuite = GEMDAQTestSuite(slot=options.slot,
                                 gtx=options.gtx,
                                 tests=testsToRun,
-                                test_params=test_params)#,
-                                #debug=options.debug)
+                                test_params=test_params,
+                                debug=options.debug)
 
     testSuite.runSelectedTests()
-
+    print testSuite.presentVFAT2sSingle
     for vfat in testSuite.presentVFAT2sSingle:
+        print "Running threshold scan on VFAT %d"%(vfat)
+        setRunMode(testSuite.glib,options.gtx,vfat,enable=True,debug=options.debug)
         sCurveTests = VFATSCurveTools(glib=testSuite.glib,
-                                      slot=testSuite.slot,
-                                      gtx=testSuite.gtx,
+                                      slot=vfat,
+                                      gtx=options.gtx,
                                       scan_params=scan_params,
-                                      doLatency=options.doLatency)#,
-                                      #debug=options.debug
+                                      doLatency=options.doLatency,
+                                      debug=options.debug)
         
-        data_threshold = sCurveTests.scanThresholdByVFAT(vfat)
-#        print "Length of returned data_threshold = %d"%(len(data_threshold))
+        data_threshold = sCurveTests.scanThresholdByVFAT(vfat,debug=options.debug)
+        setRunMode(testSuite.glib,options.gtx,vfat,enable=False,debug=options.debug)
+        if options.debug:
+            print "Length of returned data_threshold = %d"%(len(data_threshold))
+            pass
         threshold = 0
         noise = 100*(data_threshold[0] & 0xffffff)/(1.*sCurveTests.N_EVENTS_THRESH)
-#        print "%d = %3.4f"%(((data_threshold[0] & 0xff000000) >> 24), noise)
+        if options.debug:
+            print "%d = %3.4f"%(((data_threshold[0] & 0xff000000) >> 24), noise)
+            pass
 
         for d in range (1,len(data_threshold)-1):
             noise     = 100*(data_threshold[d  ] & 0xffffff)/(1.*sCurveTests.N_EVENTS_THRESH)
             lastnoise = 100*(data_threshold[d-1] & 0xffffff)/(1.*sCurveTests.N_EVENTS_THRESH)
             nextnoise = 100*(data_threshold[d+1] & 0xffffff)/(1.*sCurveTests.N_EVENTS_THRESH)
 
-            passAbs     = (noise) < sCurveTests.THRESH_ABS
+            passAbs     = (noise) <= sCurveTests.THRESH_ABS
             passLastRel = (lastnoise - noise) < sCurveTests.THRESH_REL
             passNextRel = abs(noise - nextnoise) < sCurveTests.THRESH_REL
 
- #           print "%d = %3.4f"%(((data_threshold[d] & 0xff000000) >> 24), noise)
+            if options.debug:
+                print "%d = %3.4f"%(((data_threshold[d] & 0xff000000) >> 24), noise)
+                pass
             if passAbs and passLastRel and passNextRel:
                 # why is the threshold set to the previous value?                                                                                                        
                 threshold = (data_threshold[d] >> 24 )
-#                setVFATThreshold(testSuite.glib,testSuite.gtx,vfat,vt1=(threshold),vt2=0)
+                # setVFATThreshold(testSuite.glib,testSuite.gtx,vfat,vt1=(threshold),vt2=0)
                 print "Threshold set to: %d"%(threshold)
                 break
             pass

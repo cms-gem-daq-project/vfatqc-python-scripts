@@ -111,7 +111,7 @@ for port in testSuite.presentVFAT2sSingle:
     g.close()
     pass
     ################## Threshold Scan For All VFAT2 #########################
-
+biasAllVFATs(testSuite.glib, options.gtx, 0, enable = True, debug = options.debug) #Not sure this should be set
 configureScanModule(testSuite.glib, options.gtx, 0, 0, scanmin = THRESH_MIN, scanmax = THRESH_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
 printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
 startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
