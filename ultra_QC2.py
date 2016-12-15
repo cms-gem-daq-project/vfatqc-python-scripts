@@ -32,7 +32,7 @@ parser.add_option("--ntrk", type="int", dest="ntrk",
                   help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
 parser.add_option("--writeout", action="store_true", dest="writeout",
                   help="Write the data to disk when testing the rate", metavar="writeout")
-parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E,F,G,H,I,J",
+parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E",
                   help="Tests to run, default is all", metavar="tests")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
@@ -166,16 +166,17 @@ for n in testSuite.presentVFAT2sSingle:
     ################## S-curve by channel ######################
 
 #enable triggers
-#startLocalT1(testSuite.glib, options.gtx)
+configureLocalT1(testSuite.glib, options.gtx, 1, 0, 40, 200, 0, options.debug)
+startLocalT1(testSuite.glib, options.gtx)
     #### With TRIM DAC to 0
 for channel in range(CHAN_MIN, CHAN_MAX):
     for trim in [0,16,31]:
-        broadcastWrite(testSuite.glib, options.gtx, "ChannelReg"+str(channel), 64+trim)
+        writeAllVFATs(testSuite.glib, options.gtx, "VFATChannels.ChanReg%d"%(channel+1), 64+trim)
         configureScanModule(testSuite.glib, options.gtx, 3, 0, channel = channel, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS_SCURVE), useUltra = True, debug = options.debug)
         printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
         startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
         SCurve_Ultra_Results = getUltraScanResults(testSuite.glib, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
-           
+
         for n in testSuite.presentVFAT2sSingle:
             m = open("%s_SCurve_by_channel_VFAT2_%d_ID_0x%04x"%(str(Date),port,testSuite.chipIDs[n]&0xffff),'a')
             print "---------------- S-Curve data trimDAC %2d --------------------"%(trim)
@@ -221,6 +222,7 @@ for channel in range(CHAN_MIN, CHAN_MAX):
                 pass
             m.close()
             pass
+        writeAllVFATs(testSuite.glib, options.gtx, "VFATChannels.ChanReg%d"%(channel+1), trim)
         pass
     pass
 print "------Second Debug ----" + str(channel)
