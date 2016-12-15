@@ -34,14 +34,14 @@ parser.add_option("-d", "--debug", action="store_true", dest="debug",
 
 (options, args) = parser.parse_args()
 
-myF = TFile('SCurveData.root','recreate')
-myT = TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
+myF = TFile('ThresholdData.root','recreate')
+myT = TTree('thrTree','Tree Holding CMS GEM SCurve Data')
 
 Nev = array( 'i', [ 0 ] )
 Nev[0] = 1000
 myT.Branch( 'Nev', Nev, 'Nev/I' )
-vcal = array( 'i', [ 0 ] )
-myT.Branch( 'vcal', vcal, 'vcal/I' )
+vth = array( 'i', [ 0 ] )
+myT.Branch( 'vth', vth, 'vth/I' )
 Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
 vfatN = array( 'i', [ 0 ] )
@@ -69,8 +69,8 @@ testSuite = GEMDAQTestSuite(slot=options.slot,
 testSuite.runSelectedTests()
 testSuite.report()
 
-SCURVE_MIN = 0
-SCURVE_MAX = 254
+THRESH_MIN = 0
+THRESH_MAX = 254
 
 N_EVENTS = Nev[0]
 CHAN_MIN = 0
@@ -86,23 +86,17 @@ writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0x37, mask)
 for scCH in range(CHAN_MIN,CHAN_MAX):
     vfatCH[0] = scCH
     print "Channel #"+str(scCH)
-    for vfat in testSuite.presentVFAT2sSingle:
-        trimVal = readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1))
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal+64)
-    configureScanModule(testSuite.glib, options.gtx, 3, 0, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
+    configureScanModule(testSuite.glib, options.gtx, 1, 0, scanmin = THRESH_MIN, scanmax = THRESH_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
     printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
     startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
-    scanData = getUltraScanResults(testSuite.glib, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
+    scanData = getUltraScanResults(testSuite.glib, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
     for i in range(0,24):
         vfatN[0] = i
         dataNow = scanData[i]
-        for VC in range(SCURVE_MIN,SCURVE_MAX+1):
-            vcal[0] = int((dataNow[VC] & 0xff000000) >> 24)
+        for VC in range(THRESH_MIN,THRESH_MAX+1):
+            vth[0] = int((dataNow[VC] & 0xff000000) >> 24)
             Nhits[0] = int(dataNow[VC] & 0xffffff)
             myT.Fill()
-    for vfat in testSuite.presentVFAT2sSingle:
-        trimVal = readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1))
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal-64)
 
 stopLocalT1(testSuite.glib, options.gtx)
 myF.cd()
