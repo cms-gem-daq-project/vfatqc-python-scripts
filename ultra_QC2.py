@@ -159,14 +159,15 @@ startLocalT1(testSuite.glib, options.gtx)
     #### With TRIM DAC to 0
 for channel in range(CHAN_MIN, CHAN_MAX):
     for port in testSuite.presentVFAT2sSingle:
-        TotVCal[str(port)+"0"] = []
-        TotVCal[str(port)+"16"] = []
-        TotVCal[str(port)+"31"] = []
-        TotFoundVCal = []
-        
-        VCal_ref[str(port)+"0"]   = 0
-        VCal_ref[str(port)+"31"]  = 0
-        VCal_ref[str(port)+"avg"] = 0
+        TotVCal[str(port)+",0"] = []
+        TotVCal[str(port)+",16"] = []
+        TotVCal[str(port)+",31"] = []
+        TotFoundVCal = [] * 24
+        TotFoundVCal.append([])
+
+        VCal_ref[str(port)+",0"]   = 0
+        VCal_ref[str(port)+",31"]  = 0
+        VCal_ref[str(port)+",avg"] = 0
         pass
 
     if ((options.debug) and (channel == 1)):
@@ -204,7 +205,7 @@ for channel in range(CHAN_MIN, CHAN_MAX):
                     if (Eff >= 0.48 and not passed):
                         if not passed:
                             print "%d => %3.4f"%(VCal,Eff)
-                            TotVCal[str(n)+"%s"%(trim)].append(VCal)
+                            TotVCal[str(n)+",%s"%(trim)].append(VCal)
                             pass
                         passed = True
                         if trim in [0,31]:
@@ -225,9 +226,11 @@ for channel in range(CHAN_MIN, CHAN_MAX):
             pass
         writeAllVFATs(testSuite.glib, options.gtx, "VFATChannels.ChanReg%d"%(channel+1), 0)
         pass
+    pass
     ################## Adjust the trim for each channel ######################
     #    if options.doQC3:
     #        continue
+for channel in range(CHAN_MIN, CHAN_MAX):
     print
     print "------------------------ TrimDAC routine ------------------------"
     print
@@ -243,14 +246,18 @@ for channel in range(CHAN_MIN, CHAN_MAX):
     for n in testSuite.presentVFAT2sSingle:
         h=open("%s_VCal_VFAT2_%d_ID_0x%04x"%(str(Date),n,testSuite.chipIDs[n]&0xffff),'a')
         try:
-            VCal_ref[str(n)+"0"] = sum(TotVCal[str(n)+"0"])/len(TotVCal[str(n)+"0"])
-            h.write(str(TotVCal[str(n)+"0"])+"\n")
-            VCal_ref[str(n)+"31"] = sum(TotVCal[str(n)+"31"])/len(TotVCal[str(n)+"31"])
-            h.write(str(TotVCal[str(n)+"31"])+"\n")
-            VCal_ref[str(n)+"avg"] = (VCal_ref[str(n)+"0"] + VCal_ref[str(n)+"31"])/2
-            print "VCal_ref0", VCal_ref[str(n)+"0"]
-            print "VCal_ref31", VCal_ref[str(n)+"31"]
+            VCal_ref[str(n)+",0"] = sum(TotVCal[str(n)+",0"])/len(TotVCal[str(n)+",0"])
+            h.write(str(TotVCal[str(n)+",0"])+"\n")
+            VCal_ref[str(n)+",31"] = sum(TotVCal[str(n)+",31"])/len(TotVCal[str(n)+",31"])
+            h.write(str(TotVCal[str(n)+",31"])+"\n")
+            VCal_ref[str(n)+",avg"] = (VCal_ref[str(n)+",0"] + VCal_ref[str(n)+",31"])/2
+            print "VCal_ref0", VCal_ref[str(n)+",0"]
+            print "VCal_ref31", VCal_ref[str(n)+",31"]
             print VCal_ref
+#Applying higher trims lowers the threshold
+#If one channel has a very high threshold, and needs more than the max trim to bring it down to the reference VCal, then needs to increase trim size with Control Reg 3 (default 0)
+#if the max of trim 31's is a VCal 
+
         except:
             ex = sys.exc_info()[0]
             print "Caught exception: %s"%(ex)
@@ -302,10 +309,10 @@ for channel in range(CHAN_MIN, CHAN_MAX):
                     TRIM_IT[n] +=1
                 else:
                     g.write(str(trimDAC[n])+"\n")
-                    TotFoundVCal.append(foundVCal)
+                    #TotFoundVCal[n].append(foundVCal)
                     f.write("S_CURVE_"+str(channel)+"\n")
                     foundGood[n] = True
-                    h.write(str(TotFoundVCal)+"\n")
+                    #h.write(str(TotFoundVCal)+"\n")
                     for d in data_trim:
                         f.write(str((d & 0xff000000) >> 24)+"\n")
                         f.write(str((d & 0xffffff)/N_EVENTS_SCURVE)+"\n")
@@ -314,7 +321,7 @@ for channel in range(CHAN_MIN, CHAN_MAX):
                     pass
                 h.close()
                 pass
-            print TotFoundVCal
+            #print TotFoundVCal
             g.close()
             f.close()
             bool_it = bool_it & foundGood[n]

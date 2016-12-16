@@ -15,6 +15,10 @@ parser.add_option("-t", "--thresh", action="store_true", dest= "do_thresh",
                   help="Do a threshold scan before/after setting trim", metavar="do_thresh")
 parser.add_option("-d", "--debug", action="store_true", dest= "debug",
                   help="Debugging mode", metavar="debug")
+parser.add_option("-m", "--mask", action="store_true", dest= "do_mask",
+                  help="Mask Noisy Channels From File", metavar="do_mask")
+parser.add_option("-b", "--bias", action="store_true", dest= "bias_all",
+                  help="Leave Chips Biased at End", metavar="bias_all")
 
 parser.add_option("--save", action="store_true", dest= "save",
                   help="Save Threshold Scan", metavar="save")
@@ -40,22 +44,33 @@ startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
 Date = startTime
 print startTime
 
+
 trimfilelist = options.trimfilelist
 
 testSuite = GEMDAQTestSuite(slot=options.slot,gtx=options.gtx,debug=options.debug)
 
 testSuite.VFAT2DetectionTest()
 
+if(options.bias_all):
+    biasAllVFATs(testSuite.glib, options.gtx, 0, enable = True, debug = options.debug)
+    writeAllVFATs(testSuite.glib, options.gtx, "Latency", 37)
+    pass
+
+
 if options.debug:
     print testSuite.chipIDs
     pass
-try:
-    trimDACfileList = open(trimfilelist,'r')
-except:
-    print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
-    sys.exit()
 
 for port in testSuite.presentVFAT2sSingle:
+
+    try:
+        #    with open (trimfilelist) as freco:
+        trimDACfileList = open(trimfilelist,'r')
+    except:
+        print "Couldn't find " + trimfilelist + "  to specify paths to TRIM_DACS"
+        sys.exit()
+
+#for port in testSuite.presentVFAT2sSingle:
     trimDACfile = ""
     for line in trimDACfileList:
         if ("ID_0x%04x"%(testSuite.chipIDs[port]&0xffff) in line) and ("Mask_TRIM_DAC" in line):
@@ -63,6 +78,7 @@ for port in testSuite.presentVFAT2sSingle:
             pass
         pass
     if len(trimDACfile) < 2:
+        print trimDACfile
         print "Chip ID: 0x%04x"%(testSuite.chipIDs[port]&0xffff)
         trimDACfile = raw_input("> Enter Trim DAC file to read in: ")
         pass
@@ -70,20 +86,26 @@ for port in testSuite.presentVFAT2sSingle:
         continue
 
     g=open(trimDACfile,'r') #will break here if ''
-
+    print "Trying to set for VFAT %x using file %s"%(testSuite.chipIDs[port]&0xffff, trimDACfile)
     for channel in range(0, 128):
-        print "------------------- channel ", str(channel), "-------------------"
+#        print "------------------- channel ", str(channel), "-------------------"
         
         regline = (g.readline()).rstrip('\n')
-        cc = regline.split('\t')
+        cc = regline.split()
         chan_num = int(cc[0]) 
         trimDAC  = int(cc[1])
-        mask_yes = int(cc[2])
+        if (options.do_mask):
+            mask_yes = int(cc[2])
+            pass
+        else:
+            mask_yes = 0
+            pass
         setChannelRegister(testSuite.glib, options.gtx, port, channel, mask_yes, 0x0, trimDAC, debug = False)
         pass
     g.close()
+    trimDACfileList.close()
     pass
-trimDACfileList.close()
+#trimDACfileList.close()
 
 if (options.do_thresh):
     THRESH_ABS = 0.1
@@ -92,6 +114,7 @@ if (options.do_thresh):
     THRESH_MIN = 0
     N_EVENTS = 1000.00
 
+    biasAllVFATs(testSuite.glib, options.gtx, 0, enable = True, debug = options.debug)
     configureScanModule(testSuite.glib, options.gtx, 0, 0, scanmin = THRESH_MIN, scanmax = THRESH_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
     printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
     startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
