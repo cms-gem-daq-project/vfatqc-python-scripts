@@ -17,15 +17,11 @@ outF = TFile('SCurvePlots.root','recreate')
 outF.cd()
 
 canv = TCanvas('canv','canv',500*8,500*3)
-pads = {}
+canv.Divide(8,3)
 for i in range(0,24):
-    pads[i] = TPad('pad%i'%i,'pad%i'%i,(i%8)/8.0+0.1/8,(i%3)/3.0+0.1/3,1-(i%8)/8.0-0.1/8,1-(i%3)/3.0-0.1/3)
-for i in range(0,24):
-    pads[i].Draw()
-for i in range(0,24):
-    pads[i].cd()
+    canv.cd(i+1)
     vSum[i].Draw('colz')
     canv.Update()
     vSum[i].Write()
-canv.SaveAs('ThresholdSummary.png')
+canv.SaveAs('SCurveSummary.png')
 outF.Close()
