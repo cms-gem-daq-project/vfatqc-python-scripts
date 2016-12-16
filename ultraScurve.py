@@ -1,7 +1,7 @@
 #!/bin/env python
 """
 Script to take Scurve data using OH ultra scans
-By: Cameron Bravo c.bravo@cern.ch
+By: Cameron Bravo (c.bravo@cern.ch)
 """
 
 #import sys, os, random, time
@@ -77,11 +77,16 @@ CHAN_MIN = 0
 CHAN_MAX = 128
 mask = 0
 
+setTriggerSource(testSuite.glib,options.gtx,1)
 configureLocalT1(testSuite.glib, options.gtx, 1, 0, 40, 250, 0, options.debug)
 startLocalT1(testSuite.glib, options.gtx)
 
 writeAllVFATs(testSuite.glib, options.gtx, "Latency",    37, mask)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0x37, mask)
+
+for vfat in testSuite.presentVFAT2sSingle:
+    trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
+    writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal)
 
 for scCH in range(CHAN_MIN,CHAN_MAX):
     vfatCH[0] = scCH
@@ -105,6 +110,8 @@ for scCH in range(CHAN_MIN,CHAN_MAX):
         writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal-64)
 
 stopLocalT1(testSuite.glib, options.gtx)
+writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0, mask)
+
 myF.cd()
 myT.Write()
 myF.Close()
