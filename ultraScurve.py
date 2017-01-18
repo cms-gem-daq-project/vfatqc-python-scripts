@@ -83,18 +83,20 @@ startLocalT1(testSuite.glib, options.gtx)
 
 writeAllVFATs(testSuite.glib, options.gtx, "Latency",    37, mask)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0x37, mask)
+writeAllVFATs(testSuite.glib, options.gtx, "ContReg2",    48, mask)
 
 for vfat in testSuite.presentVFAT2sSingle:
-    trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
-    writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal)
+    for scCH in range(CHAN_MIN,CHAN_MAX):
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal)
 
 for scCH in range(CHAN_MIN,CHAN_MAX):
     vfatCH[0] = scCH
     print "Channel #"+str(scCH)
     for vfat in testSuite.presentVFAT2sSingle:
-        trimVal = readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1))
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
         writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal+64)
-    configureScanModule(testSuite.glib, options.gtx, 3, 0, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
+    configureScanModule(testSuite.glib, options.gtx, 3, mask, channel = scCH, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
     printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
     startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
     scanData = getUltraScanResults(testSuite.glib, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
@@ -106,8 +108,8 @@ for scCH in range(CHAN_MIN,CHAN_MAX):
             Nhits[0] = int(dataNow[VC] & 0xffffff)
             myT.Fill()
     for vfat in testSuite.presentVFAT2sSingle:
-        trimVal = readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1))
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal-64)
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal)
 
 stopLocalT1(testSuite.glib, options.gtx)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0, mask)

@@ -8,7 +8,6 @@ inF = TFile('SCurveData.root')
 vSum = {}
 for i in range(0,24):
     vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channel;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
-print vSum
 
 for event in inF.scurveTree :
     vSum[event.vfatN].Fill(event.vfatCH,event.vcal,event.Nhits)
