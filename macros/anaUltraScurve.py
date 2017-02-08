@@ -3,7 +3,7 @@ from ROOT import TFile,TTree,TH2D,TCanvas,TPad,gROOT,gStyle
 gROOT.SetBatch(True)
 gStyle.SetOptStat(0)
 
-inF = TFile('SCurveData.root')
+inF = TFile('testName.root')
 
 vSum = {}
 for i in range(0,24):

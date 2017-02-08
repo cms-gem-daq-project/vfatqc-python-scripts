@@ -29,12 +29,15 @@ parser.add_option("--writeout", action="store_true", dest="writeout",
                   help="Write the data to disk when testing the rate", metavar="writeout")
 parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E",
                   help="Tests to run, default is all", metavar="tests")
+parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
+                  help="Specify Output Filename", metavar="filename")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
 
 (options, args) = parser.parse_args()
 
-myF = TFile('SCurveData.root','recreate')
+filename = options.filename
+myF = TFile(filename,'recreate')
 myT = TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 
 Nev = array( 'i', [ 0 ] )
