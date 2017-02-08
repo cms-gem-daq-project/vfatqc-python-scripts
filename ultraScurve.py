@@ -1,7 +1,7 @@
 #!/bin/env python
 """
 Script to take Scurve data using OH ultra scans
-By: Cameron Bravo c.bravo@cern.ch
+By: Cameron Bravo (c.bravo@cern.ch)
 """
 
 #import sys, os, random, time
@@ -29,12 +29,15 @@ parser.add_option("--writeout", action="store_true", dest="writeout",
                   help="Write the data to disk when testing the rate", metavar="writeout")
 parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E",
                   help="Tests to run, default is all", metavar="tests")
+parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
+                  help="Specify Output Filename", metavar="filename")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
 
 (options, args) = parser.parse_args()
 
-myF = TFile('SCurveData.root','recreate')
+filename = options.filename
+myF = TFile(filename,'recreate')
 myT = TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 
 Nev = array( 'i', [ 0 ] )
@@ -77,19 +80,26 @@ CHAN_MIN = 0
 CHAN_MAX = 128
 mask = 0
 
+setTriggerSource(testSuite.glib,options.gtx,1)
 configureLocalT1(testSuite.glib, options.gtx, 1, 0, 40, 250, 0, options.debug)
 startLocalT1(testSuite.glib, options.gtx)
 
 writeAllVFATs(testSuite.glib, options.gtx, "Latency",    37, mask)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0x37, mask)
+writeAllVFATs(testSuite.glib, options.gtx, "ContReg2",    48, mask)
+
+for vfat in testSuite.presentVFAT2sSingle:
+    for scCH in range(CHAN_MIN,CHAN_MAX):
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal)
 
 for scCH in range(CHAN_MIN,CHAN_MAX):
     vfatCH[0] = scCH
     print "Channel #"+str(scCH)
     for vfat in testSuite.presentVFAT2sSingle:
-        trimVal = readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1))
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
         writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal+64)
-    configureScanModule(testSuite.glib, options.gtx, 3, 0, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
+    configureScanModule(testSuite.glib, options.gtx, 3, mask, channel = scCH, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
     printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
     startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
     scanData = getUltraScanResults(testSuite.glib, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
@@ -101,10 +111,12 @@ for scCH in range(CHAN_MIN,CHAN_MAX):
             Nhits[0] = int(dataNow[VC] & 0xffffff)
             myT.Fill()
     for vfat in testSuite.presentVFAT2sSingle:
-        trimVal = readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1))
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal-64)
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal)
 
 stopLocalT1(testSuite.glib, options.gtx)
+writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0, mask)
+
 myF.cd()
 myT.Write()
 myF.Close()
