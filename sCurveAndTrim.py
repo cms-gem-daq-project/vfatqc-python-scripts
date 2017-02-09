@@ -9,7 +9,8 @@ from array import array
 from GEMDAQTestSuite import *
 from vfat_functions_uhal import *
 from optparse import OptionParser
-from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle
+from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1
+import ROOT
 
 parser = OptionParser()
 
@@ -88,6 +89,7 @@ testSuite.report()
 
 #bias vfats
 biasAllVFATs(testSuite.glib,options.gtx,0x0,enable=False)
+writeAllVFATs(testSuite.glib, options.gtx, "VThreshold1", 40, 0)
 
 CHAN_MIN = 0
 CHAN_MAX = 128
@@ -102,7 +104,7 @@ for vfat in testSuite.presentVFAT2sSingle:
 
 #Scurve scan with trimdac set to 0
 filename0 = "%s/SCurveData_trimdac0_%s.root"%(options.path,startTime)
-os.system("python ultraScurve.py -s %s -g %s --tests="" -f %s"%(options.slot,options.gtx,filename0))
+os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename0))
 
 ###############
 # TRIMDAC = 31
@@ -114,11 +116,11 @@ for vfat in testSuite.presentVFAT2sSingle:
 
 #Scurve scan with trimdac set to 0
 filename31 = "%s/SCurveData_trimdac31_%s.root"%(options.path,startTime)
-os.system("python ultraScurve.py -s %s -g %s --tests="" -f %s"%(options.slot,options.gtx,filename31))
+os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename31))
 
 #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
-muFits_0[24][128] = fitScanData(filename0);
-muFits_31[24][128] = fitScanData(filename31);
+muFits_0  = fitScanData(filename0);
+muFits_31 = fitScanData(filename31);
 
 vfat0_hist_0 = TH1D("vfat0_hist_0",";Channel Threshold [DAC Units]; Number of Channels",100,0,100)
 vfat0_hist_31 = TH1D("vfat0_hist_31",";Channel Threshold [DAC Units]; Number of Channels",100,0,100)
@@ -130,8 +132,8 @@ for ch in range(CHAN_MIN,CHAN_MAX):
 c1 = TCanvas()
 c1.cd()
 
-vfat0_hist_0.SetFillColor(kOrange+1)
-vfat0_hist_31.SetFillColor(kGreen+2)
+vfat0_hist_0.SetFillColor(ROOT.kOrange+1)
+vfat0_hist_31.SetFillColor(ROOT.kGreen+2)
 vfat0_hist_0.Draw()
 vfat0_hist_31.Draw("SAME")
 
