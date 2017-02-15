@@ -69,8 +69,8 @@ CHAN_MIN = 0
 CHAN_MAX = 128
 
 
-for vthr1 in range(140,90,-5):
-    for trimRange in range(0,6):
+for vthr1 in range(125,90,-5):
+    for trimRange in range(0,5):
         #Set VThreshold1
         writeAllVFATs(testSuite.glib, options.gtx, "VThreshold1", vthr1,0)
         writeAllVFATs(testSuite.glib, options.gtx, "ContReg3", trimRange,0)
