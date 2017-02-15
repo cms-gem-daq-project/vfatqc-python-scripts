@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python2.7
 
 # -*- coding: utf-8 -*-
 """
@@ -15,30 +15,41 @@ from optparse import OptionParser
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-s", "--slot", type="int", dest="slot",
-                      help="slot in uTCA crate", metavar="slot", default=10)
+                      help="[REQUIRED] AMC slot in uTCA crate", metavar="slot")
     parser.add_option("-g", "--gtx", type="int", dest="gtx",
-                      help="GTX on the GLIB", metavar="gtx", default=0)
-
+                      help="[REQUIRED] OH link on the AMC", metavar="gtx")
+    parser.add_option("-d", "--debug", action="store_true", dest="debug",
+                      help="Run in debug mode", metavar="debug")
     parser.add_option("--nglib", type="int", dest="nglib",
-                      help="Number of register tests to perform on the glib (default is 100)", metavar="nglib", default=100)
+                      help="[OPTIONAL] Number of register tests to perform on the glib (default is 100)", metavar="nglib", default=100)
     parser.add_option("--noh", type="int", dest="noh",
-                      help="Number of register tests to perform on the OptoHybrid (default is 100)", metavar="noh", default=100)
+                      help="[OPTIONAL] Number of register tests to perform on the OptoHybrid (default is 100)", metavar="noh", default=100)
     parser.add_option("--ni2c", type="int", dest="ni2c",
-                      help="Number of I2C tests to perform on the VFAT2s (default is 100)", metavar="ni2c", default=100)
+                      help="[OPTIONAL] Number of I2C tests to perform on the VFAT2s (default is 100)", metavar="ni2c", default=100)
     parser.add_option("--ntrk", type="int", dest="ntrk",
-                      help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
+                      help="[OPTIONAL] Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
     parser.add_option("--writeout", action="store_true", dest="writeout",
-                      help="Write the data to disk when testing the rate", metavar="writeout")
-
+                      help="[OPTIONAL] Write the data to disk when testing the rate", metavar="writeout")
     parser.add_option("--doLatency", action="store_true", dest="doLatency",
                       metavar="doLatency",
                       help="[OPTIONAL] Run latency scan to determine the latency value")
-
     parser.add_option("--QC3test", action="store_true", dest="doQC3",
                       metavar="doQC3",
                       help="[OPTIONAL] Run a shortened test after covers have been applied")
 
     (options, args) = parser.parse_args()
+
+    if options.slot is None or options.slot not in range(1,13):
+        print options.slot
+        print "Must specify an AMC slot in range[1,12]"
+        exit(1)
+        pass
+
+    if options.gtx is None or options.gtx not in range(0,2):
+        print options.gtx
+        print "Must specify an OH slot in range[0,1]"
+        exit(1)
+        pass
 
     import subprocess,datetime
     startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
@@ -82,14 +93,14 @@ if __name__ == "__main__":
         chan_max=128,
         def_dac=16,
         t1_n=0,
-        t1_interval=150,
+        t1_interval=210,
         t1_delay=10
         )
 
     sys.stdout.flush()
     ####################################################
 
-    testsToRun = "A,B,C,D,E,F,G,H"
+    testsToRun = "A,B,C,D,E"
 
     print "Running %s on AMC%02d  OH%02d"%(testsToRun,options.slot,options.gtx)
 
@@ -102,11 +113,13 @@ if __name__ == "__main__":
     testSuite.runSelectedTests()
 
     for vfat in testSuite.presentVFAT2sSingle:
+        if options.debug and vfat > 0:
+            continue
         sCurveTests = VFATSCurveTools(glib=testSuite.glib,
                                       slot=testSuite.slot,
                                       gtx=testSuite.gtx,
                                       scan_params=scan_params,
-                                      doLatency=options.doLatency,
+                                      doLatency=True,
                                       debug=options.debug)
         
         sCurveTests.runScanRoutine(vfat,options.debug)
