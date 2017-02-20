@@ -68,29 +68,44 @@ writeAllVFATs(testSuite.glib, options.gtx, "VThreshold1", 100, 0)
 CHAN_MIN = 0
 CHAN_MAX = 128
 
+masks = {}
+for vfat in testSuite.presentVFAT2sSingle:
+    masks[vfat] = {}
+    for ch in range(CHAN_MIN,CHAN_MAX):
+        masks[vfat][ch] = False
+
 #Find trimRange for each VFAT
 tRanges = {}
 tRangeGood = {}
-for vfat in range(0,24):
+trimVcal = {}
+goodSup = {}
+goodInf = {}
+for vfat in testSuite.presentVFAT2sSingle:
     tRanges[vfat] = 0
     tRangeGood[vfat] = False
+    trimVcal[vfat] = 0
+    goodSup[vfat] = -99
+    goodInf[vfat] = -99
 
-for trimRange in range(0,4):
+###############
+# TRIMDAC = 0
+###############
+#Configure for initial scan
+for vfat in testSuite.presentVFAT2sSingle:
+    writeVFAT(testSuite.glib, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
+    for scCH in range(CHAN_MIN,CHAN_MAX):
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),0)
+#Scurve scan with trimdac set to 0
+filename0 = "%s/SCurveData_trimdac0_range0.root"%dirPath
+os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename0))
+muFits_0  = fitScanData(filename0)
+    
+
+#This loop determines the trimRangeDAC for each VFAT
+for trimRange in range(0,5):
     #Set Trim Ranges
-    for vfat in range(0,24)
-    writeAllVFATs(testSuite.glib, options.gtx, "ContReg3", trimRange,0)
-    ###############
-    # TRIMDAC = 0
-    ###############
-    #Setting trimdac value
     for vfat in testSuite.presentVFAT2sSingle:
-        for scCH in range(CHAN_MIN,CHAN_MAX):
-            writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),0)
-    
-    #Scurve scan with trimdac set to 0
-    filename0 = "%s/SCurveData_trimdac0_vthr%i_range%i.root"%(dirPath,vthr1,trimRange)
-    os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename0))
-    
+        writeVFAT(testSuite.glib, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
     ###############
     # TRIMDAC = 31
     ###############
@@ -99,36 +114,110 @@ for trimRange in range(0,4):
         for scCH in range(CHAN_MIN,CHAN_MAX):
             writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),31)
     
-    #Scurve scan with trimdac set to 0
-    filename31 = "%s/SCurveData_trimdac31_vthr%i_range%i.root"%(dirPath,vthr1,trimRange)
+    #Scurve scan with trimdac set to 31 (maximum trimming)
+    filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
     os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename31))
     
     #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
-    muFits_0  = fitScanData(filename0);
-    muFits_31 = fitScanData(filename31);
+    muFits_31 = fitScanData(filename31)
     
-    vfat_hist_31 = {}
-    vfat_hist_0 = {}
-    #vfat0_hist_0 = TH1D("vfat0_hist_0",";Channel Threshold [DAC Units]; Number of Channels",100,0,100)
-    for vfat in range(0,24):
-        vfat_hist_31[vfat] = TH1D("vfat%i_hist_31"%vfat,";Channel Threshold [DAC Units]; Number of Channels",125,0,250)
-        vfat_hist_0[vfat] = TH1D("vfat%i_hist_0"%vfat,";Channel Threshold [DAC Units]; Number of Channels",125,0,250)
+    sup = {}
+    supCH = {}
+    inf = {}
+    infCH = {}
+    #Check to see if the new trimRange is good
+    for vfat in testSuite.presentVFAT2sSingle:
+        if(tRangeGood[vfat]): continue
+        sup[vfat] = 999.0
+        inf[vfat] = 0.0
+        supCH[vfat] = -1
+        infCH[vfat] = -1
         for ch in range(CHAN_MIN,CHAN_MAX):
-            #vfat0_hist_0.Fill(muFits_0[0][ch])
-            vfat_hist_31[vfat].Fill(muFits_31[vfat][ch])
-            vfat_hist_0[vfat].Fill(muFits_0[vfat][ch])
+            if(masks[vfat][ch]): continue
+            if(muFits_31[0][vfat][ch] > inf[vfat]): 
+                inf[vfat] = muFits_31[0][vfat][ch]
+                infCH[vfat] = ch
+            if(muFits_0[0][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] > 0.1): 
+                sup[vfat] = muFits_0[0][vfat][ch]
+                supCH[vfat] = ch
+        print "vfat: %i"%vfat
+        print muFits_0[0][vfat]
+        print muFits_31[0][vfat]
+        print "sup: %f  inf: %f"%(sup[vfat],inf[vfat])
+        print "supCH: %f  infCH: %f"%(supCH[vfat],infCH[vfat])
+        print " "
+        if(inf[vfat] <= sup[vfat]):
+            tRangeGood[vfat] = True
+            goodSup[vfat] = sup[vfat]
+            goodInf[vfat] = inf[vfat]
+            trimVcal[vfat] = sup[vfat]
+        else:
+            tRanges[vfat] += 1
+            trimVcal[vfat] = sup[vfat]
+
+trimDACs = {}
+for vfat in testSuite.presentVFAT2sSingle:
+    trimDACs[vfat] = {}
+    for ch in range(CHAN_MIN,CHAN_MAX):
+        trimDACs[vfat][ch] = 0
+
+#This is a binary search to set each channel's trimDAC
+for i in range(0,5):
+    #First write this steps values to the VFATs
+    for vfat in testSuite.presentVFAT2sSingle:
+        for ch in range(CHAN_MIN,CHAN_MAX):
+            trimDACs[vfat][ch] += pow(2,4-i)
+            writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch+1),trimDACs[vfat][ch])
+    #Run an SCurve
+    filenameBS = "%s/SCurveData_binarySearch%i.root"%(dirPath,i)
+    os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filenameBS))
+    #Fit Scurve data
+    fitData = fitScanData(filenameBS)
+    #Now use data to determine the new trimDAC value
+    for vfat in testSuite.presentVFAT2sSingle:
+        for ch in range(CHAN_MIN,CHAN_MAX):
+            if(fitData[0][vfat][ch] < trimVcal[vfat]): trimDACs[vfat][ch] -= pow(2,4-i)
+
+#Now take a scan with trimDACs found by binary search
+for vfat in testSuite.presentVFAT2sSingle:
+    for ch in range(CHAN_MIN,CHAN_MAX):
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch+1),trimDACs[vfat][ch])
+
+filenameFinal = "%s/SCurveData_Trimmed.root"%dirPath
+os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filenameFinal))
     
-    c1 = TCanvas()
-    c1.cd()
-    
-    #vfat0_hist_0.SetFillColor(ROOT.kOrange+1)
-    #vfat0_hist_0.Draw()
-    for vfat in range(0,24):
-        vfat_hist_0[vfat].SetLineColor(ROOT.kRed+2)
-        vfat_hist_31[vfat].SetLineColor(ROOT.kGreen+2)
-        vfat_hist_0[vfat].SetLineWidth(2)
-        vfat_hist_31[vfat].SetLineWidth(2)
-        vfat_hist_0[vfat].Draw()
-        vfat_hist_31[vfat].Draw("same")
-        c1.SaveAs("%s/vfat%i_vthr%i_range%i.png"%(dirPath,vfat,vthr1,trimRange))
-    
+for vfat in testSuite.presentVFAT2sSingle:
+    print vfat
+    print tRangeGood[vfat]
+    print tRanges[vfat]
+    print goodSup[vfat]
+    print goodInf[vfat]
+    print trimVcal[vfat]
+    print " "
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
