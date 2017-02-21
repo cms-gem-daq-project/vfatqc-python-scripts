@@ -40,6 +40,8 @@ threshold = array( 'f', [ 0 ] )
 myT.Branch( 'threshold', threshold, 'threshold/F')
 noise = array( 'f', [ 0 ] )
 myT.Branch( 'noise', noise, 'noise/F')
+chi2 = array( 'f', [ 0 ] )
+myT.Branch( 'chi2', chi2, 'chi2/F')
 
 scanFits = fitScanData(filename)
 
@@ -53,6 +55,7 @@ for event in inF.scurveTree:
     trimDAC[0] = event.trimDAC
     threshold[0] = scanFits[0][event.vfatN][event.vfatCH]
     noise[0] = scanFits[1][event.vfatN][event.vfatCH]
+    chi2[0] = scanFits[2][event.vfatN][event.vfatCH]
     myT.Fill()
     pass
 

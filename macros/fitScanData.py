@@ -11,11 +11,12 @@ def fitScanData(treeFile):
     scanFits = {}
     scanFits[0] = {}
     scanFits[1] = {}
-
+    scanFits[2] = {}
     for vfat in range(0,24):
         scanHistos[vfat] = {}
         scanFits[0][vfat] = np.zeros(128)
         scanFits[1][vfat] = np.zeros(128)
+        scanFits[2][vfat] = np.zeros(128)
         for ch in range(0,128):
             scanHistos[vfat][ch] = TH1D('scurve_%i_%i_h'%(vfat,ch),'scurve_%i_%i_h'%(vfat,ch),254,0.5,254.5)
 
@@ -36,6 +37,7 @@ def fitScanData(treeFile):
                 fitStatus = fitResult.Status()
                 scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
                 scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
+                scanFits[2][vfat][ch] = fitTF1.GetChisquare()
                 fitN += 1
 
     return scanFits
