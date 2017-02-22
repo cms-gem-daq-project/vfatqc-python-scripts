@@ -134,11 +134,11 @@ for trimRange in range(0,5):
         infCH[vfat] = -1
         for ch in range(CHAN_MIN,CHAN_MAX):
             if(masks[vfat][ch]): continue
-            if(muFits_31[0][vfat][ch] > inf[vfat]): 
-                inf[vfat] = muFits_31[0][vfat][ch]
+            if(muFits_31[0][vfat][ch] - 4*muFits_31[1][vfat][ch] > inf[vfat]): 
+                inf[vfat] = muFits_31[0][vfat][ch] - 4*muFits_31[1][vfat][ch]
                 infCH[vfat] = ch
-            if(muFits_0[0][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] > 0.1): 
-                sup[vfat] = muFits_0[0][vfat][ch]
+            if(muFits_0[0][vfat][ch] - 4*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - 4*muFits_0[1][vfat][ch] > 0.1): 
+                sup[vfat] = muFits_0[0][vfat][ch] - 4*muFits_0[1][vfat][ch]
                 supCH[vfat] = ch
         print "vfat: %i"%vfat
         print muFits_0[0][vfat]
@@ -155,6 +155,7 @@ for trimRange in range(0,5):
             tRanges[vfat] += 1
             trimVcal[vfat] = sup[vfat]
 
+#Init trimDACs to all zeros
 trimDACs = {}
 for vfat in testSuite.presentVFAT2sSingle:
     trimDACs[vfat] = {}
@@ -176,7 +177,7 @@ for i in range(0,5):
     #Now use data to determine the new trimDAC value
     for vfat in testSuite.presentVFAT2sSingle:
         for ch in range(CHAN_MIN,CHAN_MAX):
-            if(fitData[0][vfat][ch] < trimVcal[vfat]): trimDACs[vfat][ch] -= pow(2,4-i)
+            if(fitData[0][vfat][ch] - 4*fitData[1][vfat][ch] < trimVcal[vfat]): trimDACs[vfat][ch] -= pow(2,4-i)
 
 #Now take a scan with trimDACs found by binary search
 for vfat in testSuite.presentVFAT2sSingle:
