@@ -27,16 +27,22 @@ def fitScanData(treeFile):
         print 'fitting vfat %i'%vfat
         for ch in range(0,128):
             fitStatus = 1
+            fitChi2 = 0
             fitN = 0
-            while(fitStatus):
+            tryN = 0
+            while(fitStatus or fitChi2 > 10000.0):
                 fitTF1.SetParameter(0,125.0)
                 fitTF1.SetParameter(1,125.0+fitN*5.0)
                 fitTF1.SetParLimits(0, 0.01, 300.0)
                 fitResult = scanHistos[vfat][ch].Fit('myERF','S')
                 fitStatus = fitResult.Status()
+                fitChi2 = fitResult.Chi2()
+                print fitChi2
                 scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
                 scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
                 fitN += 1
+                if(tryN > 25): break
+                tryN += 1
 
     return scanFits
 
