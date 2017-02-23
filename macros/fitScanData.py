@@ -12,8 +12,6 @@ def fitScanData(treeFile):
     scanFits[0] = {}
     scanFits[1] = {}
     scanFits[2] = {}
-    scanFits[3] = {}
-    scanFits[4] = {}
 
     for vfat in range(0,24):
         scanHistos[vfat] = {}
@@ -25,8 +23,6 @@ def fitScanData(treeFile):
 
     for event in inF.scurveTree :
         scanHistos[event.vfatN][event.vfatCH].Fill(event.vcal,event.Nhits)
-        scanFits[3][event.vfat][event.ch] = fitTF1.GetChisquare()
-        scanFits[4][event.vfat][event.ch] = fitTF1.GetChisquare()
 
     fitTF1 = TF1('myERF','500*TMath::Erf((x-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
     for vfat in range(0,24):
@@ -35,7 +31,6 @@ def fitScanData(treeFile):
             fitStatus = 1
             fitChi2 = 0
             fitN = 0
-            tryN = 0
             while(fitStatus or fitChi2 > 10000.0):
                 fitTF1.SetParameter(0,125.0)
                 fitTF1.SetParameter(1,125.0+fitN*5.0)
@@ -48,8 +43,7 @@ def fitScanData(treeFile):
                 scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
                 scanFits[2][vfat][ch] = fitTF1.GetChisquare()
                 fitN += 1
-                if(tryN > 25): break
-                tryN += 1
+                if(fitN > 25): break
 
     return scanFits
 
