@@ -187,15 +187,13 @@ for vfat in testSuite.presentVFAT2sSingle:
 filenameFinal = "%s/SCurveData_Trimmed.root"%dirPath
 os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filenameFinal))
     
+scanFilename = '%s/scanInfo.txt'%dirPath
+outF = open(scanFilename,'w')
+outF.write('vfat/I:tRange/I:sup/D:inf/D:trimVcal/D')
 for vfat in testSuite.presentVFAT2sSingle:
-    print vfat
-    print tRangeGood[vfat]
-    print tRanges[vfat]
-    print goodSup[vfat]
-    print goodInf[vfat]
-    print trimVcal[vfat]
-    print " "
+    outF.write('%i  %i  %f  %f  %f\n'%(vfat,tRanges[vfat],goodSup[vfat],goodInf[vfat],trimVcal[vfat]))
    
+outF.close()
 
 
 
