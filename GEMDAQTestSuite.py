@@ -5,6 +5,7 @@ sys.path.append('${GEM_PYTHON_PATH}')
 
 import uhal
 from rate_calculator import rateConverter
+from glib_system_info_uhal import *
 from glib_user_functions_uhal import *
 from optohybrid_user_functions_uhal import *
 from vfat_functions_uhal import *
@@ -39,10 +40,11 @@ class GEMDAQTestSuite:
 
     allTests = ["A","B","C","D","E","F","G","H","I","J"]
 
-    def __init__(self, slot,gtx,tests="",test_params=TEST_PARAMS(),debug=False):
+    def __init__(self, slot,gtx,shelf=1,tests="",test_params=TEST_PARAMS(),debug=False):
         """
         """
         self.slot   = slot
+        self.shelf  = shelf
         self.gtx    = gtx
 
         self.tests = tests.upper().split(',')
@@ -91,10 +93,10 @@ class GEMDAQTestSuite:
 
         self.ipaddr = '192.168.0.%d'%(uTCAslot)
 
-        self.address_table = "file://${GEM_ADDRESS_TABLE_PATH}/glib_address_table.xml"
-        self.uri = "chtcp-2.0://localhost:10203?target=%s:50001"%(self.ipaddr)
-        self.glib       = uhal.getDevice( "glib" , self.uri, self.address_table )
-        self.oh_basenode = "GLIB.OptoHybrid_%d.OptoHybrid"%(self.gtx)
+        self.oh_basenode = "GEM_AMC.OH.OH%d"%(self.gtx)
+        self.connection_file = "file://${GEM_ADDRESS_TABLE_PATH}/connections.xml"
+        self.manager         = uhal.ConnectionManager(self.connection_file)
+        self.glib            = self.manager.getDevice( "gem.shelf%02d.amc%02d"%(self.shelf,self.slot))
 
         self.presentVFAT2sSingle = []
         self.presentVFAT2sFifo   = []
@@ -120,7 +122,7 @@ class GEMDAQTestSuite:
         txtTitle("A. Testing the GLIB's presence")
         print "   Trying to read the GLIB board ID... If this test fails, the script will stop."
 
-        if (readRegister(self.glib,"GLIB.SYSTEM.BOARD_ID") != 0):
+        if (getBoardID(self.glib) != 0):
             print Passed
         else:
             print Failed
@@ -638,7 +640,7 @@ if __name__ == "__main__":
                       help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
     parser.add_option("--writeout", action="store_true", dest="writeout",
                       help="Write the data to disk when testing the rate", metavar="writeout")
-    parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E,F,G,H,I,J",
+    parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E,F",
                       help="Tests to run, default is all", metavar="tests")
 
     parser.add_option("-d", "--debug", action="store_true", dest="debug",
