@@ -29,12 +29,15 @@ parser.add_option("--writeout", action="store_true", dest="writeout",
                   help="Write the data to disk when testing the rate", metavar="writeout")
 parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E",
                   help="Tests to run, default is all", metavar="tests")
+parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
+                  help="Specify Output Filename", metavar="filename")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
 
 (options, args) = parser.parse_args()
 
-myF = TFile('SCurveData.root','recreate')
+filename = options.filename
+myF = TFile(filename,'recreate')
 myT = TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 
 Nev = array( 'i', [ 0 ] )
@@ -48,6 +51,12 @@ vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
 vfatCH = array( 'i', [ 0 ] )
 myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
+trimRange = array( 'i', [ 0 ] )
+myT.Branch( 'trimRange', trimRange, 'trimRange/I' )
+vthr = array( 'i', [ 0 ] )
+myT.Branch( 'vthr', vthr, 'vthr/I' )
+trimDAC = array( 'i', [ 0 ] )
+myT.Branch( 'trimDAC', trimDAC, 'trimDAC/I' )
 
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
@@ -81,6 +90,7 @@ setTriggerSource(testSuite.glib,options.gtx,1)
 configureLocalT1(testSuite.glib, options.gtx, 1, 0, 40, 250, 0, options.debug)
 startLocalT1(testSuite.glib, options.gtx)
 
+
 writeAllVFATs(testSuite.glib, options.gtx, "Latency",    37, mask)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0x37, mask)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg2",    48, mask)
@@ -103,6 +113,9 @@ for scCH in range(CHAN_MIN,CHAN_MAX):
     for i in range(0,24):
         vfatN[0] = i
         dataNow = scanData[i]
+        trimRange[0] = (0x7 & readVFAT(testSuite.glib,options.gtx, i,"ContReg3"))
+        trimDAC[0] = (0x1f & readVFAT(testSuite.glib,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH+1)))
+        vthr[0] = (0xff & readVFAT(testSuite.glib,options.gtx, i,"VThreshold1"))
         for VC in range(SCURVE_MIN,SCURVE_MAX+1):
             vcal[0] = int((dataNow[VC] & 0xff000000) >> 24)
             Nhits[0] = int(dataNow[VC] & 0xffffff)
@@ -117,4 +130,9 @@ writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0, mask)
 myF.cd()
 myT.Write()
 myF.Close()
+
+
+
+
+
 
