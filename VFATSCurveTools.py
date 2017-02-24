@@ -747,7 +747,7 @@ if __name__ == "__main__":
     sys.stdout.flush()
     ####################################################
 
-    testsToRun = "A,B,C,D,E,F,G,H"
+    testsToRun = "A,B,C,D,E,F"
 
     print "Running %s on AMC%02d  OH%02d"%(testsToRun,options.slot,options.gtx)
 
