@@ -1,9 +1,18 @@
+from optparse import OptionParser
 from ROOT import TFile,TTree,TH2D,TCanvas,TPad,gROOT,gStyle
+
+parser = OptionParser()
+
+parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
+                  help="Specify Output Filename", metavar="filename")
+
+(options, args) = parser.parse_args()
+filename = options.filename
 
 gROOT.SetBatch(True)
 gStyle.SetOptStat(0)
 
-inF = TFile('testName.root')
+inF = TFile(filename)
 
 vSum = {}
 for i in range(0,24):

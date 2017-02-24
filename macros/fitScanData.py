@@ -1,4 +1,5 @@
 from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1
+import numpy as np
 
 def fitScanData(treeFile):
     gROOT.SetBatch(True)
@@ -8,10 +9,13 @@ def fitScanData(treeFile):
 
     scanHistos = {}
     scanFits = {}
+    scanFits[0] = {}
+    scanFits[1] = {}
 
     for vfat in range(0,24):
         scanHistos[vfat] = {}
-        scanFits[vfat] = {}
+        scanFits[0][vfat] = np.zeros(128)
+        scanFits[1][vfat] = np.zeros(128)
         for ch in range(0,128):
             scanHistos[vfat][ch] = TH1D('scurve_%i_%i_h'%(vfat,ch),'scurve_%i_%i_h'%(vfat,ch),254,0.5,254.5)
 
@@ -23,14 +27,22 @@ def fitScanData(treeFile):
         print 'fitting vfat %i'%vfat
         for ch in range(0,128):
             fitStatus = 1
+            fitChi2 = 0
             fitN = 0
-            while(fitStatus):
-                fitTF1.SetParameter(0,5*fitN)
-                fitTF1.SetParameter(1,2.0)
+            tryN = 0
+            while(fitStatus or fitChi2 > 10000.0):
+                fitTF1.SetParameter(0,125.0)
+                fitTF1.SetParameter(1,125.0+fitN*5.0)
+                fitTF1.SetParLimits(0, 0.01, 300.0)
                 fitResult = scanHistos[vfat][ch].Fit('myERF','S')
                 fitStatus = fitResult.Status()
-                scanFits[vfat][ch] = fitTF1.GetParameter(0)
+                fitChi2 = fitResult.Chi2()
+                print fitChi2
+                scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
+                scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
                 fitN += 1
+                if(tryN > 25): break
+                tryN += 1
 
     return scanFits
 
