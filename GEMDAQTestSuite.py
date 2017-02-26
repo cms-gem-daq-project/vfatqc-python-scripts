@@ -230,6 +230,39 @@ class GEMDAQTestSuite:
         return
 
     ####################################################
+    def OptoHybridT1ControllerTest(self):
+        txtTitle("Testing the OH T1 controller")
+
+        initialSrc = getTriggerSource(self.glib,self.gtx)
+        print "  T1 Controller Status: 0x%08x"%(getLocalT1Status(self.glib,self.gtx))
+        resetLocalT1(self.glib,self.gtx)
+        setTriggerSource(self.glib,self.gtx,0x1)
+
+        # send 1000 L1As
+        print "  Testing sequential L1As"
+        sentL1AsInitial = optohybridCounters(self.glib,self.gtx)["T1"]["SENT"]["L1A"]
+        sendL1A(self.glib,self.gtx,interval=100,number=1000)
+        sleep(1)
+        sentL1As = optohybridCounters(self.glib,self.gtx)["T1"]["SENT"]["L1A"]
+        print "  L1A: %d, Expected:%d"%(sentL1As-sentL1AsInitial, 1000)
+
+        # send 1000 CalPulses+L1As
+        sentL1AsInitial      = optohybridCounters(self.glib,self.gtx)["T1"]["SENT"]["L1A"]
+        sentCalPulsesInitial = optohybridCounters(self.glib,self.gtx)["T1"]["SENT"]["CalPulse"]
+        sendL1ACalPulse(self.glib,self.gtx,delay=0x40,interval=300,number=1000)
+        sleep(1)
+        sentL1As = optohybridCounters(self.glib,self.gtx)["T1"]["SENT"]["L1A"]
+        sentCalPulses = optohybridCounters(self.glib,self.gtx)["T1"]["SENT"]["CalPulse"]
+        print "  Testing sequential CalPulse+L1As"
+        print "  L1A: %d, CalPulse: %d, Expected:%d"%(sentL1As-sentL1AsInitial, sentCalPulses-sentCalPulsesInitial, 1000)
+
+        # return to original state
+        resetLocalT1(self.glib,self.gtx)
+        setTriggerSource(self.glib,self.gtx,initialSrc)
+
+        return
+
+    ####################################################
     def VFAT2DetectionTest(self):
         txtTitle("E. Detecting the VFAT2s over I2C")
         print "   Detecting VFAT2s on the GEM by reading out their chip ID."
@@ -292,6 +325,39 @@ class GEMDAQTestSuite:
             else:
                 print Failed, "#%d received %d, expected %d"%(i, validOperations, self.test_params.I2C_TEST)
                 self.test["F"] = False
+                pass
+            pass
+
+        print
+
+        return
+
+    ####################################################
+    def VFAT2ChannelRegisterTest(self):
+        # self.test
+
+        for i in self.presentVFAT2sSingle:
+            validOperations = 0
+            for chan in range(128):
+                initialValue = (getChannelRegister(self.glib,self.gtx,i,chan)&0xff)
+                for j in range(0,self.test_params.I2C_TEST):
+                    writeData    = random.randint(0, 255)
+                    setChannelRegister(self.glib,self.gtx,i,chan,writeData)
+                    readData     = (getChannelRegister(self.glib,self.gtx,i,chan)&0xff)
+                    if (readData == writeData):
+                        validOperations += 1
+                        pass
+                    else:
+                        print "0x%02x not 0x%02x"%(readData,writeData)
+                        pass
+                    pass
+                writeVFAT(self.glib,self.gtx,i,chan,initialValue)
+                pass
+            if (validOperations == 128*self.test_params.I2C_TEST):
+                print Passed, "#%d"%(i)
+            else:
+                print Failed, "#%d valid operations: %d, expected: %d"%(i, validOperations, 128*self.test_params.I2C_TEST)
+                # self.test["F"] = False
                 pass
             pass
 
@@ -575,12 +641,14 @@ class GEMDAQTestSuite:
             pass
         if ("D" in self.tests):
             self.OptoHybridRegisterTest()
+            self.OptoHybridT1ControllerTest()
             pass
         if ("E" in self.tests):
             self.VFAT2DetectionTest()
             pass
         if ("F" in self.tests):
             self.VFAT2I2CRegisterTest()
+            self.VFAT2ChannelRegisterTest()
             pass
         if ("G" in self.tests):
             self.TrackingDataReadoutTest()
