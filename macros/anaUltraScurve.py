@@ -12,7 +12,7 @@ filename = options.filename
 gROOT.SetBatch(True)
 gStyle.SetOptStat(0)
 
-inF = TFile(filename)
+inF = TFile(filename+'.root')
 
 vSum = {}
 for i in range(0,24):
@@ -31,5 +31,5 @@ for i in range(0,24):
     vSum[i].Draw('colz')
     canv.Update()
     vSum[i].Write()
-canv.SaveAs('SCurveSummary.png')
+canv.SaveAs(filename+'.png')
 outF.Close()
