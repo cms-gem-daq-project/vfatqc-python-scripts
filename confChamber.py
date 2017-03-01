@@ -31,6 +31,8 @@ parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E",
                   help="Tests to run, default is all", metavar="tests")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
+parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData_Trimmed.root",
+                          help="Specify Output Filename", metavar="filename")
 
 (options, args) = parser.parse_args()
 
@@ -54,12 +56,36 @@ testSuite = GEMDAQTestSuite(slot=options.slot,
 testSuite.runSelectedTests()
 testSuite.report()
 
-for vfat in range(0,24):
-    with open('conf/vfat%iconf.dat'%vfat) as fconf:
-        fileLines = fconf.read().splitlines()
-    for cLine in fileLines:
-        lineParts = cLine.split()
-        writeVFAT(testSuite.glib,options.gtx,vfat,lineParts[0],int(lineParts[1]))
+filename = options.filename
+
+biasAllVFATs(testSuite.glib,options.gtx,0x0,enable=False)
+writeAllVFATs(testSuite.glib, options.gtx, "VThreshold1", 100, 0)
+#writeVFAT(testSuite.glib, options.gtx, 0, "VThreshold1", 40)
+#writeVFAT(testSuite.glib, options.gtx, 1, "VThreshold1", 25)
+#writeVFAT(testSuite.glib, options.gtx, 2, "VThreshold1", 20)
+#writeVFAT(testSuite.glib, options.gtx, 3, "VThreshold1", 16)
+#writeVFAT(testSuite.glib, options.gtx, 6, "VThreshold1", 58)
+#writeVFAT(testSuite.glib, options.gtx, 7, "VThreshold1", 60)
+#writeVFAT(testSuite.glib, options.gtx, 8, "VThreshold1", 60)
+#writeVFAT(testSuite.glib, options.gtx, 9, "VThreshold1", 20)
+#writeVFAT(testSuite.glib, options.gtx, 10, "VThreshold1", 19)
+#writeVFAT(testSuite.glib, options.gtx, 11, "VThreshold1", 26)
+#writeVFAT(testSuite.glib, options.gtx, 14, "VThreshold1", 50)
+#writeVFAT(testSuite.glib, options.gtx, 15, "VThreshold1", 63)
+#writeVFAT(testSuite.glib, options.gtx, 16, "VThreshold1", 23)
+#writeVFAT(testSuite.glib, options.gtx, 17, "VThreshold1", 17)
+#writeVFAT(testSuite.glib, options.gtx, 18, "VThreshold1", 20)
+#writeVFAT(testSuite.glib, options.gtx, 19, "VThreshold1", 43)
+#writeVFAT(testSuite.glib, options.gtx, 22, "VThreshold1", 55)
+#writeVFAT(testSuite.glib, options.gtx, 23, "VThreshold1", 62)
+
+inF = TFile(filename)
+
+for event in inF.scurveTree :
+    if event.vcal == 10 :
+        writeVFAT(testSuite.glib,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)+1),int(event.trimDAC))
+        if event.vfatCH == 10 : writeVFAT(testSuite.glib, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+
 
 print 'Chamber Configured'
 

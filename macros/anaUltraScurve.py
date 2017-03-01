@@ -18,7 +18,7 @@ outfilename = options.outfilename
 gROOT.SetBatch(True)
 #gStyle.SetOptStat(0)
 
-inF = TFile(filename)
+inF = TFile(filename+'.root')
 
 outF = TFile(outfilename, 'recreate')
 
@@ -107,7 +107,7 @@ for i in range(0,24):
     canv.Update()
     vSum[i].Write()
     pass
-canv.SaveAs('SCurveSummary.png')
+canv.SaveAs(filename+'.png')
 
 gStyle.SetOptStat(111100)
 canv_comp = TCanvas('canv','canv',500*8,500*3)
