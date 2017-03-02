@@ -8,7 +8,7 @@ for cT in chamberType:
     for vfat in range(0,24):
         for strip in range(0,128):
             channel = stripToChannel(cT,vfat,strip)
-            outF.write('%i\t%i\t%i\n'%(vfat,strip,channel))
+            outF.write('%i\t%i\t%i\n'%(vfat,strip,channel+1))
             pass
         pass
     outF.close()
