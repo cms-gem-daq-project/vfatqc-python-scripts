@@ -18,7 +18,7 @@ outfilename = options.outfilename
 gROOT.SetBatch(True)
 #gStyle.SetOptStat(0)
 
-inF = TFile(filename+'.root')
+inF = TFile(filename)
 
 outF = TFile(outfilename, 'recreate')
 
@@ -48,23 +48,16 @@ vThreshold = {}
 vChi2 = {}
 vComparison = {}
 
-def overlay_fit(VFAT, CH, data_filename, fit_filename):
-    inF = TFile(data_filename)
-    fitF = TFile(fit_filename)
+def overlay_fit(VFAT, CH):
     Scurve = TH1D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]'%(VFAT, CH),255,-0.5,254.5)
     for event in inF.scurveTree:
         if (event.vfatN == VFAT) and (event.vfatCH == CH):
             Scurve.Fill(event.vcal, event.Nhits)
             pass
         pass
-    for event in fitF.scurveFitTree:
-        print event.vfatN, event.vfatCH
-        if (event.vfatN == VFAT) and (event.vfatCH == CH):
-            print 'After if'
-            param0 = event.threshold
-            param1 = event.noise
-            pass
-        pass
+    param0 = scanFits[0][VFAT][CH]
+    param1 = scanFits[1][VFAT][CH]
+
     fitTF1 =  TF1('myERF','500*TMath::Erf((x-[0])/(TMath::Sqrt(2)*[1]))+500',1, 253)
     fitTF1.SetParameter(0, param0)
     fitTF1.SetParameter(1, param1)
