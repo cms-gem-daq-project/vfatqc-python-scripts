@@ -9,7 +9,7 @@ parser.add_option("-f", "--filename", type="string", dest="filename", default="S
                   help="Specify Input Filename", metavar="filename")
 parser.add_option("-o", "--outfilename", type="string", dest="outfilename", default="SCurveFitData.root",
                   help="Specify Output Filename", metavar="outfilename")
-parser.add_option("-d", "--drawbad", action="store_true", dest="drawbad",
+parser.add_option("-b", "--drawbad", action="store_true", dest="drawbad",
                   help="Draw fit overlays for Chi2 > 10000", metavar="drawbad")
 
 

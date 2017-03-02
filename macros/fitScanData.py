@@ -1,4 +1,4 @@
-from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1
+from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1, TRandom3
 import numpy as np
 
 def fitScanData(treeFile):
@@ -23,7 +23,9 @@ def fitScanData(treeFile):
 
     for event in inF.scurveTree :
         scanHistos[event.vfatN][event.vfatCH].Fill(event.vcal,event.Nhits)
-
+        pass
+    random = TRandom3()
+    random.SetSeed(0)
     fitTF1 = TF1('myERF','500*TMath::Erf((x-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
     for vfat in range(0,24):
         print 'fitting vfat %i'%vfat
@@ -33,25 +35,30 @@ def fitScanData(treeFile):
             fitN = 0
             fitGoodN = 0
             MinChi2Temp = 99999999
-            while(fitGoodN < 10):
-                fitTF1.SetParameter(0,125.0)
-                fitTF1.SetParameter(1,125.0+fitN*5.0)
+            stepN = 0
+            while(stepN < 100):
+                rand = random.Gaus(10, 5)
+                if (rand < 0.0 or rand > 100): continue
+                fitTF1.SetParameter(0, 2+stepN*2)
+                fitTF1.SetParameter(1,rand)
                 fitTF1.SetParLimits(0, 0.01, 300.0)
+                fitTF1.SetParLimits(1, 0.0, 100.0)
                 fitResult = scanHistos[vfat][ch].Fit('myERF','S')
                 fitStatus = fitResult.Status()
                 fitChi2 = fitResult.Chi2()
                 print fitChi2
+                Chi2Temp = fitTF1.GetChisquare()
                 if (fitStatus == 0):
-                    Chi2Temp = fitTF1.GetChisquare()
+                    stepN +=1
                     fitGoodN+=1
+#                    pass
+                    if (Chi2Temp < MinChi2Temp):
+                        scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
+                        scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
+                        scanFits[2][vfat][ch] = fitTF1.GetChisquare()
+                        MinChi2Temp = Chi2Temp
+                        pass
                     pass
-                if (Chi2Temp < MinChi2Temp):
-                    scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
-                    scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
-                    scanFits[2][vfat][ch] = fitTF1.GetChisquare()
-                    pass
-                fitN += 1
-                if(fitN > 25): break
 
     return scanFits
 
