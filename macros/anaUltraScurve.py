@@ -48,22 +48,34 @@ vThreshold = {}
 vChi2 = {}
 vComparison = {}
 
-def overlay_fit(VFAT, CH):
-    Scurve = TH2D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]; Efficiency'%(VFAT, CH),256,-0.5,255.5,100,-0.05,0.95)
+def overlay_fit(VFAT, CH, data_filename, fit_filename):
+    inF = TFile(data_filename)
+    fitF = TFile(fit_filename)
+    Scurve = TH1D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]'%(VFAT, CH),255,-0.5,254.5)
     for event in inF.scurveTree:
         if (event.vfatN == VFAT) and (event.vfatCH == CH):
-            Scurve.Fill(event.vcal, 1000 * ((event.Nhits)/(event.Nev)))
+            Scurve.Fill(event.vcal, event.Nhits)
             pass
         pass
-    param0 = scanFits[0][VFAT][CH]
-    param1 = scanFits[1][VFAT][CH]
-    fitTF1 =  TF1('myERF','500*TMath::Erf((x-%f)/(TMath::Sqrt(2)*%f))+500'%(param0, param1),1,253)
+    for event in fitF.scurveFitTree:
+        print event.vfatN, event.vfatCH
+        if (event.vfatN == VFAT) and (event.vfatCH == CH):
+            print 'After if'
+            param0 = event.threshold
+            param1 = event.noise
+            pass
+        pass
+    fitTF1 =  TF1('myERF','500*TMath::Erf((x-[0])/(TMath::Sqrt(2)*[1]))+500',1, 253)
+    fitTF1.SetParameter(0, param0)
+    fitTF1.SetParameter(1, param1)
+    print param0, param1
     canvas = TCanvas('canvas', 'canvas', 500, 500)
     Scurve.Draw()
-#    fitTF1.Draw('SAME')
+    fitTF1.Draw('SAME')
     canvas.Update()
     canvas.SaveAs('Fit_Overlay_VFAT%i_Channel%i.png'%(VFAT, CH))
-    return 
+    return
+
 
 
 for i in range(0,24):
