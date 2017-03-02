@@ -9,6 +9,8 @@ parser.add_option("-f", "--filename", type="string", dest="filename", default="S
                   help="Specify Input Filename", metavar="filename")
 parser.add_option("-o", "--outfilename", type="string", dest="outfilename", default="SCurveFitData.root",
                   help="Specify Output Filename", metavar="outfilename")
+parser.add_option("-d", "--drawbad", action="store_true", dest="drawbad",
+                  help="Draw fit overlays for Chi2 > 10000", metavar="drawbad")
 
 
 (options, args) = parser.parse_args()
@@ -94,7 +96,7 @@ for event in inF.scurveTree:
         vThreshold[event.vfatN].Fill((scanFits[0][event.vfatN][event.vfatCH]))
         vChi2[event.vfatN].Fill((scanFits[2][event.vfatN][event.vfatCH]))
         vComparison[event.vfatN].Fill(scanFits[0][event.vfatN][event.vfatCH], scanFits[1][event.vfatN][event.vfatCH])
-        if (scanFits[2][event.vfatN][event.vfatCH] > 1000):
+        if (scanFits[2][event.vfatN][event.vfatCH] > 1000) and options.drawbad:
             overlay_fit(event.vfatN, event.vfatCH)
             pass
         myT.Fill()

@@ -33,7 +33,7 @@ def fitScanData(treeFile):
             fitN = 0
             fitGoodN = 0
             MinChi2Temp = 99999999
-            while(fitGoodN < 5):
+            while(fitGoodN < 10):
                 fitTF1.SetParameter(0,125.0)
                 fitTF1.SetParameter(1,125.0+fitN*5.0)
                 fitTF1.SetParLimits(0, 0.01, 300.0)
