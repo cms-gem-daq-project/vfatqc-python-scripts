@@ -31,7 +31,9 @@ def fitScanData(treeFile):
             fitStatus = 1
             fitChi2 = 0
             fitN = 0
-            while(fitStatus or fitChi2 > 10000.0):
+            fitGoodN = 0
+            MinChi2Temp = 99999999
+            while(fitGoodN < 5):
                 fitTF1.SetParameter(0,125.0)
                 fitTF1.SetParameter(1,125.0+fitN*5.0)
                 fitTF1.SetParLimits(0, 0.01, 300.0)
@@ -39,9 +41,15 @@ def fitScanData(treeFile):
                 fitStatus = fitResult.Status()
                 fitChi2 = fitResult.Chi2()
                 print fitChi2
-                scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
-                scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
-                scanFits[2][vfat][ch] = fitTF1.GetChisquare()
+                if (fitStatus == 0):
+                    Chi2Temp = fitTF1.GetChisquare()
+                    fitGoodN+=1
+                    pass
+                if (Chi2Temp < MinChi2Temp):
+                    scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
+                    scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
+                    scanFits[2][vfat][ch] = fitTF1.GetChisquare()
+                    pass
                 fitN += 1
                 if(fitN > 25): break
 

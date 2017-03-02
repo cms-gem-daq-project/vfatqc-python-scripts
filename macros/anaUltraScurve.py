@@ -112,7 +112,7 @@ for i in range(0,24):
     canv.Update()
     vSum[i].Write()
     pass
-canv.SaveAs(filename+'.png')
+canv.SaveAs(filename[:-5]+'.png')
 
 gStyle.SetOptStat(111100)
 canv_comp = TCanvas('canv','canv',500*8,500*3)

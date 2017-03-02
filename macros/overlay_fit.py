@@ -15,9 +15,7 @@ def overlay_fit(VFAT, CH, data_filename, fit_filename):
             pass
         pass
     for event in fitF.scurveFitTree:
-        print event.vfatN, event.vfatCH
         if (event.vfatN == VFAT) and (event.vfatCH == CH):
-            print 'After if'
             param0 = event.threshold
             param1 = event.noise
             pass
@@ -25,7 +23,6 @@ def overlay_fit(VFAT, CH, data_filename, fit_filename):
     fitTF1 =  TF1('myERF','500*TMath::Erf((x-[0])/(TMath::Sqrt(2)*[1]))+500',1, 253)
     fitTF1.SetParameter(0, param0)
     fitTF1.SetParameter(1, param1)
-    print param0, param1
     canvas = TCanvas('canvas', 'canvas', 500, 500)
     Scurve.Draw()
     fitTF1.Draw('SAME')
