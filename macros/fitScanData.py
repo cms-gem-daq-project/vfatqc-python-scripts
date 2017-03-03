@@ -36,29 +36,32 @@ def fitScanData(treeFile):
             fitGoodN = 0
             MinChi2Temp = 99999999
             stepN = 0
-            while(stepN < 100):
-                rand = random.Gaus(10, 5)
-                if (rand < 0.0 or rand > 100): continue
-                fitTF1.SetParameter(0, 2+stepN*2)
-                fitTF1.SetParameter(1,rand)
-                fitTF1.SetParLimits(0, 0.01, 300.0)
-                fitTF1.SetParLimits(1, 0.0, 100.0)
-                fitResult = scanHistos[vfat][ch].Fit('myERF','S')
-                fitStatus = fitResult.Status()
-                fitChi2 = fitResult.Chi2()
-                print fitChi2
-                Chi2Temp = fitTF1.GetChisquare()
-                if (fitStatus == 0):
-                    stepN +=1
-                    fitGoodN+=1
-#                    pass
-                    if (Chi2Temp < MinChi2Temp):
-                        scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
-                        scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
-                        scanFits[2][vfat][ch] = fitTF1.GetChisquare()
-                        MinChi2Temp = Chi2Temp
+            while(stepN < 5):
+                stepNoise = 0
+                while (stepNoise < 2):
+                    rand = random.Gaus(10, 5)
+                    if (rand < 0.0 or rand > 100): continue
+                    fitTF1.SetParameter(0, 40+stepN*40)
+                    fitTF1.SetParameter(1,rand)
+                    fitTF1.SetParLimits(0, 0.01, 300.0)
+                    fitTF1.SetParLimits(1, 0.0, 100.0)
+                    fitResult = scanHistos[vfat][ch].Fit('myERF','S')
+                    fitStatus = fitResult.Status()
+                    fitChi2 = fitResult.Chi2()
+                    print fitChi2
+                    Chi2Temp = fitTF1.GetChisquare()
+                    if (fitStatus == 0):
+                        stepNoise +=1
+                        if (stepNoise == 2): stepN +=1
+                        fitGoodN+=1
+                        if (Chi2Temp < MinChi2Temp):
+                            scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
+                            scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
+                            scanFits[2][vfat][ch] = fitTF1.GetChisquare()
+                            MinChi2Temp = Chi2Temp
+                            pass
                         pass
                     pass
-
+                pass
+            pass
     return scanFits
-
