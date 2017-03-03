@@ -1,7 +1,6 @@
 from optparse import OptionParser
 from array import array
-from fitScanData import *
-from ROOT import TFile,TTree,TH2D,TGraph,TGraph2D,TCanvas,TPad,gROOT,gStyle,gPad,TPaveStats
+from ROOT import TFile,TTree,TH1D,TGraph,TGraph2D,TCanvas,TPad,gROOT,gStyle,gPad,TPaveStats,TF1
 
 
 
@@ -31,4 +30,4 @@ def overlay_fit(VFAT, CH, data_filename, fit_filename):
     print fitTF1.GetChisquare()
     return
 
-overlay_fit(8, 106, 'SCurveData_Trimmed.root', 'SCurveFitData.root')
+#overlay_fit(8, 106, 'SCurveData_Trimmed.root', 'SCurveFitData.root')

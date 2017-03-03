@@ -50,15 +50,13 @@ def fitScanData(treeFile):
                 fitChi2 = fitResult.Chi2()
                 print fitChi2
                 Chi2Temp = fitChi2
-                if (fitStatus == 0):
-                    stepN +=1
-                    fitGoodN+=1
-                    if (Chi2Temp < MinChi2Temp):
-                        scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
-                        scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
-                        scanFits[2][vfat][ch] = fitChi2
-                        MinChi2Temp = Chi2Temp
-                        pass
+                stepN +=1
+                fitGoodN+=1
+                if (Chi2Temp < MinChi2Temp):
+                    scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
+                    scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
+                    scanFits[2][vfat][ch] = fitChi2
+                    MinChi2Temp = Chi2Temp
                     pass
                 if (MinChi2Temp < 50): break
                 pass
