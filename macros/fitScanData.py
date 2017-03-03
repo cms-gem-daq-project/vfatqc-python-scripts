@@ -26,7 +26,7 @@ def fitScanData(treeFile):
         pass
     random = TRandom3()
     random.SetSeed(0)
-    fitTF1 = TF1('myERF','500*TMath::Erf((x-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
+    fitTF1 = TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
     for vfat in range(0,24):
         print 'fitting vfat %i'%vfat
         for ch in range(0,128):
@@ -36,15 +36,17 @@ def fitScanData(treeFile):
             fitGoodN = 0
             MinChi2Temp = 99999999
             stepN = 0
-            while(stepN < 5):
+            while(stepN < 25):
                 stepNoise = 0
                 while (stepNoise < 2):
                     rand = random.Gaus(10, 5)
                     if (rand < 0.0 or rand > 100): continue
-                    fitTF1.SetParameter(0, 40+stepN*40)
+                    fitTF1.SetParameter(0, 8+stepN*8)
                     fitTF1.SetParameter(1,rand)
+                    fitTF1.SetParameter(2,8+stepN)
                     fitTF1.SetParLimits(0, 0.01, 300.0)
                     fitTF1.SetParLimits(1, 0.0, 100.0)
+                    fitTF1.SetParLimits(2, 0.0, 300.0)
                     fitResult = scanHistos[vfat][ch].Fit('myERF','S')
                     fitStatus = fitResult.Status()
                     fitChi2 = fitResult.Chi2()
