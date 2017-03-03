@@ -40,8 +40,12 @@ threshold = array( 'f', [ 0 ] )
 myT.Branch( 'threshold', threshold, 'threshold/F')
 noise = array( 'f', [ 0 ] )
 myT.Branch( 'noise', noise, 'noise/F')
+pedestal = array( 'f', [ 0 ] )
+myT.Branch( 'pedestal', pedestal, 'pedestal/F')
+
 chi2 = array( 'f', [ 0 ] )
 myT.Branch( 'chi2', chi2, 'chi2/F')
+
 
 scanFits = fitScanData(filename)
 vSum = {}
@@ -49,7 +53,7 @@ vNoise = {}
 vThreshold = {}
 vChi2 = {}
 vComparison = {}
-
+vPedestal = {}
 def overlay_fit(VFAT, CH):
     Scurve = TH1D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]'%(VFAT, CH),255,-0.5,254.5)
     for event in inF.scurveTree:
@@ -59,10 +63,11 @@ def overlay_fit(VFAT, CH):
         pass
     param0 = scanFits[0][VFAT][CH]
     param1 = scanFits[1][VFAT][CH]
-
-    fitTF1 =  TF1('myERF','500*TMath::Erf((x-[0])/(TMath::Sqrt(2)*[1]))+500',1, 253)
+    param2 = scanFits[2][VFAT][CH]
+    fitTF1 =  TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
     fitTF1.SetParameter(0, param0)
     fitTF1.SetParameter(1, param1)
+    fitTF1.SetParameter(2, param2)
     canvas = TCanvas('canvas', 'canvas', 500, 500)
     Scurve.Draw()
     fitTF1.Draw('SAME')
@@ -74,10 +79,11 @@ def overlay_fit(VFAT, CH):
 
 for i in range(0,24):
     vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channel;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
-    vNoise[i] = TH1D('Noise%i'%i,'Noise%i;Noise'%i,35,-0.5,34.5)
-    vThreshold[i] = TH1D('Threshold%i'%i,'Threshold%i;Threshold'%i,256,-0.5,255.5)
+    vNoise[i] = TH1D('Noise%i'%i,'Noise%i;Noise [DAC units]'%i,35,-0.5,34.5)
+    vPedestal[i] = TH1D('Pedestal%i'%i,'Pedestal%i;Pedestal [DAC units]'%i,256,-0.5,255.5)
+    vThreshold[i] = TH1D('Threshold%i'%i,'Threshold%i;Threshold [DAC units]'%i,60,-0.5,299.5)
     vChi2[i] = TH1D('ChiSquared%i'%i,'ChiSquared%i;Chi2'%i,100,-0.5,999.5)
-    vComparison[i] = TH2D('vComparison%i'%i,'Parameter Spread %i;Threshold;Noise'%i,256,-0.5,255.5,70,-0.5,34.5)
+    vComparison[i] = TH2D('vComparison%i'%i,'Parameter Spread %i;Threshold [DAC units];Noise [DAC units]'%i,60,-0.5,299.5,70,-0.5,34.5)
     pass
 
 for event in inF.scurveTree:
@@ -90,14 +96,16 @@ for event in inF.scurveTree:
         trimDAC[0] = event.trimDAC
         threshold[0] = scanFits[0][event.vfatN][event.vfatCH]
         noise[0] = scanFits[1][event.vfatN][event.vfatCH]
-        chi2[0] = scanFits[2][event.vfatN][event.vfatCH]
+        pedestal[0] = scanFits[2][event.vfatN][event.vfatCH]
+        chi2[0] = scanFits[3][event.vfatN][event.vfatCH]
         vNoise[event.vfatN].Fill((scanFits[1][event.vfatN][event.vfatCH]))
         vThreshold[event.vfatN].Fill((scanFits[0][event.vfatN][event.vfatCH]))
-        Chi2 = scanFits[2][event.vfatN][event.vfatCH]
+        Chi2 = scanFits[3][event.vfatN][event.vfatCH]
         vChi2[event.vfatN].Fill(Chi2)
+        vPedestal[event.vfatN].Fill((scanFits[2][event.vfatN][event.vfatCH]))
         vComparison[event.vfatN].Fill(scanFits[0][event.vfatN][event.vfatCH], scanFits[1][event.vfatN][event.vfatCH])
         if options.drawbad:
-            if (scanFits[2][event.vfatN][event.vfatCH] > 1000.0):
+            if (Chi2 > 1000.0):
                 overlay_fit(event.vfatN, event.vfatCH)
                 print "Chi2 is, %d"%(Chi2)
                 pass
@@ -143,6 +151,19 @@ for i in range(0,24):
     vThreshold[i].Write()
     pass
 canv_thresh.SaveAs('FitThreshSummary.png')
+
+canv_Pedestal = TCanvas('canv','canv',500*8,500*3)
+canv_Pedestal.Divide(8,3)
+for i in range(0,24):
+    canv_Pedestal.cd(i+1)
+    gStyle.SetOptStat(111100)
+    vPedestal[i].Draw()
+    gPad.SetLogy()
+    canv_Pedestal.Update()
+    vPedestal[i].Write()
+    pass
+canv_Pedestal.SaveAs('FitPedestalSummary.png')
+
 
 canv_noise = TCanvas('canv','canv',500*8,500*3)
 canv_noise.Divide(8,3)
