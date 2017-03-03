@@ -28,6 +28,7 @@ def overlay_fit(VFAT, CH, data_filename, fit_filename):
     fitTF1.Draw('SAME')
     canvas.Update()
     canvas.SaveAs('Fit_Overlay_VFAT%i_Channel%i.png'%(VFAT, CH))
+    print fitTF1.GetChisquare()
     return
 
-overlay_fit(0, 2, 'SCurveData_trimdac0_range0.root', 'SCurveFitData.root')
+overlay_fit(8, 106, 'SCurveData_Trimmed.root', 'SCurveFitData.root')
