@@ -63,7 +63,6 @@ def overlay_fit(VFAT, CH):
     fitTF1 =  TF1('myERF','500*TMath::Erf((x-[0])/(TMath::Sqrt(2)*[1]))+500',1, 253)
     fitTF1.SetParameter(0, param0)
     fitTF1.SetParameter(1, param1)
-    print param0, param1
     canvas = TCanvas('canvas', 'canvas', 500, 500)
     Scurve.Draw()
     fitTF1.Draw('SAME')
@@ -94,10 +93,14 @@ for event in inF.scurveTree:
         chi2[0] = scanFits[2][event.vfatN][event.vfatCH]
         vNoise[event.vfatN].Fill((scanFits[1][event.vfatN][event.vfatCH]))
         vThreshold[event.vfatN].Fill((scanFits[0][event.vfatN][event.vfatCH]))
-        vChi2[event.vfatN].Fill((scanFits[2][event.vfatN][event.vfatCH]))
+        Chi2 = scanFits[2][event.vfatN][event.vfatCH]
+        vChi2[event.vfatN].Fill(Chi2)
         vComparison[event.vfatN].Fill(scanFits[0][event.vfatN][event.vfatCH], scanFits[1][event.vfatN][event.vfatCH])
-        if (scanFits[2][event.vfatN][event.vfatCH] > 1000) and options.drawbad:
-            overlay_fit(event.vfatN, event.vfatCH)
+        if options.drawbad:
+            if (scanFits[2][event.vfatN][event.vfatCH] > 1000.0):
+                overlay_fit(event.vfatN, event.vfatCH)
+                print "Chi2 is, %d"%(Chi2)
+                pass
             pass
         myT.Fill()
         pass
