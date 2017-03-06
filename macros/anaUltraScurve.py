@@ -136,7 +136,7 @@ for i in range(0,24):
     vChi2[i] = TH1D('ChiSquared%i'%i,'ChiSquared%i;Chi2'%i,100,-0.5,999.5)
     vComparison[i] = TH2D('vComparison%i'%i,'Parameter Spread %i;Threshold [DAC units];Noise [DAC units]'%i,60,-0.5,299.5,70,-0.5,34.5)
     for ch in range (0,128):
-        vScurves[i].append(TH1D('Scurve_vfat_%i_channel_%i'%(i,ch),'Scurve_vfat_%i_channel_%i;VCal [DAC units]'%(i,ch),256,-0.5,255.5))
+        vScurves[i].append(TH1D('Scurve_vfat_%i_channel_%i'%(i,ch),'Scurve_vfat_%i_Strip_%i;VCal [DAC units]'%(i,ch),256,-0.5,255.5))
         vthr_list[i].append(0)
         trim_list[i].append(0)
         trimrange_list[i].append(0)
