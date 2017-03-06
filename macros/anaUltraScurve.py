@@ -1,3 +1,4 @@
+import os
 from optparse import OptionParser
 from array import array
 from fitScanData import *
@@ -20,6 +21,8 @@ parser.add_option("-s", "--Save", action="store_true", dest="SaveFile",
 
 (options, args) = parser.parse_args()
 filename = options.filename
+os.system("mkdir " + filename[:-5])
+
 print filename
 outfilename = options.outfilename
 gROOT.SetBatch(True)
@@ -54,7 +57,7 @@ if GEBtype is 'short':
     for i, line in enumerate(intext):
         if i == 0: continue
         mapping = line.rsplit('\t')
-        lookup_table[mapping[0]][mapping[2]] = mapping[1]
+        lookup_table[int(mapping[0])][int(mapping[2]) -1] = int(mapping[1])
         pass
     pass
 
@@ -201,7 +204,7 @@ for i in range(0,24):
     canv.Update()
     vSum[i].Write()
     pass
-canv.SaveAs(filename[:-5]+'.png')
+canv.SaveAs(filename[:-5]+'/.png')
 
 if options.SaveFile:
     gStyle.SetOptStat(111100)
@@ -214,7 +217,7 @@ if options.SaveFile:
         canv_comp.Update()
         vComparison[i].Write()
         pass
-    canv_comp.SaveAs(filename[:-5]+'_ParameterSpread.png')
+    canv_comp.SaveAs(filename[:-5]+'/ParameterSpread.png')
 
     canv_thresh = TCanvas('canv','canv',500*8,500*3)
     canv_thresh.Divide(8,3)
@@ -226,7 +229,7 @@ if options.SaveFile:
         canv_thresh.Update()
         vThreshold[i].Write()
         pass
-    canv_thresh.SaveAs(filename[:-5]+'_FitThreshSummary.png')
+    canv_thresh.SaveAs(filename[:-5]+'/FitThreshSummary.png')
     
     canv_Pedestal = TCanvas('canv','canv',500*8,500*3)
     canv_Pedestal.Divide(8,3)
@@ -238,7 +241,7 @@ if options.SaveFile:
         canv_Pedestal.Update()
         vPedestal[i].Write()
         pass
-    canv_Pedestal.SaveAs(filename[:-5]+'_FitPedestalSummary.png')
+    canv_Pedestal.SaveAs(filename[:-5]+'/FitPedestalSummary.png')
 
     canv_noise = TCanvas('canv','canv',500*8,500*3)
     canv_noise.Divide(8,3)
@@ -250,7 +253,7 @@ if options.SaveFile:
         vNoise[i].Write()
         pass
     canv_noise.SetLogy()
-    canv_noise.SaveAs(filename[:-5]+'_FitNoiseSummary.png')
+    canv_noise.SaveAs(filename[:-5]+'/FitNoiseSummary.png')
     
     canv_Chi2 = TCanvas('canv','canv',500*8,500*3)
     canv_Chi2.Divide(8,3)
@@ -263,7 +266,7 @@ if options.SaveFile:
         vChi2[i].Write()
         pass
     canv_Chi2.SetLogy()
-    canv_Chi2.SaveAs(filename[:-5]+'_FitChi2Summary.png')
+    canv_Chi2.SaveAs(filename[:-5]+'/FitChi2Summary.png')
     pass
 outF.Write()
 outF.Close()
