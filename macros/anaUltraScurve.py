@@ -17,6 +17,8 @@ parser.add_option("-t", "--type", type="string", dest="GEBtype", default="long",
                   help="Specify GEB (long/short)", metavar="GEBtype")
 parser.add_option("-s", "--Save", action="store_true", dest="SaveFile",
                   help="Save the Fit values to Root file", metavar="SaveFile")
+parser.add_option("--channels", action="store_true", dest="channels",
+                  help="Make plots vs channels instead of strips", metavar="channels")
 
 
 (options, args) = parser.parse_args()
@@ -44,7 +46,7 @@ for vfat in range(0,24):
         pass
     pass
 
-if GEBtype is 'long':
+if GEBtype == 'long':
     intext = open('longChannelMap.txt', 'r')
     for i, line in enumerate(intext):
         if i == 0: continue
@@ -52,7 +54,7 @@ if GEBtype is 'long':
         lookup_table[int(mapping[0])][int(mapping[2]) -1] = int(mapping[1])
         pass
     pass
-if GEBtype is 'short':
+if GEBtype == 'short':
     intext = open('shortChannelMap.txt', 'r')
     for i, line in enumerate(intext):
         if i == 0: continue
@@ -132,7 +134,12 @@ for i in range(0,24):
     vthr_list.append([])
     trim_list.append([])
     trimrange_list.append([])
-    vSum[i] = TH2D('vSum%i'%i,'vSum%i;Strip;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
+    if not options.channels:
+        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Strip;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
+        pass
+    else:
+        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channels;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
+        pass
     vNoise[i] = TH1D('Noise%i'%i,'Noise%i;Noise [DAC units]'%i,35,-0.5,34.5)
     vPedestal[i] = TH1D('Pedestal%i'%i,'Pedestal%i;Pedestal [DAC units]'%i,256,-0.5,255.5)
     vThreshold[i] = TH1D('Threshold%i'%i,'Threshold%i;Threshold [DAC units]'%i,60,-0.5,299.5)
@@ -154,7 +161,12 @@ if options.SaveFile:
 
 for event in inF.scurveTree:
     strip = lookup_table[event.vfatN][event.vfatCH]
-    vSum[event.vfatN].Fill(strip,event.vcal,event.Nhits)
+    if not options.channels:
+        vSum[event.vfatN].Fill(strip,event.vcal,event.Nhits)
+        pass
+    else:
+        vSum[event.vfatN].Fill(event.vfatCH,event.vcal,event.Nhits)
+        pass
     vScurves[event.vfatN][event.vfatCH].Fill(event.vcal, event.Nhits)
     vthr_list[event.vfatN][event.vfatCH] = event.vthr
     trim_list[event.vfatN][event.vfatCH] = event.trimDAC
@@ -204,7 +216,7 @@ for i in range(0,24):
     canv.Update()
     vSum[i].Write()
     pass
-canv.SaveAs(filename[:-5]+'/.png')
+canv.SaveAs(filename[:-5]+'/Summary.png')
 
 if options.SaveFile:
     gStyle.SetOptStat(111100)
