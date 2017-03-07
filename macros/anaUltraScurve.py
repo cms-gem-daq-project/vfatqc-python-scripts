@@ -7,7 +7,7 @@ from ROOT import TFile,TTree,TH2D,TGraph,TGraph2D,TCanvas,TPad,gROOT,gStyle,gPad
 
 parser = OptionParser()
 
-parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
+parser.add_option("-i", "--infilename", type="string", dest="filename", default="SCurveData.root",
                   help="Specify Input Filename", metavar="filename")
 parser.add_option("-o", "--outfilename", type="string", dest="outfilename", default="SCurveFitData.root",
                   help="Specify Output Filename", metavar="outfilename")
@@ -15,24 +15,24 @@ parser.add_option("-b", "--drawbad", action="store_true", dest="drawbad",
                   help="Draw fit overlays for Chi2 > 10000", metavar="drawbad")
 parser.add_option("-t", "--type", type="string", dest="GEBtype", default="long",
                   help="Specify GEB (long/short)", metavar="GEBtype")
-parser.add_option("-s", "--Save", action="store_true", dest="SaveFile",
+parser.add_option("-f", "--fit", action="store_true", dest="SaveFile",
                   help="Save the Fit values to Root file", metavar="SaveFile")
-parser.add_option("--channels", action="store_true", dest="channels",
+parser.add_option("-c","--channels", action="store_true", dest="channels",
                   help="Make plots vs channels instead of strips", metavar="channels")
 
 
 (options, args) = parser.parse_args()
-filename = options.filename
-os.system("mkdir " + filename[:-5])
+filename = options.filename[:-5]
+os.system("mkdir " + filename)
 
 print filename
 outfilename = options.outfilename
 gROOT.SetBatch(True)
 #gStyle.SetOptStat(0)
 GEBtype = options.GEBtype
-inF = TFile(filename)
+inF = TFile(filename+'.root')
 
-outF = TFile(outfilename, 'recreate')
+outF = TFile(filename+'/'+outfilename, 'recreate')
 if options.SaveFile:
     outF = TFile(outfilename, 'recreate')
     myT = TTree('scurveFitTree','Tree Holding FitData')
@@ -46,8 +46,10 @@ for vfat in range(0,24):
         pass
     pass
 
+buildHome = os.environ.get('BUILD_HOME')
+
 if GEBtype == 'long':
-    intext = open('longChannelMap.txt', 'r')
+    intext = open(buildHome+'/vfatqc-python-scripts/macros/longChannelMap.txt', 'r')
     for i, line in enumerate(intext):
         if i == 0: continue
         mapping = line.rsplit('\t')
@@ -55,7 +57,7 @@ if GEBtype == 'long':
         pass
     pass
 if GEBtype == 'short':
-    intext = open('shortChannelMap.txt', 'r')
+    intext = open(buildHome+'/vfatqc-python-scripts/macros/shortChannelMap.txt', 'r')
     for i, line in enumerate(intext):
         if i == 0: continue
         mapping = line.rsplit('\t')
@@ -90,8 +92,6 @@ if options.SaveFile:
     chi2 = array( 'f', [ 0 ] )
     myT.Branch( 'chi2', chi2, 'chi2/F')
     pass
-
-#scanFits = fitScanData(filename)
 
 vSum = {}
 vNoise = {}
@@ -154,7 +154,7 @@ for i in range(0,24):
     pass
 
 if options.SaveFile:
-    scanFits = fitScanData(filename)
+    scanFits = fitScanData(filename+'.root')
     pass
 
 
@@ -216,7 +216,7 @@ for i in range(0,24):
     canv.Update()
     vSum[i].Write()
     pass
-canv.SaveAs(filename[:-5]+'/Summary.png')
+canv.SaveAs(filename+'/Summary.png')
 
 if options.SaveFile:
     gStyle.SetOptStat(111100)
@@ -229,7 +229,7 @@ if options.SaveFile:
         canv_comp.Update()
         vComparison[i].Write()
         pass
-    canv_comp.SaveAs(filename[:-5]+'/ParameterSpread.png')
+    canv_comp.SaveAs(filename+'/ParameterSpread.png')
 
     canv_thresh = TCanvas('canv','canv',500*8,500*3)
     canv_thresh.Divide(8,3)
@@ -241,7 +241,7 @@ if options.SaveFile:
         canv_thresh.Update()
         vThreshold[i].Write()
         pass
-    canv_thresh.SaveAs(filename[:-5]+'/FitThreshSummary.png')
+    canv_thresh.SaveAs(filename+'/FitThreshSummary.png')
     
     canv_Pedestal = TCanvas('canv','canv',500*8,500*3)
     canv_Pedestal.Divide(8,3)
@@ -253,7 +253,7 @@ if options.SaveFile:
         canv_Pedestal.Update()
         vPedestal[i].Write()
         pass
-    canv_Pedestal.SaveAs(filename[:-5]+'/FitPedestalSummary.png')
+    canv_Pedestal.SaveAs(filename+'/FitPedestalSummary.png')
 
     canv_noise = TCanvas('canv','canv',500*8,500*3)
     canv_noise.Divide(8,3)
@@ -265,7 +265,7 @@ if options.SaveFile:
         vNoise[i].Write()
         pass
     canv_noise.SetLogy()
-    canv_noise.SaveAs(filename[:-5]+'/FitNoiseSummary.png')
+    canv_noise.SaveAs(filename+'/FitNoiseSummary.png')
     
     canv_Chi2 = TCanvas('canv','canv',500*8,500*3)
     canv_Chi2.Divide(8,3)
@@ -278,7 +278,7 @@ if options.SaveFile:
         vChi2[i].Write()
         pass
     canv_Chi2.SetLogy()
-    canv_Chi2.SaveAs(filename[:-5]+'/FitChi2Summary.png')
+    canv_Chi2.SaveAs(filename+'/FitChi2Summary.png')
     pass
 outF.Write()
 outF.Close()
