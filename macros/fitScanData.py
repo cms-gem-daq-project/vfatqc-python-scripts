@@ -47,17 +47,18 @@ def fitScanData(treeFile):
                 fitTF1.SetParLimits(1, 0.0, 100.0)
                 fitTF1.SetParLimits(2, 0.0, 300.0)
                 fitResult = scanHistos[vfat][ch].Fit('myERF','S')
-                fitStatus = fitResult.Status()
-                fitChi2 = fitResult.Chi2()
+                #fitStatus = fitResult.Status()
+                fitChi2 = fitTF1.GetChisquare()
                 print fitChi2
                 Chi2Temp = fitChi2
                 stepN +=1
                 fitGoodN+=1
-                if (Chi2Temp < MinChi2Temp):
+                if (Chi2Temp < MinChi2Temp and fitChi2 > 0.0):
                     scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
                     scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
-                    scanFits[2][vfat][ch] = fitChi2
-                    MinChi2Temp = Chi2Temp
+                    scanFits[2][vfat][ch] = fitTF1.GetParameter(2)
+                    scanFits[3][vfat][ch] = fitChi2
+                    MinChi2Temp = fitChi2
                     pass
                 if (MinChi2Temp < 50): break
                 pass
