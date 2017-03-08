@@ -10,6 +10,7 @@ from GEMDAQTestSuite import *
 from vfat_functions_uhal import *
 from optparse import OptionParser
 from ROOT import TFile,TTree
+from rw_reg import writeReg,rpc_connect,parseXML, getNode
 
 parser = OptionParser()
 
@@ -27,7 +28,7 @@ parser.add_option("--ntrk", type="int", dest="ntrk",
                   help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
 parser.add_option("--writeout", action="store_true", dest="writeout",
                   help="Write the data to disk when testing the rate", metavar="writeout")
-parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E",
+parser.add_option("--tests", type="string", dest="tests",default="B,C,D,E",
                   help="Tests to run, default is all", metavar="tests")
 parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
                   help="Specify Output Filename", metavar="filename")
@@ -75,6 +76,7 @@ testSuite = GEMDAQTestSuite(slot=options.slot,
                             test_params=test_params,
                             debug=options.debug)
 
+uhal.setLogLevelTo(uhal.LogLevel.WARNING)
 testSuite.runSelectedTests()
 testSuite.report()
 
@@ -86,26 +88,39 @@ CHAN_MIN = 0
 CHAN_MAX = 128
 mask = 0
 
+parseXML()
+rpc_connect("eagle33")
+
+#bias vfats
+biasAllVFATs(testSuite.glib,options.gtx,0x0,enable=False)
+writeAllVFATs(testSuite.glib, options.gtx, "VThreshold1", 70, 0)
+
 setTriggerSource(testSuite.glib,options.gtx,1)
 configureLocalT1(testSuite.glib, options.gtx, 1, 0, 40, 250, 0, options.debug)
-startLocalT1(testSuite.glib, options.gtx)
+print 'Starting OH T1 controller'
+#startLocalT1(testSuite.glib, options.gtx, options.debug)
+reg=getNode("GEM_AMC.OH.OH%i.T1Controller.TOGGLE"%options.gtx)
+print 'RPC register address ',hex(reg.address)
+writeReg(reg,0x1)
 
 
 writeAllVFATs(testSuite.glib, options.gtx, "Latency",    37, mask)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0x37, mask)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg2",    48, mask)
+print 'Configured Latency and started VFATs'
 
 for vfat in testSuite.presentVFAT2sSingle:
     for scCH in range(CHAN_MIN,CHAN_MAX):
-        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal)
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
+print 'Set Channel CalPulses to 0'
 
 for scCH in range(CHAN_MIN,CHAN_MAX):
     vfatCH[0] = scCH
     print "Channel #"+str(scCH)
     for vfat in testSuite.presentVFAT2sSingle:
-        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal+64)
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
     configureScanModule(testSuite.glib, options.gtx, 3, mask, channel = scCH, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
     printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
     startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
@@ -114,17 +129,19 @@ for scCH in range(CHAN_MIN,CHAN_MAX):
         vfatN[0] = i
         dataNow = scanData[i]
         trimRange[0] = (0x7 & readVFAT(testSuite.glib,options.gtx, i,"ContReg3"))
-        trimDAC[0] = (0x1f & readVFAT(testSuite.glib,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH+1)))
+        trimDAC[0] = (0x1f & readVFAT(testSuite.glib,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))
         vthr[0] = (0xff & readVFAT(testSuite.glib,options.gtx, i,"VThreshold1"))
         for VC in range(SCURVE_MIN,SCURVE_MAX+1):
             vcal[0] = int((dataNow[VC] & 0xff000000) >> 24)
             Nhits[0] = int(dataNow[VC] & 0xffffff)
             myT.Fill()
     for vfat in testSuite.presentVFAT2sSingle:
-        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1)))
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),trimVal)
+        trimVal = (0x3f & readVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
+        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
 
-stopLocalT1(testSuite.glib, options.gtx)
+print 'Stopping OH T1 controller'
+stopLocalT1(testSuite.glib, options.gtx,options.debug)
+writeReg(reg,0x1)
 writeAllVFATs(testSuite.glib, options.gtx, "ContReg0",    0, mask)
 
 myF.cd()

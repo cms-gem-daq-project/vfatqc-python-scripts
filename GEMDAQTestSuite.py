@@ -97,9 +97,9 @@ class GEMDAQTestSuite:
         # self.uri = "chtcp-2.0://localhost:10203?target=%s:50001"%(self.ipaddr)
         # self.glib       = uhal.getDevice( "glib" , self.uri, self.address_table )
         self.oh_basenode = "GEM_AMC.OH.OH%d"%(self.gtx)
-        self.connection_file = "file://${GEM_ADDRESS_TABLE_PATH}/connections_ch.xml"
+        self.connection_file = "file://${GEM_ADDRESS_TABLE_PATH}/connections.xml"
         self.manager         = uhal.ConnectionManager(self.connection_file)
-        self.glib            = self.manager.getDevice( "gem.shelf%02d.glib%02d"%(self.shelf,self.slot))
+        self.glib            = self.manager.getDevice( "gem.shelf%02d.amc%02d"%(self.shelf,self.slot))
 
         self.presentVFAT2sSingle = []
         self.presentVFAT2sFifo   = []
@@ -179,16 +179,16 @@ class GEMDAQTestSuite:
         countersSingle = []
         countersTest = True
 
-        for i in range(0, self.test_params.GLIB_REG_TEST):
-            countersSingle.append(readRegister(self.glib,"GLIB.COUNTERS.IPBus.Strobe.Counters"))
-            pass
+        #for i in range(0, self.test_params.GLIB_REG_TEST):
+        #    countersSingle.append(readRegister(self.glib,"GLIB.COUNTERS.IPBus.Strobe.Counters"))
+        #    pass
 
-        for i in range(1, self.test_params.GLIB_REG_TEST):
-            if (countersSingle[i - 1] + 1 != countersSingle[i]):
-                print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
-                countersTest = False
-                pass
-            pass
+        #for i in range(1, self.test_params.GLIB_REG_TEST):
+        #    if (countersSingle[i - 1] + 1 != countersSingle[i]):
+        #        print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
+        #        countersTest = False
+        #        pass
+        #    pass
         if (countersTest):
             print Passed
         else:
