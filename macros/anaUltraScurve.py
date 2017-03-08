@@ -83,11 +83,10 @@ if options.SaveFile:
     myT.Branch( 'noise', noise, 'noise/F')
     pedestal = array( 'f', [ 0 ] )
     myT.Branch( 'pedestal', pedestal, 'pedestal/F')
-#scurve = array( 'TH1D', [ 0 ] )
+    ped_eff = array( 'f', [ 0 ] )
+    myT.Branch( 'ped_eff', ped_eff, 'ped_eff/F')
     scurve_h = TH1D()
-#sc_h = TH1D()
-#scurve_h.append(sc_h)
-#myT.Branch( 'scurve_h', scurve_h)
+    myT.Branch( 'scurve_h', scurve_h)
     chi2 = array( 'f', [ 0 ] )
     myT.Branch( 'chi2', chi2, 'chi2/F')
     pass
@@ -99,7 +98,7 @@ vChi2 = {}
 vComparison = {}
 vPedestal = {}
 vScurves = []
-
+#scruve[vfat][channel][vcal of this event] = Nhits
 vthr_list = []
 trim_list = []
 trimrange_list = []
@@ -145,7 +144,7 @@ for i in range(0,24):
     vChi2[i] = TH1D('ChiSquared%i'%i,'ChiSquared%i;Chi2'%i,100,-0.5,999.5)
     vComparison[i] = TH2D('vComparison%i'%i,'Parameter Spread %i;Threshold [DAC units];Noise [DAC units]'%i,60,-0.5,299.5,70,-0.5,34.5)
     for ch in range (0,128):
-        vScurves[i].append(TH1D('Scurve_vfat_%i_channel_%i'%(i,ch),'Scurve_vfat_%i_Strip_%i;VCal [DAC units]'%(i,ch),256,-0.5,255.5))
+        vScurves[i].append(TH1D('Scurve_%i_%i'%(i,ch),'Scurve_%i_%i;VCal [DAC units]'%(i,ch),256,-0.5,255.5))
         vthr_list[i].append(0)
         trim_list[i].append(0)
         trimrange_list[i].append(0)
@@ -176,17 +175,26 @@ if options.SaveFile:
         for CH in range (0, 128):
             strip = lookup_table[vfat][CH]
             #Filling the Branches
+            param0 = scanFits[0][vfat][CH]
+            param1 = scanFits[1][vfat][CH]
+            param2 = scanFits[2][vfat][CH]
+            FittedFunction =  TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
+            FittedFunction.SetParameter(0, param0)
+            FittedFunction.SetParameter(1, param1)
+            FittedFunction.SetParameter(2, param2)
+            ped_eff[0] = FittedFunction.Eval(0.0)
             vfatN[0] = vfat
             vfatCH[0] = CH
             vfatstrip[0] = strip
             trimRange[0] = trimrange_list[vfat][CH] 
             vthr[0] = vthr_list[vfat][CH]
             trimDAC[0] = trim_list[vfat][CH]
-            threshold[0] = scanFits[0][vfat][CH]
-            noise[0] = scanFits[1][vfat][CH]
-            pedestal[0] = scanFits[2][vfat][CH]
+            threshold[0] = param0
+            noise[0] = param1
+            pedestal[0] = param2
             chi2[0] = scanFits[3][vfat][CH]
-            scurve_h = vScurves[vfat][CH]
+            holder_curve = vScurves[vfat][CH]
+            holder_curve.Copy(scurve_h)
         #Filling the arrays for plotting later
             vNoise[vfat].Fill((scanFits[1][vfat][CH]))
             vThreshold[vfat].Fill((scanFits[0][vfat][CH]))
@@ -205,81 +213,79 @@ if options.SaveFile:
         pass
     pass
 
+canv = TCanvas('canv','canv',500*8,500*3)
+canv.Divide(8,3)
+for i in range(0,24):
+    canv.cd(i+1)
+    vSum[i].Draw('colz')
+    canv.Update()
+    pass
+canv.SaveAs(filename+'/Summary.png')
 
-if options.SaveFile: 
+    
+if options.SaveFile:
     outF.cd()
-    canv = TCanvas('canv','canv',500*8,500*3)
-    canv.Divide(8,3)
+    gStyle.SetOptStat(111100)
+    canv_comp = TCanvas('canv','canv',500*8,500*3)
+    canv_comp.Divide(8,3)
     for i in range(0,24):
-        canv.cd(i+1)
-        vSum[i].Draw('colz')
-        canv.Update()
-        vSum[i].Write()
-        pass
-    canv.SaveAs(filename+'/Summary.png')
-    
-    if options.SaveFile:
+        canv_comp.cd(i+1)
         gStyle.SetOptStat(111100)
-        canv_comp = TCanvas('canv','canv',500*8,500*3)
-        canv_comp.Divide(8,3)
-        for i in range(0,24):
-            canv_comp.cd(i+1)
-            gStyle.SetOptStat(111100)
-            vComparison[i].Draw('colz')
-            canv_comp.Update()
-            vComparison[i].Write()
-            pass
-        canv_comp.SaveAs(filename+'/ParameterSpread.png')
-    
-        canv_thresh = TCanvas('canv','canv',500*8,500*3)
-        canv_thresh.Divide(8,3)
-        for i in range(0,24):
-            canv_thresh.cd(i+1)
-            gStyle.SetOptStat(111100)
-            vThreshold[i].Draw()
-            gPad.SetLogy()
-            canv_thresh.Update()
-            vThreshold[i].Write()
-            pass
-        canv_thresh.SaveAs(filename+'/FitThreshSummary.png')
-        
-        canv_Pedestal = TCanvas('canv','canv',500*8,500*3)
-        canv_Pedestal.Divide(8,3)
-        for i in range(0,24):
-            canv_Pedestal.cd(i+1)
-            gStyle.SetOptStat(111100)
-            vPedestal[i].Draw()
-            gPad.SetLogy()
-            canv_Pedestal.Update()
-            vPedestal[i].Write()
-            pass
-        canv_Pedestal.SaveAs(filename+'/FitPedestalSummary.png')
-    
-        canv_noise = TCanvas('canv','canv',500*8,500*3)
-        canv_noise.Divide(8,3)
-        for i in range(0,24):
-            canv_noise.cd(i+1)
-            vNoise[i].Draw()
-            gPad.SetLogy()
-            canv_noise.Update()
-            vNoise[i].Write()
-            pass
-        canv_noise.SetLogy()
-        canv_noise.SaveAs(filename+'/FitNoiseSummary.png')
-        
-        canv_Chi2 = TCanvas('canv','canv',500*8,500*3)
-        canv_Chi2.Divide(8,3)
-        canv_Chi2.SetLogy()
-        for i in range(0,24):
-            canv_Chi2.cd(i+1)
-            vChi2[i].Draw()
-            gPad.SetLogy()
-            canv_Chi2.Update()
-            vChi2[i].Write()
-            pass
-        canv_Chi2.SetLogy()
-        canv_Chi2.SaveAs(filename+'/FitChi2Summary.png')
+        vComparison[i].Draw('colz')
+        canv_comp.Update()
+        vComparison[i].Write()
         pass
+    canv_comp.SaveAs(filename+'/ParameterSpread.png')
+    
+    canv_thresh = TCanvas('canv','canv',500*8,500*3)
+    canv_thresh.Divide(8,3)
+    for i in range(0,24):
+        canv_thresh.cd(i+1)
+        gStyle.SetOptStat(111100)
+        vThreshold[i].Draw()
+        gPad.SetLogy()
+        canv_thresh.Update()
+        vThreshold[i].Write()
+        pass
+    canv_thresh.SaveAs(filename+'/FitThreshSummary.png')
+    
+    canv_Pedestal = TCanvas('canv','canv',500*8,500*3)
+    canv_Pedestal.Divide(8,3)
+    for i in range(0,24):
+        canv_Pedestal.cd(i+1)
+        gStyle.SetOptStat(111100)
+        vPedestal[i].Draw()
+        gPad.SetLogy()
+        canv_Pedestal.Update()
+        vPedestal[i].Write()
+        pass
+    canv_Pedestal.SaveAs(filename+'/FitPedestalSummary.png')
+    
+    canv_noise = TCanvas('canv','canv',500*8,500*3)
+    canv_noise.Divide(8,3)
+    for i in range(0,24):
+        canv_noise.cd(i+1)
+        vNoise[i].Draw()
+        gPad.SetLogy()
+        canv_noise.Update()
+        vNoise[i].Write()
+        pass
+    canv_noise.SetLogy()
+    canv_noise.SaveAs(filename+'/FitNoiseSummary.png')
+    
+    canv_Chi2 = TCanvas('canv','canv',500*8,500*3)
+    canv_Chi2.Divide(8,3)
+    canv_Chi2.SetLogy()
+    for i in range(0,24):
+        canv_Chi2.cd(i+1)
+        vChi2[i].Draw()
+        gPad.SetLogy()
+        canv_Chi2.Update()
+        vChi2[i].Write()
+        pass
+    canv_Chi2.SetLogy()
+    canv_Chi2.SaveAs(filename+'/FitChi2Summary.png')
+    pass
 
-    myT.Write()
-    outF.Close()
+myT.Write()
+outF.Close()

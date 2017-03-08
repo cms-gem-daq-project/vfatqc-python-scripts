@@ -42,7 +42,7 @@ def fitScanData(treeFile):
                 if (rand < 0.0 or rand > 100): continue
                 fitTF1.SetParameter(0, 8+stepN*8)
                 fitTF1.SetParameter(1,rand)
-                fitTF1.SetParameter(2,8+stepN)
+                fitTF1.SetParameter(2,8+stepN*8)
                 fitTF1.SetParLimits(0, 0.01, 300.0)
                 fitTF1.SetParLimits(1, 0.0, 100.0)
                 fitTF1.SetParLimits(2, 0.0, 300.0)
@@ -50,10 +50,9 @@ def fitScanData(treeFile):
                 #fitStatus = fitResult.Status()
                 fitChi2 = fitTF1.GetChisquare()
                 print fitChi2
-                Chi2Temp = fitChi2
                 stepN +=1
                 fitGoodN+=1
-                if (Chi2Temp < MinChi2Temp and fitChi2 > 0.0):
+                if (fitChi2 < MinChi2Temp and fitChi2 > 0.0):
                     scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
                     scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
                     scanFits[2][vfat][ch] = fitTF1.GetParameter(2)
