@@ -3,12 +3,11 @@
 import sys, os, random, time
 sys.path.append('${GEM_PYTHON_PATH}')
 
-import uhal
-from rate_calculator import rateConverter
-from glib_system_info_uhal import *
-from glib_user_functions_uhal import *
-from optohybrid_user_functions_uhal import *
-from vfat_functions_uhal import *
+from gempython.utils.rate_calculator import rateConverter
+from gempython.tools.glib_system_info_uhal import *
+from gempython.tools.glib_user_functions_uhal import *
+from gempython.tools.optohybrid_user_functions_uhal import *
+from gempython.tools.vfat_functions_uhal import *
 
 Passed = '\033[92m   > Passed... \033[0m'
 NotRun = '\033[90m   > NotRun... \033[0m'
@@ -176,16 +175,16 @@ class GEMDAQTestSuite:
         countersSingle = []
         countersTest = True
 
-        for i in range(0, self.test_params.GLIB_REG_TEST):
-            countersSingle.append(readRegister(self.glib,"GLIB.COUNTERS.IPBus.Strobe.Counters"))
-            pass
+        # for i in range(0, self.test_params.GLIB_REG_TEST):
+        #     countersSingle.append(readRegister(self.glib,"GLIB.COUNTERS.IPBus.Strobe.Counters"))
+        #     pass
 
-        for i in range(1, self.test_params.GLIB_REG_TEST):
-            if (countersSingle[i - 1] + 1 != countersSingle[i]):
-                print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
-                countersTest = False
-                pass
-            pass
+        # for i in range(1, self.test_params.GLIB_REG_TEST):
+        #     if (countersSingle[i - 1] + 1 != countersSingle[i]):
+        #         print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
+        #         countersTest = False
+        #         pass
+        #     pass
         if (countersTest):
             print Passed
         else:
@@ -708,7 +707,7 @@ if __name__ == "__main__":
                       help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
     parser.add_option("--writeout", action="store_true", dest="writeout",
                       help="Write the data to disk when testing the rate", metavar="writeout")
-    parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E,F",
+    parser.add_option("--tests", type="string", dest="tests",default="A,B,D,E,F",
                       help="Tests to run, default is all", metavar="tests")
 
     parser.add_option("-d", "--debug", action="store_true", dest="debug",

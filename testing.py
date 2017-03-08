@@ -18,7 +18,7 @@ parser.add_option("--ntrk", type="int", dest="ntrk",
                   help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
 parser.add_option("--writeout", action="store_true", dest="writeout",
                   help="Write the data to disk when testing the rate", metavar="writeout")
-parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E,F",
+parser.add_option("--tests", type="string", dest="tests",default="A,B,D,E,F",
                   help="Tests to run, default is all", metavar="tests")
 
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
