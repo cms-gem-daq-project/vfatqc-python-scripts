@@ -37,6 +37,7 @@ def fitScanData(treeFile):
             fitGoodN = 0
             MinChi2Temp = 99999999
             stepN = 0
+            chi2_iter = 0
             while(stepN < 25):
                 rand = random.Gaus(10, 5)
                 if (rand < 0.0 or rand > 100): continue
@@ -52,6 +53,9 @@ def fitScanData(treeFile):
                 print fitChi2
                 stepN +=1
                 fitGoodN+=1
+                if abs(fitChi2 - MinChi2Temp) < 0.001:
+                    chi2_iter += 1
+                    pass
                 if (fitChi2 < MinChi2Temp and fitChi2 > 0.0):
                     scanFits[0][vfat][ch] = fitTF1.GetParameter(0)
                     scanFits[1][vfat][ch] = fitTF1.GetParameter(1)
@@ -59,6 +63,9 @@ def fitScanData(treeFile):
                     scanFits[3][vfat][ch] = fitChi2
                     MinChi2Temp = fitChi2
                     pass
+                if chi2_iter > 2:
+                    chi2_iter = 0
+                    break            
                 if (MinChi2Temp < 50): break
                 pass
             pass
