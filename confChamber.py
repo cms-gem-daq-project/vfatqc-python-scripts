@@ -15,6 +15,8 @@ parser = OptionParser()
 
 parser.add_option("-s", "--slot", type="int", dest="slot",
                   help="slot in uTCA crate", metavar="slot", default=10)
+parser.add_option("--shelf", type="int", dest="shelf",
+                  help="Which uTCA crate", metavar="shelf", default=1)
 parser.add_option("-g", "--gtx", type="int", dest="gtx",
                   help="GTX on the GLIB", metavar="gtx", default=0)
 parser.add_option("--nglib", type="int", dest="nglib",
@@ -41,50 +43,26 @@ startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
 print startTime
 Date = startTime
 
-test_params = TEST_PARAMS(nglib=options.nglib,
-                          noh=options.noh,
-                          ni2c=options.ni2c,
-                          ntrk=options.ntrk,
-                          writeout=options.writeout)
+connection_file = "file://${GEM_ADDRESS_TABLE_PATH}/connections.xml"
+manager         = uhal.ConnectionManager(connection_file )
+amc  = manager.getDevice( "gem.shelf%02d.amc%02d.optohybrid%02d"%(options.shelf,options.slot,options.gtx) )
 
-testSuite = GEMDAQTestSuite(slot=options.slot,
-                            gtx=options.gtx,
-                            tests=options.tests,
-                            test_params=test_params,
-                            debug=options.debug)
-
-testSuite.runSelectedTests()
-testSuite.report()
+print 'opened connection'
 
 filename = options.filename
 
-biasAllVFATs(testSuite.glib,options.gtx,0x0,enable=False)
-writeAllVFATs(testSuite.glib, options.gtx, "VThreshold1", 100, 0)
-#writeVFAT(testSuite.glib, options.gtx, 0, "VThreshold1", 40)
-#writeVFAT(testSuite.glib, options.gtx, 1, "VThreshold1", 25)
-#writeVFAT(testSuite.glib, options.gtx, 2, "VThreshold1", 20)
-#writeVFAT(testSuite.glib, options.gtx, 3, "VThreshold1", 16)
-#writeVFAT(testSuite.glib, options.gtx, 6, "VThreshold1", 58)
-#writeVFAT(testSuite.glib, options.gtx, 7, "VThreshold1", 60)
-#writeVFAT(testSuite.glib, options.gtx, 8, "VThreshold1", 60)
-#writeVFAT(testSuite.glib, options.gtx, 9, "VThreshold1", 20)
-#writeVFAT(testSuite.glib, options.gtx, 10, "VThreshold1", 19)
-#writeVFAT(testSuite.glib, options.gtx, 11, "VThreshold1", 26)
-#writeVFAT(testSuite.glib, options.gtx, 14, "VThreshold1", 50)
-#writeVFAT(testSuite.glib, options.gtx, 15, "VThreshold1", 63)
-#writeVFAT(testSuite.glib, options.gtx, 16, "VThreshold1", 23)
-#writeVFAT(testSuite.glib, options.gtx, 17, "VThreshold1", 17)
-#writeVFAT(testSuite.glib, options.gtx, 18, "VThreshold1", 20)
-#writeVFAT(testSuite.glib, options.gtx, 19, "VThreshold1", 43)
-#writeVFAT(testSuite.glib, options.gtx, 22, "VThreshold1", 55)
-#writeVFAT(testSuite.glib, options.gtx, 23, "VThreshold1", 62)
+biasAllVFATs(amc,options.gtx,0x0,enable=False)
+print 'biased VFATs'
+writeAllVFATs(amc, options.gtx, "VThreshold1", 100, 0)
+print 'Set VThreshold1 to 100'
+writeAllVFATs(amc, options.gtx, "ContReg0",    0x36, 0)
 
-inF = TFile(filename)
+#inF = TFile(filename)
 
-for event in inF.scurveTree :
-    if event.vcal == 10 :
-        writeVFAT(testSuite.glib,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)+1),int(event.trimDAC))
-        if event.vfatCH == 10 : writeVFAT(testSuite.glib, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+#for event in inF.scurveTree :
+#    if event.vcal == 10 :
+#        writeVFAT(testSuite.glib,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)+1),int(event.trimDAC))
+#        if event.vfatCH == 10 : writeVFAT(testSuite.glib, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
 
 
 print 'Chamber Configured'

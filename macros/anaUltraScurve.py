@@ -134,10 +134,10 @@ for i in range(0,24):
     trim_list.append([])
     trimrange_list.append([])
     if not options.channels:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Strip;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
+        vSum[i] = TH2D('vSum%i'%i,'%s_vfat%i;Strip;VCal [DAC units]'%(filename,i),128,-0.5,127.5,256,-0.5,255.5)
         pass
     else:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channels;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
+        vSum[i] = TH2D('vSum%i'%i,'%s_vfat%i;Channels;VCal [DAC units]'%(filename,i),128,-0.5,127.5,256,-0.5,255.5)
         pass
     vNoise[i] = TH1D('Noise%i'%i,'Noise%i;Noise [DAC units]'%i,35,-0.5,34.5)
     vPedestal[i] = TH1D('Pedestal%i'%i,'Pedestal%i;Pedestal [DAC units]'%i,256,-0.5,255.5)
@@ -216,7 +216,7 @@ if options.SaveFile:
         canv.Update()
         vSum[i].Write()
         pass
-    canv.SaveAs(filename+'/Summary.png')
+    canv.SaveAs(filename+'/Summary_%s.png'%filename)
     
     if options.SaveFile:
         gStyle.SetOptStat(111100)
