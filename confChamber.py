@@ -15,6 +15,8 @@ parser = OptionParser()
 
 parser.add_option("-s", "--slot", type="int", dest="slot",
                   help="slot in uTCA crate", metavar="slot", default=10)
+parser.add_option("--shelf", type="int", dest="shelf",
+                  help="Which uTCA crate", metavar="shelf", default=1)
 parser.add_option("-g", "--gtx", type="int", dest="gtx",
                   help="GTX on the GLIB", metavar="gtx", default=0)
 parser.add_option("--nglib", type="int", dest="nglib",
@@ -31,6 +33,10 @@ parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E",
                   help="Tests to run, default is all", metavar="tests")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
+parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData_Trimmed.root",
+                          help="Specify Output Filename", metavar="filename")
+parser.add_option("-v", "--vthreshold", type="int", dest="vthr",
+                  help="VThreshold1 DAC value for all VFATs", metavar="vthr", default=100)
 
 (options, args) = parser.parse_args()
 
@@ -39,27 +45,27 @@ startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
 print startTime
 Date = startTime
 
-test_params = TEST_PARAMS(nglib=options.nglib,
-                          noh=options.noh,
-                          ni2c=options.ni2c,
-                          ntrk=options.ntrk,
-                          writeout=options.writeout)
+connection_file = "file://${GEM_ADDRESS_TABLE_PATH}/connections.xml"
+manager         = uhal.ConnectionManager(connection_file )
+amc  = manager.getDevice( "gem.shelf%02d.amc%02d.optohybrid%02d"%(options.shelf,options.slot,options.gtx) )
 
-testSuite = GEMDAQTestSuite(slot=options.slot,
-                            gtx=options.gtx,
-                            tests=options.tests,
-                            test_params=test_params,
-                            debug=options.debug)
+print 'opened connection'
 
-testSuite.runSelectedTests()
-testSuite.report()
+filename = options.filename
 
-for vfat in range(0,24):
-    with open('conf/vfat%iconf.dat'%vfat) as fconf:
-        fileLines = fconf.read().splitlines()
-    for cLine in fileLines:
-        lineParts = cLine.split()
-        writeVFAT(testSuite.glib,options.gtx,vfat,lineParts[0],int(lineParts[1]))
+biasAllVFATs(amc,options.gtx,0x0,enable=False)
+print 'biased VFATs'
+writeAllVFATs(amc, options.gtx, "VThreshold1", options.vthr, 0)
+print 'Set VThreshold1 to %i'%options.vthr
+writeAllVFATs(amc, options.gtx, "ContReg0",    0x36, 0)
+
+#inF = TFile(filename)
+
+#for event in inF.scurveTree :
+#    if event.vcal == 10 :
+#        writeVFAT(testSuite.glib,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)+1),int(event.trimDAC))
+#        if event.vfatCH == 10 : writeVFAT(testSuite.glib, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+
 
 print 'Chamber Configured'
 
