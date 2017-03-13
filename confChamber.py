@@ -35,6 +35,8 @@ parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
 parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData_Trimmed.root",
                           help="Specify Output Filename", metavar="filename")
+parser.add_option("-v", "--vthreshold", type="int", dest="vthr",
+                  help="VThreshold1 DAC value for all VFATs", metavar="vthr", default=100)
 
 (options, args) = parser.parse_args()
 
@@ -53,8 +55,8 @@ filename = options.filename
 
 biasAllVFATs(amc,options.gtx,0x0,enable=False)
 print 'biased VFATs'
-writeAllVFATs(amc, options.gtx, "VThreshold1", 100, 0)
-print 'Set VThreshold1 to 100'
+writeAllVFATs(amc, options.gtx, "VThreshold1", options.vthr, 0)
+print 'Set VThreshold1 to %i'%options.vthr
 writeAllVFATs(amc, options.gtx, "ContReg0",    0x36, 0)
 
 #inF = TFile(filename)
