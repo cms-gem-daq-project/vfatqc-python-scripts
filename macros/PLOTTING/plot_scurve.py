@@ -23,12 +23,15 @@ def plot_scurve(VFAT, CH, fit_filename, overlay_fit, channel_yes):
         fitTF1.SetParameter(2, param2)
         pass
     canvas = TCanvas('canvas', 'canvas', 500, 500)
+    gStyle.SetOptStat(0)
     Scurve.Draw()
     if overlay_fit:
         fitTF1.Draw('SAME')
         pass
     canvas.Update()
     if overlay_fit:
+        gStyle.SetOptStat(111)
+        print param0, param1, param2
         if channel_yes:
             canvas.SaveAs('Fit_Overlay_VFAT%i_Channel%i.png'%(VFAT, CH))
             pass

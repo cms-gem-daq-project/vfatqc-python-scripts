@@ -28,7 +28,7 @@ os.system("mkdir " + filename)
 print filename
 outfilename = options.outfilename
 gROOT.SetBatch(True)
-#gStyle.SetOptStat(0)
+gStyle.SetOptStat(1111111)
 GEBtype = options.GEBtype
 inF = TFile(filename+'.root')
 
@@ -155,7 +155,9 @@ for event in inF.scurveTree:
     else:
         vSum[event.vfatN].Fill(event.vfatCH,event.vcal,event.Nhits)
         pass
-    vScurves[event.vfatN][event.vfatCH].Fill(event.vcal, event.Nhits)
+    x = vScurves[event.vfatN][event.vfatCH].FindBin(event.vcal)
+    vScurves[event.vfatN][event.vfatCH].SetBinContent(x, event.Nhits)
+    gStyle.SetOptStat(1111111)
     vthr_list[event.vfatN][event.vfatCH] = event.vthr
     trim_list[event.vfatN][event.vfatCH] = event.trimDAC
     trimrange_list[event.vfatN][event.vfatCH] = event.trimRange
@@ -199,7 +201,9 @@ if options.SaveFile:
 
 canv = TCanvas('canv','canv',500*8,500*3)
 canv.Divide(8,3)
+gStyle.SetOptStat(0)
 for i in range(0,24):
+    gStyle.SetOptStat(0)
     canv.cd(i+1)
     vSum[i].Draw('colz')
     canv.Update()
