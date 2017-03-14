@@ -7,43 +7,24 @@ By: Christine McLean (ch.mclean@cern.ch), Cameron Bravo (c.bravo@cern.ch), Eliza
 import sys, os, random, time
 from array import array
 from GEMDAQTestSuite import *
-from vfat_functions_uhal import *
-from optparse import OptionParser
-from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1
+from gempython.tools.vfat_user_functions_uhal import *
 from fitScanData import fitScanData
-import ROOT
 
-parser = OptionParser()
+from qcoptions import parser
 
-parser.add_option("-s", "--slot", type="int", dest="slot",
-                  help="slot in uTCA crate", metavar="slot", default=10)
-parser.add_option("-g", "--gtx", type="int", dest="gtx",
-                  help="GTX on the GLIB", metavar="gtx", default=0)
-parser.add_option("--nglib", type="int", dest="nglib",
-                  help="Number of register tests to perform on the glib (default is 100)", metavar="nglib", default=100)
-parser.add_option("--noh", type="int", dest="noh",
-                  help="Number of register tests to perform on the OptoHybrid (default is 100)", metavar="noh", default=100)
-parser.add_option("--ni2c", type="int", dest="ni2c",
-                  help="Number of I2C tests to perform on the VFAT2s (default is 100)", metavar="ni2c", default=100)
-parser.add_option("--ntrk", type="int", dest="ntrk",
-                  help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
-parser.add_option("--writeout", action="store_true", dest="writeout",
-                  help="Write the data to disk when testing the rate", metavar="writeout")
-parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E",
-                  help="Tests to run, default is all", metavar="tests")
 parser.add_option("--path", type="string", dest="path", default="data",
                   help="Specify Output File Path", metavar="path")
-parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                  help="print extra debugging information", metavar="debug")
 
 (options, args) = parser.parse_args()
 
+from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1
+import ROOT
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
 print startTime
 
 #run standard tests to check communication with the system
-test_params = TEST_PARAMS(nglib=options.nglib,
+test_params = TEST_PARAMS(namc=options.namc,
                           noh=options.noh,
                           ni2c=options.ni2c,
                           ntrk=options.ntrk,
@@ -51,6 +32,7 @@ test_params = TEST_PARAMS(nglib=options.nglib,
 
 testSuite = GEMDAQTestSuite(slot=options.slot,
                             gtx=options.gtx,
+                            shelf=options.shelf,
                             tests=options.tests,
                             test_params=test_params,
                             debug=options.debug)
@@ -62,8 +44,8 @@ dirPath = '%s/%s'%(options.path,startTime)
 os.system('mkdir %s'%dirPath)
 
 #bias vfats
-biasAllVFATs(testSuite.glib,options.gtx,0x0,enable=False)
-writeAllVFATs(testSuite.glib, options.gtx, "VThreshold1", 100, 0)
+biasAllVFATs(testSuite.ohboard,options.gtx,0x0,enable=False)
+writeAllVFATs(testSuite.ohboard, options.gtx, "VThreshold1", 100, 0)
 
 CHAN_MIN = 0
 CHAN_MAX = 128
@@ -92,9 +74,9 @@ for vfat in testSuite.presentVFAT2sSingle:
 ###############
 #Configure for initial scan
 for vfat in testSuite.presentVFAT2sSingle:
-    writeVFAT(testSuite.glib, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
+    writeVFAT(testSuite.ohboard, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
     for scCH in range(CHAN_MIN,CHAN_MAX):
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),0)
+        writeVFAT(testSuite.ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),0)
 #Scurve scan with trimdac set to 0
 filename0 = "%s/SCurveData_trimdac0_range0.root"%dirPath
 os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename0))
@@ -105,14 +87,14 @@ muFits_0  = fitScanData(filename0)
 for trimRange in range(0,5):
     #Set Trim Ranges
     for vfat in testSuite.presentVFAT2sSingle:
-        writeVFAT(testSuite.glib, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
+        writeVFAT(testSuite.ohboard, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
     ###############
     # TRIMDAC = 31
     ###############
     #Setting trimdac value
     for vfat in testSuite.presentVFAT2sSingle:
         for scCH in range(CHAN_MIN,CHAN_MAX):
-            writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),31)
+            writeVFAT(testSuite.ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH+1),31)
     
     #Scurve scan with trimdac set to 31 (maximum trimming)
     filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
@@ -168,7 +150,7 @@ for i in range(0,5):
     for vfat in testSuite.presentVFAT2sSingle:
         for ch in range(CHAN_MIN,CHAN_MAX):
             trimDACs[vfat][ch] += pow(2,4-i)
-            writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch+1),trimDACs[vfat][ch])
+            writeVFAT(testSuite.ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch+1),trimDACs[vfat][ch])
     #Run an SCurve
     filenameBS = "%s/SCurveData_binarySearch%i.root"%(dirPath,i)
     os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filenameBS))
@@ -182,7 +164,7 @@ for i in range(0,5):
 #Now take a scan with trimDACs found by binary search
 for vfat in testSuite.presentVFAT2sSingle:
     for ch in range(CHAN_MIN,CHAN_MAX):
-        writeVFAT(testSuite.glib,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch+1),trimDACs[vfat][ch])
+        writeVFAT(testSuite.ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch+1),trimDACs[vfat][ch])
 
 filenameFinal = "%s/SCurveData_Trimmed.root"%dirPath
 os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filenameFinal))
