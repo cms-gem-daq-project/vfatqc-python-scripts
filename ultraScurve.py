@@ -39,6 +39,7 @@ parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
 
 (options, args) = parser.parse_args()
+uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 
 filename = options.filename
 myF = TFile(filename,'recreate')
