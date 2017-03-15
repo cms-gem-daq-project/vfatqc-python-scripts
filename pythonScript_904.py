@@ -10,25 +10,16 @@ Created on Thu Mar 31 09:28:14 2016
 """
 
 import sys, os, random, time
-from optparse import OptionParser
 
 if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                      metavar="debug",
-                      help="[OPTIONAL] Run in debug mode")
-    parser.add_option("-m", "--middle", action="store_true", dest="doMiddle",
-                      metavar="doMiddle",
-                      help="[OPTIONAL] Use the middle column")
-    parser.add_option("-s", "--special", action="store_true", dest="special",
-                      metavar="special",
-                      help="[OPTIONAL] Run a special arrangement")
+    from qcoptions import parser
 
-    parser.add_option("-e", "--QC3test", action="store_true", dest="doQC3",
-                      metavar="doQC3",
-                      help="[OPTIONAL] Run a shortened test after covers have been applied")
+    parser = OptionParser()
 
     (options, args) = parser.parse_args()
+
+    print "Obsolete, do not use"
+    exit(1)
 
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/kernel")
     from ipbus import *
@@ -54,11 +45,11 @@ if __name__ == "__main__":
     pr = cProfile.Profile()
     pr.enable()
 
-    gilbIP = raw_input("> Enter the GLIB's IP address: ")
+    gilbIP = raw_input("> Enter the AMC's IP address: ")
     Date = raw_input("> Enter the Name of the Test [In case of conflict, the old file will be overwrite]: ")
     glib = GLIB(gilbIP.strip())
 
-    GLIB_REG_TEST = raw_input("> Number of register tests to perform on the GLIB [100]: ")
+    GLIB_REG_TEST = raw_input("> Number of register tests to perform on the AMC [100]: ")
     sys.stdout.flush()
     OH_REG_TEST = raw_input("> Number of register tests to perform on the OptoHybrid [100]: ")
     sys.stdout.flush()

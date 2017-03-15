@@ -1,25 +1,17 @@
 #!/usr/bin/env python
 
 from GEMDAQTestSuite import *
-from vfat_functions_uhal import setChannelRegister
+from gempython.tools.vfat_user_functions_uhal import setChannelRegister
 from optparse import OptionParser
 
-parser = OptionParser()
-parser.add_option("-s", "--slot", type="int", dest="slot",
-                  help="slot in uTCA crate", metavar="slot")
-parser.add_option("-g", "--gtx", type="int", dest="gtx",
-                  help="GTX on the GLIB", metavar="gtx")
+from qcoptions import parser
+
 parser.add_option("-f", "--file", type="string", dest="trimfilelist",
                   help="File containing paths to MASK_TrimDACs", metavar="trimfilelist", default="TrimDACfiles.txt")
 parser.add_option("-t", "--thresh", action="store_true", dest= "do_thresh",
                   help="Do a threshold scan before/after setting trim", metavar="do_thresh")
-parser.add_option("-d", "--debug", action="store_true", dest= "debug",
-                  help="Debugging mode", metavar="debug")
-
 parser.add_option("--save", action="store_true", dest= "save",
                   help="Save Threshold Scan", metavar="save")
-
-
 
 (options, args) = parser.parse_args()
 
@@ -42,7 +34,7 @@ print startTime
 
 trimfilelist = options.trimfilelist
 
-testSuite = GEMDAQTestSuite(slot=options.slot,gtx=options.gtx,debug=options.debug)
+testSuite = GEMDAQTestSuite(slot=options.slot,gtx=options.gtx,shelf=options.shelf,debug=options.debug)
 
 testSuite.VFAT2DetectionTest()
 
@@ -79,7 +71,7 @@ for port in testSuite.presentVFAT2sSingle:
         chan_num = int(cc[0]) 
         trimDAC  = int(cc[1])
         mask_yes = int(cc[2])
-        setChannelRegister(testSuite.glib, options.gtx, port, channel, mask_yes, 0x0, trimDAC, debug = False)
+        setChannelRegister(testSuite.ohboard, options.gtx, port, channel, mask_yes, 0x0, trimDAC, debug = False)
         pass
     g.close()
     pass
@@ -92,10 +84,10 @@ if (options.do_thresh):
     THRESH_MIN = 0
     N_EVENTS = 1000.00
 
-    configureScanModule(testSuite.glib, options.gtx, 0, 0, scanmin = THRESH_MIN, scanmax = THRESH_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
-    printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
-    startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
-    UltraResults = getUltraScanResults(testSuite.glib, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
+    configureScanModule(testSuite.ohboard, options.gtx, 0, 0, scanmin = THRESH_MIN, scanmax = THRESH_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
+    printScanConfiguration(testSuite.ohboard, options.gtx, useUltra = True, debug = options.debug)
+    startScanModule(testSuite.ohboard, options.gtx, useUltra = True, debug = options.debug)
+    UltraResults = getUltraScanResults(testSuite.ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
 
     if options.debug:
         raw_input ("Press Enter to Continue")
@@ -104,8 +96,8 @@ if (options.do_thresh):
     print
     for n in testSuite.presentVFAT2sSingle:
         if options.save:
-            f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
-            z = open("%s_Setting_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
+            f = open("%s_Data_AMC_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
+            z = open("%s_Setting_AMC_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'w')
             f.write("First Threshold Scan \n")
             pass
         data_threshold = UltraResults[n]
@@ -124,7 +116,7 @@ if (options.do_thresh):
             if passAbs and passLastRel and passNextRel:
                 # why is the threshold set to the previous value?                                                                                                                                                 
                 threshold = (data_threshold[d] >> 24 )
-                setVFATThreshold(testSuite.glib,options.gtx,n,vt1=(threshold),vt2=0)
+                setVFATThreshold(testSuite.ohboard,options.gtx,n,vt1=(threshold),vt2=0)
                 print "Threshold set to: %d"%(threshold)
                 if options.save:
                     f.write("Threshold set to: %d\n"%(threshold))
