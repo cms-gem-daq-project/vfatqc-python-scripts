@@ -5,10 +5,10 @@ sys.path.append('${GEM_PYTHON_PATH}')
 
 from gempython.utils.rate_calculator import rateConverter
 from gempython.tools.glib_system_info_uhal import *
-from gempython.tools.glib_user_functions_uhal import *
+from gempython.tools.amc_user_functions_uhal import *
 from gempython.tools.optohybrid_user_functions_uhal import *
-from gempython.tools.vfat_functions_uhal import *
-
+from gempython.tools.vfat_user_functions_uhal import *
+>>>>>>> gemdaq-master
 Passed = '\033[92m   > Passed... \033[0m'
 NotRun = '\033[90m   > NotRun... \033[0m'
 Failed = '\033[91m   > Failed... \033[0m'
@@ -18,8 +18,8 @@ def txtTitle(str):
     return
 
 class TEST_PARAMS:
-    def __init__(self,nglib=100,noh=100,ni2c=100,ntrk=100,writeout=False):
-        self.GLIB_REG_TEST = nglib
+    def __init__(self,namc=100,noh=100,ni2c=100,ntrk=100,writeout=False):
+        self.AMC_REG_TEST = namc
         self.OH_REG_TEST   = noh
         self.I2C_TEST      = ni2c
         self.TK_RD_TEST    = ntrk
@@ -29,7 +29,7 @@ class TEST_PARAMS:
 
 class GEMDAQTestSuite:
     """
-    This python script will test the GLIB, optical links, OH, and VFAT2 functionalities.
+    This python script will test the AMC, optical links, OH, and VFAT2 functionalities.
     Simply follow the instructions on the screen in order to diagnose the setup.
     Thomas Lenzi - tlenzi@ulb.ac.be
     Jared Sturdy - sturdy@cern.ch (Adapted for uHAL)
@@ -39,7 +39,7 @@ class GEMDAQTestSuite:
 
     allTests = ["A","B","C","D","E","F","G","H","I","J"]
 
-    def __init__(self, slot,gtx,shelf=1,tests="",test_params=TEST_PARAMS(),debug=False):
+    def __init__(self,slot,gtx,shelf=1,tests="",test_params=TEST_PARAMS(),debug=False):
         """
         """
         self.slot   = slot
@@ -82,11 +82,8 @@ class GEMDAQTestSuite:
 
         self.debug         = debug
 
-        connection_file = "file://${GEM_ADDRESS_TABLE_PATH}/connections.xml"
-        manager         = uhal.ConnectionManager(connection_file )
-
-        self.amc     = manager.getDevice( "gem.shelf%02d.amc%02d"%(self.shelf,self.slot) )
-        self.ohboard = manager.getDevice( "gem.shelf%02d.amc%02d.optohybrid%02d"%(self.shelf,self.slot,self.gtx) )
+        self.amc     = getAMCObject(self.slot,self.shelf)
+        self.ohboard = getOHObject(self.slot,self.gtx,self.shelf)
 
         self.presentVFAT2sSingle = []
         self.presentVFAT2sFifo   = []
@@ -108,9 +105,9 @@ class GEMDAQTestSuite:
         return
 
     ####################################################
-    def GLIBPresenceTest(self):
-        txtTitle("A. Testing the GLIB's presence")
-        print "   Trying to read the GLIB board ID... If this test fails, the script will stop."
+    def AMCPresenceTest(self):
+        txtTitle("A. Testing the AMC's presence")
+        print "   Trying to read the AMC board ID... If this test fails, the script will stop."
 
         if (getBoardID(self.amc) != 0):
             print Passed
@@ -159,18 +156,18 @@ class GEMDAQTestSuite:
         return
 
     ####################################################
-    def GLIBRegisterTest(self):
-        txtTitle("C. Testing the GLIB registers")
-        print "   Performing single reads on the GLIB counters and ensuring they increment."
+    def AMCRegisterTest(self):
+        txtTitle("C. Testing the AMC registers")
+        print "   Performing single reads on the AMC counters and ensuring they increment."
 
         # countersSingle = []
         # countersTest = True
 
-        # for i in range(0, self.test_params.GLIB_REG_TEST):
-        #     countersSingle.append(readRegister(self.amc,"GLIB.COUNTERS.IPBus.Strobe.Counters"))
+        # for i in range(0, self.test_params.AMC_REG_TEST):
+        #     countersSingle.append(readRegister(self.amc,"AMC.COUNTERS.IPBus.Strobe.Counters"))
         #     pass
 
-        # for i in range(1, self.test_params.GLIB_REG_TEST):
+        # for i in range(1, self.test_params.AMC_REG_TEST):
         #     if (countersSingle[i - 1] + 1 != countersSingle[i]):
         #         print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
         #         countersTest = False
@@ -607,8 +604,8 @@ class GEMDAQTestSuite:
         # time.sleep(1)
         # oh_tr_error_reg = readRegister(self.amc,"%s.COUNTERS.GTX.TRG_ERR"%(self.oh_basenode))
 
-        # print "   GLIB tracking link error rate is of       %4d %sHz"%(rateConverter(1*glib_tk_error_reg))
-        # print "   GLIB trigger link error rate is of        %4d %sHz"%(rateConverter(1*glib_tr_error_reg))
+        # print "   AMC tracking link error rate is of        %4d %sHz"%(rateConverter(1*glib_tk_error_reg))
+        # print "   AMC trigger link error rate is of         %4d %sHz"%(rateConverter(1*glib_tr_error_reg))
         # print "   OptoHybrid tracking link error rate is of %4d %sHz"%(rateConverter(1*oh_tk_error_reg))
         # print "   OptoHybrid trigger link error rate is of  %4d %sHz"%(rateConverter(1*oh_tr_error_reg))
 
@@ -621,13 +618,13 @@ class GEMDAQTestSuite:
     ####################################################
     def runSelectedTests(self):
         if ("A" in self.tests):
-            self.GLIBPresenceTest()
+            self.AMCPresenceTest()
             pass
         if ("B" in self.tests):
             self.OptoHybridPresenceTest()
             pass
         if ("C" in self.tests):
-            self.GLIBRegisterTest()
+            self.AMCRegisterTest()
             pass
         if ("D" in self.tests):
             self.OptoHybridRegisterTest()
@@ -656,9 +653,9 @@ class GEMDAQTestSuite:
 
     ####################################################
     def runAllTests(self):
-        self.GLIBPresenceTest()
+        self.AMCPresenceTest()
         self.OptoHybridPresenceTest()
-        self.GLIBRegisterTest()
+        self.AMCRegisterTest()
         self.OptoHybridRegisterTest()
         self.VFAT2DetectionTest()
         self.VFAT2I2CRegisterTest()
@@ -682,33 +679,11 @@ class GEMDAQTestSuite:
         return
 
 if __name__ == "__main__":
-    from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option("-s", "--slot", type="int", dest="slot",
-                      help="slot in uTCA crate", metavar="slot", default=10)
-    parser.add_option("--shelf", type="int", dest="shelf",
-                      help="uTCA crate number", metavar="shelf", default=1)
-    parser.add_option("-g", "--gtx", type="int", dest="gtx",
-                      help="GTX on the GLIB", metavar="gtx", default=0)
-    parser.add_option("--nglib", type="int", dest="nglib",
-                      help="Number of register tests to perform on the glib (default is 100)", metavar="nglib", default=100)
-    parser.add_option("--noh", type="int", dest="noh",
-                      help="Number of register tests to perform on the OptoHybrid (default is 100)", metavar="noh", default=100)
-    parser.add_option("--ni2c", type="int", dest="ni2c",
-                      help="Number of I2C tests to perform on the VFAT2s (default is 100)", metavar="ni2c", default=100)
-    parser.add_option("--ntrk", type="int", dest="ntrk",
-                      help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
-    parser.add_option("--writeout", action="store_true", dest="writeout",
-                      help="Write the data to disk when testing the rate", metavar="writeout")
-    parser.add_option("--tests", type="string", dest="tests",default="A,B,D,E,F",
-                      help="Tests to run, default is all", metavar="tests")
-
-    parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                      help="print extra debugging information", metavar="debug")
+    from qcoptions import parser
 
     (options, args) = parser.parse_args()
 
-    test_params = TEST_PARAMS(nglib=options.nglib,
+    test_params = TEST_PARAMS(namc=options.namc,
                               noh=options.noh,
                               ni2c=options.ni2c,
                               ntrk=options.ntrk,
@@ -716,6 +691,7 @@ if __name__ == "__main__":
 
     testSuite = GEMDAQTestSuite(slot=options.slot,
                                 gtx=options.gtx,
+                                shelf=options.shelf,
                                 tests=options.tests,
                                 test_params=test_params,
                                 debug=options.debug)
