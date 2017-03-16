@@ -63,6 +63,13 @@ def fitScanData(treeFile):
                     scanFits[3][vfat][ch] = fitChi2
                     MinChi2Temp = fitChi2
                     pass
+                if (fitTF1.GetParameter(0) == 8+stepN*8):
+                    scanFits[0][vfat][ch] = -999.9
+                    scanFits[1][vfat][ch] = -999.9
+                    scanFits[2][vfat][ch] = -999.9
+                    scanFits[3][vfat][ch] = -999999999.9
+                    MinChi2Temp = fitChi2
+                    pass
                 #if chi2_iter > 2:
                 #    chi2_iter = 0
                 #    break            

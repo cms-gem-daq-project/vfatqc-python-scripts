@@ -3,11 +3,11 @@
 import sys, os, random, time
 sys.path.append('${GEM_PYTHON_PATH}')
 
-import uhal
-from rate_calculator import rateConverter
-from glib_user_functions_uhal import *
-from optohybrid_user_functions_uhal import *
-from vfat_functions_uhal import *
+from gempython.utils.rate_calculator import rateConverter
+from gempython.tools.glib_system_info_uhal import *
+from gempython.tools.amc_user_functions_uhal import *
+from gempython.tools.optohybrid_user_functions_uhal import *
+from gempython.tools.vfat_user_functions_uhal import *
 
 Passed = '\033[92m   > Passed... \033[0m'
 NotRun = '\033[90m   > NotRun... \033[0m'
@@ -18,8 +18,8 @@ def txtTitle(str):
     return
 
 class TEST_PARAMS:
-    def __init__(self,nglib=100,noh=100,ni2c=100,ntrk=100,writeout=False):
-        self.GLIB_REG_TEST = nglib
+    def __init__(self,namc=100,noh=100,ni2c=100,ntrk=100,writeout=False):
+        self.AMC_REG_TEST = namc
         self.OH_REG_TEST   = noh
         self.I2C_TEST      = ni2c
         self.TK_RD_TEST    = ntrk
@@ -29,7 +29,7 @@ class TEST_PARAMS:
 
 class GEMDAQTestSuite:
     """
-    This python script will test the GLIB, optical links, OH, and VFAT2 functionalities.
+    This python script will test the AMC, optical links, OH, and VFAT2 functionalities.
     Simply follow the instructions on the screen in order to diagnose the setup.
     Thomas Lenzi - tlenzi@ulb.ac.be
     Jared Sturdy - sturdy@cern.ch (Adapted for uHAL)
@@ -39,7 +39,7 @@ class GEMDAQTestSuite:
 
     allTests = ["A","B","C","D","E","F","G","H","I","J"]
 
-    def __init__(self, slot,gtx,tests="",test_params=TEST_PARAMS(),debug=False):
+    def __init__(self,slot,gtx,shelf=1,tests="",test_params=TEST_PARAMS(),debug=False):
         """
         """
         self.slot   = slot
@@ -81,12 +81,8 @@ class GEMDAQTestSuite:
 
         self.debug         = debug
 
-        connection_file = "file://${GEM_ADDRESS_TABLE_PATH}/connections.xml"
-        manager         = uhal.ConnectionManager(connection_file )
-
-        self.amc  = manager.getDevice( "gem.shelf%02d.amc%02d"%(1,self.slot) )
-
-
+        self.amc     = getAMCObject(self.slot,self.shelf)
+        self.ohboard = getOHObject(self.slot,self.gtx,self.shelf)
 
         self.presentVFAT2sSingle = []
         self.presentVFAT2sFifo   = []
@@ -108,11 +104,11 @@ class GEMDAQTestSuite:
         return
 
     ####################################################
-    def GLIBPresenceTest(self):
-        txtTitle("A. Testing the GLIB's presence")
-        print "   Trying to read the GLIB board ID... If this test fails, the script will stop."
+    def AMCPresenceTest(self):
+        txtTitle("A. Testing the AMC's presence")
+        print "   Trying to read the AMC board ID... If this test fails, the script will stop."
 
-        if (readRegister(self.amc,"GLIB.SYSTEM.BOARD_ID") != 0):
+        if (getBoardID(self.amc) != 0):
             print Passed
         else:
             print Failed
@@ -126,29 +122,29 @@ class GEMDAQTestSuite:
         txtTitle("B. Testing the OH's presence")
         print "   Trying to set the OptoHybrid registers... If this test fails, the script will stop."
 
-        # setReferenceClock( self.amc, self.gtx, 1)
-        setTriggerSource(  self.amc, self.gtx, 1)
-        setTriggerThrottle(self.amc, self.gtx, 0)
+        # setReferenceClock( self.ohboard, self.gtx, 1)
+        setTriggerSource(  self.ohboard, self.gtx, 1)
+        setTriggerThrottle(self.ohboard, self.gtx, 0)
 
 
-        if (getTriggerSource(self.amc, self.gtx) == 1):
+        if (getTriggerSource(self.ohboard, self.gtx) == 1):
             print Passed
         else:
-            print Failed, "oh_trigger_source %d"%(getTriggerSource(self.amc, self.gtx))
+            print Failed, "oh_trigger_source %d"%(getTriggerSource(self.ohboard, self.gtx))
             sys.exit()
             pass
 
-        # if (getReferenceClock(self.amc,self.gtx) == 1):
+        # if (getReferenceClock(self.ohboard,self.gtx) == 1):
         #     print Passed
         # else:
-        #     print Failed, "oh_clk_src %d"%(getReferenceClock(self.amc,self.gtx))
+        #     print Failed, "oh_clk_src %d"%(getReferenceClock(self.ohboard,self.gtx))
         #     sys.exit()
         #     pass
 
-        if (getTriggerThrottle(self.amc,self.gtx) == 0):
+        if (getTriggerThrottle(self.ohboard,self.gtx) == 0):
             print Passed
         else:
-            print Failed, "oh_trg_throttle %d"%(getTriggerThrottle(self.amc,self.gtx))
+            print Failed, "oh_trg_throttle %d"%(getTriggerThrottle(self.ohboard,self.gtx))
             sys.exit()
             pass
 
@@ -159,30 +155,30 @@ class GEMDAQTestSuite:
         return
 
     ####################################################
-    def GLIBRegisterTest(self):
-        txtTitle("C. Testing the GLIB registers")
-        print "   Performing single reads on the GLIB counters and ensuring they increment."
+    def AMCRegisterTest(self):
+        txtTitle("C. Testing the AMC registers")
+        print "   Performing single reads on the AMC counters and ensuring they increment."
 
-        countersSingle = []
-        countersTest = True
+        # countersSingle = []
+        # countersTest = True
 
-        for i in range(0, self.test_params.GLIB_REG_TEST):
-            countersSingle.append(readRegister(self.amc,"GLIB.COUNTERS.IPBus.Strobe.Counters"))
-            pass
+        # for i in range(0, self.test_params.AMC_REG_TEST):
+        #     countersSingle.append(readRegister(self.amc,"AMC.COUNTERS.IPBus.Strobe.Counters"))
+        #     pass
 
-        for i in range(1, self.test_params.GLIB_REG_TEST):
-            if (countersSingle[i - 1] + 1 != countersSingle[i]):
-                print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
-                countersTest = False
-                pass
-            pass
-        if (countersTest):
-            print Passed
-        else:
-            print Failed
-            pass
+        # for i in range(1, self.test_params.AMC_REG_TEST):
+        #     if (countersSingle[i - 1] + 1 != countersSingle[i]):
+        #         print "\033[91m   > #%d previous %d, current %d \033[0m"%(i, countersSingle[i-1], countersSingle[i])
+        #         countersTest = False
+        #         pass
+        #     pass
+        # if (countersTest):
+        #     print Passed
+        # else:
+        #     print Failed
+        #     pass
 
-        self.test["C"] = countersTest
+        # self.test["C"] = countersTest
 
         print
 
@@ -197,7 +193,7 @@ class GEMDAQTestSuite:
         countersTest = True
 
         for i in range(0, self.test_params.OH_REG_TEST):
-            countersSingle.append(readRegister(self.amc,"%s.COUNTERS.WB.MASTER.Strobe.GTX"%(self.oh_basenode)))
+            countersSingle.append(readRegister(self.ohboard,"%s.COUNTERS.WB.MASTER.Strobe.GTX"%(self.oh_basenode)))
             pass
 
         for i in range(1, self.test_params.OH_REG_TEST):
@@ -220,13 +216,46 @@ class GEMDAQTestSuite:
         return
 
     ####################################################
+    def OptoHybridT1ControllerTest(self):
+        txtTitle("Testing the OH T1 controller")
+
+        initialSrc = getTriggerSource(self.ohboard,self.gtx)
+        print "  T1 Controller Status: 0x%08x"%(getLocalT1Status(self.ohboard,self.gtx))
+        resetLocalT1(self.ohboard,self.gtx)
+        setTriggerSource(self.ohboard,self.gtx,0x1)
+
+        # send 1000 L1As
+        print "  Testing sequential L1As"
+        sentL1AsInitial = optohybridCounters(self.ohboard,self.gtx)["T1"]["SENT"]["L1A"]
+        sendL1A(self.ohboard,self.gtx,interval=100,number=1000)
+        sleep(1)
+        sentL1As = optohybridCounters(self.ohboard,self.gtx)["T1"]["SENT"]["L1A"]
+        print "  L1A: %d, Expected:%d"%(sentL1As-sentL1AsInitial, 1000)
+
+        # send 1000 CalPulses+L1As
+        sentL1AsInitial      = optohybridCounters(self.ohboard,self.gtx)["T1"]["SENT"]["L1A"]
+        sentCalPulsesInitial = optohybridCounters(self.ohboard,self.gtx)["T1"]["SENT"]["CalPulse"]
+        sendL1ACalPulse(self.ohboard,self.gtx,delay=0x40,interval=300,number=1000)
+        sleep(1)
+        sentL1As = optohybridCounters(self.ohboard,self.gtx)["T1"]["SENT"]["L1A"]
+        sentCalPulses = optohybridCounters(self.ohboard,self.gtx)["T1"]["SENT"]["CalPulse"]
+        print "  Testing sequential CalPulse+L1As"
+        print "  L1A: %d, CalPulse: %d, Expected:%d"%(sentL1As-sentL1AsInitial, sentCalPulses-sentCalPulsesInitial, 1000)
+
+        # return to original state
+        resetLocalT1(self.ohboard,self.gtx)
+        setTriggerSource(self.ohboard,self.gtx,initialSrc)
+
+        return
+
+    ####################################################
     def VFAT2DetectionTest(self):
         txtTitle("E. Detecting the VFAT2s over I2C")
         print "   Detecting VFAT2s on the GEM by reading out their chip ID."
 
-        # writeRegister(self.amc,"%s.GEB.Broadcast.Reset"%(self.oh_basenode), 0)
-        # readRegister(self.amc,"%s.GEB.Broadcast.Request.ChipID0"%(self.oh_basenode))
-        self.chipIDs = getAllChipIDs(self.amc,self.gtx)
+        # writeRegister(self.ohboard,"%s.GEB.Broadcast.Reset"%(self.oh_basenode), 0)
+        # readRegister(self.ohboard,"%s.GEB.Broadcast.Request.ChipID0"%(self.oh_basenode))
+        self.chipIDs = getAllChipIDs(self.ohboard,self.gtx)
 
         for i in range(0, 24):
             # missing VFAT shows 0x0003XX00 in I2C broadcast result
@@ -234,7 +263,7 @@ class GEMDAQTestSuite:
             # XX is slot number
             # so if ((result >> 16) & 0x3) == 0x3, chip is missing
             # or if ((result) & 0x30000)   == 0x30000, chip is missing
-            if (((readRegister(self.amc,"%s.GEB.VFATS.VFAT%d.ChipID0"%(self.oh_basenode,i)) >> 24) & 0x5) != 0x5):
+            if (((readRegister(self.ohboard,"%s.GEB.VFATS.VFAT%d.ChipID0"%(self.oh_basenode,i)) >> 24) & 0x5) != 0x5):
                 self.presentVFAT2sSingle.append(i)
                 pass
             if (self.chipIDs[i] not in [0x0000,0xdead]):
@@ -253,7 +282,7 @@ class GEMDAQTestSuite:
         print "   Detected", str(len(self.presentVFAT2sSingle)), "VFAT2s:", str(self.presentVFAT2sSingle)
         print
 
-        self.vfatmask = setVFATTrackingMask(self.amc,self.gtx)
+        self.vfatmask = setVFATTrackingMask(self.ohboard,self.gtx)
 
         return
 
@@ -268,15 +297,15 @@ class GEMDAQTestSuite:
             validOperations = 0
             for j in range(0, self.test_params.I2C_TEST):
                 writeData = random.randint(0, 255)
-                writeVFAT(self.amc,self.gtx,i,"ContReg3",writeData)
-                readData = (readVFAT(self.amc,self.gtx,i,"ContReg3")&0xff)
+                writeVFAT(self.ohboard,self.gtx,i,"ContReg3",writeData)
+                readData = (readVFAT(self.ohboard,self.gtx,i,"ContReg3")&0xff)
                 if (readData == writeData):
                     validOperations += 1
                     pass
                 else:
                     print "0x%02x not 0x%02x"%(readData,writeData)
                 pass
-            writeVFAT(self.amc,self.gtx,i,"ContReg3",0)
+            writeVFAT(self.ohboard,self.gtx,i,"ContReg3",0)
             if (validOperations == self.test_params.I2C_TEST):
                 print Passed, "#%d"%(i)
             else:
@@ -290,11 +319,44 @@ class GEMDAQTestSuite:
         return
 
     ####################################################
+    def VFAT2ChannelRegisterTest(self):
+        # self.test
+
+        for i in self.presentVFAT2sSingle:
+            validOperations = 0
+            for chan in range(128):
+                initialValue = (getChannelRegister(self.ohboard,self.gtx,i,chan)&0xff)
+                for j in range(0,self.test_params.I2C_TEST):
+                    writeData    = random.randint(0, 255)
+                    setChannelRegister(self.ohboard,self.gtx,i,chan,writeData)
+                    readData     = (getChannelRegister(self.ohboard,self.gtx,i,chan)&0xff)
+                    if (readData == writeData):
+                        validOperations += 1
+                        pass
+                    else:
+                        print "0x%02x not 0x%02x"%(readData,writeData)
+                        pass
+                    pass
+                writeVFAT(self.ohboard,self.gtx,i,chan,initialValue)
+                pass
+            if (validOperations == 128*self.test_params.I2C_TEST):
+                print Passed, "#%d"%(i)
+            else:
+                print Failed, "#%d valid operations: %d, expected: %d"%(i, validOperations, 128*self.test_params.I2C_TEST)
+                # self.test["F"] = False
+                pass
+            pass
+
+        print
+
+        return
+
+    ####################################################
     def TrackingDataReadoutTest(self):
         txtTitle("G. Reading out tracking data")
         print "   Sending triggers and testing if the Event Counter adds up."
 
-        broadcastWrite(self.amc,self.gtx,"ContReg0", 0x36)
+        broadcastWrite(self.ohboard,self.gtx,"ContReg0", 0x36)
 
         self.test["G"] = True
 
@@ -303,16 +365,16 @@ class GEMDAQTestSuite:
             t1_type     =  0
             t1_n        =  self.test_params.TK_RD_TEST
             t1_interval =  400
-            resetLocalT1(self.amc,self.gtx) 
-            writeVFAT(self.amc,self.gtx,i,"ContReg0",0x37)
-            setVFATTrackingMask(self.amc,self.gtx, ~(0x1 << i))
+            resetLocalT1(self.ohboard,self.gtx) 
+            writeVFAT(self.ohboard,self.gtx,i,"ContReg0",0x37)
+            setVFATTrackingMask(self.ohboard,self.gtx, ~(0x1 << i))
             flushTrackingFIFO(self.amc,self.gtx)
 
             nPackets = 0
             timeOut = 0
             ecs = []
 
-            sendL1A(self.amc,self.gtx,t1_interval,t1_n)
+            sendL1A(self.ohboard,self.gtx,t1_interval,t1_n)
 
             while ((readFIFODepth(self.amc,self.gtx)["Occupancy"]) != 7 * self.test_params.TK_RD_TEST):
                 timeOut += 1
@@ -328,7 +390,7 @@ class GEMDAQTestSuite:
                 nPackets += 1
                 ecs.append(ec)
                 pass
-            writeVFAT(self.amc,self.gtx,i,"ContReg0",0x36)
+            writeVFAT(self.ohboard,self.gtx,i,"ContReg0",0x36)
 
             if (nPackets != self.test_params.TK_RD_TEST):
                 print Failed, "#%d received %d, expected %d"%(i, nPackets, self.test_params.TK_RD_TEST)
@@ -369,15 +431,15 @@ class GEMDAQTestSuite:
         self.test["H"] = True
 
         if (self.test["G"]):
-            broadcastWrite(self.amc,self.gtx,"ContReg0", 0x37)
+            broadcastWrite(self.ohboard,self.gtx,"ContReg0", 0x37)
 
             mask = 0
             for i in self.presentVFAT2sSingle:
                 mask |= (0x1 << i)
                 pass
-            setVFATTrackingMask(self.amc,self.gtx, ~(mask))
+            setVFATTrackingMask(self.ohboard,self.gtx, ~(mask))
 
-            sendResync(self.amc,self.gtx, 10, 1)
+            sendResync(self.ohboard,self.gtx, 10, 1)
 
             flushTrackingFIFO(self.amc,self.gtx)
 
@@ -385,13 +447,13 @@ class GEMDAQTestSuite:
             t1_type     =  0
             t1_n        =  self.test_params.TK_RD_TEST
             t1_interval =  400
-            resetLocalT1(self.amc,self.gtx)
+            resetLocalT1(self.ohboard,self.gtx)
 
             nPackets = 0
             timeOut = 0
             ecs = []
 
-            sendL1A(self.amc,self.gtx,t1_interval,t1_n)
+            sendL1A(self.ohboard,self.gtx,t1_interval,t1_n)
 
             while ((readFIFODepth(self.amc,self.gtx)["Occupancy"]) != len(self.presentVFAT2sSingle) * self.test_params.TK_RD_TEST):
                 timeOut += 1
@@ -403,7 +465,7 @@ class GEMDAQTestSuite:
                 nPackets += 1
                 ecs.append(ec)
                 pass
-            broadcastWrite(self.amc,self.gtx,"ContReg0", 0x36)
+            broadcastWrite(self.ohboard,self.gtx,"ContReg0", 0x36)
 
             if (nPackets != len(self.presentVFAT2sSingle) * self.test_params.TK_RD_TEST):
                 print Failed, "#%d received: %d, expected: %d"%(i,nPackets, len(self.presentVFAT2sSingle) * self.test_params.TK_RD_TEST)
@@ -431,7 +493,7 @@ class GEMDAQTestSuite:
                     self.test["H"] = False
                     pass
                 pass
-            resetLocalT1(self.amc,self.gtx)
+            resetLocalT1(self.ohboard,self.gtx)
             pass
         else:
             print "   Skipping this test as the previous test did not succeed..."
@@ -447,10 +509,10 @@ class GEMDAQTestSuite:
         txtTitle("I. Testing the tracking data readout rate")
         print "   Sending triggers at a given rate and looking at the maximum readout rate that can be achieved."
 
-        broadcastWrite(self.amc,self.gtx,"ContReg0", 0x36)
+        broadcastWrite(self.ohboard,self.gtx,"ContReg0", 0x36)
 
-        writeVFAT(self.amc,self.gtx,self.presentVFAT2sSingle[0],"ContReg0",0x37)
-        setVFATTrackingMask(self.amc,self.gtx, ~(0x1 << self.presentVFAT2sSingle[0]))
+        writeVFAT(self.ohboard,self.gtx,self.presentVFAT2sSingle[0],"ContReg0",0x37)
+        setVFATTrackingMask(self.ohboard,self.gtx, ~(0x1 << self.presentVFAT2sSingle[0]))
 
         f = open('out.log', 'w')
 
@@ -471,9 +533,9 @@ class GEMDAQTestSuite:
             t1_n        =  0
             t1_interval =  40000000 / i
 
-            resetLocalT1(self.amc,self.gtx)
+            resetLocalT1(self.ohboard,self.gtx)
             flushTrackingFIFO(self.amc,self.gtx)
-            sendL1A(self.amc,self.gtx,t1_interval,t1_n)
+            sendL1A(self.ohboard,self.gtx,t1_interval,t1_n)
 
             if (self.test_params.RATE_WRITE):
                 for j in range(0, 1000):
@@ -510,12 +572,12 @@ class GEMDAQTestSuite:
 
         f.close()
 
-        resetLocalT1(self.amc,self.gtx)
-        writeVFAT(self.amc,self.gtx,self.presentVFAT2sSingle[0],"ContReg0",0x36)
+        resetLocalT1(self.ohboard,self.gtx)
+        writeVFAT(self.ohboard,self.gtx,self.presentVFAT2sSingle[0],"ContReg0",0x36)
 
         self.test["I"] = True
 
-        setVFATTrackingMask(self.amc,self.gtx,self.vfatmask)
+        setVFATTrackingMask(self.ohboard,self.gtx,self.vfatmask)
 
         print
 
@@ -525,28 +587,28 @@ class GEMDAQTestSuite:
     def OpticalLinkErrorTest(self):
         txtTitle("J. Testing the optical link error rate")
 
-        writeRegister(self.amc,"GLIB.COUNTERS.GTX%d.TRK_ERR.Reset"%(self.gtx), 1)
-        time.sleep(1)
-        glib_tk_error_reg = readRegister(self.amc,"GLIB.COUNTERS.GTX%d.TRK_ERR"%(self.gtx))
+        # writeRegister(self.amc,"GLIB.COUNTERS.GTX%d.TRK_ERR.Reset"%(self.gtx), 1)
+        # time.sleep(1)
+        # glib_tk_error_reg = readRegister(self.amc,"GLIB.COUNTERS.GTX%d.TRK_ERR"%(self.gtx))
 
-        writeRegister(self.amc,"GLIB.COUNTERS.GTX%d.TRG_ERR.Reset"%(self.gtx), 1)
-        time.sleep(1)
-        glib_tr_error_reg = readRegister(self.amc,"GLIB.COUNTERS.GTX%d.TRG_ERR"%(self.gtx))
+        # writeRegister(self.amc,"GLIB.COUNTERS.GTX%d.TRG_ERR.Reset"%(self.gtx), 1)
+        # time.sleep(1)
+        # glib_tr_error_reg = readRegister(self.amc,"GLIB.COUNTERS.GTX%d.TRG_ERR"%(self.gtx))
 
-        writeRegister(self.amc,"%s.COUNTERS.GTX.TRK_ERR"%(self.oh_basenode), 1)
-        time.sleep(1)
-        oh_tk_error_reg = readRegister(self.amc,"%s.COUNTERS.GTX.TRK_ERR"%(self.oh_basenode))
+        # writeRegister(self.amc,"%s.COUNTERS.GTX.TRK_ERR"%(self.oh_basenode), 1)
+        # time.sleep(1)
+        # oh_tk_error_reg = readRegister(self.amc,"%s.COUNTERS.GTX.TRK_ERR"%(self.oh_basenode))
 
-        writeRegister(self.amc,"%s.COUNTERS.GTX.TRG_ERR"%(self.oh_basenode), 1)
-        time.sleep(1)
-        oh_tr_error_reg = readRegister(self.amc,"%s.COUNTERS.GTX.TRG_ERR"%(self.oh_basenode))
+        # writeRegister(self.amc,"%s.COUNTERS.GTX.TRG_ERR"%(self.oh_basenode), 1)
+        # time.sleep(1)
+        # oh_tr_error_reg = readRegister(self.amc,"%s.COUNTERS.GTX.TRG_ERR"%(self.oh_basenode))
 
-        print "   GLIB tracking link error rate is of       %4d %sHz"%(rateConverter(1*glib_tk_error_reg))
-        print "   GLIB trigger link error rate is of        %4d %sHz"%(rateConverter(1*glib_tr_error_reg))
-        print "   OptoHybrid tracking link error rate is of %4d %sHz"%(rateConverter(1*oh_tk_error_reg))
-        print "   OptoHybrid trigger link error rate is of  %4d %sHz"%(rateConverter(1*oh_tr_error_reg))
+        # print "   AMC tracking link error rate is of        %4d %sHz"%(rateConverter(1*glib_tk_error_reg))
+        # print "   AMC trigger link error rate is of         %4d %sHz"%(rateConverter(1*glib_tr_error_reg))
+        # print "   OptoHybrid tracking link error rate is of %4d %sHz"%(rateConverter(1*oh_tk_error_reg))
+        # print "   OptoHybrid trigger link error rate is of  %4d %sHz"%(rateConverter(1*oh_tr_error_reg))
 
-        self.test["J"] = True
+        # self.test["J"] = True
 
         print
 
@@ -555,22 +617,24 @@ class GEMDAQTestSuite:
     ####################################################
     def runSelectedTests(self):
         if ("A" in self.tests):
-            self.GLIBPresenceTest()
+            self.AMCPresenceTest()
             pass
         if ("B" in self.tests):
             self.OptoHybridPresenceTest()
             pass
         if ("C" in self.tests):
-            self.GLIBRegisterTest()
+            self.AMCRegisterTest()
             pass
         if ("D" in self.tests):
             self.OptoHybridRegisterTest()
+            self.OptoHybridT1ControllerTest()
             pass
         if ("E" in self.tests):
             self.VFAT2DetectionTest()
             pass
         if ("F" in self.tests):
             self.VFAT2I2CRegisterTest()
+            self.VFAT2ChannelRegisterTest()
             pass
         if ("G" in self.tests):
             self.TrackingDataReadoutTest()
@@ -588,9 +652,9 @@ class GEMDAQTestSuite:
 
     ####################################################
     def runAllTests(self):
-        self.GLIBPresenceTest()
+        self.AMCPresenceTest()
         self.OptoHybridPresenceTest()
-        self.GLIBRegisterTest()
+        self.AMCRegisterTest()
         self.OptoHybridRegisterTest()
         self.VFAT2DetectionTest()
         self.VFAT2I2CRegisterTest()
@@ -614,31 +678,11 @@ class GEMDAQTestSuite:
         return
 
 if __name__ == "__main__":
-    from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option("-s", "--slot", type="int", dest="slot",
-                      help="slot in uTCA crate", metavar="slot", default=10)
-    parser.add_option("-g", "--gtx", type="int", dest="gtx",
-                      help="GTX on the GLIB", metavar="gtx", default=0)
-    parser.add_option("--nglib", type="int", dest="nglib",
-                      help="Number of register tests to perform on the glib (default is 100)", metavar="nglib", default=100)
-    parser.add_option("--noh", type="int", dest="noh",
-                      help="Number of register tests to perform on the OptoHybrid (default is 100)", metavar="noh", default=100)
-    parser.add_option("--ni2c", type="int", dest="ni2c",
-                      help="Number of I2C tests to perform on the VFAT2s (default is 100)", metavar="ni2c", default=100)
-    parser.add_option("--ntrk", type="int", dest="ntrk",
-                      help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
-    parser.add_option("--writeout", action="store_true", dest="writeout",
-                      help="Write the data to disk when testing the rate", metavar="writeout")
-    parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E,F,G,H,I,J",
-                      help="Tests to run, default is all", metavar="tests")
-
-    parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                      help="print extra debugging information", metavar="debug")
+    from qcoptions import parser
 
     (options, args) = parser.parse_args()
 
-    test_params = TEST_PARAMS(nglib=options.nglib,
+    test_params = TEST_PARAMS(namc=options.namc,
                               noh=options.noh,
                               ni2c=options.ni2c,
                               ntrk=options.ntrk,

@@ -10,35 +10,11 @@ Created on Thu Mar 31 09:28:14 2016
 """
 
 import sys, os, random, time
-from optparse import OptionParser
 
 if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option("-s", "--slot", type="int", dest="slot",
-                      help="[REQUIRED] AMC slot in uTCA crate", metavar="slot")
-    parser.add_option("-g", "--gtx", type="int", dest="gtx",
-                      help="[REQUIRED] OH link on the AMC", metavar="gtx")
-    parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                      help="Run in debug mode", metavar="debug")
-    parser.add_option("--nglib", type="int", dest="nglib",
-                      help="[OPTIONAL] Number of register tests to perform on the glib (default is 100)", metavar="nglib", default=100)
-    parser.add_option("--noh", type="int", dest="noh",
-                      help="[OPTIONAL] Number of register tests to perform on the OptoHybrid (default is 100)", metavar="noh", default=100)
-    parser.add_option("--ni2c", type="int", dest="ni2c",
-                      help="[OPTIONAL] Number of I2C tests to perform on the VFAT2s (default is 100)", metavar="ni2c", default=100)
-    parser.add_option("--ntrk", type="int", dest="ntrk",
-                      help="[OPTIONAL] Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
-    parser.add_option("--writeout", action="store_true", dest="writeout",
-                      help="[OPTIONAL] Write the data to disk when testing the rate", metavar="writeout")
-    parser.add_option("--doLatency", action="store_true", dest="doLatency",
-                      metavar="doLatency",
-                      help="[OPTIONAL] Run latency scan to determine the latency value")
-    parser.add_option("--QC3test", action="store_true", dest="doQC3",
-                      metavar="doQC3",
-                      help="[OPTIONAL] Run a shortened test after covers have been applied")
+    from qcoptions import parser
 
-    parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                      help="print extra debugging information", metavar="debug")
+    parser = OptionParser()
 
     (options, args) = parser.parse_args()
 
@@ -103,12 +79,13 @@ if __name__ == "__main__":
     sys.stdout.flush()
     ####################################################
 
-    testsToRun = "A,B,C,D,E"
+    testsToRun = "A,B,E"
 
     print "Running %s on AMC%02d  OH%02d"%(testsToRun,options.slot,options.gtx)
 
     testSuite = GEMDAQTestSuite(slot=options.slot,
                                 gtx=options.gtx,
+                                shelf=options.shelf,
                                 tests=testsToRun,
                                 test_params=test_params)#,
                                 #debug=options.debug)
@@ -118,7 +95,7 @@ if __name__ == "__main__":
     for vfat in testSuite.presentVFAT2sSingle:
         if options.debug and vfat > 0:
             continue
-        sCurveTests = VFATSCurveTools(glib=testSuite.glib,
+        sCurveTests = VFATSCurveTools(ohboard=testSuite.ohboard,
                                       slot=testSuite.slot,
                                       gtx=testSuite.gtx,
                                       scan_params=scan_params,
