@@ -691,6 +691,7 @@ if __name__ == "__main__":
 
     testSuite = GEMDAQTestSuite(slot=options.slot,
                                 gtx=options.gtx,
+                                shelf=options.shelf,
                                 tests=options.tests,
                                 test_params=test_params,
                                 debug=options.debug)
