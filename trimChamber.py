@@ -11,10 +11,8 @@ from gempython.tools.vfat_user_functions_uhal import *
 
 from qcoptions import parser
 
-parser.add_option("--path", type="string", dest="path", default="data",
-                  help="Specify Output File Path", metavar="path")
-parser.add_option("-p", "--ptrim", type="float", dest="ptrim", default=4.0,
-                  help="Specify GEB (long/short)", metavar="GEBtype")
+parser.add_option("-p","--ptrim", type="float", dest="ptrim", default=4.0,
+                  help="Specify the p value of the trim", metavar="GEBtype")
 
 
 uhal.setLogLevelTo( uhal.LogLevel.WARNING )
@@ -43,7 +41,6 @@ if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
 
 
 from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1
-import ROOT
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S.%f")
 print startTime
@@ -70,12 +67,14 @@ for vfat in range(0,24):
 tRanges = {}
 tRangeGood = {}
 trimVcal = {}
+trimCH = {}
 goodSup = {}
 goodInf = {}
 for vfat in range(0,24):
     tRanges[vfat] = 0
     tRangeGood[vfat] = False
     trimVcal[vfat] = 0
+    trimCH[vfat] = 0
     goodSup[vfat] = -99
     goodInf[vfat] = -99
 
@@ -144,9 +143,11 @@ for trimRange in range(0,5):
             goodSup[vfat] = sup[vfat]
             goodInf[vfat] = inf[vfat]
             trimVcal[vfat] = sup[vfat]
+            trimCH[vfat] = supCH[vfat]
         else:
             tRanges[vfat] += 1
             trimVcal[vfat] = sup[vfat]
+            trimCH[vfat] = supCH[vfat]
 
 #Init trimDACs to all zeros
 trimDACs = {}
@@ -182,9 +183,9 @@ os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,fi
     
 scanFilename = '%s/scanInfo.txt'%dirPath
 outF = open(scanFilename,'w')
-outF.write('vfat/I:tRange/I:sup/D:inf/D:trimVcal/D')
+outF.write('vfat/I:tRange/I:sup/D:inf/D:trimVcal/D:trimCH/D\n')
 for vfat in range(0,24):
-    outF.write('%i  %i  %f  %f  %f\n'%(vfat,tRanges[vfat],goodSup[vfat],goodInf[vfat],trimVcal[vfat]))
+    outF.write('%i  %i  %f  %f  %f  %i\n'%(vfat,tRanges[vfat],goodSup[vfat],goodInf[vfat],trimVcal[vfat],trimCH[vfat]))
    
 outF.close()
 

@@ -43,6 +43,7 @@ class GEMDAQTestSuite:
         """
         """
         self.slot   = slot
+        self.shelf  = shelf
         self.gtx    = gtx
 
         self.tests = tests.upper().split(',')
