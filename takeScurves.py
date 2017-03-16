@@ -53,7 +53,7 @@ if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
     print 'You must source the environment properly!'
 if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
     print 'You must source the environment properly!'
-exit(0)
+
 for link in range(0,10):
     dirPath = '$DATA_PATH/%s/scurves/%s'%(chamber_config[link],startTime)
     os.system('mkdir -p %s'%dirPath)
