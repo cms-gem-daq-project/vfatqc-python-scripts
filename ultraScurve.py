@@ -14,6 +14,7 @@ parser.add_option("-f", "--filename", type="string", dest="filename", default="S
                   help="Specify Output Filename", metavar="filename")
 
 (options, args) = parser.parse_args()
+uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 
 if options.debug:
     uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
@@ -82,8 +83,6 @@ for vfat in range(0,24):
         trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
         writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
 
-print 'VFATs configured'
-
 for scCH in range(CHAN_MIN,CHAN_MAX):
     vfatCH[0] = scCH
     print "Channel #"+str(scCH)
@@ -118,7 +117,7 @@ for scCH in range(CHAN_MIN,CHAN_MAX):
     sys.stdout.flush()
 
 stopLocalT1(ohboard, options.gtx)
-#writeAllVFATs(ohboard, options.gtx, "ContReg0",    0, mask)
+writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
 
 myF.cd()
 myT.Write()
