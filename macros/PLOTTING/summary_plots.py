@@ -67,7 +67,8 @@ for i in range(0,24):
     vPedestal[i] = TH1D('Pedestal%i'%i,'Pedestal%i;Pedestal [DAC units]'%i,256,-0.5,255.5)
     vThreshold[i] = TH1D('Threshold%i'%i,'Threshold%i;Threshold [DAC units]'%i,60,-0.5,299.5)
     vChi2[i] = TH1D('ChiSquared%i'%i,'ChiSquared%i;Chi2'%i,100,-0.5,999.5)
-    vComparison[i] = TH2D('vComparison%i'%i,'Parameter Spread %i;Threshold [DAC units];Noise [DAC units]'%i,60,-0.5,299.5,70,-0.5,34.5)
+    vComparison[i] = TH2D('vComparison%i'%i,'Fit Summary %i;Threshold [DAC units];Noise [DAC units]'%i,60,-0.5,299.5,70,-0.5,34.5)
+    vComparison[i].GetYaxis().SetTitleOffset(1.5)
     pass
 
 for event in inF.scurveFitTree:
@@ -92,7 +93,7 @@ if options.fit_plots or options.all_plots:
         vComparison[i].Draw('colz')
         canv_comp.Update()
         pass
-    canv_comp.SaveAs(filename+'_ParameterSpread.png')
+    canv_comp.SaveAs(filename+'_FitSummary.png')
     
     canv_thresh = TCanvas('canv_thresh','canv_thresh',500*8,500*3)
     canv_thresh.Divide(8,3)
