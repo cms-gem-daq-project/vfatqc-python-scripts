@@ -149,7 +149,9 @@ for i in range(0,24):
     vthr_list.append([])
     trim_list.append([])
     trimrange_list.append([])
-    lines.append(TLine(-0.5, trimVcal[i], 127.5, trimVcal[i]))
+    if options.IsTrimmed:
+        lines.append(TLine(-0.5, trimVcal[i], 127.5, trimVcal[i]))
+        pass
     if not (options.channels or options.PanPin):
         vSum[i] = TH2D('vSum%i'%i,'vSum%i;Strip;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
         vSum[i].GetYaxis().SetTitleOffset(1.5)
@@ -159,11 +161,10 @@ for i in range(0,24):
         vSum[i].GetYaxis().SetTitleOffset(1.5)
         pass
     if options.PanPin:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i_0-63;Panasonic Pin;VCal [DAC units]'%i,64,-0.5,63.5,256,-0.5,255.5)
+        vSum[i] = TH2D('vSum%i'%i,'vSum%i_0-63;63 - Panasonic Pin;VCal [DAC units]'%i,64,-0.5,63.5,256,-0.5,255.5)
         vSum[i].GetYaxis().SetTitleOffset(1.5)
-        vSum2[i] = TH2D('vSum2_%i'%i,'vSum%i_64-127;Panasonic Pin;VCal [DAC units]'%i,64,63.5,127.5,256,-0.5,255.5)
+        vSum2[i] = TH2D('vSum2_%i'%i,'vSum%i_64-127;127 - Panasonic Pin;VCal [DAC units]'%i,64,-0.5,63.5,256,-0.5,255.5)
         vSum2[i].GetYaxis().SetTitleOffset(1.5)
-
         pass
     for ch in range (0,128):
         vScurves[i].append(TH1D('Scurve_%i_%i'%(i,ch),'Scurve_%i_%i;VCal [DAC units]'%(i,ch),256,-0.5,255.5))
@@ -190,10 +191,10 @@ for event in inF.scurveTree:
         pass
     if options.PanPin:
         if (pan_pin < 64):
-            vSum[event.vfatN].Fill(pan_pin,event.vcal,event.Nhits)
+            vSum[event.vfatN].Fill(63-pan_pin,event.vcal,event.Nhits)
             pass
         else:
-            vSum2[event.vfatN].Fill(pan_pin,event.vcal,event.Nhits)
+            vSum2[event.vfatN].Fill(127-pan_pin,event.vcal,event.Nhits)
             pass
         pass
     x = vScurves[event.vfatN][event.vfatCH].FindBin(event.vcal)
@@ -243,6 +244,7 @@ if options.SaveFile:
     pass
 
 canv = TCanvas('canv','canv',500*8,500*3)
+legend = TLegend(0.75,0.7,0.88,0.88)
 if not options.PanPin:
     canv.Divide(8,3)
     gStyle.SetOptStat(0)
@@ -251,8 +253,9 @@ if not options.PanPin:
         canv.cd(i+1)
         vSum[i].Draw('colz')
         if options.IsTrimmed:
-            legend = TLegend(0.75,0.7,0.88,0.88)
+            legend.Clear()
             legend.AddEntry(line, 'trimVCal is %f'%(trimVcal[i]))
+            legend.Draw('SAME')
             print trimVcal[i]
             lines[i].SetLineColor(1)
             lines[i].SetLineWidth(3)
@@ -270,7 +273,7 @@ else:
             canv.cd(i+1 + j*16)
             vSum[i+(8*j)].Draw('colz')
             canv.Update()
-            canv.cd(i+9 + j*8)
+            canv.cd(i+9 + j*16)
             vSum2[i+(8*j)].Draw('colz')
             canv.Update()
             pass

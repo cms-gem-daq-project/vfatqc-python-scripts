@@ -1,5 +1,5 @@
 from plot_scurve import *
-
+from ROOT import TLegend
 parser = OptionParser()
 parser.add_option("-i", "--infilename", type="string", dest="filename", default="SCurveFitData.root",
                   help="Specify Input Filename", metavar="filename")
@@ -18,6 +18,8 @@ channel_yes = options.channel_yes
 vfat = options.vfat
 strip = options.strip
 
+gStyle.SetOptStat(0)
+
 thr = []
 Scurves = []
 fitF = TFile(filename)
@@ -30,15 +32,31 @@ print thr
 
 canvas = TCanvas('canvas', 'canvas', 500, 500)
 canvas.cd()
+i = 0
 for thresh in thr:
     for event in fitF.scurveFitTree:
         if (event.vthr == thresh) and (event.vfatN == vfat) and (event.vfatstrip == strip):
-#            Scurve = event.scurve_h
-            Scurves.append(event.scurve_h)
-            (event.scurve_h).Draw('SAME')
-#            canvas.Update()
+            Scurves.append((event.scurve_h).Clone())
             pass
         pass
     pass
+
+leg = TLegend(0.1, 0.6, 0.3, 0.8)
+
+for hist in Scurves:
+    hist.SetTitle("")
+    hist.SetLineColor((i%9) + 1)
+    if i == 0:
+        hist.Draw()
+        hist.Set
+        i+=1
+        pass
+    else:
+        hist.Draw('SAME')
+        i+=1
+        pass
+    leg.AddEntry(hist, "Scurve for vthr%i"%thr[i-1])
+    pass
+leg.Draw('SAME')
 canvas.Update()
 canvas.SaveAs('Scurve_vs_Thresh_VFAT_%i_Strip_%i.png'%(vfat, strip))
