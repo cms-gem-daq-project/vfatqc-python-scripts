@@ -90,7 +90,7 @@ for scCH in range(CHAN_MIN,CHAN_MAX):
         trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
         writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
     configureScanModule(ohboard, options.gtx, 3, mask, channel = scCH, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
-    printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
+    #printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
     startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
     scanData = getUltraScanResults(ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
     for i in range(0,24):
@@ -99,7 +99,7 @@ for scCH in range(CHAN_MIN,CHAN_MAX):
         trimRange[0] = (0x7 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
         trimDAC[0] = (0x1f & readVFAT(ohboard,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))
         vthr[0] = (0xff & readVFAT(ohboard,options.gtx, i,"VThreshold1"))
-        for VC in range(SCURVE_MIN,SCURVE_MAX+1):
+        for VC in range(SCURVE_MAX-SCURVE_MIN+1):
             try:
                 vcal[0] = int((dataNow[VC] & 0xff000000) >> 24)
                 Nhits[0] = int(dataNow[VC] & 0xffffff)
