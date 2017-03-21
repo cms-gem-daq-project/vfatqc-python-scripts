@@ -26,32 +26,9 @@ GEBtype = options.GEBtype
 inF = TFile(filename+'.root')
 
 #Build the channel to strip mapping from the text file
-lookup_table = []
-for vfat in range(0,24):
-    lookup_table.append([])
-    for channel in range(0,128):
-        lookup_table[vfat].append(0)
-        pass
-    pass
 
 buildHome = os.environ.get('BUILD_HOME')
 
-if GEBtype == 'long':
-    intext = open(buildHome+'/vfatqc-python-scripts/macros/longChannelMap.txt', 'r')
-    for i, line in enumerate(intext):
-        if i == 0: continue
-        mapping = line.rsplit('\t')
-        lookup_table[int(mapping[0])][int(mapping[2]) -1] = int(mapping[1])
-        pass
-    pass
-if GEBtype == 'short':
-    intext = open(buildHome+'/vfatqc-python-scripts/macros/shortChannelMap.txt', 'r')
-    for i, line in enumerate(intext):
-        if i == 0: continue
-        mapping = line.rsplit('\t')
-        lookup_table[int(mapping[0])][int(mapping[2]) -1] = int(mapping[1])
-        pass
-    pass
 
 
 vSum = {}
@@ -59,6 +36,7 @@ vNoise = {}
 vThreshold = {}
 vChi2 = {}
 vComparison = {}
+vNoiseTrim = {}
 vPedestal = {}
 
 
@@ -68,11 +46,13 @@ for i in range(0,24):
     vThreshold[i] = TH1D('Threshold%i'%i,'Threshold%i;Threshold [DAC units]'%i,60,-0.5,299.5)
     vChi2[i] = TH1D('ChiSquared%i'%i,'ChiSquared%i;Chi2'%i,100,-0.5,999.5)
     vComparison[i] = TH2D('vComparison%i'%i,'Fit Summary %i;Threshold [DAC units];Noise [DAC units]'%i,60,-0.5,299.5,70,-0.5,34.5)
+    vNoiseTrim[i] = TH2D('vNoiseTrim%i'%i,'Noise vs. Trim Summary %i;Trim [DAC units];Noise [DAC units]'%i,32,-0.5,31.5,70,-0.5,34.5)
     vComparison[i].GetYaxis().SetTitleOffset(1.5)
+    vNoiseTrim[i].GetYaxis().SetTitleOffset(1.5)
     pass
 
 for event in inF.scurveFitTree:
-    strip = lookup_table[event.vfatN][event.vfatCH]
+    strip = event.vfatstrip
     param0 = event.threshold
     param1 = event.noise
     param2 = event.pedestal
@@ -81,6 +61,7 @@ for event in inF.scurveFitTree:
     vPedestal[event.vfatN].Fill(param2)
     vChi2[event.vfatN].Fill(event.chi2)
     vComparison[event.vfatN].Fill(param0, param1)
+    vNoiseTrim[event.vfatN].Fill(event.trimDAC, param1)
     pass
     
 if options.fit_plots or options.all_plots:
@@ -94,6 +75,17 @@ if options.fit_plots or options.all_plots:
         canv_comp.Update()
         pass
     canv_comp.SaveAs(filename+'_FitSummary.png')
+
+    gStyle.SetOptStat(111100)
+    canv_trim = TCanvas('canv_trim','canv_trim',500*8,500*3)
+    canv_trim.Divide(8,3)
+    for i in range(0,24):
+        canv_trim.cd(i+1)
+        gStyle.SetOptStat(111100)
+        vNoiseTrim[i].Draw('colz')
+        canv_trim.Update()
+        pass
+    canv_trim.SaveAs(filename+'_TrimNoiseSummary.png')
     
     canv_thresh = TCanvas('canv_thresh','canv_thresh',500*8,500*3)
     canv_thresh.Divide(8,3)
