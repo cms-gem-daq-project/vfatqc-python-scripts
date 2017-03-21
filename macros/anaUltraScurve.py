@@ -89,6 +89,8 @@ if options.SaveFile:
     myT.Branch( 'scurve_h', scurve_h)
     chi2 = array( 'f', [ 0 ] )
     myT.Branch( 'chi2', chi2, 'chi2/F')
+    Nev = array( 'f', [ 0 ] )
+    myT.Branch( 'Nev', Nev, 'Nev/F')
     pass
 
 vSum = {}
@@ -164,33 +166,35 @@ for event in inF.scurveTree:
     pass
 if options.SaveFile:
     for vfat in range (0,24):
-        for CH in range (0, 128):
-            strip = lookup_table[vfat][CH]
+        print 'Filling vfat %i'%vfat
+        for ch in range (0, 128):
+            strip = lookup_table[vfat][ch]
             #Filling the Branches
-            param0 = scanFits[0][vfat][CH]
-            param1 = scanFits[1][vfat][CH]
-            param2 = scanFits[2][vfat][CH]
+            param0 = scanFits[0][vfat][ch]
+            param1 = scanFits[1][vfat][ch]
+            param2 = scanFits[2][vfat][ch]
             FittedFunction =  TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
             FittedFunction.SetParameter(0, param0)
             FittedFunction.SetParameter(1, param1)
             FittedFunction.SetParameter(2, param2)
             ped_eff[0] = FittedFunction.Eval(0.0)
             vfatN[0] = vfat
-            vfatCH[0] = CH
+            vfatCH[0] = ch
             vfatstrip[0] = strip
-            trimRange[0] = trimrange_list[vfat][CH] 
-            vthr[0] = vthr_list[vfat][CH]
-            trimDAC[0] = trim_list[vfat][CH]
+            trimRange[0] = trimrange_list[vfat][ch] 
+            vthr[0] = vthr_list[vfat][ch]
+            trimDAC[0] = trim_list[vfat][ch]
             threshold[0] = param0
             noise[0] = param1
             pedestal[0] = param2
-            chi2[0] = scanFits[3][vfat][CH]
-            holder_curve = vScurves[vfat][CH]
+            chi2[0] = scanFits[3][vfat][ch]
+            holder_curve = vScurves[vfat][ch]
             holder_curve.Copy(scurve_h)
+            Nev[0] = scanFits[4][vfat][ch]
         #Filling the arrays for plotting later
             if options.drawbad:
                 if (Chi2 > 1000.0 or Chi2 < 1.0):
-                    overlay_fit(vfat, CH)
+                    overlay_fit(vfat, ch)
                     print "Chi2 is, %d"%(Chi2)
                     pass
                 pass
