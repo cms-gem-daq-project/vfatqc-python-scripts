@@ -1,13 +1,11 @@
-from optparse import OptionParser
-from array import array
-from ROOT import TFile,TTree,TH1D,TGraph,TGraph2D,TCanvas,TPad,gROOT,gStyle,gPad,TPaveStats,TF1
-
-
 
 def overlay_fit(VFAT, CH, data_filename, fit_filename):
-    inF = TFile(data_filename)
-    fitF = TFile(fit_filename)
+    from ROOT import TFile,TH1D,TCanvas,TF1
+
+    inF     = TFile(data_filename)
+    fitF   = TFile(fit_filename)
     Scurve = TH1D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]'%(VFAT, CH),255,-0.5,254.5)
+
     for event in inF.scurveTree:
         if (event.vfatN == VFAT) and (event.vfatCH == CH):
             Scurve.Fill(event.vcal, event.Nhits)

@@ -1,23 +1,18 @@
-from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1, TRandom3
-import numpy as np
 
 def fitScanData(treeFile):
+    from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1, TRandom3
+    import numpy as np
+    from gempython.utils.nesteddict import nesteddict as ndict
     gROOT.SetBatch(True)
     gStyle.SetOptStat(0)
 
     inF = TFile(treeFile)
 
-    scanHistos = {}
-    scanCount = {}
-    scanFits = {}
-    scanFits[0] = {}
-    scanFits[1] = {}
-    scanFits[2] = {}
-    scanFits[3] = {}
-    scanFits[4] = {}
+    scanHistos = ndict()
+    scanCount  = ndict()
+    scanFits   = ndict()
+
     for vfat in range(0,24):
-        scanHistos[vfat] = {}
-        scanCount[vfat] = {}
         scanFits[0][vfat] = np.zeros(128)
         scanFits[1][vfat] = np.zeros(128)
         scanFits[2][vfat] = np.zeros(128)
@@ -29,11 +24,11 @@ def fitScanData(treeFile):
 
     for event in inF.scurveTree :
         scanHistos[event.vfatN][event.vfatCH].Fill(event.vcal,event.Nhits)
-        if(event.vcal > 250): 
+        if(event.vcal > 250):
             scanCount[event.vfatN][event.vfatCH] += event.Nhits
             pass
         pass
-    
+
     random = TRandom3()
     random.SetSeed(0)
     fitTF1 = TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)

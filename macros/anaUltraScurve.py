@@ -4,7 +4,7 @@ from array import array
 from fitScanData import *
 from channelMaps import *
 from PanChannelMaps import *
-from ROOT import TFile,TTree,TH2D,TGraph,TGraph2D,TCanvas,TPad,gROOT,gStyle,gPad,TPaveStats, TLine, TColor, TLegend
+from gempython.utils.nesteddict import nesteddict as ndict
 
 parser = OptionParser()
 
@@ -32,6 +32,9 @@ os.system("mkdir " + filename)
 
 print filename
 outfilename = options.outfilename
+
+from ROOT import TFile,TTree,TH2D,TCanvas,gROOT,gStyle,TLine,TLegend
+
 gROOT.SetBatch(True)
 gStyle.SetOptStat(1111111)
 GEBtype = options.GEBtype
@@ -113,8 +116,8 @@ if options.SaveFile:
     myT.Branch( 'Nev', Nev, 'Nev/F')
     pass
 
-vSum = {}
-vSum2 = {}
+vSum  = ndict()
+vSum2 = ndict()
 vScurves = []
 vthr_list = []
 trim_list = []
@@ -267,9 +270,6 @@ if not options.PanPin:
         canv.Update()
         pass
     pass
-<<<<<<< HEAD
-canv.SaveAs(filename+'/Summary%s.png'%filename)
-=======
 else:
     canv.Divide(8,6)
     gStyle.SetOptStat(0)
@@ -287,7 +287,6 @@ else:
     pass
 
 canv.SaveAs(filename+'/Summary.png')
->>>>>>> glib-only-fw
 
 if options.SaveFile:
     outF.cd()

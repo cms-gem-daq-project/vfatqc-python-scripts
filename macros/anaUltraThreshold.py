@@ -1,8 +1,9 @@
-from ROOT import TFile,TTree,TH2D
+from gempython.utils.nesteddict import nesteddict as ndict
 
+from ROOT import TFile,TH2D
 inF = TFile('ThresholdData.root')
 
-vSum = {}
+vSum = ndict()
 for i in range(0,24):
     vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channel;VThreshold1 [DAC units]'%i,128,-0.5,127.5,81,-0.5,80.5)
 

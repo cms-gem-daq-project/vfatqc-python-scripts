@@ -8,6 +8,7 @@ import sys
 from array import array
 from macros.fitScanData import fitScanData
 from gempython.tools.vfat_user_functions_uhal import *
+from gempython.utils.nesteddict import nesteddict as ndict
 
 from qcoptions import parser
 
@@ -58,19 +59,18 @@ writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
 CHAN_MIN = 0
 CHAN_MAX = 128
 
-masks = {}
+masks = ndict()
 for vfat in range(0,24):
-    masks[vfat] = {}
     for ch in range(CHAN_MIN,CHAN_MAX):
         masks[vfat][ch] = False
 
 #Find trimRange for each VFAT
-tRanges = {}
-tRangeGood = {}
-trimVcal = {}
-trimCH = {}
-goodSup = {}
-goodInf = {}
+tRanges    = ndict()
+tRangeGood = ndict()
+trimVcal = ndict()
+trimCH   = ndict()
+goodSup  = ndict()
+goodInf  = ndict()
 for vfat in range(0,24):
     tRanges[vfat] = 0
     tRangeGood[vfat] = False
@@ -95,7 +95,7 @@ muFits_0  = fitScanData(filename0)
 for vfat in range(0,24):
     for ch in range(CHAN_MIN,CHAN_MAX):
         if muFits_0[4][vfat][ch] < 0.1: masks[vfat][ch] = True
-    
+
 
 #This loop determines the trimRangeDAC for each VFAT
 for trimRange in range(0,5):
@@ -109,18 +109,18 @@ for trimRange in range(0,5):
     for vfat in range(0,24):
         for scCH in range(CHAN_MIN,CHAN_MAX):
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),31)
-    
+
     #Scurve scan with trimdac set to 31 (maximum trimming)
     filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
     os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename31))
-    
+
     #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
     muFits_31 = fitScanData(filename31)
-    
-    sup = {}
-    supCH = {}
-    inf = {}
-    infCH = {}
+
+    sup   = ndict()
+    supCH = ndict()
+    inf   = ndict()
+    infCH = ndict()
     #Check to see if the new trimRange is good
     for vfat in range(0,24):
         if(tRangeGood[vfat]): continue
@@ -130,10 +130,10 @@ for trimRange in range(0,5):
         infCH[vfat] = -1
         for ch in range(CHAN_MIN,CHAN_MAX):
             if(masks[vfat][ch]): continue
-            if(muFits_31[0][vfat][ch] - ptrim*muFits_31[1][vfat][ch] > inf[vfat]): 
+            if(muFits_31[0][vfat][ch] - ptrim*muFits_31[1][vfat][ch] > inf[vfat]):
                 inf[vfat] = muFits_31[0][vfat][ch] - ptrim*muFits_31[1][vfat][ch]
                 infCH[vfat] = ch
-            if(muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] > 0.1): 
+            if(muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] > 0.1):
                 sup[vfat] = muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch]
                 supCH[vfat] = ch
         print "vfat: %i"%vfat
@@ -154,9 +154,8 @@ for trimRange in range(0,5):
             trimCH[vfat] = supCH[vfat]
 
 #Init trimDACs to all zeros
-trimDACs = {}
+trimDACs = ndict()
 for vfat in range(0,24):
-    trimDACs[vfat] = {}
     for ch in range(CHAN_MIN,CHAN_MAX):
         trimDACs[vfat][ch] = 0
 
@@ -184,13 +183,13 @@ for vfat in range(0,24):
 
 filenameFinal = "%s/SCurveData_Trimmed.root"%dirPath
 os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filenameFinal))
-    
+
 scanFilename = '%s/scanInfo.txt'%dirPath
 outF = open(scanFilename,'w')
 outF.write('vfat/I:tRange/I:sup/D:inf/D:trimVcal/D:trimCH/D\n')
 for vfat in range(0,24):
     outF.write('%i  %i  %f  %f  %f  %i\n'%(vfat,tRanges[vfat],goodSup[vfat],goodInf[vfat],trimVcal[vfat],trimCH[vfat]))
-   
+
 outF.close()
 
 exit(0)

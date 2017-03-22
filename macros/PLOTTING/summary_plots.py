@@ -1,6 +1,6 @@
 import os
 from optparse import OptionParser
-from ROOT import TFile,TTree,TH2D,TH1D,TGraph,TGraph2D,TCanvas,TPad,gROOT,gStyle,gPad,TPaveStats
+from gempython.utils.nesteddict import nesteddict as ndict
 
 parser = OptionParser()
 
@@ -21,6 +21,8 @@ parser.add_option("-x","--chi2", action="store_true", dest="chi2_plots",
 (options, args) = parser.parse_args()
 filename = options.filename[:-5]
 
+from ROOT import TFile,TH2D,TH1D,TCanvas,gROOT,gStyle,gPad
+
 gROOT.SetBatch(True)
 GEBtype = options.GEBtype
 inF = TFile(filename+'.root')
@@ -29,15 +31,13 @@ inF = TFile(filename+'.root')
 
 buildHome = os.environ.get('BUILD_HOME')
 
-
-
-vSum = {}
-vNoise = {}
-vThreshold = {}
-vChi2 = {}
-vComparison = {}
-vNoiseTrim = {}
-vPedestal = {}
+vSum   = ndict()
+vNoise = ndict()
+vThreshold = ndict()
+vChi2      = ndict()
+vComparison = ndict()
+vNoiseTrim  = ndict()
+vPedestal   = ndict()
 
 
 for i in range(0,24):
@@ -63,7 +63,7 @@ for event in inF.scurveFitTree:
     vComparison[event.vfatN].Fill(param0, param1)
     vNoiseTrim[event.vfatN].Fill(event.trimDAC, param1)
     pass
-    
+
 if options.fit_plots or options.all_plots:
     gStyle.SetOptStat(111100)
     canv_comp = TCanvas('canv_comp','canv_comp',500*8,500*3)
@@ -86,7 +86,7 @@ if options.fit_plots or options.all_plots:
         canv_trim.Update()
         pass
     canv_trim.SaveAs(filename+'_TrimNoiseSummary.png')
-    
+
     canv_thresh = TCanvas('canv_thresh','canv_thresh',500*8,500*3)
     canv_thresh.Divide(8,3)
     for i in range(0,24):
@@ -97,7 +97,7 @@ if options.fit_plots or options.all_plots:
         canv_thresh.Update()
         pass
     canv_thresh.SaveAs(filename+'_FitThreshSummary.png')
-    
+
     canv_Pedestal = TCanvas('canv_Pedestal','canv_Pedestal',500*8,500*3)
     canv_Pedestal.Divide(8,3)
     for i in range(0,24):
@@ -108,7 +108,7 @@ if options.fit_plots or options.all_plots:
         canv_Pedestal.Update()
         pass
     canv_Pedestal.SaveAs(filename+'_FitPedestalSummary.png')
-    
+
     canv_noise = TCanvas('canv_noise','canv_noise',500*8,500*3)
     canv_noise.Divide(8,3)
     for i in range(0,24):
@@ -120,7 +120,7 @@ if options.fit_plots or options.all_plots:
     canv_noise.SetLogy()
     canv_noise.SaveAs(filename+'_FitNoiseSummary.png')
     pass
-if options.chi2_plots or options.all_plots:    
+if options.chi2_plots or options.all_plots:
     canv_Chi2 = TCanvas('canv_Chi2','canv_Chi2',500*8,500*3)
     canv_Chi2.Divide(8,3)
     canv_Chi2.SetLogy()

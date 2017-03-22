@@ -1,6 +1,5 @@
 from optparse import OptionParser
-from array import array
-from ROOT import TFile,TTree,TH1D,TGraph,TGraph2D,TCanvas,TPad,gROOT,gStyle,gPad,TPaveStats,TF1, TH2D
+
 parser = OptionParser()
 parser.add_option("-i", "--infilename", type="string", dest="filename", default="SCurveFitData.root",
                   help="Specify Input Filename", metavar="filename")
@@ -12,8 +11,8 @@ parser.add_option("-c","--channels", action="store_true", dest="channels",
 (options, args) = parser.parse_args()
 
 
-
-def plot_vfat_summary(VFAT, fit_filename): 
+def plot_vfat_summary(VFAT, fit_filename):
+    from ROOT import TFile,TH1D,TCanvas,gStyle,TH2D
     fitF = TFile(fit_filename)
     Scurve = TH1D()
     if options.channels:
