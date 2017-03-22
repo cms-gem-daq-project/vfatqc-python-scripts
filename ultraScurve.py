@@ -65,63 +65,68 @@ if options.debug:
     pass
 mask = 0
 
-setTriggerSource(ohboard,options.gtx,1)
-configureLocalT1(ohboard, options.gtx, 1, 0, 40, 250, 0, options.debug)
-startLocalT1(ohboard, options.gtx)
+try:
+    setTriggerSource(ohboard,options.gtx,1)
+    configureLocalT1(ohboard, options.gtx, 1, 0, 40, 250, 0, options.debug)
+    startLocalT1(ohboard, options.gtx)
 
-print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
+    print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
 
-#biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
-#writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
+    #biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
+    #writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
 
-writeAllVFATs(ohboard, options.gtx, "Latency",    37, mask)
-writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
-writeAllVFATs(ohboard, options.gtx, "ContReg2",    48, mask)
+    writeAllVFATs(ohboard, options.gtx, "Latency",    37, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg0", 0x37, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",   48, mask)
 
-for vfat in range(0,24):
+    for vfat in range(0,24):
+        for scCH in range(CHAN_MIN,CHAN_MAX):
+            trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
+            writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
+
     for scCH in range(CHAN_MIN,CHAN_MAX):
-        trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
-        writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
+        vfatCH[0] = scCH
+        print "Channel #"+str(scCH)
+        for vfat in range(0,24):
+            trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
+            writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
+        configureScanModule(ohboard, options.gtx, 3, mask, channel = scCH, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
+        printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
+        startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
+        scanData = getUltraScanResults(ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
+        for i in range(0,24):
+            vfatN[0] = i
+            dataNow = scanData[i]
+            trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
+            trimDAC[0]   = (0x1f & readVFAT(ohboard,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))
+            vthr[0]      = (0xff & readVFAT(ohboard,options.gtx, i,"VThreshold1"))
+            for VC in range(SCURVE_MAX-SCURVE_MIN+1):
+                try:
+                    vcal[0]  = int((dataNow[VC] & 0xff000000) >> 24)
+                    Nhits[0] = int(dataNow[VC] & 0xffffff)
+                except IndexError:
+                    print 'Unable to index data for channel %i'%scCH
+                    print dataNow
+                    vcal[0]  = -99
+                    Nhits[0] = -99
+                finally:
+                    myT.Fill()
+        for vfat in range(0,24):
+            trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
+            writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
+        myT.AutoSave("SaveSelf")
+        sys.stdout.flush()
+        pass
+    stopLocalT1(ohboard, options.gtx)
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
 
-for scCH in range(CHAN_MIN,CHAN_MAX):
-    vfatCH[0] = scCH
-    print "Channel #"+str(scCH)
-    for vfat in range(0,24):
-        trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
-        writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
-    configureScanModule(ohboard, options.gtx, 3, mask, channel = scCH, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
-    #printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
-    startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
-    scanData = getUltraScanResults(ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
-    for i in range(0,24):
-        vfatN[0] = i
-        dataNow = scanData[i]
-        trimRange[0] = (0x7 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
-        trimDAC[0] = (0x1f & readVFAT(ohboard,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))
-        vthr[0] = (0xff & readVFAT(ohboard,options.gtx, i,"VThreshold1"))
-        for VC in range(SCURVE_MAX-SCURVE_MIN+1):
-            try:
-                vcal[0] = int((dataNow[VC] & 0xff000000) >> 24)
-                Nhits[0] = int(dataNow[VC] & 0xffffff)
-                myT.Fill()
-            except IndexError:
-                print 'Unable to index data for channel %i'%scCH
-                print dataNow
-                vcal[0] = -99
-                Nhits[0] = -99
-                myT.Fill()
-    for vfat in range(0,24):
-        trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
-        writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
+except Exception as e:
     myT.AutoSave("SaveSelf")
-    sys.stdout.flush()
-
-stopLocalT1(ohboard, options.gtx)
-writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
-
-myF.cd()
-myT.Write()
-myF.Close()
+    print "An exception occurred", e
+finally:
+    myF.cd()
+    myT.Write()
+    myF.Close()
 
 
 
