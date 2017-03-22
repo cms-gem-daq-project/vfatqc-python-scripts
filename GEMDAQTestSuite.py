@@ -8,7 +8,7 @@ from gempython.tools.glib_system_info_uhal import *
 from gempython.tools.amc_user_functions_uhal import *
 from gempython.tools.optohybrid_user_functions_uhal import *
 from gempython.tools.vfat_user_functions_uhal import *
->>>>>>> gemdaq-master
+
 Passed = '\033[92m   > Passed... \033[0m'
 NotRun = '\033[90m   > NotRun... \033[0m'
 Failed = '\033[91m   > Failed... \033[0m'
