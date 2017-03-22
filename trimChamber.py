@@ -47,7 +47,8 @@ print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-dirPath = '$DATA_PATH/%s/trimming/%s'%(chamber_config[options.gtx],startTime)
+#dirPath = '$DATA_PATH/%s/trimming/%s'%(chamber_config[options.gtx],startTime)
+dirPath = 'data/%s/trimming/p_%f/%s'%(chamber_config[options.gtx],ptrim,startTime)
 os.system('mkdir -p %s'%dirPath)
 
 #bias vfats
@@ -91,6 +92,9 @@ for vfat in range(0,24):
 filename0 = "%s/SCurveData_trimdac0_range0.root"%dirPath
 os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename0))
 muFits_0  = fitScanData(filename0)
+for vfat in range(0,24):
+    for ch in range(CHAN_MIN,CHAN_MAX):
+        if muFits_0[4][vfat][ch] < 0.1: masks[vfat][ch] = True
     
 
 #This loop determines the trimRangeDAC for each VFAT
@@ -189,6 +193,7 @@ for vfat in range(0,24):
    
 outF.close()
 
+exit(0)
 
 
 
