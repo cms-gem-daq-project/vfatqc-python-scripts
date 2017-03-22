@@ -270,10 +270,10 @@ else:
     for i in range(0,8):
         for j in range (0,3):
             gStyle.SetOptStat(0)
-            canv.cd(i+1 + j*16)
+            canv.cd((i+1 + j*16)%48 + 16)
             vSum[i+(8*j)].Draw('colz')
             canv.Update()
-            canv.cd(i+9 + j*16)
+            canv.cd((i+9 + j*16)%48 + 16)
             vSum2[i+(8*j)].Draw('colz')
             canv.Update()
             pass
