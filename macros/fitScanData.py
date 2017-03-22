@@ -81,9 +81,6 @@ def fitScanData(treeFile):
                     scanFits[4][vfat][ch] = scanCount[vfat][ch]
                     MinChi2Temp = fitChi2
                     pass
-                #if chi2_iter > 2:
-                #    chi2_iter = 0
-                #    break            
                 if (MinChi2Temp < 50): break
                 pass
             pass
