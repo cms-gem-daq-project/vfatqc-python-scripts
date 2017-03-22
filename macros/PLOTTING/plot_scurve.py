@@ -46,6 +46,5 @@ def plot_scurve(VFAT, CH, fit_filename, overlay_fit, channel_yes):
             canvas.SaveAs('Scurve_VFAT%i_Strip%i.png'%(VFAT, CH))
             pass
         pass
-    return
+    return 
 
-#overlay_fit(8, 106, 'SCurveData_Trimmed.root', 'SCurveFitData.root')
