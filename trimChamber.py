@@ -8,6 +8,7 @@ import sys
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 from gempython.utils.nesteddict import nesteddict as ndict
+from chamberInfo import chamber_config
 
 def runCommand(cmd):
     import datetime,os,sys
@@ -34,19 +35,6 @@ uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 
 ptrim = options.ptrim
 print 'trimming at p = %f'%ptrim
-
-chamber_config = {
-  0:"GEMINI01L1",
-  1:"GEMINI01L2",
-  2:"GEMINI27L1",
-  3:"GEMINI27L2",
-  4:"GEMINI28L1",
-  5:"GEMINI28L2",
-  6:"GEMINI29L1",
-  7:"GEMINI29L2",
-  8:"GEMINI30L1",
-  9:"GEMINI30L2"
-  }
 
 if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
     print 'You must source the environment properly!'
