@@ -135,6 +135,6 @@ if __name__ == '__main__':
     print "Running jobs in serial mode"
     for link in chamber_config.keys():
       chamber = chamber_config[link]
-      launchTests(options.tool,options.slot,link,chamber,options.vt2,options.perchannel,options.trkdata,options.ztrim)
+      launchTests([options.tool,options.slot,link,chamber,options.vt2,options.perchannel,options.trkdata,options.ztrim])
       pass
     pass
