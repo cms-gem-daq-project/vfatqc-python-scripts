@@ -7,7 +7,6 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
-  from chamberInfo import chamber_config
 
   scanType = "vt1"
   dataType = "VT1Threshold"
@@ -76,6 +75,7 @@ if __name__ == '__main__':
   import subprocess
   import itertools
   from multiprocessing import Pool, freeze_support
+  from chamberInfo import chamber_config
 
   from qcoptions import parser
 
