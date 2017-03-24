@@ -7,7 +7,6 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
-  from chamberInfo import chamber_config
 
   scanType = "vt1"
   dataType = "VT1Threshold"
@@ -16,10 +15,10 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
-    if vt1 in range(256):
-      cmd.append("--vt1=%d"%(vt1))
-      pass
     preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
+    if vt1 in range(256):
+      preCmd.append("--vt1=%d"%(vt1))
+      pass
     pass
   elif tool == "trimChamber.py":
     scanType = "trim"
@@ -76,6 +75,7 @@ if __name__ == '__main__':
   import subprocess
   import itertools
   from multiprocessing import Pool, freeze_support
+  from chamberInfo import chamber_config
 
   from qcoptions import parser
 
