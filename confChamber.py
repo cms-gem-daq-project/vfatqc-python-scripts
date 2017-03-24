@@ -23,7 +23,7 @@ else:
 
 from ROOT import TFile,TTree
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 

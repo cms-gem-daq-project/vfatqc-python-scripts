@@ -28,7 +28,7 @@ if options.gtx is None or options.gtx not in range(0,2):
     pass
 
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 Date = startTime
 print startTime
 

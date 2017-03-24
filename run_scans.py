@@ -26,7 +26,7 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
     dataType = None
     pass
 
-  startTime = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M")
+  startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
   log = file("%s_scan_%s_%s.log"%(chamber,scanType,startTime),"w")
   cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link)]
 

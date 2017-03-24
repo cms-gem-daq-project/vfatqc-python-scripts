@@ -670,7 +670,7 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
 
     import subprocess,datetime
-    startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M")
+    startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     print "Start time: %s"%(startTime)
 
     # Unbuffer output

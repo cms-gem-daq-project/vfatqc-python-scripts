@@ -11,7 +11,7 @@ from qcoptions import parser
 (options, args) = parser.parse_args()
 
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S.%f")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M.%S.%f")
 print startTime
 
 if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':

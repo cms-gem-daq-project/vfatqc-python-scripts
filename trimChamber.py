@@ -45,7 +45,7 @@ if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
 
 from macros.fitScanData import fitScanData
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
