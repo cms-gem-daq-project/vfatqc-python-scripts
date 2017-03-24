@@ -83,6 +83,8 @@ if __name__ == '__main__':
                     help="Run tests in parllel (default is false)", metavar="parallel")
   parser.add_option("--tool", type="string", dest="tool",default="ultraThreshold.py",
                     help="Tool to run (scan or analyze", metavar="tool")
+  parser.add_option("--vt1", type="int", dest="vt1", default=100,
+                    help="Specify VT1 to use", metavar="vt1")
   parser.add_option("--vt2", type="int", dest="vt2", default=0,
                     help="Specify VT2 to use", metavar="vt2")
   parser.add_option("--perchannel", action="store_true", dest="perchannel",
@@ -104,6 +106,7 @@ if __name__ == '__main__':
                        [options.slot for x in range(len(chamber_config))],
                        chamber_config.keys(),
                        chamber_config.values(),
+                       [options.vt1 for x in range(len(chamber_config))],
                        [options.vt2 for x in range(len(chamber_config))],
                        [options.perchannel for x in range(len(chamber_config))],
                        [options.trkdata for x in range(len(chamber_config))],
@@ -119,6 +122,7 @@ if __name__ == '__main__':
                                   [options.slot for x in range(len(chamber_config))],
                                   chamber_config.keys(),
                                   chamber_config.values(),
+                                  [options.vt1 for x in range(len(chamber_config))],
                                   [options.vt2 for x in range(len(chamber_config))],
                                   [options.perchannel for x in range(len(chamber_config))],
                                   [options.trkdata for x in range(len(chamber_config))],
