@@ -36,7 +36,7 @@ biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
 print 'biased VFATs'
 writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
 print 'Set VThreshold1 to %i'%options.vt1
-writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36,         0)
+writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36,        0)
 
 #inF = TFile(filename)
 
