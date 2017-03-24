@@ -57,8 +57,10 @@ print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-dirPath = '%s/%s/trimming/%s'%(dataPath,chamber_config[options.gtx],startTime)
+dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
 runCommand(["mkdir","-p",dirPath])
+runCommand(["unlink",'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
+runCommand(["ln","-s",dirPath,'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
 
 # bias vfats
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
