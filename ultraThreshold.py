@@ -8,7 +8,7 @@ import sys, os, random, time
 from array import array
 
 from gempython.tools.optohybrid_user_functions_uhal import *
-from gempython.tools.vfat_functions_uhal import *
+from gempython.tools.vfat_user_functions_uhal import *
 
 from qcoptions import parser
 
