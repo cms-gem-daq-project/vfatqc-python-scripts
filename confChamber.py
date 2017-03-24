@@ -42,7 +42,7 @@ if options.filename != None:
 
         for event in inF.scurveTree :
             if event.vcal == 10 :
-                writeVFAT(testSuite.glib,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC))
+                writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC))
                 if event.vfatCH == 10 : writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
     except:
         print '%s does not seem to exist'%options.filename
