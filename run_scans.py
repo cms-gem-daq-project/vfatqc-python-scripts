@@ -16,10 +16,10 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
-    if vt1 in range(256):
-      cmd.append("--vt1=%d"%(vt1))
-      pass
     preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
+    if vt1 in range(256):
+      preCmd.append("--vt1=%d"%(vt1))
+      pass
     pass
   elif tool == "trimChamber.py":
     scanType = "trim"
