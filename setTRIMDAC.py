@@ -30,7 +30,7 @@ if __name__ == "__main__":
     from ipbus import *
 
     import subprocess,datetime
-    startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+    startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M")
     print startTime
 
     # Unbuffer output

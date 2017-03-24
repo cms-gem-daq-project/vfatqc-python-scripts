@@ -28,6 +28,8 @@ from qcoptions import parser
 
 parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
                   help="Specify the p value of the trim", metavar="ztrim")
+parser.add_option("--vt1", type="int", dest="vt1",
+                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 
 
 uhal.setLogLevelTo( uhal.LogLevel.WARNING )
@@ -43,7 +45,7 @@ if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
 
 from macros.fitScanData import fitScanData
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S.%f")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M")
 print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
@@ -53,7 +55,7 @@ runCommand(["mkdir","-p",dirPath])
 
 # bias vfats
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
-writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
+writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
 
 CHAN_MIN = 0
 CHAN_MAX = 128
