@@ -1,8 +1,6 @@
-from optparse import OptionParser
-from array import array
-from ROOT import TFile,TTree,TH1D,TGraph,TGraph2D,TCanvas,TPad,gROOT,gStyle,gPad,TPaveStats,TF1
 
 def plot_scurve(VFAT, CH, fit_filename, overlay_fit, channel_yes):
+    from ROOT import TFile,TCanvas,gStyle,TF1
     fitF = TFile(fit_filename)
     Scurve = TH1D()
 #    Scurve = TH1D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]'%(VFAT, CH),255,-0.5,254.5)
@@ -48,4 +46,3 @@ def plot_scurve(VFAT, CH, fit_filename, overlay_fit, channel_yes):
         pass
     return
 
-#overlay_fit(8, 106, 'SCurveData_Trimmed.root', 'SCurveFitData.root')

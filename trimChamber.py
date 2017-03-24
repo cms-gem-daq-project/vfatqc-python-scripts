@@ -6,74 +6,79 @@ By: Christine McLean (ch.mclean@cern.ch), Cameron Bravo (c.bravo@cern.ch), Eliza
 
 import sys
 from array import array
-from macros.fitScanData import fitScanData
 from gempython.tools.vfat_user_functions_uhal import *
+from gempython.utils.nesteddict import nesteddict as ndict
+from chamberInfo import chamber_config
+
+def runCommand(cmd):
+    import datetime,os,sys
+    import subprocess
+    from subprocess import CalledProcessError
+    try:
+        print "Executing command",cmd
+        sys.stdout.flush()
+        returncode = subprocess.call(cmd)
+    except CalledProcessError as e:
+        print "Caught exception",e,"running",cmd
+        sys.stdout.flush()
+        pass
+    return returncode
 
 from qcoptions import parser
 
-parser.add_option("-p","--ptrim", type="float", dest="ptrim", default=4.0,
-                  help="Specify the p value of the trim", metavar="GEBtype")
 parser.add_option("--trimRange", type="string", dest="rangeFile", default="",
                   help="Specify the file to take trim ranges from", metavar="rangeFile")
+parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
+                  help="Specify the p value of the trim", metavar="ztrim")
+parser.add_option("--vt1", type="int", dest="vt1",
+                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 
 
 uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 (options, args) = parser.parse_args()
 
-ptrim = options.ptrim
 rangeFile = options.rangeFile
-print 'trimming at p = %f'%ptrim
-
-chamber_config = {
-  0:"SC1L1",
-  1:"SC1L2",
-  2:"SC27L1",
-  3:"SC27L2",
-  4:"SC28L1",
-  5:"SC28L2",
-  6:"SC29L1",
-  7:"SC29L2",
-  8:"SC30L1",
-  9:"SC30L2"
-  }
+ztrim = options.ztrim
+print 'trimming at z = %f'%ztrim
 
 if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
     print 'You must source the environment properly!'
+    exit(0)
 if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
     print 'You must source the environment properly!'
+    exit(0)
 
+dataPath = os.getenv('DATA_PATH')
 
-from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1
+from macros.fitScanData import fitScanData
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S.%f")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-#dirPath = '$DATA_PATH/%s/trimming/%s'%(chamber_config[options.gtx],startTime)
-dirPath = 'data/%s/trimming/p_%f/%s'%(chamber_config[options.gtx],ptrim,startTime)
-os.system('mkdir -p %s'%dirPath)
+dirPath = '%s/%s/trimming/%s'%(dataPath,chamber_config[options.gtx],startTime)
+runCommand(["mkdir","-p",dirPath])
 
-#bias vfats
+# bias vfats
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
-writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
+writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
 
 CHAN_MIN = 0
 CHAN_MAX = 128
 
-masks = {}
+masks = ndict()
 for vfat in range(0,24):
-    masks[vfat] = {}
     for ch in range(CHAN_MIN,CHAN_MAX):
         masks[vfat][ch] = False
 
 #Find trimRange for each VFAT
-tRanges = {}
-tRangeGood = {}
-trimVcal = {}
-trimCH = {}
-goodSup = {}
-goodInf = {}
+tRanges    = ndict()
+tRangeGood = ndict()
+trimVcal = ndict()
+trimCH   = ndict()
+goodSup  = ndict()
+goodInf  = ndict()
 for vfat in range(0,24):
     tRanges[vfat] = 0
     tRangeGood[vfat] = False
@@ -85,19 +90,24 @@ for vfat in range(0,24):
 ###############
 # TRIMDAC = 0
 ###############
-#Configure for initial scan
+# Configure for initial scan
 for vfat in range(0,24):
     writeVFAT(ohboard, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
-    for scCH in range(CHAN_MIN,CHAN_MAX):
-        writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),0)
 
-#Scurve scan with trimdac set to 0
+zeroAllVFATChannels(ohboard,options.gtx,mask=0x0)
+
+# Scurve scan with trimdac set to 0
 filename0 = "%s/SCurveData_trimdac0_range0.root"%dirPath
-os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename0))
+runCommand(["./ultraScurve.py",
+            "-s%d"%(options.slot),
+            "-g%d"%(options.gtx),
+            "--filename=%s"%(filename0)]
+           )
 muFits_0  = fitScanData(filename0)
 for vfat in range(0,24):
     for ch in range(CHAN_MIN,CHAN_MAX):
         if muFits_0[4][vfat][ch] < 0.1: masks[vfat][ch] = True
+
 #calculate the sup and set trimVcal
 sup = {}
 supCH = {}
@@ -177,45 +187,55 @@ else:
             if event.vfatCH == 10:
                 writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
                 tRanges[event.vfatN] = event.trimRange
+            pass
+        pass
+    pass
 
 #Init trimDACs to all zeros
-trimDACs = {}
+trimDACs = ndict()
 for vfat in range(0,24):
-    trimDACs[vfat] = {}
     for ch in range(CHAN_MIN,CHAN_MAX):
         trimDACs[vfat][ch] = 0
 
-#This is a binary search to set each channel's trimDAC
+# This is a binary search to set each channel's trimDAC
 for i in range(0,5):
-    #First write this steps values to the VFATs
+    # First write this steps values to the VFATs
     for vfat in range(0,24):
         for ch in range(CHAN_MIN,CHAN_MAX):
             trimDACs[vfat][ch] += pow(2,4-i)
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch),trimDACs[vfat][ch])
-    #Run an SCurve
+    # Run an SCurve
     filenameBS = "%s/SCurveData_binarySearch%i.root"%(dirPath,i)
-    os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filenameBS))
-    #Fit Scurve data
+    runCommand(["./ultraScurve.py",
+                "-s%d"%(options.slot),
+                "-g%d"%(options.gtx),
+                "--filename=%s"%(filenameBS)]
+               )
+    # Fit Scurve data
     fitData = fitScanData(filenameBS)
-    #Now use data to determine the new trimDAC value
+    # Now use data to determine the new trimDAC value
     for vfat in range(0,24):
         for ch in range(CHAN_MIN,CHAN_MAX):
-            if(fitData[0][vfat][ch] - ptrim*fitData[1][vfat][ch] < trimVcal[vfat]): trimDACs[vfat][ch] -= pow(2,4-i)
+            if(fitData[0][vfat][ch] - ztrim*fitData[1][vfat][ch] < trimVcal[vfat]): trimDACs[vfat][ch] -= pow(2,4-i)
 
-#Now take a scan with trimDACs found by binary search
+# Now take a scan with trimDACs found by binary search
 for vfat in range(0,24):
     for ch in range(CHAN_MIN,CHAN_MAX):
         writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch),trimDACs[vfat][ch])
 
 filenameFinal = "%s/SCurveData_Trimmed.root"%dirPath
-os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filenameFinal))
-    
+runCommand(["./ultraScurve.py",
+            "-s%d"%(options.slot),
+            "-g%d"%(options.gtx),
+            "--filename=%s"%(filenameFinal)]
+           )
+
 scanFilename = '%s/scanInfo.txt'%dirPath
 outF = open(scanFilename,'w')
 outF.write('vfat/I:tRange/I:sup/D:inf/D:trimVcal/D:trimCH/D\n')
 for vfat in range(0,24):
     outF.write('%i  %i  %f  %f  %f  %i\n'%(vfat,tRanges[vfat],goodSup[vfat],goodInf[vfat],trimVcal[vfat],trimCH[vfat]))
-   
+    pass
 outF.close()
 
 exit(0)

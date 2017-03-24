@@ -1,22 +1,11 @@
 import os
 import threading
+from chamberInfo import chamber_config
 
 def launchScurveScan(link,trimName):
   os.system("python $BUILD_HOME/vfatqc-python-scripts/trimChamber.py -s3 -g %i -p 0.0 --trimRange data/jaredTrim/%s/SCurveData_trimdac31_range4.root &> log/trim%i.log"%(link,trimName,link))
 
 threads = []
-chamber_config = {
-  0:"SC1L1",
-  1:"SC1L2",
-  2:"SC27L1",
-  3:"SC27L2",
-  4:"SC28L1",
-  5:"SC28L2",
-  6:"SC29L1",
-  7:"SC29L2",
-  8:"SC30L1",
-  9:"SC30L2"
-  }
 
 trim_name = {
   0:"GEMINI01L1",
