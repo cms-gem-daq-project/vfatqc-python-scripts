@@ -9,10 +9,10 @@ from gempython.tools.vfat_user_functions_uhal import *
 
 from qcoptions import parser
 
-parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData_Trimmed.root",
-                  help="Specify Output Filename", metavar="filename")
-parser.add_option("-v", "--vthreshold", type="int", dest="vthr",
-                  help="VThreshold1 DAC value for all VFATs", metavar="vthr", default=100)
+parser.add_option("--filename", type="string", dest="filename", default="SCurveData_Trimmed.root",
+                  help="Specify file containing settings information", metavar="filename")
+parser.add_option("--vt1", type="int", dest="vt1",
+                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 
 (options, args) = parser.parse_args()
 
@@ -23,7 +23,7 @@ else:
 
 from ROOT import TFile,TTree
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 
@@ -34,9 +34,9 @@ filename = options.filename
 
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
 print 'biased VFATs'
-writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vthr, 0)
-print 'Set VThreshold1 to %i'%options.vthr
-writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, 0)
+writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
+print 'Set VThreshold1 to %i'%options.vt1
+writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36,        0)
 
 #inF = TFile(filename)
 

@@ -58,7 +58,7 @@ myT.Branch( 'link', link, 'link/I' )
 link[0] = options.gtx
 
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 

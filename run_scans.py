@@ -3,7 +3,7 @@
 def launchTests(args):
   return launchTestsArgs(*args)
 
-def launchTestsArgs(tool, slot, link, chamber,vt2=0,perchannel=False,trkdata=False,ztrim=4.0):
+def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,trkdata=False,ztrim=4.0):
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
@@ -16,6 +16,9 @@ def launchTestsArgs(tool, slot, link, chamber,vt2=0,perchannel=False,trkdata=Fal
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
+    if vt1 in range(256):
+      cmd.append("--vt1=%d"%(vt1))
+      pass
     preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
     pass
   elif tool == "trimChamber.py":
@@ -23,12 +26,15 @@ def launchTestsArgs(tool, slot, link, chamber,vt2=0,perchannel=False,trkdata=Fal
     dataType = None
     pass
 
-  startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+  startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
   log = file("%s_scan_%s_%s.log"%(chamber,scanType,startTime),"w")
   cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link)]
 
   if tool == "trimChamber.py":
     cmd.append("--ztrim=%f"%(ztrim))
+    if vt1 in range(256):
+      cmd.append("--vt1=%d"%(vt1))
+      pass
     pass
   else:
     cmd.append("--filename=%sData_%s_%s.root"%(dataType,chamber,startTime))
