@@ -26,6 +26,8 @@ def runCommand(cmd):
 
 from qcoptions import parser
 
+parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
+                  help="Specify the file to take trim ranges from", metavar="rangeFile")
 parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
                   help="Specify the p value of the trim", metavar="ztrim")
 parser.add_option("--vt1", type="int", dest="vt1",
@@ -35,13 +37,18 @@ parser.add_option("--vt1", type="int", dest="vt1",
 uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 (options, args) = parser.parse_args()
 
+rangeFile = options.rangeFile
 ztrim = options.ztrim
-print 'trimming at p = %f'%ztrim
+print 'trimming at z = %f'%ztrim
 
 if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
     print 'You must source the environment properly!'
+    exit(0)
 if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
     print 'You must source the environment properly!'
+    exit(0)
+
+dataPath = os.getenv('DATA_PATH')
 
 from macros.fitScanData import fitScanData
 import subprocess,datetime
@@ -50,8 +57,10 @@ print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-dirPath = '%s/%s/trimming/%s'%(os.getenv("DATA_PATH"),chamber_config[options.gtx],startTime)
+dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
 runCommand(["mkdir","-p",dirPath])
+runCommand(["unlink",'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
+runCommand(["ln","-s",dirPath,'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
 
 # bias vfats
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
@@ -101,72 +110,92 @@ for vfat in range(0,24):
     for ch in range(CHAN_MIN,CHAN_MAX):
         if muFits_0[4][vfat][ch] < 0.1: masks[vfat][ch] = True
 
-# This loop determines the trimRangeDAC for each VFAT
-for trimRange in range(0,5):
-    # Set Trim Ranges
-    for vfat in range(0,24):
-        writeVFAT(ohboard, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
-    ###############
-    # TRIMDAC = 31
-    ###############
-    # Setting trimdac value
-    for vfat in range(0,24):
-        for scCH in range(CHAN_MIN,CHAN_MAX):
-            writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),31)
+#calculate the sup and set trimVcal
+sup = ndict()
+supCH = ndict()
+for vfat in range(0,24):
+    if(tRangeGood[vfat]): continue
+    sup[vfat] = 999.0
+    supCH[vfat] = -1
+    for ch in range(CHAN_MIN,CHAN_MAX):
+        if(masks[vfat][ch]): continue
+        if(muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] > 0.1): 
+            sup[vfat] = muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch]
+            supCH[vfat] = ch
+    goodSup[vfat] = sup[vfat]
+    trimVcal[vfat] = sup[vfat]
+    trimCH[vfat] = supCH[vfat]
+    
 
-    # Scurve scan with trimdac set to 31 (maximum trimming)
-    filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
-    runCommand(["./ultraScurve.py",
-                "-s%d"%(options.slot),
-                "-g%d"%(options.gtx),
-                "--filename=%s"%(filename31)]
-               )
-
-    # For each channel check that the infimum of the scan with trimDAC = 31
-    # is less than the subpremum of the scan with trimDAC = 0.
-    # The difference should be greater than the trimdac range.
-    muFits_31 = fitScanData(filename31)
-
-    sup   = ndict()
-    supCH = ndict()
-    inf   = ndict()
-    infCH = ndict()
-
-    # Check to see if the new trimRange is good
-    for vfat in range(0,24):
-        if(tRangeGood[vfat]): continue
-        sup[vfat] = 999.0
-        inf[vfat] = 0.0
-        supCH[vfat] = -1
-        infCH[vfat] = -1
-        for ch in range(CHAN_MIN,CHAN_MAX):
-            if(masks[vfat][ch]): continue
-            if(muFits_31[0][vfat][ch] - ztrim*muFits_31[1][vfat][ch] > inf[vfat]):
-                inf[vfat] = muFits_31[0][vfat][ch] - ztrim*muFits_31[1][vfat][ch]
-                infCH[vfat] = ch
-            if(muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch] > 0.1):
-                sup[vfat] = muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch]
-                supCH[vfat] = ch
-        print "vfat: %i"%vfat
-        print muFits_0[0][vfat]
-        print muFits_31[0][vfat]
-        print "sup: %f  inf: %f"%(sup[vfat],inf[vfat])
-        print "supCH: %f  infCH: %f"%(supCH[vfat],infCH[vfat])
-        print " "
-        if (inf[vfat] <= sup[vfat]):
-            tRangeGood[vfat] = True
-            goodSup[vfat] = sup[vfat]
-            goodInf[vfat] = inf[vfat]
-            trimVcal[vfat] = sup[vfat]
-            trimCH[vfat] = supCH[vfat]
-        else:
-            tRanges[vfat] += 1
-            trimVcal[vfat] = sup[vfat]
-            trimCH[vfat] = supCH[vfat]
-
+if rangeFile == None:
+    #This loop determines the trimRangeDAC for each VFAT
+    for trimRange in range(0,5):
+        #Set Trim Ranges
+        for vfat in range(0,24):
+            writeVFAT(ohboard, options.gtx, vfat, "ContReg3", tRanges[vfat],0)
+        ###############
+        # TRIMDAC = 31
+        ###############
+        #Setting trimdac value
+        for vfat in range(0,24):
+            for scCH in range(CHAN_MIN,CHAN_MAX):
+                writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),31)
+        
+        #Scurve scan with trimdac set to 31 (maximum trimming)
+        filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
+        os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename31))
+        
+        #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
+        muFits_31 = fitScanData(filename31)
+        
+        inf = ndict()
+        infCH = ndict()
+        #Check to see if the new trimRange is good
+        for vfat in range(0,24):
+            if(tRangeGood[vfat]): continue
+            sup[vfat] = 999.0
+            inf[vfat] = 0.0
+            supCH[vfat] = -1
+            infCH[vfat] = -1
+            for ch in range(CHAN_MIN,CHAN_MAX):
+                if(masks[vfat][ch]): continue
+                if(muFits_31[0][vfat][ch] - ptrim*muFits_31[1][vfat][ch] > inf[vfat]): 
+                    inf[vfat] = muFits_31[0][vfat][ch] - ptrim*muFits_31[1][vfat][ch]
+                    infCH[vfat] = ch
+                if(muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] > 0.1): 
+                    sup[vfat] = muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch]
+                    supCH[vfat] = ch
+            print "vfat: %i"%vfat
+            print muFits_0[0][vfat]
+            print muFits_31[0][vfat]
+            print "sup: %f  inf: %f"%(sup[vfat],inf[vfat])
+            print "supCH: %f  infCH: %f"%(supCH[vfat],infCH[vfat])
+            print " "
+            if(inf[vfat] <= sup[vfat]):
+                tRangeGood[vfat] = True
+                goodSup[vfat] = sup[vfat]
+                goodInf[vfat] = inf[vfat]
+                trimVcal[vfat] = sup[vfat]
+                trimCH[vfat] = supCH[vfat]
+            else:
+                tRanges[vfat] += 1
+                trimVcal[vfat] = sup[vfat]
+                trimCH[vfat] = supCH[vfat]
+    print "trimRanges found"
+else:
+    try:
+        rF = TFile(rangeFile)
+        for event in rF.scurveTree:
+            if event.vcal == 10:
+                if event.vfatCH == 10:
+                    writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+                    tRanges[event.vfatN] = event.trimRange
+                pass
             pass
         pass
-    pass
+    except:
+        print "%s does not exist! Exiting"
+        exit(404)
 
 #Init trimDACs to all zeros
 trimDACs = ndict()
