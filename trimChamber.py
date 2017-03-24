@@ -26,7 +26,7 @@ def runCommand(cmd):
 
 from qcoptions import parser
 
-parser.add_option("--trimRange", type="string", dest="rangeFile", default="",
+parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
                   help="Specify the file to take trim ranges from", metavar="rangeFile")
 parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
                   help="Specify the p value of the trim", metavar="ztrim")
@@ -111,8 +111,8 @@ for vfat in range(0,24):
         if muFits_0[4][vfat][ch] < 0.1: masks[vfat][ch] = True
 
 #calculate the sup and set trimVcal
-sup = {}
-supCH = {}
+sup = ndict()
+supCH = ndict()
 for vfat in range(0,24):
     if(tRangeGood[vfat]): continue
     sup[vfat] = 999.0
@@ -127,7 +127,7 @@ for vfat in range(0,24):
     trimCH[vfat] = supCH[vfat]
     
 
-if rangeFile == "":
+if rangeFile == None:
     #This loop determines the trimRangeDAC for each VFAT
     for trimRange in range(0,5):
         #Set Trim Ranges
@@ -148,8 +148,8 @@ if rangeFile == "":
         #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
         muFits_31 = fitScanData(filename31)
         
-        inf = {}
-        infCH = {}
+        inf = ndict()
+        infCH = ndict()
         #Check to see if the new trimRange is good
         for vfat in range(0,24):
             if(tRangeGood[vfat]): continue
@@ -183,15 +183,19 @@ if rangeFile == "":
                 trimCH[vfat] = supCH[vfat]
     print "trimRanges found"
 else:
-    rF = TFile(rangeFile)
-    for event in rF.scurveTree:
-        if event.vcal == 10:
-            if event.vfatCH == 10:
-                writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
-                tRanges[event.vfatN] = event.trimRange
+    try:
+        rF = TFile(rangeFile)
+        for event in rF.scurveTree:
+            if event.vcal == 10:
+                if event.vfatCH == 10:
+                    writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+                    tRanges[event.vfatN] = event.trimRange
+                pass
             pass
         pass
-    pass
+    except:
+        print "%s does not exist! Exiting"
+        exit(404)
 
 #Init trimDACs to all zeros
 trimDACs = ndict()
