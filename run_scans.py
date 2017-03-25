@@ -100,18 +100,17 @@ if __name__ == '__main__':
     print "Invalid tool specified"
     exit(1)
 
-  threads = []
-
-  print itertools.izip([options.tool for x in range(len(chamber_config))],
-                       [options.slot for x in range(len(chamber_config))],
-                       chamber_config.keys(),
-                       chamber_config.values(),
-                       [options.vt1 for x in range(len(chamber_config))],
-                       [options.vt2 for x in range(len(chamber_config))],
-                       [options.perchannel for x in range(len(chamber_config))],
-                       [options.trkdata for x in range(len(chamber_config))],
-                       [options.ztrim for x in range(len(chamber_config))]
-                       )
+  if options.debug:
+    print itertools.izip([options.tool for x in range(len(chamber_config))],
+                         [options.slot for x in range(len(chamber_config))],
+                         chamber_config.keys(),
+                         chamber_config.values(),
+                         [options.vt1 for x in range(len(chamber_config))],
+                         [options.vt2 for x in range(len(chamber_config))],
+                         [options.perchannel for x in range(len(chamber_config))],
+                         [options.trkdata for x in range(len(chamber_config))],
+                         [options.ztrim for x in range(len(chamber_config))]
+                         )
 
   if options.parallel:
     print "Running jobs in parallel mode (using Pool(8))"
@@ -133,15 +132,21 @@ if __name__ == '__main__':
                                           [options.ztrim for x in range(len(chamber_config))]
                                           )
                            )
-      print res.get(60)
+      # timeout must be properly set, otherwise tasks will crash
+      print res.get(999999999)
+      print("Normal termination")
+      pool.close()
+      pool.join()
     except KeyboardInterrupt:
       print("Caught KeyboardInterrupt, terminating workers")
       pool.terminate()
-    else:
-      print("Normal termination")
-      pool.close()
-      pass
-    pool.join()
+    except Exception as e:
+      print("Caught Exception %s, terminating workers"%(str(e)))
+      pool.terminate()
+    except: # catch *all* exceptions
+      e = sys.exc_info()[0]
+      print("Caught non-Python Exception %s"%(e))
+      pool.terminate()
   else:
     print "Running jobs in serial mode"
     for link in chamber_config.keys():
