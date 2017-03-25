@@ -18,7 +18,7 @@ if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
 
 for link in range(10):
     dataPath = os.getenv('DATA_PATH')
-    filename="%s/%s/trimming/p_0.000000/config/SCurveData_Trimmed.root"%(dataPath,chamber_config[link])
+    filename="%s/%s/trimming/z0.000000/config/SCurveData_Trimmed.root"%(dataPath,chamber_config[link])
     #launchScurveScan(link,filename)
     threads.append(threading.Thread(target=launchScurveScan, args=[link,filename]))
     pass
