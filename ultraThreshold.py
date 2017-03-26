@@ -56,12 +56,8 @@ myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
 link = array( 'i', [ 0 ] )
 myT.Branch( 'link', link, 'link/I' )
 link[0] = options.gtx
-utime = array( 'i', [ 0 ] )
-myT.Branch( 'utime', utime, 'utime/I' )
 
-
-import subprocess,datetime,time
-utime[0] = int(time.time())
+import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
