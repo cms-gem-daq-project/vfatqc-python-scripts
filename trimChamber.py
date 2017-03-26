@@ -28,6 +28,8 @@ from qcoptions import parser
 
 parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
                   help="Specify the file to take trim ranges from", metavar="rangeFile")
+parser.add_option("--dirPath", type="string", dest="dirPath", default=None,
+                  help="Specify the path where the scan data should be stored", metavar="dirPath")
 parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
                   help="Specify the p value of the trim", metavar="ztrim")
 parser.add_option("--vt1", type="int", dest="vt1",
@@ -57,7 +59,8 @@ print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
+if options.dirPath == None: dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
+else: dirPath = options.dirPath
 runCommand(["mkdir","-p",dirPath])
 runCommand(["unlink",'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
 runCommand(["ln","-s",dirPath,'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
