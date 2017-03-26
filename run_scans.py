@@ -129,8 +129,6 @@ if __name__ == '__main__':
                     help="Run a per-channel VT1 scan", metavar="perchannel")
   parser.add_option("--trkdata", action="store_true", dest="trkdata",
                     help="Run a per-VFAT VT1 scan using tracking data (default is to use trigger data)", metavar="trkdata")
-  parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
-                  help="Specify the p value of the trim", metavar="ztrim")
 
   (options, args) = parser.parse_args()
 

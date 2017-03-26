@@ -3,9 +3,6 @@ import threading
 from chamberInfo import chamber_config
 from qcoptions import parser
 
-parser.add_option("--ztrim", type="float", dest="ztrim", default=0.0,
-                  help="Specify the p value of the trim", metavar="ztrim")
-
 (options, args) = parser.parse_args()
 
 def launchScurveScan(link,filename):

@@ -17,8 +17,6 @@ parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
                   help="Specify the file to take trim ranges from", metavar="rangeFile")
 parser.add_option("--dirPath", type="string", dest="dirPath", default=None,
                   help="Specify the path where the scan data should be stored", metavar="dirPath")
-parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
-                  help="Specify the p value of the trim", metavar="ztrim")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 
