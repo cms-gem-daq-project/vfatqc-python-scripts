@@ -33,7 +33,7 @@ os.system("mkdir " + filename)
 print filename
 outfilename = options.outfilename
 
-from ROOT import TFile,TTree,TH2D,TCanvas,gROOT,gStyle,TLine,TLegend
+from ROOT import TFile,TTree,TF1,TH1D,TH2D,TCanvas,gROOT,gStyle,TLine,TLegend
 
 gROOT.SetBatch(True)
 gStyle.SetOptStat(1111111)
