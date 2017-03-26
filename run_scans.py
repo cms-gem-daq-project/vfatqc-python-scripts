@@ -74,7 +74,6 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
     cmd.append( "--filename=%s/ThresholdScanData.root"%dirPath )
     pass
 
-  log = file("%s/scanLog.log"%(dirPath),"w")
 
   #Execute Commands
   try:
@@ -100,6 +99,7 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
       pass
     print "executing", cmd
     sys.stdout.flush()
+    log = file("%s/scanLog.log"%(dirPath),"w")
     returncode = subprocess.call(cmd,stdout=log)
     print "%s had return code %d"%(cmd,returncode)
   except CalledProcessError as e:
