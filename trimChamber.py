@@ -8,21 +8,8 @@ import sys
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 from gempython.utils.nesteddict import nesteddict as ndict
+from gempython.utils.wrappers import runCommand
 from chamberInfo import chamber_config
-
-def runCommand(cmd):
-    import datetime,os,sys
-    import subprocess
-    from subprocess import CalledProcessError
-    try:
-        print "Executing command",cmd
-        sys.stdout.flush()
-        returncode = subprocess.call(cmd)
-    except CalledProcessError as e:
-        print "Caught exception",e,"running",cmd
-        sys.stdout.flush()
-        pass
-    return returncode
 
 from qcoptions import parser
 
@@ -61,9 +48,6 @@ ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
 if options.dirPath == None: dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
 else: dirPath = options.dirPath
-runCommand(["mkdir","-p",dirPath])
-runCommand(["unlink",'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
-runCommand(["ln","-s",dirPath,'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
 
 # bias vfats
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)

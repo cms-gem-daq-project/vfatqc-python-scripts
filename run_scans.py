@@ -9,13 +9,6 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
   from subprocess import CalledProcessError
   from chamberInfo import chamber_config
 
-  if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
-    print 'You must source the environment properly!'
-    exit(0)
-  if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
-    print 'You must source the environment properly!'
-    exit(0)
-
   startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
   dataPath = os.getenv('DATA_PATH')
 
@@ -140,6 +133,14 @@ if __name__ == '__main__':
                   help="Specify the p value of the trim", metavar="ztrim")
 
   (options, args) = parser.parse_args()
+
+  if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
+    print 'You must source the environment properly, DATA_PATH is not set'
+    exit(0)
+  if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
+    print 'You must source the environment properly, BUILD_HOME is not set'
+    exit(0)
+
 
   if options.tool not in ["trimChamber.py","ultraThreshold.py","ultraScurve.py"]:
     print "Invalid tool specified"
