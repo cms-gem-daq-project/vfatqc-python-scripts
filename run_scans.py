@@ -161,7 +161,7 @@ if __name__ == '__main__':
     freeze_support()
     # from: https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    pool = Pool(8)
+    pool = Pool(10)
     signal.signal(signal.SIGINT, original_sigint_handler)
     try:
       res = pool.map_async(launchTests,
