@@ -16,10 +16,6 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
     print 'You must source the environment properly!'
     exit(0)
 
-  if tool != "ultraScurve.py" or tool != "trimChamber.py" or tool == "ultraThreshold.py":
-    print "The tool you requested does not exist!"
-    exit(0)
-
   startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
   dataPath = os.getenv('DATA_PATH')
 
