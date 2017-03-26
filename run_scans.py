@@ -71,7 +71,7 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
 
 if __name__ == '__main__':
 
-  import sys,os
+  import sys,os,signal
   import subprocess
   import itertools
   from multiprocessing import Pool, freeze_support
@@ -100,37 +100,53 @@ if __name__ == '__main__':
     print "Invalid tool specified"
     exit(1)
 
-  threads = []
-
-  print itertools.izip([options.tool for x in range(len(chamber_config))],
-                       [options.slot for x in range(len(chamber_config))],
-                       chamber_config.keys(),
-                       chamber_config.values(),
-                       [options.vt1 for x in range(len(chamber_config))],
-                       [options.vt2 for x in range(len(chamber_config))],
-                       [options.perchannel for x in range(len(chamber_config))],
-                       [options.trkdata for x in range(len(chamber_config))],
-                       [options.ztrim for x in range(len(chamber_config))]
-                       )
+  if options.debug:
+    print itertools.izip([options.tool for x in range(len(chamber_config))],
+                         [options.slot for x in range(len(chamber_config))],
+                         chamber_config.keys(),
+                         chamber_config.values(),
+                         [options.vt1 for x in range(len(chamber_config))],
+                         [options.vt2 for x in range(len(chamber_config))],
+                         [options.perchannel for x in range(len(chamber_config))],
+                         [options.trkdata for x in range(len(chamber_config))],
+                         [options.ztrim for x in range(len(chamber_config))]
+                         )
 
   if options.parallel:
-    print "Running jobs in parallel mode"
+    print "Running jobs in parallel mode (using Pool(8))"
     freeze_support()
-    pool = Pool(10)
-    res = pool.map(launchTests,
-                   itertools.izip([options.tool for x in range(len(chamber_config))],
-                                  [options.slot for x in range(len(chamber_config))],
-                                  chamber_config.keys(),
-                                  chamber_config.values(),
-                                  [options.vt1 for x in range(len(chamber_config))],
-                                  [options.vt2 for x in range(len(chamber_config))],
-                                  [options.perchannel for x in range(len(chamber_config))],
-                                  [options.trkdata for x in range(len(chamber_config))],
-                                  [options.ztrim for x in range(len(chamber_config))]
-                                  )
-                   )
-    print res
-    pass
+    # from: https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
+    original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    pool = Pool(8)
+    signal.signal(signal.SIGINT, original_sigint_handler)
+    try:
+      res = pool.map_async(launchTests,
+                           itertools.izip([options.tool for x in range(len(chamber_config))],
+                                          [options.slot for x in range(len(chamber_config))],
+                                          chamber_config.keys(),
+                                          chamber_config.values(),
+                                          [options.vt1 for x in range(len(chamber_config))],
+                                          [options.vt2 for x in range(len(chamber_config))],
+                                          [options.perchannel for x in range(len(chamber_config))],
+                                          [options.trkdata for x in range(len(chamber_config))],
+                                          [options.ztrim for x in range(len(chamber_config))]
+                                          )
+                           )
+      # timeout must be properly set, otherwise tasks will crash
+      print res.get(999999999)
+      print("Normal termination")
+      pool.close()
+      pool.join()
+    except KeyboardInterrupt:
+      print("Caught KeyboardInterrupt, terminating workers")
+      pool.terminate()
+    except Exception as e:
+      print("Caught Exception %s, terminating workers"%(str(e)))
+      pool.terminate()
+    except: # catch *all* exceptions
+      e = sys.exc_info()[0]
+      print("Caught non-Python Exception %s"%(e))
+      pool.terminate()
   else:
     print "Running jobs in serial mode"
     for link in chamber_config.keys():
