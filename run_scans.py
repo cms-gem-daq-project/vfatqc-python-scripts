@@ -74,19 +74,19 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
     cmd.append( "--filename=%s/ThresholdScanData.root"%dirPath )
     pass
 
-
   #Execute Commands
   try:
     for setupCmd in setupCmds:
       try:
         print "executing", setupCmd
         sys.stdout.flush()
-        returncode = subprocess.call(setupCmd,stdout=log)
+        returncode = subprocess.call(setupCmd)
         print "%s had return code %d"%(setupCmd,returncode)
       except CalledProcessError as e:
         print "Caught exception",e
         pass
       pass
+    log = file("%s/scanLog.log"%(dirPath),"w")
     if preCmd:
       try:
         print "executing", preCmd
@@ -99,7 +99,6 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
       pass
     print "executing", cmd
     sys.stdout.flush()
-    log = file("%s/scanLog.log"%(dirPath),"w")
     returncode = subprocess.call(cmd,stdout=log)
     print "%s had return code %d"%(cmd,returncode)
   except CalledProcessError as e:
