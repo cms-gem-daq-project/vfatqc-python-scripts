@@ -19,3 +19,6 @@ parser.add_option("--doLatency", action="store_true", dest="doLatency",
 parser.add_option("--QC3test", action="store_true", dest="doQC3",
                   metavar="doQC3",
                   help="[OPTIONAL] Run a shortened test after covers have been applied")
+parser.add_option("--ztrim", type="float", dest="ztrim", default=0.0,
+                  help="Specify the p value of the trim", metavar="ztrim")
+

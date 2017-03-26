@@ -7,49 +7,87 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
+  from chamberInfo import chamber_config
+
+  startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
+  dataPath = os.getenv('DATA_PATH')
 
   scanType = "vt1"
   dataType = "VT1Threshold"
 
+  #Build Commands
+  setupCmds = []
   preCmd = None
+  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link)]
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
-    preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
-    if vt1 in range(256):
-      preCmd.append("--vt1=%d"%(vt1))
-      pass
+    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
+    setupCmds.append( ["mkdir","-p",dirPath+startTime] )
+    setupCmds.append( ["unlink",dirPath+"current"] )
+    setupCmds.append( ["ln","-s",dirPath+startTime,dirPath+"current"] )
+    dirPath = dirPath+startTime
+    cmd.append( "--filename=%s/SCurveData.root"%dirPath )
+    #preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
+    #if vt1 in range(256):
+    #  preCmd.append("--vt1=%d"%(vt1))
+    #  pass
     pass
   elif tool == "trimChamber.py":
     scanType = "trim"
     dataType = None
-    pass
-
-  startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
-  log = file("%s_scan_%s_%s.log"%(chamber,scanType,startTime),"w")
-  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link)]
-
-  if tool == "trimChamber.py":
+    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
+    setupCmds.append( ["mkdir","-p",dirPath+startTime] )
+    setupCmds.append( ["unlink",dirPath+"current"] )
+    setupCmds.append( ["ln","-s",dirPath+startTime,dirPath+"current"] )
+    dirPath = dirPath+startTime
     cmd.append("--ztrim=%f"%(ztrim))
     if vt1 in range(256):
       cmd.append("--vt1=%d"%(vt1))
       pass
+    cmd.append( "--dirPath=%s"%dirPath )
     pass
-  else:
-    cmd.append("--filename=%sData_%s_%s.root"%(dataType,chamber,startTime))
-    if tool is "ultraThreshold.py":
-      if vt2 in range(256):
-        cmd.append("--vt2=%d"%(vt2))
-        pass
-      if perchannel:
-        cmd.append("--perchannel")
-        pass
-      if trkdata:
-        cmd.append("--trkdata")
+  elif tool == "ultraThreshold.py":
+    scanType = "threshold"
+    if vt2 in range(256):
+      cmd.append("--vt2=%d"%(vt2))
+      pass
+    if perchannel:
+      cmd.append("--perchannel")
+      scanType = scanType + "/channel"
+      pass
+    else:
+      scanType = scanType + "/vfat"
+      pass
+    if trkdata:
+      cmd.append("--trkdata")
+      scanType = scanType + "/trk"
+      pass
+    else:
+      scanType = scanType + "/trig"
+      pass
+    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
+    setupCmds.append( ["mkdir","-p",dirPath+startTime] )
+    setupCmds.append( ["unlink",dirPath+"current"] )
+    setupCmds.append( ["ln","-s",dirPath+startTime,dirPath+"current"] )
+    dirPath = dirPath+startTime
+    cmd.append( "--filename=%s/ThresholdScanData.root"%dirPath )
+    pass
+
+  log = file("%s/scanLog.log"%(dirPath),"w")
+
+  #Execute Commands
+  try:
+    for setupCmd in setupCmds:
+      try:
+        print "executing", setupCmd
+        sys.stdout.flush()
+        returncode = subprocess.call(setupCmd,stdout=log)
+        print "%s had return code %d"%(setupCmd,returncode)
+      except CalledProcessError as e:
+        print "Caught exception",e
         pass
       pass
-    pass
-  try:
     if preCmd:
       try:
         print "executing", preCmd
@@ -91,10 +129,16 @@ if __name__ == '__main__':
                     help="Run a per-channel VT1 scan", metavar="perchannel")
   parser.add_option("--trkdata", action="store_true", dest="trkdata",
                     help="Run a per-VFAT VT1 scan using tracking data (default is to use trigger data)", metavar="trkdata")
-  parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
-                  help="Specify the p value of the trim", metavar="ztrim")
 
   (options, args) = parser.parse_args()
+
+  if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
+    print 'You must source the environment properly, DATA_PATH is not set'
+    exit(0)
+  if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
+    print 'You must source the environment properly, BUILD_HOME is not set'
+    exit(0)
+
 
   if options.tool not in ["trimChamber.py","ultraThreshold.py","ultraScurve.py"]:
     print "Invalid tool specified"

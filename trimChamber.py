@@ -8,28 +8,15 @@ import sys
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 from gempython.utils.nesteddict import nesteddict as ndict
+from gempython.utils.wrappers import runCommand
 from chamberInfo import chamber_config
-
-def runCommand(cmd):
-    import datetime,os,sys
-    import subprocess
-    from subprocess import CalledProcessError
-    try:
-        print "Executing command",cmd
-        sys.stdout.flush()
-        returncode = subprocess.call(cmd)
-    except CalledProcessError as e:
-        print "Caught exception",e,"running",cmd
-        sys.stdout.flush()
-        pass
-    return returncode
 
 from qcoptions import parser
 
 parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
                   help="Specify the file to take trim ranges from", metavar="rangeFile")
-parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
-                  help="Specify the p value of the trim", metavar="ztrim")
+parser.add_option("--dirPath", type="string", dest="dirPath", default=None,
+                  help="Specify the path where the scan data should be stored", metavar="dirPath")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 
@@ -57,10 +44,8 @@ print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
-runCommand(["mkdir","-p",dirPath])
-runCommand(["unlink",'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
-runCommand(["ln","-s",dirPath,'%s/%s/trimming/z%f/current'%(dataPath,chamber_config[options.gtx],ztrim)])
+if options.dirPath == None: dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
+else: dirPath = options.dirPath
 
 # bias vfats
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)

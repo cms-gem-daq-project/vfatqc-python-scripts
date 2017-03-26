@@ -1,6 +1,9 @@
 import os
 import threading
 from chamberInfo import chamber_config
+from qcoptions import parser
+
+(options, args) = parser.parse_args()
 
 def launchScurveScan(link,filename):
     os.system("python confChamber.py -s 3 -g %i --filename %s"%(link,filename))
@@ -18,9 +21,12 @@ if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
 
 for link in range(10):
     dataPath = os.getenv('DATA_PATH')
-    filename="%s/%s/trimming/p_0.000000/config/SCurveData_Trimmed.root"%(dataPath,chamber_config[link])
-    #launchScurveScan(link,filename)
-    threads.append(threading.Thread(target=launchScurveScan, args=[link,filename]))
+    filename="%s/%s/trimming/z%f/config/SCurveData_Trimmed.root"%(dataPath,chamber_config[link],options.ztrim)
+    if os.path.isfile(filename):
+      #launchScurveScan(link,filename)
+      threads.append(threading.Thread(target=launchScurveScan, args=[link,filename]))
+    else:
+      print "No trim configuration exists for z = %f for %s"%(options.ztrim,chamber_config[link])
     pass
 
 for t in threads:
