@@ -85,7 +85,7 @@ zeroAllVFATChannels(ohboard,options.gtx,mask=0x0)
 
 # Scurve scan with trimdac set to 0
 filename0 = "%s/SCurveData_trimdac0_range0.root"%dirPath
-runCommand(["./ultraScurve.py",
+runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filename0)]
@@ -128,7 +128,7 @@ if rangeFile == None:
         
         #Scurve scan with trimdac set to 31 (maximum trimming)
         filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
-        os.system("python ultraScurve.py -s %s -g %s -f %s"%(options.slot,options.gtx,filename31))
+        runCommand(["ultraScurve.py","-s%d"%(options.slot),"-g%d"%(options.gtx),"--filename=%s"%(filename31)])
         
         #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
         muFits_31 = fitScanData(filename31)
@@ -197,7 +197,7 @@ for i in range(0,5):
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch),trimDACs[vfat][ch])
     # Run an SCurve
     filenameBS = "%s/SCurveData_binarySearch%i.root"%(dirPath,i)
-    runCommand(["./ultraScurve.py",
+    runCommand(["ultraScurve.py",
                 "-s%d"%(options.slot),
                 "-g%d"%(options.gtx),
                 "--filename=%s"%(filenameBS)]
@@ -215,7 +215,7 @@ for vfat in range(0,24):
         writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(ch),trimDACs[vfat][ch])
 
 filenameFinal = "%s/SCurveData_Trimmed.root"%dirPath
-runCommand(["./ultraScurve.py",
+runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filenameFinal)]
