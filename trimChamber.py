@@ -104,8 +104,8 @@ for vfat in range(0,24):
     supCH[vfat] = -1
     for ch in range(CHAN_MIN,CHAN_MAX):
         if(masks[vfat][ch]): continue
-        if(muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] > 0.1): 
-            sup[vfat] = muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch]
+        if(muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch] > 0.1): 
+            sup[vfat] = muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch]
             supCH[vfat] = ch
     goodSup[vfat] = sup[vfat]
     trimVcal[vfat] = sup[vfat]
@@ -144,11 +144,11 @@ if rangeFile == None:
             infCH[vfat] = -1
             for ch in range(CHAN_MIN,CHAN_MAX):
                 if(masks[vfat][ch]): continue
-                if(muFits_31[0][vfat][ch] - ptrim*muFits_31[1][vfat][ch] > inf[vfat]): 
-                    inf[vfat] = muFits_31[0][vfat][ch] - ptrim*muFits_31[1][vfat][ch]
+                if(muFits_31[0][vfat][ch] - ztrim*muFits_31[1][vfat][ch] > inf[vfat]): 
+                    inf[vfat] = muFits_31[0][vfat][ch] - ztrim*muFits_31[1][vfat][ch]
                     infCH[vfat] = ch
-                if(muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch] > 0.1): 
-                    sup[vfat] = muFits_0[0][vfat][ch] - ptrim*muFits_0[1][vfat][ch]
+                if(muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch] < sup[vfat] and muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch] > 0.1): 
+                    sup[vfat] = muFits_0[0][vfat][ch] - ztrim*muFits_0[1][vfat][ch]
                     supCH[vfat] = ch
             print "vfat: %i"%vfat
             print muFits_0[0][vfat]
