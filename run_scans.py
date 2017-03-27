@@ -8,6 +8,7 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
   import subprocess
   from subprocess import CalledProcessError
   from chamberInfo import chamber_config
+  from gempython.utils.wrappers import runCommand
 
   startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
   dataPath = os.getenv('DATA_PATH')
@@ -81,30 +82,13 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
   #Execute Commands
   try:
     for setupCmd in setupCmds:
-      try:
-        print "executing", setupCmd
-        sys.stdout.flush()
-        returncode = subprocess.call(setupCmd)
-        print "%s had return code %d"%(setupCmd,returncode)
-      except CalledProcessError as e:
-        print "Caught exception",e
-        pass
+      runCommand(setupCmd)
       pass
     log = file("%s/scanLog.log"%(dirPath),"w")
     if preCmd and config:
-      try:
-        print "executing", preCmd
-        sys.stdout.flush()
-        returncode = subprocess.call(preCmd,stdout=log)
-        print "%s had return code %d"%(preCmd,returncode)
-      except CalledProcessError as e:
-        print "Caught exception",e
-        pass
+      runCommand(preCmd,log)
       pass
-    print "executing", cmd
-    sys.stdout.flush()
-    returncode = subprocess.call(cmd,stdout=log)
-    print "%s had return code %d"%(cmd,returncode)
+    runCommand(cmd,log)
   except CalledProcessError as e:
     print "Caught exception",e
     pass
