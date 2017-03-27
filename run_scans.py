@@ -3,7 +3,7 @@
 def launchTests(args):
   return launchTestsArgs(*args)
 
-def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,trkdata=False,ztrim=4.0):
+def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,trkdata=False,ztrim=4.0,config=False):
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
@@ -28,14 +28,18 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
     setupCmds.append( ["ln","-s",dirPath+startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/SCurveData.root"%dirPath )
-    #preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
-    #if vt1 in range(256):
-    #  preCmd.append("--vt1=%d"%(vt1))
-    #  pass
+    preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
+    if vt1 in range(256):
+      preCmd.append("--vt1=%d"%(vt1))
+      pass
     pass
   elif tool == "trimChamber.py":
     scanType = "trim"
     dataType = None
+    preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
+    if vt1 in range(256):
+      preCmd.append("--vt1=%d"%(vt1))
+      pass
     dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
@@ -87,7 +91,7 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
         pass
       pass
     log = file("%s/scanLog.log"%(dirPath),"w")
-    if preCmd:
+    if preCmd and config:
       try:
         print "executing", preCmd
         sys.stdout.flush()
@@ -116,9 +120,11 @@ if __name__ == '__main__':
 
   from qcoptions import parser
 
-  parser.add_option("--parallel", action="store_true", dest="parallel",
-                    help="Run tests in parllel (default is false)", metavar="parallel")
-  parser.add_option("--tool", type="string", dest="tool",default="ultraThreshold.py",
+  parser.add_option("--series", action="store_true", dest="series",
+                    help="Run tests in series (default is false)", metavar="series")
+  parser.add_option("--config", action="store_true", dest="config",
+                    help="Configure chambers before running scan", metavar="config")
+  parser.add_option("--tool", type="string", dest="tool",default="ultraScurve.py",
                     help="Tool to run (scan or analyze", metavar="tool")
   parser.add_option("--vt1", type="int", dest="vt1", default=100,
                     help="Specify VT1 to use", metavar="vt1")
@@ -152,11 +158,19 @@ if __name__ == '__main__':
                          [options.vt2 for x in range(len(chamber_config))],
                          [options.perchannel for x in range(len(chamber_config))],
                          [options.trkdata for x in range(len(chamber_config))],
-                         [options.ztrim for x in range(len(chamber_config))]
+                         [options.ztrim for x in range(len(chamber_config))],
+                         [options.config for x in range(len(chamber_config))]
                          )
 
-  if options.parallel:
-    print "Running jobs in parallel mode (using Pool(8))"
+  if options.series:
+    print "Running jobs in serial mode"
+    for link in chamber_config.keys():
+      chamber = chamber_config[link]
+      launchTests([options.tool,options.slot,link,chamber,options.vt2,options.perchannel,options.trkdata,options.ztrim,options.config])
+      pass
+    pass
+  else:
+    print "Running jobs in parallel mode (using Pool(10))"
     freeze_support()
     # from: https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -172,7 +186,8 @@ if __name__ == '__main__':
                                           [options.vt2 for x in range(len(chamber_config))],
                                           [options.perchannel for x in range(len(chamber_config))],
                                           [options.trkdata for x in range(len(chamber_config))],
-                                          [options.ztrim for x in range(len(chamber_config))]
+                                          [options.ztrim for x in range(len(chamber_config))],
+                                          [options.config for x in range(len(chamber_config))]
                                           )
                            )
       # timeout must be properly set, otherwise tasks will crash
@@ -190,10 +205,3 @@ if __name__ == '__main__':
       e = sys.exc_info()[0]
       print("Caught non-Python Exception %s"%(e))
       pool.terminate()
-  else:
-    print "Running jobs in serial mode"
-    for link in chamber_config.keys():
-      chamber = chamber_config[link]
-      launchTests([options.tool,options.slot,link,chamber,options.vt2,options.perchannel,options.trkdata,options.ztrim])
-      pass
-    pass
