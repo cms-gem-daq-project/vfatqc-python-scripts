@@ -13,6 +13,9 @@ parser.add_option("--filename", type="string", dest="filename", default=None,
                   help="Specify file containing settings information", metavar="filename")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
+parser.add_option("--run", action="store_true", dest="run",
+                  help="Set VFATs to run mode", metavar="run")
+
 
 (options, args) = parser.parse_args()
 
@@ -34,7 +37,12 @@ biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
 print 'biased VFATs'
 writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
 print 'Set VThreshold1 to %i'%options.vt1
-writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36,        0)
+
+if options.run:
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37,        0)
+    print 'VFATs set to run mode'
+else:
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36,        0)
 
 if options.filename != None:
     try:
