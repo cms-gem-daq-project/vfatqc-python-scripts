@@ -3,10 +3,16 @@ import threading
 from chamberInfo import chamber_config
 from qcoptions import parser
 
+parser.add_option("--run", action="store_true", dest="run",
+                  help="Set VFATs to run mode", metavar="run")
+
 (options, args) = parser.parse_args()
 
-def launchScurveScan(link,filename):
-    os.system("python confChamber.py -s 3 -g %i --filename %s"%(link,filename))
+def launchScurveScan(link,filename,run):
+    if run:
+        os.system("python confChamber.py -s 3 -g %i --filename %s --run"%(link,filename))
+    else:
+        os.system("python confChamber.py -s 3 -g %i --filename %s"%(link,filename))
 
 threads = []
 if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
@@ -24,7 +30,7 @@ for link in range(10):
     filename="%s/%s/trim/z%f/config/SCurveData_Trimmed.root"%(dataPath,chamber_config[link],options.ztrim)
     if os.path.isfile(filename):
       #launchScurveScan(link,filename)
-      threads.append(threading.Thread(target=launchScurveScan, args=[link,filename]))
+      threads.append(threading.Thread(target=launchScurveScan, args=[link,filename,options.run]))
     else:
       print "No trim configuration exists for z = %f for %s"%(options.ztrim,chamber_config[link])
     pass
