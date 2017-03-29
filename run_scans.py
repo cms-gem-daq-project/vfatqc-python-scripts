@@ -44,7 +44,7 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
     dirPath = "%s/%s/%s/z%f/"%(dataPath,chamber_config[link],scanType,ztrim)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
-    setupCmds.append( ["ln","-s",dirPath+startTime,dirPath+"current"] )
+    setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append("--ztrim=%f"%(ztrim))
     if vt1 in range(256):
