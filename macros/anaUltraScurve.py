@@ -1,3 +1,4 @@
+#!/bin/env python
 import os
 from optparse import OptionParser
 from array import array
