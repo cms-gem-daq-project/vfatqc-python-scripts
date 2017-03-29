@@ -46,6 +46,7 @@ else:
 
 if options.filename != None:
     try:
+        print 'Configuring Trims with %s'%options.filename
         inF = TFile(options.filename)
 
         for event in inF.scurveTree :
