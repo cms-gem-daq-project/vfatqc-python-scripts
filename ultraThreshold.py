@@ -83,30 +83,27 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
-    if options.perchannel or options.trkdata:
-        mode = scanmode.THRESHTRK
-        if options.perchannel:
-            scanmode.THRESHCH
-            pass
+    if options.perchannel:
+        mode = scanmode.THRESHCH
         sendL1A(ohboard, options.gtx, interval=250, number=0)
 
         for scCH in range(CHAN_MIN,CHAN_MAX):
             vfatCH[0] = scCH
             print "Channel #"+str(scCH)
-            configureScanModule(ohboard, options.gtx, mode, mask, channel = scCH,
-                                scanmin = THRESH_MIN, scanmax = THRESH_MAX,
-                                numtrigs = int(N_EVENTS),
-                                useUltra = True, debug = options.debug)
-            printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
-            startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
+            configureScanModule(ohboard, options.gtx, mode, mask, channel=scCH,
+                                scanmin=THRESH_MIN, scanmax=THRESH_MAX,
+                                numtrigs=int(N_EVENTS),
+                                useUltra=True, debug=options.debug)
+            printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
+            startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
             scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
             sys.stdout.flush()
             for i in range(0,24):
                 vfatN[0] = i
-                dataNow = scanData[i]
+                dataNow  = scanData[i]
                 for VC in range(THRESH_MAX-THRESH_MIN+1):
-                    vth1[0] = int((dataNow[VC] & 0xff000000) >> 24)
-                    vth[0]  = vth2[0] - vth1[0]
+                    vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
+                    vth[0]   = vth2[0] - vth1[0]
                     Nhits[0] = int(dataNow[VC] & 0xffffff)
                     myT.Fill()
                     pass
@@ -117,25 +114,35 @@ try:
         stopLocalT1(ohboard, options.gtx)
         pass
     else:
-        configureScanModule(ohboard, options.gtx, scanmode.THRESHTRG, mask,
-                            scanmin = THRESH_MIN, scanmax = THRESH_MAX,
-                            numtrigs = int(N_EVENTS),
-                            useUltra = True, debug = options.debug)
-        printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
-        startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
+        if options.trkdata:
+            mode = scanmode.THRESHTRK
+            sendL1A(ohboard, options.gtx, interval=250, number=0)
+        else:
+            mode = scanmode.THRESHTRG
+            pass
+        configureScanModule(ohboard, options.gtx, mode=mode, mask=mask,
+                            scanmin=THRESH_MIN, scanmax=THRESH_MAX,
+                            numtrigs=int(N_EVENTS),
+                            useUltra=True, debug=options.debug)
+        printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
+        startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
         scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
         sys.stdout.flush()
         for i in range(0,24):
             vfatN[0] = i
-            dataNow = scanData[i]
+            dataNow  = scanData[i]
             for VC in range(THRESH_MAX-THRESH_MIN+1):
-                vth1[0] = int((dataNow[VC] & 0xff000000) >> 24)
-                vth[0]  = vth2[0] - vth1[0]
+                vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
+                vth[0]   = vth2[0] - vth1[0]
                 Nhits[0] = int(dataNow[VC] & 0xffffff)
                 myT.Fill()
                 pass
             pass
         myT.AutoSave("SaveSelf")
+
+        if options.trkdata:
+            stopLocalT1(ohboard, options.gtx)
+            pass
         pass
 except Exception as e:
     myT.AutoSave("SaveSelf")
