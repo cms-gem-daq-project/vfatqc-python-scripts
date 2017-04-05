@@ -12,14 +12,14 @@ parser.add_option("-c","--channels", action="store_true", dest="channels",
 
 
 def plot_vfat_summary(VFAT, fit_filename):
-    from ROOT import TFile,TH1D,TCanvas,gStyle,TH2D
-    fitF = TFile(fit_filename)
-    Scurve = TH1D()
+    import ROOT as r
+    fitF = r.TFile(fit_filename)
+    Scurve = r.TH1D()
     if options.channels:
-        vSum = TH2D('vSum', 'vSum for VFAT %i; Channels; VCal [DAC units]'%VFAT, 128, -0.5, 127.5, 256, -0.5, 255.5)
+        vSum = r.TH2D('vSum', 'vSum for VFAT %i; Channels; VCal [DAC units]'%VFAT, 128, -0.5, 127.5, 256, -0.5, 255.5)
         pass
     else:
-        vSum = TH2D('vSum', 'vSum for VFAT %i; Strips; VCal [DAC units]'%VFAT, 128, -0.5, 127.5, 256, -0.5, 255.5)
+        vSum = Tr.H2D('vSum', 'vSum for VFAT %i; Strips; VCal [DAC units]'%VFAT, 128, -0.5, 127.5, 256, -0.5, 255.5)
         pass
     vSum.GetYaxis().SetTitleOffset(1.5)
     for event in fitF.scurveFitTree:
@@ -36,8 +36,8 @@ def plot_vfat_summary(VFAT, fit_filename):
                 pass
             pass
         pass
-    canvas = TCanvas('canvas', 'canvas', 500, 500)
-    gStyle.SetOptStat(0)
+    canvas = r.TCanvas('canvas', 'canvas', 500, 500)
+    r.gStyle.SetOptStat(0)
     vSum.Draw('colz')
     canvas.Update()
     canvas.SaveAs('Summary_VFAT_%i.png'%VFAT)

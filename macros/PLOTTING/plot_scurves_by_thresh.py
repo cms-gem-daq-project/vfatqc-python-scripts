@@ -20,13 +20,13 @@ channel_yes = options.channel_yes
 vfat = options.vfat
 strip = options.strip
 
-from ROOT import TLegend
+#from ROOT import TLegend
 
-gStyle.SetOptStat(0)
+r.gStyle.SetOptStat(0)
 
 thr     = []
 Scurves = []
-fitF = TFile(filename)
+fitF = r.TFile(filename)
 for event in fitF.scurveFitTree:
     if (event.vthr) not in thr:
         thr.append(event.vthr)
@@ -34,7 +34,7 @@ for event in fitF.scurveFitTree:
     pass
 print thr
 
-canvas = TCanvas('canvas', 'canvas', 500, 500)
+canvas = r.TCanvas('canvas', 'canvas', 500, 500)
 canvas.cd()
 i = 0
 for thresh in thr:
@@ -45,7 +45,7 @@ for thresh in thr:
         pass
     pass
 
-leg = TLegend(0.1, 0.6, 0.3, 0.8)
+leg = r.TLegend(0.1, 0.6, 0.3, 0.8)
 
 for hist in Scurves:
     hist.SetTitle("")

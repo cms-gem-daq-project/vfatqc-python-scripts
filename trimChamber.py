@@ -179,7 +179,7 @@ else:
             pass
         pass
     except:
-        print "%s does not exist! Exiting"
+        print "%s does not exist! Exiting"%rangeFile
         exit(404)
 
 #Init trimDACs to all zeros
