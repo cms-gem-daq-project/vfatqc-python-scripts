@@ -14,14 +14,14 @@ parser.add_option("-c","--channels", action="store_true", dest="channels",
 
 
 def plot_vfat_summary(VFAT, STRIP, fit_filename):
-    from ROOT import TFile,TCanvas,gStyle,TH2D
+    import ROOT as r
 
-    fitF = TFile(fit_filename)
+    fitF = r.TFile(fit_filename)
     if options.channels:
-        vNoise = TH2D('vNoise', 'Noise vs trim for VFAT %i Channel %i; trimDAC [DAC units]; Noise [DAC units]'%(VFAT, STRIP), 32, -0.5, 31.5, 60, -0.5, 59.5)
+        vNoise = r.TH2D('vNoise', 'Noise vs trim for VFAT %i Channel %i; trimDAC [DAC units]; Noise [DAC units]'%(VFAT, STRIP), 32, -0.5, 31.5, 60, -0.5, 59.5)
         pass
     else:
-        vNoise = TH2D('vNoise', 'Noise vs trim for VFAT %i Strip %i; trimDAC [DAC units]; Noise [DAC units]'%(VFAT, STRIP), 32, -0.5, 31.5, 60, -0.5, 59.5)
+        vNoise = r.TH2D('vNoise', 'Noise vs trim for VFAT %i Strip %i; trimDAC [DAC units]; Noise [DAC units]'%(VFAT, STRIP), 32, -0.5, 31.5, 60, -0.5, 59.5)
         pass
     vNoise.GetYaxis().SetTitleOffset(1.5)
     for event in fitF.scurveFitTree:
@@ -29,8 +29,8 @@ def plot_vfat_summary(VFAT, STRIP, fit_filename):
             vNoise.Fill(event.trimDAC, event.noise)
             pass
         pass
-    canvas = TCanvas('canvas', 'canvas', 500, 500)
-    gStyle.SetOptStat(0)
+    canvas = r.TCanvas('canvas', 'canvas', 500, 500)
+    r.gStyle.SetOptStat(0)
     vNoise.Draw('colz')
     canvas.Update()
     if options.channels:
