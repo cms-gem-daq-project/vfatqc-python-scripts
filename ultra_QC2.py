@@ -14,38 +14,20 @@ Created on Thu Mar 31 09:28:14 2016
 
 #import sys, os, random, time
 from GEMDAQTestSuite import *
-from vfat_functions_uhal import *
-from optparse import OptionParser
-parser = OptionParser()
-
-parser.add_option("-s", "--slot", type="int", dest="slot",
-                  help="slot in uTCA crate", metavar="slot", default=10)
-parser.add_option("-g", "--gtx", type="int", dest="gtx",
-                  help="GTX on the GLIB", metavar="gtx", default=0)
-parser.add_option("--nglib", type="int", dest="nglib",
-                  help="Number of register tests to perform on the glib (default is 100)", metavar="nglib", default=100)
-parser.add_option("--noh", type="int", dest="noh",
-                  help="Number of register tests to perform on the OptoHybrid (default is 100)", metavar="noh", default=100)
-parser.add_option("--ni2c", type="int", dest="ni2c",
-                  help="Number of I2C tests to perform on the VFAT2s (default is 100)", metavar="ni2c", default=100)
-parser.add_option("--ntrk", type="int", dest="ntrk",
-                  help="Number of tracking data packets to readout (default is 100)", metavar="ntrk", default=100)
-parser.add_option("--writeout", action="store_true", dest="writeout",
-                  help="Write the data to disk when testing the rate", metavar="writeout")
-parser.add_option("--tests", type="string", dest="tests",default="A,B,C,D,E,F,G,H,I,J",
-                  help="Tests to run, default is all", metavar="tests")
-parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                  help="print extra debugging information", metavar="debug")
+from gempython.tools.vfat_user_functions_uhal import *
+from qcoptions import parser
 
 (options, args) = parser.parse_args()
 
+print "Obsolete, needs to be updated or not used"
+exit(1)
 
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
 print startTime
 Date = startTime
 
-test_params = TEST_PARAMS(nglib=options.nglib,
+test_params = TEST_PARAMS(namc=options.namc,
                           noh=options.noh,
                           ni2c=options.ni2c,
                           ntrk=options.ntrk,
@@ -54,6 +36,7 @@ test_params = TEST_PARAMS(nglib=options.nglib,
 
 testSuite = GEMDAQTestSuite(slot=options.slot,
                             gtx=options.gtx,
+                            shelf=options.shelf,
                             tests=options.tests,
                             test_params=test_params,
                             debug=options.debug)
@@ -97,9 +80,9 @@ print "------------------------------------------------------"
 
 #Creating all the files
 for port in testSuite.presentVFAT2sSingle:
-    f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),port,testSuite.chipIDs[port]&0xffff),'w')
+    f = open("%s_Data_AMC_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),port,testSuite.chipIDs[port]&0xffff),'w')
     m = open("%s_SCurve_by_channel_VFAT2_%d_ID_0x%04x"%(str(Date),port,testSuite.chipIDs[port]&0xffff),'w')
-    z = open("%s_Setting_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),port,testSuite.chipIDs[port]&0xffff),'w')
+    z = open("%s_Setting_AMC_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),port,testSuite.chipIDs[port]&0xffff),'w')
     h = open("%s_VCal_VFAT2_%d_ID_0x%04x"%(str(Date),port,testSuite.chipIDs[port]&0xffff),'w')
     g = open("%s_TRIM_DAC_value_VFAT_%d_ID_0x%04x"%(str(Date),port,testSuite.chipIDs[port]&0xffff),'w')
     z.write(time.strftime("%Y/%m/%d") +"-" +time.strftime("%H:%M:%S")+"\n")
@@ -112,10 +95,10 @@ for port in testSuite.presentVFAT2sSingle:
     pass
     ################## Threshold Scan For All VFAT2 #########################
 
-configureScanModule(testSuite.glib, options.gtx, 0, 0, scanmin = THRESH_MIN, scanmax = THRESH_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
-printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
-startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
-UltraResults = getUltraScanResults(testSuite.glib, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
+configureScanModule(testSuite.ohboard, options.gtx, 0, 0, scanmin = THRESH_MIN, scanmax = THRESH_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
+printScanConfiguration(testSuite.ohboard, options.gtx, useUltra = True, debug = options.debug)
+startScanModule(testSuite.ohboard, options.gtx, useUltra = True, debug = options.debug)
+UltraResults = getUltraScanResults(testSuite.ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
 
 for n in testSuite.presentVFAT2sSingle:
     f = open("%s_Data_GLIB_IP_%s_VFAT2_%d_ID_0x%04x"%(str(Date),str(options.slot),n,testSuite.chipIDs[n]&0xffff),'a')
@@ -141,7 +124,7 @@ for n in testSuite.presentVFAT2sSingle:
         if passAbs and passLastRel and passNextRel:
             # why is the threshold set to the previous value?
             threshold = (data_threshold[d] >> 24 )
-            setVFATThreshold(testSuite.glib,options.gtx,n,vt1=(threshold),vt2=0)
+            setVFATThreshold(testSuite.ohboard,options.gtx,n,vt1=(threshold),vt2=0)
             print "Threshold set to: %d"%(threshold)
             f.write("Threshold set to: %d\n"%(threshold))
             z.write("vthreshold1: %d\n"%(threshold))
@@ -166,15 +149,15 @@ for n in testSuite.presentVFAT2sSingle:
     ################## S-curve by channel ######################
 
 #enable triggers
-#startLocalT1(testSuite.glib, options.gtx)
+#startLocalT1(testSuite.ohboard, options.gtx)
     #### With TRIM DAC to 0
 for channel in range(CHAN_MIN, CHAN_MAX):
     for trim in [0,16,31]:
-        broadcastWrite(testSuite.glib, options.gtx, "ChannelReg"+str(channel), 64+trim)
-        configureScanModule(testSuite.glib, options.gtx, 3, 0, channel = channel, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS_SCURVE), useUltra = True, debug = options.debug)
-        printScanConfiguration(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
-        startScanModule(testSuite.glib, options.gtx, useUltra = True, debug = options.debug)
-        SCurve_Ultra_Results = getUltraScanResults(testSuite.glib, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
+        broadcastWrite(testSuite.ohboard, options.gtx, "ChannelReg"+str(channel), 64+trim)
+        configureScanModule(testSuite.ohboard, options.gtx, 3, 0, channel = channel, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS_SCURVE), useUltra = True, debug = options.debug)
+        printScanConfiguration(testSuite.ohboard, options.gtx, useUltra = True, debug = options.debug)
+        startScanModule(testSuite.ohboard, options.gtx, useUltra = True, debug = options.debug)
+        SCurve_Ultra_Results = getUltraScanResults(testSuite.ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
            
         for n in testSuite.presentVFAT2sSingle:
             m = open("%s_SCurve_by_channel_VFAT2_%d_ID_0x%04x"%(str(Date),port,testSuite.chipIDs[n]&0xffff),'a')
