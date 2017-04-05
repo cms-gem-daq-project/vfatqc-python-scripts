@@ -1,24 +1,19 @@
+#!/bin/env python
 import os
 import threading
 from chamberInfo import chamber_config,GEBtype
 from qcoptions import parser
+from gempython.utils.wrappers import envCheck
 
 (options, args) = parser.parse_args()
 
-if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
-  print 'You must source the environment properly, DATA_PATH is not set'
-  exit(0)
-if os.getenv('CONFIG_PATH') == None or os.getenv('CONFIG_PATH') == '':
-  print 'You must source the environment properly, CONFIG_PATH is not set'
-  exit(0)
-if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
-  print 'You must source the environment properly, BUILD_HOME is not set'
-  exit(0)
-
+envCheck('DATA_PATH')
+envCheck('CONFIG_PATH')
+envCheck('BUILD_HOME')
 
 def launchScurveScan(link,ztrim,cName,cType):
   import ROOT as r
-  buildPath = os.getenv('BUILD_PATH')
+  buildPath = os.getenv('BUILD_HOME')
   dataPath = os.getenv('DATA_PATH')
   configPath = os.getenv('CONFIG_PATH')
   trimFile = r.TFile( '%s/%s/trim/z%f/config/SCurveData_Trimmed.root'%(dataPath,cName,ztrim) )

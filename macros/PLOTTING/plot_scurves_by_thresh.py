@@ -20,8 +20,6 @@ channel_yes = options.channel_yes
 vfat = options.vfat
 strip = options.strip
 
-#from ROOT import TLegend
-
 r.gStyle.SetOptStat(0)
 
 thr     = []

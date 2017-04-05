@@ -8,7 +8,7 @@ import sys
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 from gempython.utils.nesteddict import nesteddict as ndict
-from gempython.utils.wrappers import runCommand
+from gempython.utils.wrappers import runCommand, envCheck
 from chamberInfo import chamber_config
 
 from qcoptions import parser
@@ -28,12 +28,8 @@ rangeFile = options.rangeFile
 ztrim = options.ztrim
 print 'trimming at z = %f'%ztrim
 
-if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
-    print 'You must source the environment properly!'
-    exit(0)
-if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
-    print 'You must source the environment properly!'
-    exit(0)
+envCheck('DATA_PATH')
+envCheck('BUILD_HOME')
 
 dataPath = os.getenv('DATA_PATH')
 
@@ -178,8 +174,9 @@ else:
                 pass
             pass
         pass
-    except:
-        print "%s does not exist! Exiting"%rangeFile
+    except Exception as e:
+        print "%s could not be loaded\n"%rangeFile
+        print e
         exit(404)
 
 #Init trimDACs to all zeros
