@@ -9,10 +9,13 @@ from gempython.tools.vfat_user_functions_uhal import *
 
 from qcoptions import parser
 
-parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData_Trimmed.root",
-                  help="Specify Output Filename", metavar="filename")
-parser.add_option("-v", "--vthreshold", type="int", dest="vthr",
-                  help="VThreshold1 DAC value for all VFATs", metavar="vthr", default=100)
+parser.add_option("--filename", type="string", dest="filename", default=None,
+                  help="Specify file containing settings information", metavar="filename")
+parser.add_option("--vt1", type="int", dest="vt1",
+                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
+parser.add_option("--run", action="store_true", dest="run",
+                  help="Set VFATs to run mode", metavar="run")
+
 
 (options, args) = parser.parse_args()
 
@@ -23,27 +26,35 @@ else:
 
 from ROOT import TFile,TTree
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf)
 print 'opened connection'
 
-filename = options.filename
-
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
 print 'biased VFATs'
-writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vthr, 0)
-print 'Set VThreshold1 to %i'%options.vthr
-writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, 0)
+writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
+print 'Set VThreshold1 to %i'%options.vt1
 
-#inF = TFile(filename)
+if options.run:
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37,        0)
+    print 'VFATs set to run mode'
+else:
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36,        0)
 
-#for event in inF.scurveTree :
-#    if event.vcal == 10 :
-#        writeVFAT(testSuite.glib,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)+1),int(event.trimDAC))
-#        if event.vfatCH == 10 : writeVFAT(testSuite.glib, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+if options.filename != None:
+    try:
+        print 'Configuring Trims with %s'%options.filename
+        inF = TFile(options.filename)
+
+        for event in inF.scurveTree :
+            if event.vcal == 10 :
+                writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC))
+                if event.vfatCH == 10 : writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+    except:
+        print '%s does not seem to exist'%options.filename
 
 
 print 'Chamber Configured'

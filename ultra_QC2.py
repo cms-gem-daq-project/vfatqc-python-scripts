@@ -23,7 +23,7 @@ print "Obsolete, needs to be updated or not used"
 exit(1)
 
 import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 

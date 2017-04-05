@@ -46,9 +46,12 @@ myT.Branch( 'trimDAC', trimDAC, 'trimDAC/I' )
 link = array( 'i', [ 0 ] )
 myT.Branch( 'link', link, 'link/I' )
 link[0] = options.gtx
+utime = array( 'i', [ 0 ] )
+myT.Branch( 'utime', utime, 'utime/I' )
 
-import subprocess,datetime
-startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+import subprocess,datetime,time
+utime[0] = int(time.time())
+startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 
