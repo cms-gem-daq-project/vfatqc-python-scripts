@@ -27,11 +27,11 @@ os.system("mkdir " + filename)
 print filename
 outfilename = options.outfilename
 
-from ROOT import TFile,TTree,TF1,TH1D,TH2D,TCanvas,gROOT,gStyle,gPad,TLine,TLegend
-gROOT.SetBatch(True)
+import ROOT as r
+r.gROOT.SetBatch(True)
 GEBtype = options.GEBtype
-inF = TFile(filename+'.root')
-outF = TFile(filename+'/'+outfilename, 'recreate')
+inF = r.TFile(filename+'.root')
+outF = r.TFile(filename+'/'+outfilename, 'recreate')
 
 #Build the channel to strip mapping from the text file
 lookup_table = []
@@ -65,13 +65,13 @@ hot_channels = []
 for i in range(0,24):
     hot_channels.append([])
     if not (options.channels or options.PanPin):
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Strip;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Strip;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
         pass
     elif options.channels:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channel;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Channel;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
         pass
     elif options.PanPin:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Panasonic Pin;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Panasonic Pin;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
         pass
     for j in range(0,128):
         hot_channels[i].append(False)
@@ -103,12 +103,12 @@ for event in inF.thrTree :
         pass
 
 outF.cd()
-canv = TCanvas('canv','canv',500*8,500*3)
+canv = r.TCanvas('canv','canv',500*8,500*3)
 canv.Divide(8,3)
-gStyle.SetOptStat(0)
+r.gStyle.SetOptStat(0)
 print 'Saving File'
 for i in range(0,24):
-    gStyle.SetOptStat(0)
+    r.gStyle.SetOptStat(0)
     canv.cd(i+1)
     vSum[i].Draw('colz')
     vSum[i].Write()
@@ -129,12 +129,12 @@ for i in range(0,24):
        pass
     pass
 
-canv_pruned = TCanvas('canv_pruned','canv_pruned',500*8,500*3)
+canv_pruned = r.TCanvas('canv_pruned','canv_pruned',500*8,500*3)
 canv_pruned.Divide(8,3)
-gStyle.SetOptStat(0)
+r.gStyle.SetOptStat(0)
 print 'Saving File'
 for i in range(0,24):
-    gStyle.SetOptStat(0)
+    r.gStyle.SetOptStat(0)
     canv_pruned.cd(i+1)
     vSum[i].Draw('colz')
     vSum[i].Write()
@@ -142,14 +142,14 @@ for i in range(0,24):
 canv_pruned.SaveAs(filename+'/ThreshPrunedSummary.png')
 
 
-canv_proj = TCanvas('canv_proj', 'canv_proj', 500*8, 500*3)
+canv_proj = r.TCanvas('canv_proj', 'canv_proj', 500*8, 500*3)
 canv_proj.Divide(8,3)
-gStyle.SetOptStat(0)
+r.gStyle.SetOptStat(0)
 print 'Saving File'
 for i in range(0,24):
-    gStyle.SetOptStat(0)
+    r.gStyle.SetOptStat(0)
     canv_proj.cd(i+1)
-    gPad.SetLogy()
+    r.gPad.SetLogy()
     vSum[i].ProjectionY().Draw()
     vSum[i].ProjectionY().Write()
     pass
@@ -157,7 +157,7 @@ canv_proj.SaveAs(filename+'/VFATSummary.png')
 #outF.Close()
 
 #Now determine what VT1 to use for configuration.  The first threshold bin with no entries for now.
-#Make a text file readable by TTree:ReadFile
+#Make a text file readable by TTree::ReadFile
 vt1 = []
 for i in range(0,24):
 #    vt1.append([])

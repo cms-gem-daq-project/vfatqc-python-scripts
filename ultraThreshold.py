@@ -32,10 +32,10 @@ if options.debug:
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
-from ROOT import TFile,TTree
+import ROOT as r
 filename = options.filename
-myF = TFile(filename,'recreate')
-myT = TTree('thrTree','Tree Holding CMS GEM VT1 Data')
+myF = r.TFile(filename,'recreate')
+myT = r.TTree('thrTree','Tree Holding CMS GEM VT1 Data')
 
 Nev = array( 'i', [ 0 ] )
 Nev[0] = 1000

@@ -24,7 +24,7 @@ if options.debug:
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
-from ROOT import TFile,TTree
+import ROOT as r
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
@@ -47,7 +47,7 @@ else:
 if options.filename != None:
     try:
         print 'Configuring Trims with %s'%options.filename
-        inF = TFile(options.filename)
+        inF = r.TFile(options.filename)
 
         for event in inF.scurveTree :
             if event.vcal == 10 :

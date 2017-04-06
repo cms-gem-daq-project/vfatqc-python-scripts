@@ -21,11 +21,11 @@ parser.add_option("-x","--chi2", action="store_true", dest="chi2_plots",
 (options, args) = parser.parse_args()
 filename = options.filename[:-5]
 
-from ROOT import TFile,TH2D,TH1D,TCanvas,gROOT,gStyle,gPad
+import ROOT as r
 
-gROOT.SetBatch(True)
+r.gROOT.SetBatch(True)
 GEBtype = options.GEBtype
-inF = TFile(filename+'.root')
+inF = r.TFile(filename+'.root')
 
 #Build the channel to strip mapping from the text file
 
@@ -41,12 +41,12 @@ vPedestal   = ndict()
 
 
 for i in range(0,24):
-    vNoise[i] = TH1D('Noise%i'%i,'Noise%i;Noise [DAC units]'%i,35,-0.5,34.5)
-    vPedestal[i] = TH1D('Pedestal%i'%i,'Pedestal%i;Pedestal [DAC units]'%i,256,-0.5,255.5)
-    vThreshold[i] = TH1D('Threshold%i'%i,'Threshold%i;Threshold [DAC units]'%i,60,-0.5,299.5)
-    vChi2[i] = TH1D('ChiSquared%i'%i,'ChiSquared%i;Chi2'%i,100,-0.5,999.5)
-    vComparison[i] = TH2D('vComparison%i'%i,'Fit Summary %i;Threshold [DAC units];Noise [DAC units]'%i,60,-0.5,299.5,70,-0.5,34.5)
-    vNoiseTrim[i] = TH2D('vNoiseTrim%i'%i,'Noise vs. Trim Summary %i;Trim [DAC units];Noise [DAC units]'%i,32,-0.5,31.5,70,-0.5,34.5)
+    vNoise[i] = r.TH1D('Noise%i'%i,'Noise%i;Noise [DAC units]'%i,35,-0.5,34.5)
+    vPedestal[i] = r.TH1D('Pedestal%i'%i,'Pedestal%i;Pedestal [DAC units]'%i,256,-0.5,255.5)
+    vThreshold[i] = r.TH1D('Threshold%i'%i,'Threshold%i;Threshold [DAC units]'%i,60,-0.5,299.5)
+    vChi2[i] = r.TH1D('ChiSquared%i'%i,'ChiSquared%i;Chi2'%i,100,-0.5,999.5)
+    vComparison[i] = r.TH2D('vComparison%i'%i,'Fit Summary %i;Threshold [DAC units];Noise [DAC units]'%i,60,-0.5,299.5,70,-0.5,34.5)
+    vNoiseTrim[i] = r.TH2D('vNoiseTrim%i'%i,'Noise vs. Trim Summary %i;Trim [DAC units];Noise [DAC units]'%i,32,-0.5,31.5,70,-0.5,34.5)
     vComparison[i].GetYaxis().SetTitleOffset(1.5)
     vNoiseTrim[i].GetYaxis().SetTitleOffset(1.5)
     pass
@@ -65,69 +65,69 @@ for event in inF.scurveFitTree:
     pass
 
 if options.fit_plots or options.all_plots:
-    gStyle.SetOptStat(111100)
-    canv_comp = TCanvas('canv_comp','canv_comp',500*8,500*3)
+    r.gStyle.SetOptStat(111100)
+    canv_comp = r.TCanvas('canv_comp','canv_comp',500*8,500*3)
     canv_comp.Divide(8,3)
     for i in range(0,24):
         canv_comp.cd(i+1)
-        gStyle.SetOptStat(111100)
+        r.gStyle.SetOptStat(111100)
         vComparison[i].Draw('colz')
         canv_comp.Update()
         pass
     canv_comp.SaveAs(filename+'_FitSummary.png')
 
-    gStyle.SetOptStat(111100)
-    canv_trim = TCanvas('canv_trim','canv_trim',500*8,500*3)
+    r.gStyle.SetOptStat(111100)
+    canv_trim = r.TCanvas('canv_trim','canv_trim',500*8,500*3)
     canv_trim.Divide(8,3)
     for i in range(0,24):
         canv_trim.cd(i+1)
-        gStyle.SetOptStat(111100)
+        r.gStyle.SetOptStat(111100)
         vNoiseTrim[i].Draw('colz')
         canv_trim.Update()
         pass
     canv_trim.SaveAs(filename+'_TrimNoiseSummary.png')
 
-    canv_thresh = TCanvas('canv_thresh','canv_thresh',500*8,500*3)
+    canv_thresh = r.TCanvas('canv_thresh','canv_thresh',500*8,500*3)
     canv_thresh.Divide(8,3)
     for i in range(0,24):
         canv_thresh.cd(i+1)
-        gStyle.SetOptStat(111100)
+        r.gStyle.SetOptStat(111100)
         vThreshold[i].Draw()
-        gPad.SetLogy()
+        r.gPad.SetLogy()
         canv_thresh.Update()
         pass
     canv_thresh.SaveAs(filename+'_FitThreshSummary.png')
 
-    canv_Pedestal = TCanvas('canv_Pedestal','canv_Pedestal',500*8,500*3)
+    canv_Pedestal = r.TCanvas('canv_Pedestal','canv_Pedestal',500*8,500*3)
     canv_Pedestal.Divide(8,3)
     for i in range(0,24):
         canv_Pedestal.cd(i+1)
-        gStyle.SetOptStat(111100)
+        r.gStyle.SetOptStat(111100)
         vPedestal[i].Draw()
-        gPad.SetLogy()
+        r.gPad.SetLogy()
         canv_Pedestal.Update()
         pass
     canv_Pedestal.SaveAs(filename+'_FitPedestalSummary.png')
 
-    canv_noise = TCanvas('canv_noise','canv_noise',500*8,500*3)
+    canv_noise = r.TCanvas('canv_noise','canv_noise',500*8,500*3)
     canv_noise.Divide(8,3)
     for i in range(0,24):
         canv_noise.cd(i+1)
         vNoise[i].Draw()
-        gPad.SetLogy()
+        r.gPad.SetLogy()
         canv_noise.Update()
         pass
     canv_noise.SetLogy()
     canv_noise.SaveAs(filename+'_FitNoiseSummary.png')
     pass
 if options.chi2_plots or options.all_plots:
-    canv_Chi2 = TCanvas('canv_Chi2','canv_Chi2',500*8,500*3)
+    canv_Chi2 = r.TCanvas('canv_Chi2','canv_Chi2',500*8,500*3)
     canv_Chi2.Divide(8,3)
     canv_Chi2.SetLogy()
     for i in range(0,24):
         canv_Chi2.cd(i+1)
         vChi2[i].Draw()
-        gPad.SetLogy()
+        r.gPad.SetLogy()
         canv_Chi2.Update()
         pass
     canv_Chi2.SetLogy()

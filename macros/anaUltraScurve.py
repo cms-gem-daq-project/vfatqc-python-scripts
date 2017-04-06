@@ -34,16 +34,16 @@ os.system("mkdir " + filename)
 print filename
 outfilename = options.outfilename
 
-from ROOT import TFile,TTree,TF1,TH1D,TH2D,TCanvas,gROOT,gStyle,TLine,TLegend
+import ROOT as r
 
-gROOT.SetBatch(True)
-gStyle.SetOptStat(1111111)
+r.gROOT.SetBatch(True)
+r.gStyle.SetOptStat(1111111)
 GEBtype = options.GEBtype
-inF = TFile(filename+'.root')
+inF = r.TFile(filename+'.root')
 
 if options.SaveFile:
-    outF = TFile(filename+'/'+outfilename, 'recreate')
-    myT = TTree('scurveFitTree','Tree Holding FitData')
+    outF = r.TFile(filename+'/'+outfilename, 'recreate')
+    myT = r.TTree('scurveFitTree','Tree Holding FitData')
     pass
 #Build the channel to strip mapping from the text file
 lookup_table = []
@@ -109,7 +109,7 @@ if options.SaveFile:
     myT.Branch( 'pedestal', pedestal, 'pedestal/F')
     ped_eff = array( 'f', [ 0 ] )
     myT.Branch( 'ped_eff', ped_eff, 'ped_eff/F')
-    scurve_h = TH1D()
+    scurve_h = r.TH1D()
     myT.Branch( 'scurve_h', scurve_h)
     chi2 = array( 'f', [ 0 ] )
     myT.Branch( 'chi2', chi2, 'chi2/F')
@@ -125,7 +125,7 @@ trim_list = []
 trimrange_list = []
 lines = []
 def overlay_fit(VFAT, CH):
-    Scurve = TH1D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]'%(VFAT, CH),255,-0.5,254.5)
+    Scurve = r.TH1D('Scurve','Scurve for VFAT %i channel %i;VCal [DAC units]'%(VFAT, CH),255,-0.5,254.5)
     strip = lookup_table[VFAT][CH]
     pan_pin = pan_lookup[VFAT][CH]
     for event in inF.scurveTree:
@@ -136,12 +136,12 @@ def overlay_fit(VFAT, CH):
     param0 = scanFits[0][VFAT][CH]
     param1 = scanFits[1][VFAT][CH]
     param2 = scanFits[2][VFAT][CH]
-    fitTF1 =  TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
+    fitTF1 =  r.TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
     fitTF1.SetParameter(0, param0)
     fitTF1.SetParameter(1, param1)
     fitTF1.SetParameter(2, param2)
-    canvas = TCanvas('canvas', 'canvas', 500, 500)
-    gStyle.SetOptStat(1111111)
+    canvas = r.TCanvas('canvas', 'canvas', 500, 500)
+    r.gStyle.SetOptStat(1111111)
     Scurve.Draw()
     fitTF1.Draw('SAME')
     canvas.Update()
@@ -156,24 +156,24 @@ for i in range(0,24):
     trim_list.append([])
     trimrange_list.append([])
     if options.IsTrimmed:
-        lines.append(TLine(-0.5, trimVcal[i], 127.5, trimVcal[i]))
+        lines.append(r.TLine(-0.5, trimVcal[i], 127.5, trimVcal[i]))
         pass
     if not (options.channels or options.PanPin):
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Strip;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Strip;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
         vSum[i].GetYaxis().SetTitleOffset(1.5)
         pass
     if options.channels:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i;Channels;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Channels;VCal [DAC units]'%i,128,-0.5,127.5,256,-0.5,255.5)
         vSum[i].GetYaxis().SetTitleOffset(1.5)
         pass
     if options.PanPin:
-        vSum[i] = TH2D('vSum%i'%i,'vSum%i_0-63;63 - Panasonic Pin;VCal [DAC units]'%i,64,-0.5,63.5,256,-0.5,255.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i_0-63;63 - Panasonic Pin;VCal [DAC units]'%i,64,-0.5,63.5,256,-0.5,255.5)
         vSum[i].GetYaxis().SetTitleOffset(1.5)
-        vSum2[i] = TH2D('vSum2_%i'%i,'vSum%i_64-127;127 - Panasonic Pin;VCal [DAC units]'%i,64,-0.5,63.5,256,-0.5,255.5)
+        vSum2[i] = r.TH2D('vSum2_%i'%i,'vSum%i_64-127;127 - Panasonic Pin;VCal [DAC units]'%i,64,-0.5,63.5,256,-0.5,255.5)
         vSum2[i].GetYaxis().SetTitleOffset(1.5)
         pass
     for ch in range (0,128):
-        vScurves[i].append(TH1D('Scurve_%i_%i'%(i,ch),'Scurve_%i_%i;VCal [DAC units]'%(i,ch),256,-0.5,255.5))
+        vScurves[i].append(r.TH1D('Scurve_%i_%i'%(i,ch),'Scurve_%i_%i;VCal [DAC units]'%(i,ch),256,-0.5,255.5))
         vthr_list[i].append(0)
         trim_list[i].append(0)
         trimrange_list[i].append(0)
@@ -205,7 +205,7 @@ for event in inF.scurveTree:
         pass
     x = vScurves[event.vfatN][event.vfatCH].FindBin(event.vcal)
     vScurves[event.vfatN][event.vfatCH].SetBinContent(x, event.Nhits)
-    gStyle.SetOptStat(1111111)
+    r.gStyle.SetOptStat(1111111)
     vthr_list[event.vfatN][event.vfatCH] = event.vthr
     trim_list[event.vfatN][event.vfatCH] = event.trimDAC
     trimrange_list[event.vfatN][event.vfatCH] = event.trimRange
@@ -219,7 +219,7 @@ if options.SaveFile:
             param0 = scanFits[0][vfat][ch]
             param1 = scanFits[1][vfat][ch]
             param2 = scanFits[2][vfat][ch]
-            FittedFunction =  TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
+            FittedFunction =  r.TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
             FittedFunction.SetParameter(0, param0)
             FittedFunction.SetParameter(1, param1)
             FittedFunction.SetParameter(2, param2)
@@ -250,13 +250,13 @@ if options.SaveFile:
         pass
     pass
 
-canv = TCanvas('canv','canv',500*8,500*3)
-legend = TLegend(0.75,0.7,0.88,0.88)
+canv = r.TCanvas('canv','canv',500*8,500*3)
+legend = r.TLegend(0.75,0.7,0.88,0.88)
 if not options.PanPin:
     canv.Divide(8,3)
-    gStyle.SetOptStat(0)
+    r.gStyle.SetOptStat(0)
     for i in range(0,24):
-        gStyle.SetOptStat(0)
+        r.gStyle.SetOptStat(0)
         canv.cd(i+1)
         vSum[i].Draw('colz')
         if options.IsTrimmed:
@@ -273,10 +273,10 @@ if not options.PanPin:
     pass
 else:
     canv.Divide(8,6)
-    gStyle.SetOptStat(0)
+    r.gStyle.SetOptStat(0)
     for i in range(0,8):
         for j in range (0,3):
-            gStyle.SetOptStat(0)
+            r.gStyle.SetOptStat(0)
             canv.cd((i+1 + j*16)%48 + 16)
             vSum[i+(8*j)].Draw('colz')
             canv.Update()
