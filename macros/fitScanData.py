@@ -1,12 +1,12 @@
 
 def fitScanData(treeFile):
-    from ROOT import TFile,TTree,TH1D,TCanvas,gROOT,gStyle,TF1, TRandom3
+    import ROOT as r
     import numpy as np
     from gempython.utils.nesteddict import nesteddict as ndict
-    gROOT.SetBatch(True)
-    gStyle.SetOptStat(0)
+    r.gROOT.SetBatch(True)
+    r.gStyle.SetOptStat(0)
 
-    inF = TFile(treeFile)
+    inF = r.TFile(treeFile)
 
     scanHistos = ndict()
     scanCount  = ndict()
@@ -19,7 +19,7 @@ def fitScanData(treeFile):
         scanFits[3][vfat] = np.zeros(128)
         scanFits[4][vfat] = np.zeros(128)
         for ch in range(0,128):
-            scanHistos[vfat][ch] = TH1D('scurve_%i_%i_h'%(vfat,ch),'scurve_%i_%i_h'%(vfat,ch),254,0.5,254.5)
+            scanHistos[vfat][ch] = r.TH1D('scurve_%i_%i_h'%(vfat,ch),'scurve_%i_%i_h'%(vfat,ch),254,0.5,254.5)
             scanCount[vfat][ch] = 0
 
     for event in inF.scurveTree :
@@ -29,9 +29,9 @@ def fitScanData(treeFile):
             pass
         pass
 
-    random = TRandom3()
+    random = r.TRandom3()
     random.SetSeed(0)
-    fitTF1 = TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
+    fitTF1 = r.TF1('myERF','500*TMath::Erf((TMath::Max([2],x)-[0])/(TMath::Sqrt(2)*[1]))+500',1,253)
     for vfat in range(0,24):
         print 'fitting vfat %i'%vfat
         for ch in range(0,128):

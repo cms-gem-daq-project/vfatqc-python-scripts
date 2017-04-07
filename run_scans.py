@@ -101,6 +101,7 @@ if __name__ == '__main__':
   import itertools
   from multiprocessing import Pool, freeze_support
   from chamberInfo import chamber_config
+  from gempython.utils.wrappers import envCheck
 
   from qcoptions import parser
 
@@ -121,13 +122,8 @@ if __name__ == '__main__':
 
   (options, args) = parser.parse_args()
 
-  if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
-    print 'You must source the environment properly, DATA_PATH is not set'
-    exit(0)
-  if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
-    print 'You must source the environment properly, BUILD_HOME is not set'
-    exit(0)
-
+  envCheck('DATA_PATH')
+  envCheck('BUILD_HOME')
 
   if options.tool not in ["trimChamber.py","ultraThreshold.py","ultraScurve.py"]:
     print "Invalid tool specified"

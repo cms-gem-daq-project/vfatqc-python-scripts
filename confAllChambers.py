@@ -3,6 +3,7 @@ import os
 import threading
 from chamberInfo import chamber_config
 from qcoptions import parser
+from gempython.utils.wrappers import envCheck
 
 parser.add_option("--run", action="store_true", dest="run",
                   help="Set VFATs to run mode", metavar="run")
@@ -19,19 +20,12 @@ def launchScurveScan(link,slot,filename,run,vt1):
         os.system("confChamber.py -s %i -g %i --filename %s --vt1=%i"%(slot,link,filename,vt1))
 
 threads = []
-if os.getenv('DATA_PATH') == None or os.getenv('DATA_PATH') == '':
-    print 'You must source the environment properly!'
-    exit(0)
-    pass
 
-if os.getenv('BUILD_HOME') == None or os.getenv('BUILD_HOME') == '':
-    print 'You must source the environment properly!'
-    exit(0)
-    pass
+envCheck('DATA_PATH')
 
 for link in range(10):
     dataPath = os.getenv('DATA_PATH')
-    filename="%s/%s/trim/z%f/config/SCurveData_Trimmed.root"%(dataPath,chamber_config[link],options.ztrim)
+    filename="%s/%s/trim/z%f/config/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,chamber_config[link],options.ztrim)
     if os.path.isfile(filename):
       #launchScurveScan(link,filename)
       threads.append(threading.Thread(target=launchScurveScan, args=[link,options.slot,filename,options.run,options.vt1]))
