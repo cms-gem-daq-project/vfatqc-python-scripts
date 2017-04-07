@@ -52,7 +52,7 @@ for i in range(0,24):
     pass
 
 for event in inF.scurveFitTree:
-    strip = event.vfatstrip
+    strip = event.ROBstr
     param0 = event.threshold
     param1 = event.noise
     param2 = event.pedestal

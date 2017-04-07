@@ -11,6 +11,10 @@ from qcoptions import parser
 
 parser.add_option("--filename", type="string", dest="filename", default=None,
                   help="Specify file containing settings information", metavar="filename")
+parser.add_option("--chConfig", type="string", dest="chConfig", default=None,
+                  help="Specify file containing channel settings from anaUltraSCurve", metavar="chConfig")
+parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None,
+                  help="Specify file containing VFAT settings from anaUltraThreshold", metavar="vfatConfig")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 parser.add_option("--run", action="store_true", dest="run",
@@ -44,24 +48,42 @@ if options.run:
 else:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36,        0)
 
-if options.filename != None:
+if options.filename:
     try:
         print 'Configuring Trims with %s'%options.filename
         inF = r.TFile(options.filename)
 
-        for event in inF.scurveTree :
-            if event.vcal == 10 :
-                writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC))
-                if event.vfatCH == 10 : writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
-    except:
+        for event in inF.scurveFitTree :
+            writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
+            writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+    except Exception as e:
         print '%s does not seem to exist'%options.filename
+        print e
 
+if options.chConfig:
+    try:
+        print 'Configuring Channels with %s'%options.chConfig
+        chTree = r.TTree('chTree','Tree holding Channel Configuration Parameters')
+        chTree.ReadFile(options.chConfig)
 
+        for event in chTree :
+            writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
+    except Exception as e:
+        print '%s does not seem to exist'%options.filename
+        print e
+
+if options.vfatConfig:
+    try:
+        print 'Configuring VFATs with %s'%options.vfatConfig
+        vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
+        vfatTree.ReadFile(options.vfatConfig)
+
+        for event in vfatTree :
+            writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1),0)
+            writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+    except Exception as e:
+        print '%s does not seem to exist'%options.filename
+        print e
 print 'Chamber Configured'
-
-
-
-
-
 
 

@@ -25,7 +25,7 @@ envCheck('DATA_PATH')
 
 for link in range(10):
     dataPath = os.getenv('DATA_PATH')
-    filename="%s/%s/trim/z%f/config/SCurveData_Trimmed.root"%(dataPath,chamber_config[link],options.ztrim)
+    filename="%s/%s/trim/z%f/config/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,chamber_config[link],options.ztrim)
     if os.path.isfile(filename):
       #launchScurveScan(link,filename)
       threads.append(threading.Thread(target=launchScurveScan, args=[link,options.slot,filename,options.run,options.vt1]))
