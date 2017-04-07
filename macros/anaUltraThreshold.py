@@ -120,7 +120,7 @@ for i in range(0,24):
     for j in range(0,128):
        if hot_channels[i][j] is True:
            print 'VFAT %i Strip %i is noisy'%(i,j)
-           for binY in range(0,101):
+           for binY in range(0,251):
                bin = vSum[i].GetBin(j+1, binY)
                content = vSum[i].GetBinContent(bin)
                vSum[i].SetBinContent(bin, 0)
@@ -161,15 +161,22 @@ canv_proj.SaveAs(filename+'/VFATSummary.png')
 vt1 = []
 for i in range(0,24):
 #    vt1.append([])
-    for j in range(0, 100):
+    for j in range(0, 250):
         if (vSum[i].ProjectionY().GetBinContent(j+1)) == 0.0:
+            print 'vt1 for VFAT %i found'%i
             vt1.append(j)
             break
         pass
     pass
 outF.Close()
-txt = file(filename+"/ThresholdByVFAT.txt", 'w')
-txt.write("VFAT/I:VThreshold1/I:trimRange/I\n")
+txt = open(filename+"/vfatConfig.txt", 'w')
+
+print "trimRange:"
+print trimRange
+print "vt1:"
+print vt1
+
+txt.write("vfatN/I:vt1/I:trimRange/I\n")
 for i in range(0,24):
     txt.write('%i\t%i\t%i\n'%(i, vt1[i],trimRange[i]))
     pass
