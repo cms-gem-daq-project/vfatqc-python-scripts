@@ -1,7 +1,7 @@
 
 chamber_config = {
     0:"GEMINIm01L1",
-    # 1:"GEMINIm01L2",
+    1:"GEMINIm01L2",
     2:"GEMINIm27L1",
     3:"GEMINIm27L2",
     4:"GEMINIm28L1",
@@ -14,7 +14,7 @@ chamber_config = {
 
 GEBtype = {
     0:"short",
-    # 1:"short",
+    1:"short",
     2:"short",
     3:"short",
     4:"long",
