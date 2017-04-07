@@ -3,7 +3,8 @@
 def launchTests(args):
   return launchTestsArgs(*args)
 
-def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,trkdata=False,ztrim=4.0,config=False):
+def launchTestsArgs(tool, slot, link, chamber, scanmin, scanmax, nevts,
+                    vt1=None,vt2=0,perchannel=False,trkdata=False,ztrim=4.0,config=False):
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
@@ -63,13 +64,13 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
       pass
     else:
       scanType = scanType + "/vfat"
-      pass
-    if trkdata:
-      cmd.append("--trkdata")
-      scanType = scanType + "/trk"
-      pass
-    else:
-      scanType = scanType + "/trig"
+      if trkdata:
+        cmd.append("--trkdata")
+        scanType = scanType + "/trk"
+        pass
+      else:
+        scanType = scanType + "/trig"
+        pass
       pass
     dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
@@ -77,6 +78,28 @@ def launchTestsArgs(tool, slot, link, chamber,vt1=None,vt2=0,perchannel=False,tr
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/ThresholdScanData.root"%dirPath )
+    pass
+  elif tool == "fastLatency.py":
+    scanType = "latency"
+    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
+    setupCmds.append( ["mkdir","-p",dirPath+startTime] )
+    setupCmds.append( ["unlink",dirPath+"current"] )
+    setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
+    dirPath = dirPath+startTime
+    cmd.append( "--filename=%s/FastLatencyScanData.root"%dirPath )
+    pass
+  elif tool == "ultraLatency.py":
+    scanType = "latency"
+    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
+    setupCmds.append( ["mkdir","-p",dirPath+startTime] )
+    setupCmds.append( ["unlink",dirPath+"current"] )
+    setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
+    dirPath = dirPath+startTime
+    cmd.append( "--filename=%s/LatencyScanData.root"%dirPath )
+    cmd.append( "--scanmin=%d"%(scanmin) )
+    cmd.append( "--scanmax=%d"%(scanmax) )
+    cmd.append( "--nevts=%d"%(nevts) )
+    cmd.append( "--mspl=0" )
     pass
 
   #Execute Commands
@@ -129,7 +152,7 @@ if __name__ == '__main__':
     exit(0)
 
 
-  if options.tool not in ["trimChamber.py","ultraThreshold.py","ultraScurve.py"]:
+  if options.tool not in ["trimChamber.py","ultraThreshold.py","ultraLatency.py","fastLatency.py","ultraScurve.py"]:
     print "Invalid tool specified"
     exit(1)
 
@@ -138,12 +161,15 @@ if __name__ == '__main__':
                          [options.slot for x in range(len(chamber_config))],
                          chamber_config.keys(),
                          chamber_config.values(),
-                         [options.vt1 for x in range(len(chamber_config))],
-                         [options.vt2 for x in range(len(chamber_config))],
+                         [options.scanmin for x in range(len(chamber_config))],
+                         [options.scanmax for x in range(len(chamber_config))],
+                         [options.nevts   for x in range(len(chamber_config))],
+                         [options.vt1     for x in range(len(chamber_config))],
+                         [options.vt2     for x in range(len(chamber_config))],
                          [options.perchannel for x in range(len(chamber_config))],
                          [options.trkdata for x in range(len(chamber_config))],
-                         [options.ztrim for x in range(len(chamber_config))],
-                         [options.config for x in range(len(chamber_config))]
+                         [options.ztrim   for x in range(len(chamber_config))],
+                         [options.config  for x in range(len(chamber_config))],
                          )
 
   if options.series:
@@ -166,12 +192,15 @@ if __name__ == '__main__':
                                           [options.slot for x in range(len(chamber_config))],
                                           chamber_config.keys(),
                                           chamber_config.values(),
-                                          [options.vt1 for x in range(len(chamber_config))],
-                                          [options.vt2 for x in range(len(chamber_config))],
+                                          [options.scanmin for x in range(len(chamber_config))],
+                                          [options.scanmax for x in range(len(chamber_config))],
+                                          [options.nevts   for x in range(len(chamber_config))],
+                                          [options.vt1     for x in range(len(chamber_config))],
+                                          [options.vt2     for x in range(len(chamber_config))],
                                           [options.perchannel for x in range(len(chamber_config))],
                                           [options.trkdata for x in range(len(chamber_config))],
-                                          [options.ztrim for x in range(len(chamber_config))],
-                                          [options.config for x in range(len(chamber_config))]
+                                          [options.ztrim   for x in range(len(chamber_config))],
+                                          [options.config  for x in range(len(chamber_config))],
                                           )
                            )
       # timeout must be properly set, otherwise tasks will crash
