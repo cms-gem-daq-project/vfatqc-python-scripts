@@ -48,7 +48,7 @@ if options.run:
 else:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36,        0)
 
-if options.filename != None:
+if options.filename:
     try:
         print 'Configuring Trims with %s'%options.filename
         inF = r.TFile(options.filename)
@@ -60,7 +60,7 @@ if options.filename != None:
         print '%s does not seem to exist'%options.filename
         print e
 
-if options.chConfig != None:
+if options.chConfig:
     try:
         print 'Configuring Channels with %s'%options.chConfig
         chTree = r.TTree('chTree','Tree holding Channel Configuration Parameters')
@@ -72,7 +72,7 @@ if options.chConfig != None:
         print '%s does not seem to exist'%options.filename
         print e
 
-if options.vfatConfig != None:
+if options.vfatConfig:
     try:
         print 'Configuring VFATs with %s'%options.vfatConfig
         vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
@@ -85,10 +85,5 @@ if options.vfatConfig != None:
         print '%s does not seem to exist'%options.filename
         print e
 print 'Chamber Configured'
-
-
-
-
-
 
 

@@ -33,6 +33,8 @@ GEBtype = options.GEBtype
 inF = r.TFile(filename+'.root')
 outF = r.TFile(filename+'/'+outfilename, 'recreate')
 
+VT1_MAX = 250
+
 #Build the channel to strip mapping from the text file
 lookup_table = []
 pan_lookup = []
@@ -65,13 +67,13 @@ hot_channels = []
 for i in range(0,24):
     hot_channels.append([])
     if not (options.channels or options.PanPin):
-        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Strip;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Strip;VThreshold1 [DAC units]'%i,128,-0.5,127.5,VT1_MAX+1,-0.5,VT1_MAX+0.5)
         pass
     elif options.channels:
-        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Channel;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Channel;VThreshold1 [DAC units]'%i,128,-0.5,127.5,VT1_MAX+1,-0.5,VT1_MAX+0.5)
         pass
     elif options.PanPin:
-        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Panasonic Pin;VThreshold1 [DAC units]'%i,128,-0.5,127.5,251,-0.5,250.5)
+        vSum[i] = r.TH2D('vSum%i'%i,'vSum%i;Panasonic Pin;VThreshold1 [DAC units]'%i,128,-0.5,127.5,VT1_MAX+1,-0.5,VT1_MAX+0.5)
         pass
     for j in range(0,128):
         hot_channels[i].append(False)
@@ -120,7 +122,7 @@ for i in range(0,24):
     for j in range(0,128):
        if hot_channels[i][j] is True:
            print 'VFAT %i Strip %i is noisy'%(i,j)
-           for binY in range(0,251):
+           for binY in range(VT1_MAX+1):
                bin = vSum[i].GetBin(j+1, binY)
                content = vSum[i].GetBinContent(bin)
                vSum[i].SetBinContent(bin, 0)
@@ -161,7 +163,7 @@ canv_proj.SaveAs(filename+'/VFATSummary.png')
 vt1 = []
 for i in range(0,24):
 #    vt1.append([])
-    for j in range(0, 250):
+    for j in range(0,VT1_MAX+1):
         if (vSum[i].ProjectionY().GetBinContent(j+1)) == 0.0:
             print 'vt1 for VFAT %i found'%i
             vt1.append(j)
