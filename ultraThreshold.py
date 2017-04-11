@@ -24,11 +24,6 @@ parser.add_option("--trkdata", action="store_true", dest="trkdata",
 
 (options, args) = parser.parse_args()
 
-if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
-    print "Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax)
-    print "Scan parameters must be in range [0,255] and min < max"
-    exit(1)
-
 if options.vt2 not in range(256):
     print "Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2)
     exit(1)
@@ -77,8 +72,8 @@ Date = startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-THRESH_MIN = options.scanmin
-THRESH_MAX = options.scanmax
+THRESH_MIN = 0
+THRESH_MAX = 254
 
 N_EVENTS = Nev[0]
 CHAN_MIN = 0
@@ -107,7 +102,7 @@ try:
             printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
 
             startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
-            scanData = getUltraScanResults(ohboard, options.gtx, options.scanmax - options.scanmin + 1, options.debug)
+            scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
             sys.stdout.flush()
             for i in range(0,24):
                 vfatN[0] = i
@@ -139,7 +134,7 @@ try:
         printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
 
         startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
-        scanData = getUltraScanResults(ohboard, options.gtx, options.scanmax - options.scanmin + 1, options.debug)
+        scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
         sys.stdout.flush()
         for i in range(0,24):
             vfatN[0] = i

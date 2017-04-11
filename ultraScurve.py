@@ -15,11 +15,6 @@ parser.add_option("-f", "--filename", type="string", dest="filename", default="S
 
 (options, args) = parser.parse_args()
 
-if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
-    print "Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax)
-    print "Scan parameters must be in range [0,255] and min < max"
-    exit(1)
-
 if options.debug:
     uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
 else:
@@ -61,8 +56,8 @@ Date = startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-SCURVE_MIN = options.scanmin
-SCURVE_MAX = options.scanmax
+SCURVE_MIN = 0
+SCURVE_MAX = 254
 
 N_EVENTS = Nev[0]
 CHAN_MIN = 0
