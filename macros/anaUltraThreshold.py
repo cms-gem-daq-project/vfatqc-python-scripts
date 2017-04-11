@@ -163,10 +163,10 @@ canv_proj.SaveAs(filename+'/VFATSummary.png')
 vt1 = []
 for i in range(0,24):
 #    vt1.append([])
-    for j in range(0,VT1_MAX+1):
-        if (vSum[i].ProjectionY().GetBinContent(j+1)) == 0.0:
+    for j in range(VT1_MAX+1,0,-1):
+        if (vSum[i].ProjectionY().GetBinContent(j+1)) > 10.0:
             print 'vt1 for VFAT %i found'%i
-            vt1.append(j)
+            vt1.append(j+1)
             break
         pass
     pass
