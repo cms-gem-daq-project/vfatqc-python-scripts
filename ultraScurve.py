@@ -14,7 +14,6 @@ parser.add_option("-f", "--filename", type="string", dest="filename", default="S
                   help="Specify Output Filename", metavar="filename")
 
 (options, args) = parser.parse_args()
-uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 
 if options.debug:
     uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
@@ -27,7 +26,7 @@ myF = r.TFile(filename,'recreate')
 myT = r.TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 
 Nev = array( 'i', [ 0 ] )
-Nev[0] = 1000
+Nev[0] = options.nevts
 myT.Branch( 'Nev', Nev, 'Nev/I' )
 vcal = array( 'i', [ 0 ] )
 myT.Branch( 'vcal', vcal, 'vcal/I' )
@@ -93,7 +92,9 @@ try:
         for vfat in range(0,24):
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
-        configureScanModule(ohboard, options.gtx, 3, mask, channel = scCH, scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS), useUltra = True, debug = options.debug)
+        configureScanModule(ohboard, options.gtx, scanmode.SCURVE, mask, channel = scCH,
+                            scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS),
+                            useUltra = True, debug = options.debug)
         printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
         startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
         scanData = getUltraScanResults(ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
