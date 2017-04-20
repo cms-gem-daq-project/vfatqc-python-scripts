@@ -80,16 +80,17 @@ def launchTestsArgs(tool, slot, link, chamber, scanmin, scanmax, nevts,
     cmd.append( "--filename=%s/ThresholdScanData.root"%dirPath )
     pass
   elif tool == "fastLatency.py":
-    scanType = "latency"
+    scanType = "latency/trig"
     dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/FastLatencyScanData.root"%dirPath )
+    cmd.append( "--nevts=%d"%(nevts) )
     pass
   elif tool == "ultraLatency.py":
-    scanType = "latency"
+    scanType = "latency/trk"
     dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
@@ -99,7 +100,7 @@ def launchTestsArgs(tool, slot, link, chamber, scanmin, scanmax, nevts,
     cmd.append( "--scanmin=%d"%(scanmin) )
     cmd.append( "--scanmax=%d"%(scanmax) )
     cmd.append( "--nevts=%d"%(nevts) )
-    cmd.append( "--mspl=0" )
+    cmd.append( "--mspl=1" )
     pass
 
   #Execute Commands
