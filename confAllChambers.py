@@ -3,7 +3,7 @@
 def launch(args):
   return launchArgs(*args)
 
-def launchArgs(link,slot,run,vt1,conf,cName,ztrim):
+def launchArgs(link,slot,run,vt1,config,cName,ztrim):
     import datetime,os,sys
     import subprocess
     from subprocess import CalledProcessError
@@ -75,18 +75,18 @@ if __name__ == '__main__':
                                             [options.ztrim     for x in range(len(chamber_config))],
                                             )
                              )
-      # timeout must be properly set, otherwise tasks will crash
-      print res.get(999999999)
-      print("Normal termination")
-      pool.close()
-      pool.join()
+        # timeout must be properly set, otherwise tasks will crash
+        print res.get(999999999)
+        print("Normal termination")
+        pool.close()
+        pool.join()
     except KeyboardInterrupt:
-      print("Caught KeyboardInterrupt, terminating workers")
-      pool.terminate()
+        print("Caught KeyboardInterrupt, terminating workers")
+        pool.terminate()
     except Exception as e:
-      print("Caught Exception %s, terminating workers"%(str(e)))
-      pool.terminate()
+        print("Caught Exception %s, terminating workers"%(str(e)))
+        pool.terminate()
     except: # catch *all* exceptions
-      e = sys.exc_info()[0]
-      print("Caught non-Python Exception %s"%(e))
-      pool.terminate()
+        e = sys.exc_info()[0]
+        print("Caught non-Python Exception %s"%(e))
+        pool.terminate()
