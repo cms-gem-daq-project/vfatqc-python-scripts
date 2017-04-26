@@ -177,11 +177,11 @@ if __name__ == '__main__':
       pass
     pass
   else:
-    print "Running jobs in parallel mode (using Pool(10))"
+    print "Running jobs in parallel mode (using Pool(12))"
     freeze_support()
     # from: https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    pool = Pool(10)
+    pool = Pool(12)
     signal.signal(signal.SIGINT, original_sigint_handler)
     try:
       res = pool.map_async(launchTests,
