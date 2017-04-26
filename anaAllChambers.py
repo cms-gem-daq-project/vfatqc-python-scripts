@@ -10,18 +10,18 @@ def launchArgs(link,scandate,cName,cType,ztrim):
     from chamberInfo import chamber_config
     from gempython.utils.wrappers import runCommand
 
-    filename = "/gemdata/%s/scurve/%s/SCurveData.root"%(cName,scandate)
+    dataPath = os.getenv('DATA_PATH')
+    filename = "%s/%s/scurve/%s/SCurveData.root"%(dataPath,cName,scandate)
     if not os.path.isfile(filename):
         print "No file to analyze. %s does not exist"%(filename)
         return
-
 
     cmd1 = ["python","%s/vfatqc-python-scripts/macros/anaUltraScurve.py"%(os.getenv("BUILD_HOME"))]
     cmd1.append("--infilename=%s"%(filename))
     cmd1.append("--fit")
     cmd1.append("--type=%s"%(cType))
 
-    cmd2 = ["cp","/gemdata/%s/scurve/%s/SCurveData/Summary.png"%(cName,scandate),
+    cmd2 = ["cp","%s/%s/scurve/%s/SCurveData/Summary.png"%(dataPath,cName,scandate),
             "~/move/SCurveSummary_%s_ztrip%2.2f.png"%(cName,ztrim)]
 
     try:
