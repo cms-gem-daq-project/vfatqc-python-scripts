@@ -16,7 +16,7 @@ def launchArgs(link,scandate,cName,cType,ztrim):
         return
 
 
-    cmd1 = ["python","$BUILD_HOME/vfatqc-python-scripts/macros/anaUltraScurve.py"]
+    cmd1 = ["python","%s/vfatqc-python-scripts/macros/anaUltraScurve.py"%(os.getenv("BUILD_HOME"))]
     cmd1.append("--infilename=%s"%(filename))
     cmd1.append("--fit")
     cmd1.append("--type=%s"%(cType))
