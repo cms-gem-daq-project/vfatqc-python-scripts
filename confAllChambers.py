@@ -18,15 +18,17 @@ def launchArgs(link,slot,run,vt1,config,cName,ztrim):
         return
 
     cmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
-    cmd.append("--chConfig=%s/configs/z%.1f/chConfig_%s.txt"%(dataPath,ztrim,cName))
-    cmd.append("--vfatConfig=%s/configs/z%.1f/vfatConfig_%s.txt"%(dataPath,ztrim,cName))
 
     if run:
         cmd.append("--run")
         pass
 
     if config:
-        cmd.append("--config")
+        cmd.append("--vfatConfig=%s/configs/z%.1f/vfatConfig_%s.txt"%(dataPath,ztrim,cName))
+        cmd.append("--chConfig=%s/configs/z%.1f/chConfig_%s.txt"%(dataPath,ztrim,cName))
+    else:
+        cmd.append("--vt1=%d"%(vt1))
+        cmd.append("--filename=%s"%(filename))  
         pass
 
     try:
