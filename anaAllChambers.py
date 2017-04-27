@@ -22,7 +22,7 @@ def launchArgs(link,scandate,cName,cType,ztrim):
     cmd1.append("--type=%s"%(cType))
 
     cmd2 = ["cp","%s/%s/scurve/%s/SCurveData/Summary.png"%(dataPath,cName,scandate),
-            "~/move/SCurveSummary_%s_ztrim%2.2f.png"%(cName,ztrim)]
+            "%s/move/SCurveSummary_%s_ztrim%2.2f.png"%(os.getenv("HOME"),cName,ztrim)]
 
     try:
         runCommand(cmd1)
