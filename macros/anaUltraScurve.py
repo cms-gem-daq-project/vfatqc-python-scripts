@@ -115,8 +115,8 @@ if options.SaveFile:
     myT.Branch( 'scurve_h', scurve_h)
     chi2 = array( 'f', [ 0 ] )
     myT.Branch( 'chi2', chi2, 'chi2/F')
-    ndf = array( 'f', [ 0 ] )
-    myT.Branch( 'ndf', ndf, 'ndf/F')
+    ndf = array( 'i', [ 0 ] )
+    myT.Branch( 'ndf', ndf, 'ndf/I')
     Nev = array( 'f', [ 0 ] )
     myT.Branch( 'Nev', Nev, 'Nev/F')
     pass
