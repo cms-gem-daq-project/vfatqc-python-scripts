@@ -12,8 +12,27 @@ from qcoptions import parser
 
 parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
                   help="Specify Output Filename", metavar="filename")
+parser.add_option("--latency", type="int", dest = "latency", default = 37,
+                  help="Specify Latency", metavar="latency")
+parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
+                  help="Specify MSPL.  Must be in the range 1-8", metavar="MSPL")
+parser.add_option("--CalPhase", type="int", dest = "CalPhase", default = 0,
+                  help="Specify CalPhase. Must be in range 0-8", metavar="CalPhase")
+parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
+                  help="Specify time between L1As in bx", metavar="L1Atime")
+parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
+                  help="Specify time of pulse before L1A in bx", metavar="pDel")
 
 (options, args) = parser.parse_args()
+
+if options.MSPL < 1 or options.MSPL > 8:
+    print 'MSPL must be in the range 1-8'
+    exit(1)
+    pass
+if options.CalPhase < 0 or options.CalPhase > 8:
+    print 'CalPhase must be in the range 0-8'
+    exit(1)
+    pass
 
 if options.debug:
     uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
@@ -69,7 +88,7 @@ mask = 0
 
 try:
     setTriggerSource(ohboard,options.gtx,1)
-    configureLocalT1(ohboard, options.gtx, 1, 0, 40, 250, 0, options.debug)
+    configureLocalT1(ohboard, options.gtx, 1, 0, options.pDel, options.L1Atime, 0, options.debug)
     startLocalT1(ohboard, options.gtx)
 
     print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
@@ -77,9 +96,10 @@ try:
     #biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
     #writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
 
-    writeAllVFATs(ohboard, options.gtx, "Latency",    37, mask)
+    writeAllVFATs(ohboard, options.gtx, "Latency",    options.latency, mask)
     writeAllVFATs(ohboard, options.gtx, "ContReg0", 0x37, mask)
-    writeAllVFATs(ohboard, options.gtx, "ContReg2",   48, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",   (options.MSPL - 1) << 4, mask)
+    writeAllVFATs(ohboard, options.gtx, "CalPhase",  0xff >> (8 - options.CalPhase), mask)
 
     for vfat in range(0,24):
         for scCH in range(CHAN_MIN,CHAN_MAX):

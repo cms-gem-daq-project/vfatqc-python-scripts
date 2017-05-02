@@ -54,6 +54,7 @@ def fitScanData(treeFile):
                 fitResult = scanHistos[vfat][ch].Fit('myERF','SQ')
                 #fitStatus = fitResult.Status()
                 fitChi2 = fitTF1.GetChisquare()
+                fitNDF = fitTF1.GetNDF()
                 #print fitChi2
                 stepN +=1
                 fitGoodN+=1
@@ -66,6 +67,7 @@ def fitScanData(treeFile):
                     scanFits[2][vfat][ch] = fitTF1.GetParameter(2)
                     scanFits[3][vfat][ch] = fitChi2
                     scanFits[4][vfat][ch] = scanCount[vfat][ch]
+                    scanFits[5][vfat][ch] = fitNDF
                     MinChi2Temp = fitChi2
                     pass
                 if (fitTF1.GetParameter(0) == 8+stepN*8):
@@ -74,6 +76,7 @@ def fitScanData(treeFile):
                     scanFits[2][vfat][ch] = -999.9
                     scanFits[3][vfat][ch] = -999999999.9
                     scanFits[4][vfat][ch] = scanCount[vfat][ch]
+                    scanFits[4][vfat][ch] = -999999.9
                     MinChi2Temp = fitChi2
                     pass
                 if (MinChi2Temp < 50): break
