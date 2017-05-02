@@ -54,7 +54,7 @@ def fitScanData(treeFile):
                 fitResult = scanHistos[vfat][ch].Fit('myERF','SQ')
                 #fitStatus = fitResult.Status()
                 fitChi2 = fitTF1.GetChisquare()
-                fitNDF = int(fitTF1.GetNDF())
+                fitNDF = fitTF1.GetNDF()
                 #print fitChi2
                 stepN +=1
                 fitGoodN+=1

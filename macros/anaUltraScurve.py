@@ -117,8 +117,8 @@ if options.SaveFile:
     myT.Branch( 'chi2', chi2, 'chi2/F')
     ndf = array( 'i', [ 0 ] )
     myT.Branch( 'ndf', ndf, 'ndf/I')
-    Nev = array( 'f', [ 0 ] )
-    myT.Branch( 'Nev', Nev, 'Nev/F')
+    Nhigh = array( 'i', [ 0 ] )
+    myT.Branch( 'Nhigh', Nhigh, 'Nhigh/I')
     pass
 
 vSum  = ndict()
@@ -247,7 +247,7 @@ if options.SaveFile:
             ndf[0] = scanFits[5][vfat][ch]
             holder_curve = vScurves[vfat][ch]
             holder_curve.Copy(scurve_h)
-            Nev[0] = scanFits[4][vfat][ch]
+            Nhigh[0] = scanFits[4][vfat][ch]
         #Filling the arrays for plotting later
             if options.drawbad:
                 if (Chi2 > 1000.0 or Chi2 < 1.0):
