@@ -47,23 +47,52 @@ myT = r.TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 Nev = array( 'i', [ 0 ] )
 Nev[0] = options.nevts
 myT.Branch( 'Nev', Nev, 'Nev/I' )
+
 vcal = array( 'i', [ 0 ] )
 myT.Branch( 'vcal', vcal, 'vcal/I' )
+
 Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
+
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+
 vfatCH = array( 'i', [ 0 ] )
 myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
+
 trimRange = array( 'i', [ 0 ] )
 myT.Branch( 'trimRange', trimRange, 'trimRange/I' )
+
 vthr = array( 'i', [ 0 ] )
 myT.Branch( 'vthr', vthr, 'vthr/I' )
+
 trimDAC = array( 'i', [ 0 ] )
 myT.Branch( 'trimDAC', trimDAC, 'trimDAC/I' )
+
+l1aTime = array( 'i', [ 0 ] )
+myT.Branch( 'l1aTime', l1aTime, 'l1aTime/I' )
+l1aTime[0] = options.L1Atime
+
+mspl = array( 'i', [ 0 ] )
+myT.Branch( 'mspl', mspl, 'mspl/I' )
+mspl[0] = options.MSPL
+
+latency = array( 'i', [ 0 ] )
+myT.Branch( 'latency', latency, 'latency/I' )
+latency[0] = options.latency
+
+pDel = array( 'i', [ 0 ] )
+myT.Branch( 'pDel', pDel, 'pDel/I' )
+pDel[0] = options.pDel
+
+calPhase = array( 'i', [ 0 ] )
+myT.Branch( 'calPhase', calPhase, 'calPhase/I' )
+calPhase[0] = options.CalPhase
+
 link = array( 'i', [ 0 ] )
 myT.Branch( 'link', link, 'link/I' )
 link[0] = options.gtx
+
 utime = array( 'i', [ 0 ] )
 myT.Branch( 'utime', utime, 'utime/I' )
 
