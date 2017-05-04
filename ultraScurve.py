@@ -12,8 +12,27 @@ from qcoptions import parser
 
 parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
                   help="Specify Output Filename", metavar="filename")
+parser.add_option("--latency", type="int", dest = "latency", default = 37,
+                  help="Specify Latency", metavar="latency")
+parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
+                  help="Specify MSPL.  Must be in the range 1-8", metavar="MSPL")
+parser.add_option("--CalPhase", type="int", dest = "CalPhase", default = 0,
+                  help="Specify CalPhase. Must be in range 0-8", metavar="CalPhase")
+parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
+                  help="Specify time between L1As in bx", metavar="L1Atime")
+parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
+                  help="Specify time of pulse before L1A in bx", metavar="pDel")
 
 (options, args) = parser.parse_args()
+
+if options.MSPL < 1 or options.MSPL > 8:
+    print 'MSPL must be in the range 1-8'
+    exit(1)
+    pass
+if options.CalPhase < 0 or options.CalPhase > 8:
+    print 'CalPhase must be in the range 0-8'
+    exit(1)
+    pass
 
 if options.debug:
     uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
@@ -28,23 +47,52 @@ myT = r.TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 Nev = array( 'i', [ 0 ] )
 Nev[0] = options.nevts
 myT.Branch( 'Nev', Nev, 'Nev/I' )
+
 vcal = array( 'i', [ 0 ] )
 myT.Branch( 'vcal', vcal, 'vcal/I' )
+
 Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
+
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+
 vfatCH = array( 'i', [ 0 ] )
 myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
+
 trimRange = array( 'i', [ 0 ] )
 myT.Branch( 'trimRange', trimRange, 'trimRange/I' )
+
 vthr = array( 'i', [ 0 ] )
 myT.Branch( 'vthr', vthr, 'vthr/I' )
+
 trimDAC = array( 'i', [ 0 ] )
 myT.Branch( 'trimDAC', trimDAC, 'trimDAC/I' )
+
+l1aTime = array( 'i', [ 0 ] )
+myT.Branch( 'l1aTime', l1aTime, 'l1aTime/I' )
+l1aTime[0] = options.L1Atime
+
+mspl = array( 'i', [ 0 ] )
+myT.Branch( 'mspl', mspl, 'mspl/I' )
+mspl[0] = options.MSPL
+
+latency = array( 'i', [ 0 ] )
+myT.Branch( 'latency', latency, 'latency/I' )
+latency[0] = options.latency
+
+pDel = array( 'i', [ 0 ] )
+myT.Branch( 'pDel', pDel, 'pDel/I' )
+pDel[0] = options.pDel
+
+calPhase = array( 'i', [ 0 ] )
+myT.Branch( 'calPhase', calPhase, 'calPhase/I' )
+calPhase[0] = options.CalPhase
+
 link = array( 'i', [ 0 ] )
 myT.Branch( 'link', link, 'link/I' )
 link[0] = options.gtx
+
 utime = array( 'i', [ 0 ] )
 myT.Branch( 'utime', utime, 'utime/I' )
 
@@ -69,7 +117,7 @@ mask = 0
 
 try:
     setTriggerSource(ohboard,options.gtx,1)
-    configureLocalT1(ohboard, options.gtx, 1, 0, 40, 250, 0, options.debug)
+    configureLocalT1(ohboard, options.gtx, 1, 0, options.pDel, options.L1Atime, 0, options.debug)
     startLocalT1(ohboard, options.gtx)
 
     print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
@@ -77,9 +125,10 @@ try:
     #biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
     #writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
 
-    writeAllVFATs(ohboard, options.gtx, "Latency",    37, mask)
+    writeAllVFATs(ohboard, options.gtx, "Latency",    options.latency, mask)
     writeAllVFATs(ohboard, options.gtx, "ContReg0", 0x37, mask)
-    writeAllVFATs(ohboard, options.gtx, "ContReg2",   48, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",   (options.MSPL - 1) << 4, mask)
+    writeAllVFATs(ohboard, options.gtx, "CalPhase",  0xff >> (8 - options.CalPhase), mask)
 
     for vfat in range(0,24):
         for scCH in range(CHAN_MIN,CHAN_MAX):
