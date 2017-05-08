@@ -22,6 +22,10 @@ parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
                   help="Specify time between L1As in bx", metavar="L1Atime")
 parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
                   help="Specify time of pulse before L1A in bx", metavar="pDel")
+parser.add_option("--chMin", type="int", dest = "chMin", default = 0,
+                  help="Specify minimum channel number to scan", metavar="chMin")
+parser.add_option("--chMax", type="int", dest = "chMax", default = 127,
+                  help="Specify maximum channel number to scan", metavar="chMax")
 
 (options, args) = parser.parse_args()
 
@@ -31,6 +35,10 @@ if options.MSPL < 1 or options.MSPL > 8:
     pass
 if options.CalPhase < 0 or options.CalPhase > 8:
     print 'CalPhase must be in the range 0-8'
+    exit(1)
+    pass
+if not (0 <= options.chMin <= options.chMax < 128):
+    print "chMin %d not in [0,%d] or chMax %d not in [%d,127] or chMax < chMin"%(options.chMin,options.chMax,options.chMax,options.chMin)
     exit(1)
     pass
 
@@ -108,8 +116,8 @@ SCURVE_MIN = 0
 SCURVE_MAX = 254
 
 N_EVENTS = Nev[0]
-CHAN_MIN = 0
-CHAN_MAX = 128
+CHAN_MIN = options.chMin
+CHAN_MAX = options.chMax + 1
 if options.debug:
     CHAN_MAX = 5
     pass

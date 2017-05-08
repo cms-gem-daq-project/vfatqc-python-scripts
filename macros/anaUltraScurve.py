@@ -244,10 +244,10 @@ if options.SaveFile:
             else: mask[0] = False
             masks[vfat].append(mask[0])
             chi2[0] = scanFits[3][vfat][ch]
-            ndf[0] = scanFits[5][vfat][ch]
+            ndf[0] = int(scanFits[5][vfat][ch])
             holder_curve = vScurves[vfat][ch]
             holder_curve.Copy(scurve_h)
-            Nhigh[0] = scanFits[4][vfat][ch]
+            Nhigh[0] = int(scanFits[4][vfat][ch])
         #Filling the arrays for plotting later
             if options.drawbad:
                 if (Chi2 > 1000.0 or Chi2 < 1.0):
