@@ -95,7 +95,7 @@ try:
         for scCH in range(CHAN_MIN,CHAN_MAX):
             vfatCH[0] = scCH
             print "Channel #"+str(scCH)
-            configureScanModule(ohboard, options.gtx, mode=mode[0], mask=mask, channel=scCH,
+            configureScanModule(ohboard, options.gtx, mode[0], mask, channel=scCH,
                                 scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                                 numtrigs=int(N_EVENTS),
                                 useUltra=True, debug=options.debug)
@@ -127,7 +127,7 @@ try:
         else:
             mode[0] = scanmode.THRESHTRG
             pass
-        configureScanModule(ohboard, options.gtx, mode=mode[0], mask=mask,
+        configureScanModule(ohboard, options.gtx, mode[0], mask,
                             scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                             numtrigs=int(N_EVENTS),
                             useUltra=True, debug=options.debug)
