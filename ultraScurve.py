@@ -45,6 +45,10 @@ if options.chMax < 0 or options.chMax > 127:
     print 'chMax must be in the range 0-127'
     exit(1)
     pass
+if not (options.chMin <=  options.chMax):
+    print 'Scan requires chMin <= chMax'
+    exit(1)
+    pass
 
 if options.debug:
     uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
