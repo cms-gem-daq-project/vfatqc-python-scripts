@@ -37,16 +37,8 @@ if options.CalPhase < 0 or options.CalPhase > 8:
     print 'CalPhase must be in the range 0-8'
     exit(1)
     pass
-if options.chMin < 0 or options.chMin > 127:
-    print 'chMin must be in the range 0-127'
-    exit(1)
-    pass
-if options.chMax < 0 or options.chMax > 127:
-    print 'chMax must be in the range 0-127'
-    exit(1)
-    pass
-if not (options.chMin <=  options.chMax):
-    print 'Scan requires chMin <= chMax'
+if not (0 <= options.chMin <= options.chMax < 128):
+    print "chMin %d not in [0,%d] or chMax %d not in [%d,127] or chMax < chMin"%(options.chMin,options.chMax,options.chMax,options.chMin)
     exit(1)
     pass
 
