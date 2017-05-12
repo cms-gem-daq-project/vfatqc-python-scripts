@@ -37,6 +37,10 @@ if options.vt2 not in range(256):
     print "Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2)
     exit(1)
 
+if options.mspl not in range(1,9):
+    print "Invalid MSPL specified: %d, must be in range [1,8]"%(options.mspl)
+    exit(1)
+
 if options.debug:
     uhal.setLogLevelTo( uhal.LogLevel.INFO )
 else:
@@ -63,6 +67,8 @@ Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+mspl = array( 'i', [ -1 ] )
+myT.Branch( 'mspl', mspl, 'mspl/I' )
 vfatCH = array( 'i', [ 0 ] )
 myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
 link = array( 'i', [ 0 ] )
@@ -87,10 +93,20 @@ mask     = 0
 
 try:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
-    writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.mspl)<<4))
-    # writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.mspl-1)<<4))
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", mask)
+    vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                        range(0,24)))
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", mask)
+    vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                        range(0,24)))
+    vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
+                        range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    mask)
+    msplvals =  dict(map(lambda slotID: (slotID, (vals[slotID]>>4)&0x7),
+                         range(0,24)))
     mode = scanmode.LATENCY
 
     if options.internal:
@@ -125,6 +141,10 @@ try:
     for i in range(0,24):
         vfatN[0] = i
         dataNow = scanData[i]
+        mspl[0]  = msplvals[vfatN]
+        vt1[0]   = vt1vals[vfatN]
+        vt2[0]   = vt2vals[vfatN]
+        vth[0]   = vthvals[vfatN]
         for VC in range(LATENCY_MAX-LATENCY_MIN+1):
             lat[0]   = int((dataNow[VC] & 0xff000000) >> 24)
             Nhits[0] = int(dataNow[VC] & 0xffffff)

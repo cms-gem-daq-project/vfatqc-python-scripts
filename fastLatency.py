@@ -23,8 +23,8 @@ parser.set_defaults(nevts=1000)
 (options, args) = parser.parse_args()
 uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 
-if options.mspl not in range(0,8):
-    print "Invalid MSPL specified %d, exiting"%(options.mspl)
+if options.mspl not in range(1,9):
+    print "Invalid MSPL specified: %d, must be in range [1,8]"%(options.mspl)
     exit(1)
 
 if options.debug:
@@ -41,6 +41,14 @@ Dly = array( 'i', [ -1 ] )
 myT.Branch( 'Dly', Dly, 'Dly/I' )
 vfatN = array( 'i', [ -1 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+vth = array( 'i', [ 0 ] )
+myT.Branch( 'vth', vth, 'vth/I' )
+vth1 = array( 'i', [ 0 ] )
+myT.Branch( 'vth1', vth1, 'vth1/I' )
+vth2 = array( 'i', [ 0 ] )
+myT.Branch( 'vth2', vth2, 'vth2/I' )
+mspl = array( 'i', [ -1 ] )
+myT.Branch( 'mspl', mspl, 'mspl/I' )
 link = array( 'i', [ -1 ] )
 myT.Branch( 'link', link, 'link/I' )
 link[0] = options.gtx
@@ -60,9 +68,21 @@ try:
 
     print "Setting run mode"
     writeAllVFATs(ohboard, options.gtx, "ContReg0",   0x37)
-    print "Setting MSPL"
-    writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.mspl)<<4))
+    print "Setting MSPL to %d"%(options.mspl)
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.mspl-1)<<4))
     # writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1)
+
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", mask)
+    vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                        range(0,24)))
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", mask)
+    vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                        range(0,24)))
+    vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
+                        range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    mask)
+    msplvals =  dict(map(lambda slotID: (slotID, (vals[slotID]>>4)&0x7),
+                         range(0,24)))
 
     print "Setting base node before looping"
     baseNode = "GEM_AMC.OH.OH%d.COUNTERS"%(options.gtx)
@@ -82,6 +102,10 @@ try:
                     pass
                 Dly[0]   = dlyValue
                 vfatN[0] = vfat
+                mspl[0]  = msplvals[vfatN]
+                vt1[0]   = vt1vals[vfatN]
+                vt2[0]   = vt2vals[vfatN]
+                vth[0]   = vthvals[vfatN]
                 writeRegister(ohboard,"%s.VFAT%d_LAT_BX.RESET"%(baseNode,vfat),0x1)
                 myT.Fill()
                 pass
