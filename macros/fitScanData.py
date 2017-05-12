@@ -18,6 +18,7 @@ def fitScanData(treeFile):
         scanFits[2][vfat] = np.zeros(128)
         scanFits[3][vfat] = np.zeros(128)
         scanFits[4][vfat] = np.zeros(128)
+        scanFits[5][vfat] = np.zeros(128)
         for ch in range(0,128):
             scanHistos[vfat][ch] = r.TH1D('scurve_%i_%i_h'%(vfat,ch),'scurve_%i_%i_h'%(vfat,ch),254,0.5,254.5)
             scanCount[vfat][ch] = 0
