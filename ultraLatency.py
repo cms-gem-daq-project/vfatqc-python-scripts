@@ -60,7 +60,6 @@ vth1 = array( 'i', [ 0 ] )
 myT.Branch( 'vth1', vth1, 'vth1/I' )
 vth2 = array( 'i', [ 0 ] )
 myT.Branch( 'vth2', vth2, 'vth2/I' )
-vth2[0] = options.vt2
 lat = array( 'i', [ 0 ] )
 myT.Branch( 'lat', lat, 'lat/I' )
 Nhits = array( 'i', [ 0 ] )
@@ -142,8 +141,8 @@ try:
         vfatN[0] = i
         dataNow = scanData[i]
         mspl[0]  = msplvals[vfatN]
-        vt1[0]   = vt1vals[vfatN]
-        vt2[0]   = vt2vals[vfatN]
+        vth1[0]  = vt1vals[vfatN]
+        vth2[0]  = vt2vals[vfatN]
         vth[0]   = vthvals[vfatN]
         for VC in range(LATENCY_MAX-LATENCY_MIN+1):
             lat[0]   = int((dataNow[VC] & 0xff000000) >> 24)

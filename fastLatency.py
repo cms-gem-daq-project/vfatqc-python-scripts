@@ -103,8 +103,8 @@ try:
                 Dly[0]   = dlyValue
                 vfatN[0] = vfat
                 mspl[0]  = msplvals[vfatN]
-                vt1[0]   = vt1vals[vfatN]
-                vt2[0]   = vt2vals[vfatN]
+                vth1[0]  = vt1vals[vfatN]
+                vth2[0]  = vt2vals[vfatN]
                 vth[0]   = vthvals[vfatN]
                 writeRegister(ohboard,"%s.VFAT%d_LAT_BX.RESET"%(baseNode,vfat),0x1)
                 myT.Fill()
