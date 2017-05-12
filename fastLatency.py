@@ -15,16 +15,16 @@ parser.add_option("--filename", type="string", dest="filename", default="Latency
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
-parser.add_option("--mspl", type="int", dest="mspl",
-                  help="VThreshold1 DAC value for all VFATs", metavar="mspl", default=1)
+parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
+                  help="Specify MSPL.  Must be in the range 1-8 (default is 4)", metavar="MSPL")
 
 parser.set_defaults(nevts=1000)
 
 (options, args) = parser.parse_args()
 uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 
-if options.mspl not in range(1,9):
-    print "Invalid MSPL specified: %d, must be in range [1,8]"%(options.mspl)
+if options.MSPL not in range(1,9):
+    print "Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL)
     exit(1)
 
 if options.debug:
@@ -68,8 +68,8 @@ try:
 
     print "Setting run mode"
     writeAllVFATs(ohboard, options.gtx, "ContReg0",   0x37)
-    print "Setting MSPL to %d"%(options.mspl)
-    writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.mspl-1)<<4))
+    print "Setting MSPL to %d"%(options.MSPL)
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
     # writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1)
 
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", mask)

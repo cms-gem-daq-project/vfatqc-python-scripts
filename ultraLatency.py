@@ -15,10 +15,10 @@ from qcoptions import parser
 
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
-parser.add_option("--mspl", type="int", dest="mspl",
-                  help="VThreshold1 DAC value for all VFATs", metavar="mspl", default=1)
 parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")
+parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
+                  help="Specify MSPL.  Must be in the range 1-8 (default is 4)", metavar="MSPL")
 parser.add_option("--filename", type="string", dest="filename", default="LatencyData_Trimmed.root",
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--internal", action="store_true", dest="internal",
@@ -37,8 +37,8 @@ if options.vt2 not in range(256):
     print "Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2)
     exit(1)
 
-if options.mspl not in range(1,9):
-    print "Invalid MSPL specified: %d, must be in range [1,8]"%(options.mspl)
+if options.MSPL not in range(1,9):
+    print "Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL)
     exit(1)
 
 if options.debug:
@@ -92,7 +92,7 @@ mask     = 0
 
 try:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
-    writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.mspl-1)<<4))
+    writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", mask)
