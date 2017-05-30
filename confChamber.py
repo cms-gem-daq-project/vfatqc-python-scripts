@@ -17,6 +17,8 @@ parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None
                   help="Specify file containing VFAT settings from anaUltraThreshold", metavar="vfatConfig")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
+parser.add_option("--vt1bump", type="int", dest="vt1bump",
+                  help="VThreshold1 DAC bump value for all VFATs", metavar="vt1bump", default=0)
 parser.add_option("--run", action="store_true", dest="run",
                   help="Set VFATs to run mode", metavar="run")
 
@@ -79,7 +81,8 @@ if options.vfatConfig:
         vfatTree.ReadFile(options.vfatConfig)
 
         for event in vfatTree :
-            writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1),0)
+            print 'Set link %d VFAT%d VThreshold1 to %i'%(options.gtx,event.vfatN,event.vt1+options.vt1bump)
+            writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1+options.vt1bump),0)
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
     except Exception as e:
         print '%s does not seem to exist'%options.filename
