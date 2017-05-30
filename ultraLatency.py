@@ -106,10 +106,6 @@ try:
     vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    mask)
     msplvals =  dict(map(lambda slotID: (slotID, (vals[slotID]>>4)&0x7),
                          range(0,24)))
-    print msplvals
-    print vt1vals
-    print vt2vals
-    print vthvals
 
     mode = scanmode.LATENCY
 
@@ -141,7 +137,6 @@ try:
     printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
     sys.stdout.flush()
     scanData = getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug)
-    sys.stdout.flush()
 
     for i in range(0,24):
         vfatN[0] = i
@@ -158,7 +153,7 @@ try:
             lat[0]   = int((dataNow[VC] & 0xff000000) >> 24)
             Nhits[0] = int(dataNow[VC] & 0xffffff)
             if options.debug:
-                print "{0} {1} 0x{2:x} {3} {4}".format(i,VC,dataNow[VC],lat[0],Nhits[0])
+                print("{0} {1} 0x{2:x} {3} {4}".format(i,VC,dataNow[VC],lat[0],Nhits[0]))
                 pass
             myT.Fill()
             pass
