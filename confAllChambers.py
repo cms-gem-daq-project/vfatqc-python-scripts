@@ -3,7 +3,7 @@
 def launch(args):
   return launchArgs(*args)
 
-def launchArgs(link,slot,run,vt1,config,cName,ztrim):
+def launchArgs(link,slot,run,vt1,vt1bump,config,cName,ztrim):
     import datetime,os,sys
     import subprocess
     from subprocess import CalledProcessError
@@ -28,6 +28,7 @@ def launchArgs(link,slot,run,vt1,config,cName,ztrim):
         cmd.append("--chConfig=%s/configs/z%.1f/chConfig_%s.txt"%(dataPath,ztrim,cName))
     else:
         cmd.append("--vt1=%d"%(vt1))
+        cmd.append("--vt1bump=%d"%(vt1bump))
         cmd.append("--filename=%s"%(filename))  
         pass
 
@@ -56,6 +57,8 @@ if __name__ == '__main__':
                       help="Set Configuration from simple txt files", metavar="config")
     parser.add_option("--vt1", type="int", dest="vt1",
                       help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
+    parser.add_option("--vt1bump", type="int", dest="vt1bump",
+                      help="VThreshold1 DAC bump value for all VFATs", metavar="vt1bump", default=0)
 
     (options, args) = parser.parse_args()
 
@@ -72,6 +75,7 @@ if __name__ == '__main__':
                                             [options.slot      for x in range(len(chamber_config))],
                                             [options.run       for x in range(len(chamber_config))],
                                             [options.vt1       for x in range(len(chamber_config))],
+                                            [options.vt1bump   for x in range(len(chamber_config))],
                                             [options.config    for x in range(len(chamber_config))],
                                             [chamber_config[x] for x in chamber_config.keys()],
                                             [options.ztrim     for x in range(len(chamber_config))],
