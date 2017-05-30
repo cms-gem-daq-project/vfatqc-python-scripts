@@ -23,8 +23,8 @@ def launchArgs(link,slot,run,vt1,vt1bump,config,cName,ztrim):
         cmd.append("--run")
         pass
 
-    cmd.append("--vt1bump=%d"%(vt1bump))
     if config:
+        cmd.append("--vt1bump=%d"%(vt1bump))
         cmd.append("--vfatConfig=%s/configs/z%.1f/vfatConfig_%s.txt"%(dataPath,ztrim,cName))
         cmd.append("--chConfig=%s/configs/z%.1f/chConfig_%s.txt"%(dataPath,ztrim,cName))
     else:
