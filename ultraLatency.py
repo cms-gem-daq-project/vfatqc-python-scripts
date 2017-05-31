@@ -104,21 +104,19 @@ try:
     vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
                         range(0,24)))
     vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    mask)
-    msplvals =  dict(map(lambda slotID: (slotID, (vals[slotID]>>4)&0x7),
+    msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
                          range(0,24)))
 
     mode = scanmode.LATENCY
 
     if options.internal:
         setTriggerSource(ohboard,options.gtx,0x1)
-        # sendL1A(        ohboard, options.gtx, interval=250, number=0)
         sendL1ACalPulse(ohboard, options.gtx, delay=20, interval=400, number=0)
         chanReg = ((1&0x1) << 6)|((0&0x1) << 5)|(0&0x1f)
         writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, mask)
         writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
     else:
-        # setTriggerSource(ohboard,options.gtx,0x0) # GTX
-        setTriggerSource(ohboard,options.gtx,0x5) # GBT
+        setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
         pass
 
     scanBase = "GEM_AMC.OH.OH%d.ScanController.ULTRA"%(options.gtx)
