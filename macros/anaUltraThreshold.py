@@ -161,12 +161,19 @@ canv_proj.SaveAs(filename+'/VFATSummary.png')
 #Now determine what VT1 to use for configuration.  The first threshold bin with no entries for now.
 #Make a text file readable by TTree::ReadFile
 vt1 = []
+vt1new = []
 for i in range(0,24):
-#    vt1.append([])
     for j in range(VT1_MAX+1,0,-1):
-        if (vSum[i].ProjectionY().GetBinContent(j+1)) > 10.0:
+        #original method
+        if vSum[i].ProjectionY().GetBinContent(j+1) > 10.0:
             print 'vt1 for VFAT %i found'%i
             vt1.append(j+1)
+            break
+        pass
+    for j in range(vSum[i].ProjectionY().GetMaximumBin(),VT1_MAX+1):
+        if vSum[i].ProjectionY().GetBinContent(j) == 0:
+            print 'vt1new for VFAT %i found'%i
+            vt1new.append(j-1)
             break
         pass
     pass
@@ -178,9 +185,9 @@ print trimRange
 print "vt1:"
 print vt1
 
-txt.write("vfatN/I:vt1/I:trimRange/I\n")
+txt.write("vfatN/I:vt1/I:vt1new/I:trimRange/I\n")
 for i in range(0,24):
-    txt.write('%i\t%i\t%i\n'%(i, vt1[i],trimRange[i]))
+    txt.write('%i\t%i\t%i\t%i\n'%(i, vt1[i], vt1new[i], trimRange[i]))
     pass
 txt.close()
 
