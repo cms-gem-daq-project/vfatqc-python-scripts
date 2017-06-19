@@ -10,13 +10,10 @@ Created on Thu Mar 31 09:28:14 2016
 """
 
 import sys, os, random, time
-from optparse import OptionParser
 
 if __name__ == "__main__":
+    from qcoptions import parser
     parser = OptionParser()
-    parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                      metavar="debug",
-                      help="[OPTIONAL] Run in debug mode")
     parser.add_option("-m", "--middle", action="store_true", dest="doMiddle",
                       metavar="doMiddle",
                       help="[OPTIONAL] Use the middle column")
@@ -25,12 +22,15 @@ if __name__ == "__main__":
                       help="[OPTIONAL] Run a special arrangement")
 
     (options, args) = parser.parse_args()
+    
+    print "Obsolete, do not use"
+    exit(1)
 
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/kernel")
     from ipbus import *
 
     import subprocess,datetime
-    startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+    startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     print startTime
 
     # Unbuffer output
@@ -51,6 +51,7 @@ if __name__ == "__main__":
     pr.enable()
 
     gilbIP = raw_input("> Enter the GLIB's IP address: ")
+    #gilbIP="192.168.0.169"
     Date = raw_input("> Enter the Name of the Test [In case of conflict, the old file will be overwrite]: ")
     glib = GLIB(gilbIP.strip())
 
@@ -489,7 +490,8 @@ if __name__ == "__main__":
         trimDACfileList = open("TrimDACfiles.txt",'r')
         trimDACfile = ""
         for line in trimDACfileList:
-            if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
+            if ("ID_0x%04x"%(chipIDs[port]&0xffff) in line) and ("TRIM_DAC" in line):
+            #if "ID_0x%04x"%(chipIDs[port]&0xffff) in line:
                 trimDACfile = (line).rstrip('\n')
         if len(trimDACfile) < 2:
             print "Chip ID: 0x%04x"%(chipIDs[port]&0xffff)
@@ -505,10 +507,11 @@ if __name__ == "__main__":
 
             regName = "vfat2_" + str(port) + "_channel" + str(channel + 1)
             trimDAC = (g.readline()).rstrip('\n')
-            print trimDAC
-#            regValue = int(trimDAC) #correct version?
-            regValue = (1 << 6) + int(trimDAC) #old version?
-            #print regValue
+            #print trimDAC
+            regValue = int(trimDAC) #correct version?
+            #regValue = (1 << 6) + int(trimDAC) #old version?
+	    #regValue = (1 << 6) - int(trimDAC)  #BLD version?
+            print regValue
             glib.set(regName, regValue)
 #We should make the S-curve optional, generally not a necessary check 
 #            glib.set('scan_reset', 1)

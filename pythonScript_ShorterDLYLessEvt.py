@@ -82,9 +82,9 @@ if __name__ == "__main__":
     THRESH_MIN = 0
     N_EVENTS = 200.0
     #N_EVENTS = 1000.0
-    N_EVENTS_SCURVE = 200.0
+    N_EVENTS_SCURVE = 100.0
     #N_EVENTS_SCURVE = 1000.0
-    N_EVENTS_TRIM = 200.0
+    N_EVENTS_TRIM = 100.0
     #N_EVENTS_TRIM = 1000.0
     VFAT_FIRST = 0
     VFAT_LAST = 23

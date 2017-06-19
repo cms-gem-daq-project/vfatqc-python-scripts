@@ -14,10 +14,8 @@ import sys, os, random, time
 from optparse import OptionParser
 
 if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option("-d", "--debug", action="store_true", dest="debug",
-                      metavar="debug",
-                      help="[OPTIONAL] Run in debug mode")
+    from qcoptions import parser
+
     parser.add_option("-m", "--middle", action="store_true", dest="doMiddle",
                       metavar="doMiddle",
                       help="[OPTIONAL] Use the middle column")
@@ -26,12 +24,15 @@ if __name__ == "__main__":
                       help="[OPTIONAL] Run a special arrangement")
 
     (options, args) = parser.parse_args()
+    
+    print "Obsolete, needs to be upgraded or scrapped"
+    exit(1)
 
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/kernel")
     from ipbus import *
 
     import subprocess,datetime
-    startTime = datetime.datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
+    startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     print startTime
 
     # Unbuffer output
