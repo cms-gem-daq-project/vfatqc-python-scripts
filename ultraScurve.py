@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python2.7
 """
 Script to take Scurve data using OH ultra scans
 By: Cameron Bravo (c.bravo@cern.ch)
@@ -121,8 +121,7 @@ CHAN_MAX = options.chMax + 1
 if options.debug:
     CHAN_MAX = 5
     pass
-#mask = 0
-#mask = 0xf40400
+
 mask = options.vfatmask
 
 try:

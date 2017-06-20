@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python2.7
 import os
 from optparse import OptionParser
 from array import array

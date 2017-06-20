@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python2.7
 """
 Script to take latency data using OH ultra scans
 By: Jared Sturdy  (sturdy@cern.ch)
@@ -88,7 +88,7 @@ LATENCY_MIN = options.scanmin
 LATENCY_MAX = options.scanmax
 
 N_EVENTS = Nev[0]
-#mask = 0xf40400
+
 mask = options.vfatmask
 
 try:

@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/env python2.7
 """
 Script to set trimdac values on a chamber
 By: Christine McLean (ch.mclean@cern.ch), Cameron Bravo (c.bravo@cern.ch), Elizabeth Starling (elizabeth.starling@cern.ch)
@@ -85,7 +85,8 @@ runCommand(["ultraScurve.py",
             "--shelf=%i"%(options.shelf),
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
-            "--filename=%s"%(filename0)]
+            "--filename=%s"%(filename0),
+	    "--vfatmask=%i"%(options.vfatmask)]
            )
 muFits_0  = fitScanData(filename0)
 for vfat in range(0,24):
@@ -125,7 +126,7 @@ if rangeFile == None:
         
         #Scurve scan with trimdac set to 31 (maximum trimming)
         filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
-        runCommand(["ultraScurve.py","--shelf=%i"%(options.shelf),"-s%d"%(options.slot),"-g%d"%(options.gtx),"--filename=%s"%(filename31)])
+        runCommand(["ultraScurve.py","--shelf=%i"%(options.shelf),"-s%d"%(options.slot),"-g%d"%(options.gtx),"--filename=%s"%(filename31),"--vfatmask=%i"%(options.vfatmask)])
         
         #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
         muFits_31 = fitScanData(filename31)
@@ -199,7 +200,8 @@ for i in range(0,5):
                 "--shelf=%i"%(options.shelf),
                 "-s%d"%(options.slot),
                 "-g%d"%(options.gtx),
-                "--filename=%s"%(filenameBS)]
+                "--filename=%s"%(filenameBS),
+		"--vfatmask=%i"%(options.vfatmask)]
                )
     # Fit Scurve data
     fitData = fitScanData(filenameBS)
@@ -218,7 +220,8 @@ runCommand(["ultraScurve.py",
             "--shelf=%i"%(options.shelf),
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
-            "--filename=%s"%(filenameFinal)]
+            "--filename=%s"%(filenameFinal),
+	    "--vfatmask=%i"%(options.vfatmask)]
            )
 
 scanFilename = '%s/scanInfo.txt'%dirPath
