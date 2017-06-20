@@ -5,6 +5,19 @@ import sys, os
 import numpy as np
 #import root_numpy as rp
 
+def initVFATArray(array_dtype, nstrips=128):
+    list_dtypeTuple = []
+
+    for idx in range(0,len(array_dtype)):
+        if array_dtype.names[idx] == 'vfatN':	continue
+        if array_dtype.names[idx] == 'vfatCh':	continue
+        if array_dtype.names[idx] == 'panPin':	continue
+        if array_dtype.names[idx] == 'ROBstr':	continue
+        list_dtypeTuple.append((array_dtype.names[idx],array_dtype[idx]))
+	pass
+
+    return np.zeros(nstrips, dtype=list_dtypeTuple)
+
 #Use Median absolute deviation (MAD) to reject outliers
 #See: http://stackoverflow.com/questions/22354094/pythonic-way-of-detecting-outliers-in-one-dimensional-observation-data
 #And also: http://www.itl.nist.gov/div898/handbook/eda/section3/eda35h.htm

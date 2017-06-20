@@ -3,6 +3,7 @@
 Script to take VT1 data using OH ultra scans
 By: Cameron Bravo (c.bravo@cern.ch)
     Jared Sturdy  (sturdy@cern.ch)
+    Brian Dorney (brian.l.dorney@cern.ch)
 """
 
 import sys, os, random, time
@@ -82,7 +83,6 @@ if options.debug:
     CHAN_MAX = 5
     pass
 
-#mask = 0xF40400
 mask = options.vfatmask
 
 try:
