@@ -11,7 +11,7 @@ def launchArgs(link,scandate,cName,cType,ztrim):
     from gempython.utils.wrappers import runCommand
 
     dataPath = os.getenv('DATA_PATH')
-    elogPath = os.getenv('ELOG_PATH')
+    elogPath = "%s/%s"%(os.getenv('ELOG_PATH'),scandate)
     filename = "%s/%s/scurve/%s/SCurveData.root"%(dataPath,cName,scandate)
     if not os.path.isfile(filename):
         print "No file to analyze. %s does not exist"%(filename)
