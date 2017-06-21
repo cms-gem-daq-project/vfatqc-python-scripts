@@ -21,10 +21,9 @@ parser.add_option("-c","--channels", action="store_true", dest="channels",
 parser.add_option("-p","--panasonic", action="store_true", dest="PanPin",
                   help="Make plots vs Panasonic pins instead of strips", metavar="PanPin")
 parser.add_option("--chConfigKnown", action="store_true", dest="chConfigKnown",
-		  help="Channel config already known and found in --fileScurveFitTree", metavar="chConfigKnown")
+                  help="Channel config already known and found in --fileScurveFitTree", metavar="chConfigKnown")
 parser.add_option("--fileScurveFitTree", type="string", dest="fileScurveFitTree", default="SCurveFitData.root",
-		  help="TFile containing scurveFitTree", metavar="fileScurveFitTree")
- 
+                  help="TFile containing scurveFitTree", metavar="fileScurveFitTree")
 
 (options, args) = parser.parse_args()
 filename = options.filename[:-5]
@@ -65,8 +64,8 @@ if GEBtype == 'long':
     intext = open(buildHome+'/vfatqc-python-scripts/macros/longChannelMap.txt', 'r')
     pass
 if GEBtype == 'short':
-        intext = open(buildHome+'/vfatqc-python-scripts/macros/shortChannelMap.txt', 'r')
-        pass
+    intext = open(buildHome+'/vfatqc-python-scripts/macros/shortChannelMap.txt', 'r')
+    pass
 for i, line in enumerate(intext):
     if i == 0: continue
     mapping = line.rsplit('\t')
@@ -74,14 +73,14 @@ for i, line in enumerate(intext):
     pan_lookup[int(mapping[0])][int(mapping[2]) -1] = int(mapping[3])
     
     if not (options.channels or options.PanPin): 	#Readout Strips
-	vfatCh_lookup[int(mapping[0])][int(mapping[1])]=int(mapping[2]) - 1
-	pass
+        vfatCh_lookup[int(mapping[0])][int(mapping[1])]=int(mapping[2]) - 1
+        pass
     elif options.channels:				#VFAT Channels
-	vfatCh_lookup[int(mapping[0])][int(mapping[2]) -1]=int(mapping[2]) - 1
-	pass
+        vfatCh_lookup[int(mapping[0])][int(mapping[2]) -1]=int(mapping[2]) - 1
+        pass
     elif options.PanPin:				#Panasonic Connector Pins
-	vfatCh_lookup[int(mapping[0])][int(mapping[3])]=int(mapping[2]) - 1
-	pass
+        vfatCh_lookup[int(mapping[0])][int(mapping[3])]=int(mapping[2]) - 1
+	      pass
     pass
 
 print 'Initializing Histograms'
@@ -131,30 +130,30 @@ for vfat in range(0,24):
     #For each channel determine the maximum thresholds
     chanMaxVT1 = np.zeros((2,vSum[vfat].GetNbinsX()))
     for chan in range(0,vSum[vfat].GetNbinsX()):
-	for thresh in range(VT1_MAX+1,0,-1):
-	    if(vSum[vfat].ProjectionY("projY",chan,chan,"").GetBinContent(thresh+1) > 1.0):
-		#print chan, j
-		chanMaxVT1[0][chan]=chan
-		chanMaxVT1[1][chan]=(thresh+1)
-		break
-	    pass
-	pass
+	      for thresh in range(VT1_MAX+1,0,-1):
+	          if(vSum[vfat].ProjectionY("projY",chan,chan,"").GetBinContent(thresh+1) > 1.0):
+		            #print chan, j
+		            chanMaxVT1[0][chan]=chan
+		            chanMaxVT1[1][chan]=(thresh+1)
+		            break
+	          pass
+	      pass
 
     #Determine Outliers (e.g. "hot" channels)
     chanOutliers = isOutlier(chanMaxVT1[1,:])
     for chan in range(0,len(chanOutliers)):
-	hot_channels[vfat][chan] = chanOutliers[chan]
-	pass
+	      hot_channels[vfat][chan] = chanOutliers[chan]
+	      pass
 
     if options.debug:
-	print "VFAT%i Max Thresholds By Channel"%vfat
-	print chanMaxVT1
+	      print "VFAT%i Max Thresholds By Channel"%vfat
+	      print chanMaxVT1
 
-	print "VFAT%i Channel Outliers"%vfat
-	chanOutliers = np.column_stack((chanMaxVT1[0,:],np.array(hot_channels[vfat]).astype(float)))
-	print chanOutliers
+	      print "VFAT%i Channel Outliers"%vfat
+	      chanOutliers = np.column_stack((chanMaxVT1[0,:],np.array(hot_channels[vfat]).astype(float)))
+	      print chanOutliers
 
-	pass
+	      pass
     pass
 
 # Fetch trimDAC & chMask from scurveFitTree
@@ -164,32 +163,32 @@ dict_vfatTrimMaskData = {}
 if options.chConfigKnown:
     list_bNames = ["vfatN"]
     if not (options.channels or options.PanPin):
-    	list_bNames.append("ROBstr")
-    	pass
+        list_bNames.append("ROBstr")
+    	  pass
     elif options.channels:
-    	list_bNames.append("vfatCh")
-    	pass
+    	  list_bNames.append("vfatCh")
+    	  pass
     elif options.PanPin:
-    	list_bNames.append("panPin")
-    	pass
+    	  list_bNames.append("panPin")
+    	  pass
     list_bNames.append("mask")
     list_bNames.append("trimDAC")
 
     try:
-    	array_VFATSCurveData = rp.root2array(options.fileScurveFitTree,treename="scurveFitTree",branches=list_bNames)
+    	  array_VFATSCurveData = rp.root2array(options.fileScurveFitTree,treename="scurveFitTree",branches=list_bNames)
 
-    	#Store array_VFATSCurveData into a dict for easy access
-    	#This dictionary has VFAT position as the key value, returns a structured numpy array
-    	dict_vfatTrimMaskData = {idx:initVFATArray(array_VFATSCurveData.dtype) for idx in np.unique(array_VFATSCurveData[list_bNames[0]])}
-    	for dataPt in array_VFATSCurveData:
-	   dict_vfatTrimMaskData[dataPt['vfatN']][dataPt[list_bNames[1]]]['mask'] =  dataPt['mask']
-           dict_vfatTrimMaskData[dataPt['vfatN']][dataPt[list_bNames[1]]]['trimDAC'] =  dataPt['trimDAC']
-	   pass
-    	pass
+    	  #Store array_VFATSCurveData into a dict for easy access
+    	  #This dictionary has VFAT position as the key value, returns a structured numpy array
+    	  dict_vfatTrimMaskData = {idx:initVFATArray(array_VFATSCurveData.dtype) for idx in np.unique(array_VFATSCurveData[list_bNames[0]])}
+    	  for dataPt in array_VFATSCurveData:
+	          dict_vfatTrimMaskData[dataPt['vfatN']][dataPt[list_bNames[1]]]['mask'] =  dataPt['mask']
+            dict_vfatTrimMaskData[dataPt['vfatN']][dataPt[list_bNames[1]]]['trimDAC'] =  dataPt['trimDAC']
+	          pass
+    	  pass
     except Exception as e:
-    	print '%s does not seem to exist'%options.fileScurveFitTree
-    	print e
-    	pass
+    	  print '%s does not seem to exist'%options.fileScurveFitTree
+    	  print e
+    	  pass
     pass
 
 #Save Output
@@ -223,19 +222,19 @@ print "Subtracting off hot channels"
 for vfat in range(0,24):
     if (vfat_mask >> vfat) & 0x1: continue
     for chan in range(0,vSum[vfat].GetNbinsX()):
-       isHotChan = hot_channels[vfat][chan]
+        isHotChan = hot_channels[vfat][chan]
 
-       if options.chConfigKnown:
-	   isHotChan = (isHotChan or dict_vfatTrimMaskData[vfat][chan]['mask'])
-	   pass
+        if options.chConfigKnown:
+	          isHotChan = (isHotChan or dict_vfatTrimMaskData[vfat][chan]['mask'])
+	          pass
 
-       if isHotChan:
-           print 'VFAT %i Strip %i is noisy'%(vfat,chan)
-           for thresh in range(VT1_MAX+1):
-               vSum[vfat].SetBinContent(chan, thresh, 0)
-               pass
-           pass
-       pass
+        if isHotChan:
+            print 'VFAT %i Strip %i is noisy'%(vfat,chan)
+            for thresh in range(VT1_MAX+1):
+                vSum[vfat].SetBinContent(chan, thresh, 0)
+                pass
+            pass
+        pass
     pass
 
 #Save output with new hot channels subtracted off
@@ -276,6 +275,12 @@ for vfat in range(0,24):
             vt1[vfat]=(thresh+1)
             break
         pass
+    for j in range(vSum[i].ProjectionY().GetMaximumBin(),VT1_MAX+1):
+        if vSum[i].ProjectionY().GetBinContent(j) == 0:
+            print 'vt1new for VFAT %i found'%i
+            vt1new.append(j-1)
+            break
+        pass
     pass
 outF.Close()
 txt_vfat = open(filename+"/vfatConfig.txt", 'w')
@@ -298,21 +303,21 @@ if options.chConfigKnown:
     confF.write('vfatN/I:vfatCH/I:trimDAC/I:mask/I\n')
 
     if options.debug:
-	print 'vfatN/I:vfatCH/I:trimDAC/I:mask/I\n'
-	pass
+	      print 'vfatN/I:vfatCH/I:trimDAC/I:mask/I\n'
+	      pass
 
     for vfat in range (0,24):
-    	if (vfat_mask >> vfat) & 0x1: continue
-    	for j in range (0, 128):
-	    chan = vfatCh_lookup[vfat][j]
+    	  if (vfat_mask >> vfat) & 0x1: continue
+    	  for j in range (0, 128):
+	          chan = vfatCh_lookup[vfat][j]
 
-	    if options.debug:
-	    	print '%i\t%i\t%i\t%i\n'%(vfat,chan,dict_vfatTrimMaskData[vfat][j]['trimDAC'],int(hot_channels[vfat][j] or dict_vfatTrimMaskData[vfat][j]['mask']))
-		pass
+	          if options.debug:
+	    	        print '%i\t%i\t%i\t%i\n'%(vfat,chan,dict_vfatTrimMaskData[vfat][j]['trimDAC'],int(hot_channels[vfat][j] or dict_vfatTrimMaskData[vfat][j]['mask']))
+		            pass
 
             confF.write('%i\t%i\t%i\t%i\n'%(vfat,chan,dict_vfatTrimMaskData[vfat][j]['trimDAC'],int(hot_channels[vfat][j] or dict_vfatTrimMaskData[vfat][j]['mask'])))
             pass
-    	pass
+    	  pass
     confF.close()
     pass
 

@@ -11,6 +11,7 @@ def launchArgs(link,scandate,cName,cType,ztrim):
     from gempython.utils.wrappers import runCommand
 
     dataPath = os.getenv('DATA_PATH')
+    elogPath = "%s/%s"%(os.getenv('ELOG_PATH'),scandate)
     filename = "%s/%s/scurve/%s/SCurveData.root"%(dataPath,cName,scandate)
     if not os.path.isfile(filename):
         print "No file to analyze. %s does not exist"%(filename)
@@ -21,9 +22,9 @@ def launchArgs(link,scandate,cName,cType,ztrim):
     cmd1.append("--fit")
     cmd1.append("--type=%s"%(cType))
 
-    cmd2 = ["mkdir -p","/tmp/move"]
+    cmd2 = ["mkdir","-p","%s"%(elogPath)]
     cmd3 = ["cp","%s/%s/scurve/%s/SCurveData/Summary.png"%(dataPath,cName,scandate),
-            "/tmp/move/SCurveSummary_%s_ztrim%2.2f.png"%(cName,ztrim)]
+            "%s/SCurveSummary_%s_ztrim%2.2f.png"%(elogPath,cName,ztrim)]
 
     try:
         runCommand(cmd1)
@@ -55,6 +56,7 @@ if __name__ == '__main__':
     ztrim = options.ztrim
 
     envCheck('DATA_PATH')
+    envCheck('ELOG_PATH')
     searchPath = "%s/GEMINI*/scurve/*"%(os.getenv('DATA_PATH'))
     dirs       = glob.glob(searchPath)
     foundDir   = False

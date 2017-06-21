@@ -13,10 +13,6 @@ def launchArgs(link,slot,run,vt1,vt1bump,config,cName,ztrim):
     dataPath = os.getenv('DATA_PATH')
     filename="%s/%s/trim/z%f/config/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,cName,options.ztrim)
 
-    if not os.path.isfile(filename):
-        print "No trim configuration exists for z = %f for %s"%(ztrim,cName)
-        return
-
     cmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
 
     if run:
@@ -28,9 +24,12 @@ def launchArgs(link,slot,run,vt1,vt1bump,config,cName,ztrim):
         cmd.append("--vfatConfig=%s/configs/z%.1f/vfatConfig_%s.txt"%(dataPath,ztrim,cName))
         cmd.append("--chConfig=%s/configs/z%.1f/chConfig_%s.txt"%(dataPath,ztrim,cName))
     else:
-        cmd.append("--vt1=%d"%(vt1))
+        if not os.path.isfile(filename):
+            print "No trim configuration exists for z = %f for %s"%(ztrim,cName)
+            return
         cmd.append("--filename=%s"%(filename))  
         pass
+    cmd.append("--vt1=%d"%(vt1))
 
     try:
         runCommand(cmd)
