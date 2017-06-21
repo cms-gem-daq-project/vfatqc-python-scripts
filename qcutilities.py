@@ -1,4 +1,9 @@
-#!/bin/env python
+#!/bin/env python2.7
+
+"""
+Utilities for vfatqc scans
+By: Brian Dorney (brian.l.dorney@cern.ch)
+"""
 
 # Imports
 import sys, os

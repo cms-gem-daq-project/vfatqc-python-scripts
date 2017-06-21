@@ -2,6 +2,9 @@
 """
 Script to take Scurve data using OH ultra scans
 By: Cameron Bravo (c.bravo@cern.ch)
+
+Modified By: 
+	Brian Dorney (brian.l.dorney@cern.ch)
 """
 
 import sys

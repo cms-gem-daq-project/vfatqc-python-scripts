@@ -1,4 +1,3 @@
-
 from gempython.utils.standardopts import parser
 
 parser.add_option("--namc", type="int", dest="namc",

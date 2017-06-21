@@ -3,6 +3,8 @@
 Script to take latency data using OH ultra scans
 By: Jared Sturdy  (sturdy@cern.ch)
     Cameron Bravo (c.bravo@cern.ch)
+Modified By:
+    Brian Dorney (brian.l.dorney@cern.ch)
 """
 
 import sys, os, random, time
