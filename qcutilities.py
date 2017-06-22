@@ -1,4 +1,4 @@
-#!/bin/env python2.7
+#!/bin/env python
 
 """
 Utilities for vfatqc scans
@@ -14,12 +14,12 @@ def initVFATArray(array_dtype, nstrips=128):
     list_dtypeTuple = []
 
     for idx in range(0,len(array_dtype)):
-        if array_dtype.names[idx] == 'vfatN':	continue
-        if array_dtype.names[idx] == 'vfatCh':	continue
-        if array_dtype.names[idx] == 'panPin':	continue
-        if array_dtype.names[idx] == 'ROBstr':	continue
+        if array_dtype.names[idx] == 'vfatN':   continue
+        if array_dtype.names[idx] == 'vfatCh':  continue
+        if array_dtype.names[idx] == 'panPin':  continue
+        if array_dtype.names[idx] == 'ROBstr':  continue
         list_dtypeTuple.append((array_dtype.names[idx],array_dtype[idx]))
-	pass
+        pass
 
     return np.zeros(nstrips, dtype=list_dtypeTuple)
 
@@ -29,7 +29,7 @@ def initVFATArray(array_dtype, nstrips=128):
 def rejectOutliers(arrayData, thresh=3.5):    
     if len(arrayData.shape) == 1:
         arrayData = arrayData[:,None]
-	pass
+        pass
         
     median = np.median(arrayData, axis=0)
         
@@ -51,7 +51,7 @@ def rejectOutliers(arrayData, thresh=3.5):
 def isOutlier(arrayData, thresh=3.5):
     if len(arrayData.shape) == 1:
         arrayData = arrayData[:,None]
-	pass
+        pass
 
     median = np.median(arrayData, axis=0)
 

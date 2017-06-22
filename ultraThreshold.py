@@ -1,4 +1,4 @@
-#!/bin/env python2.7
+#!/bin/env python
 """
 Script to take VT1 data using OH ultra scans
 By: Cameron Bravo (c.bravo@cern.ch)

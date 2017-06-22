@@ -9,22 +9,3 @@
 
 # Don't ignore python
 !*.py
-<<<<<<< HEAD
-
-# Don't ignore output files
-!*_VFAT*_ID*
-
-# Ignore following
-*.pyc
-
-# Images
-*.png
-*.pdf
-
-# Misc
-.DS_Store
-
-# ROOT Files
-*.root
-=======
->>>>>>> 88c1a65bc71a9ed252b2bdfa802a7a27c233d6c8

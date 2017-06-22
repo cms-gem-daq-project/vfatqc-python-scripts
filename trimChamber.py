@@ -1,4 +1,4 @@
-#!/bin/env python2.7
+#!/bin/env python
 """
 Script to set trimdac values on a chamber
 By: Christine McLean (ch.mclean@cern.ch), Cameron Bravo (c.bravo@cern.ch), Elizabeth Starling (elizabeth.starling@cern.ch)

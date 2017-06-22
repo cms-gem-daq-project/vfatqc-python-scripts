@@ -1,4 +1,4 @@
-#!/bin/env python2.7
+#!/bin/env python
 """
 Script to take latency data using OH ultra scans
 By: Jared Sturdy  (sturdy@cern.ch)
@@ -142,7 +142,6 @@ try:
     scanData = getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug)
 
     for i in range(0,24):
-        if (mask >> i) & 0x1: continue
         vfatN[0] = i
         dataNow = scanData[i]
         mspl[0]  = msplvals[vfatN[0]]
