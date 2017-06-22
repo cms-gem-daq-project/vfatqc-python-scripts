@@ -24,7 +24,7 @@ parser.add_option("--chConfigKnown", action="store_true", dest="chConfigKnown",
                   help="Channel config already known and found in --fileScurveFitTree", metavar="chConfigKnown")
 parser.add_option("--fileScurveFitTree", type="string", dest="fileScurveFitTree", default="SCurveFitData.root",
                   help="TFile containing scurveFitTree", metavar="fileScurveFitTree")
- 
+
 (options, args) = parser.parse_args()
 filename = options.filename[:-5]
 os.system("mkdir " + filename)
