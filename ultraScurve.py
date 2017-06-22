@@ -10,7 +10,7 @@ from gempython.tools.vfat_user_functions_uhal import *
 
 from qcoptions import parser
 
-parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
+parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData",
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--latency", type="int", dest = "latency", default = 37,
                   help="Specify Latency", metavar="latency")
@@ -48,7 +48,7 @@ else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
 import ROOT as r
-filename = options.filename
+filename = options.filename + "_shelf%i_s%i_g%i.root"%(options.shelf,options.slot,options.gtx)
 myF = r.TFile(filename,'recreate')
 myT = r.TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 

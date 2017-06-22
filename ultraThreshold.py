@@ -18,7 +18,7 @@ from qcoptions import parser
 
 parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")
-parser.add_option("-f", "--filename", type="string", dest="filename", default="VThreshold1Data_Trimmed.root",
+parser.add_option("-f", "--filename", type="string", dest="filename", default="VThreshold1Data_Trimmed",
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--perchannel", action="store_true", dest="perchannel",
                   help="Run a per-channel VT1 scan", metavar="perchannel")
@@ -37,7 +37,7 @@ else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
 import ROOT as r
-filename = options.filename
+filename = options.filename + "_shelf%i_s%i_g%i.root"%(options.shelf,options.slot,options.gtx)
 myF = r.TFile(filename,'recreate')
 myT = r.TTree('thrTree','Tree Holding CMS GEM VT1 Data')
 
