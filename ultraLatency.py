@@ -49,7 +49,6 @@ else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
 from ROOT import TFile,TTree
-#filename = options.filename + "_shelf%i_s%i_g%i.root"%(options.shelf,options.slot,options.gtx)
 filename = options.filename
 myF = TFile(filename,'recreate')
 myT = TTree('latTree','Tree Holding CMS GEM Latency Data')

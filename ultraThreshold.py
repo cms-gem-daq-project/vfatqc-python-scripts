@@ -37,7 +37,6 @@ else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
 import ROOT as r
-#filename = options.filename + "_shelf%i_s%i_g%i.root"%(options.shelf,options.slot,options.gtx)
 filename = options.filename
 myF = r.TFile(filename,'recreate')
 myT = r.TTree('thrTree','Tree Holding CMS GEM VT1 Data')
