@@ -81,8 +81,10 @@ if options.vfatConfig:
         vfatTree.ReadFile(options.vfatConfig)
 
         for event in vfatTree :
-            print 'Set link %d VFAT%d VThreshold1 to %i'%(options.gtx,event.vfatN,event.vt1new+options.vt1bump)
-            writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1new+options.vt1bump),0)
+            #print 'Set link %d VFAT%d VThreshold1 to %i'%(options.gtx,event.vfatN,event.vt1new+options.vt1bump)
+            print 'Set link %d VFAT%d VThreshold1 to %i'%(options.gtx,event.vfatN,event.vt1+options.vt1bump)
+            #writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1new+options.vt1bump),0)
+            writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1+options.vt1bump),0)
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
     except Exception as e:
         print '%s does not seem to exist'%options.filename
