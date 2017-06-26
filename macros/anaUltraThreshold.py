@@ -133,8 +133,8 @@ dict_hMaxVT1_NoOutlier = {}
 for vfat in range(0,24):
     if (vfat_mask >> vfat) & 0x1: continue
 
-    dict_hMaxVT1[vfat]          = r.TH1F('vfat%iChanMaxVT1'%vfat,"vfat%i"%vfat,255,0,255)
-    dict_hMaxVT1_NoOutlier[vfat]= r.TH1F('vfat%iChanMaxVT1_NoOutlier'%vfat,"vfat%i - No Outliers"%vfat,255,0,255)
+    dict_hMaxVT1[vfat]          = r.TH1F('vfat%iChanMaxVT1'%vfat,"vfat%i"%vfat,256,-0.5,255.5)
+    dict_hMaxVT1_NoOutlier[vfat]= r.TH1F('vfat%iChanMaxVT1_NoOutlier'%vfat,"vfat%i - No Outliers"%vfat,256,-0.5,255.5)
 
     #For each channel determine the maximum thresholds
     chanMaxVT1 = np.zeros((2,vSum[vfat].GetNbinsX()))
