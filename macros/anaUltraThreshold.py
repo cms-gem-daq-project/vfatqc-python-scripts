@@ -24,6 +24,8 @@ parser.add_option("--chConfigKnown", action="store_true", dest="chConfigKnown",
                   help="Channel config already known and found in --fileScurveFitTree", metavar="chConfigKnown")
 parser.add_option("--fileScurveFitTree", type="string", dest="fileScurveFitTree", default="SCurveFitData.root",
                   help="TFile containing scurveFitTree", metavar="fileScurveFitTree")
+parser.add_option("--zscore", type="float", dest="zscore", default=3.5,
+                  help="Z-Score for Outlier Identification in MAD Algo", metavar="zscore")
 
 (options, args) = parser.parse_args()
 filename = options.filename[:-5]
@@ -123,10 +125,16 @@ for event in inF.thrTree :
 
 #Determine Hot Channels
 print 'Determining hot channels'
-from qcutilities import isOutlier
+from qcutilities import *
 import numpy as np
+import root_numpy as rp #note need root_numpy-4.7.2 (may need to run 'pip install root_numpy --upgrade')
+dict_hMaxVT1 = {}
+dict_hMaxVT1_NoOutlier = {}
 for vfat in range(0,24):
     if (vfat_mask >> vfat) & 0x1: continue
+
+    dict_hMaxVT1[vfat]          = r.TH1F('vfat%iChanMaxVT1'%vfat,"vfat%i"%vfat,255,0,255)
+    dict_hMaxVT1_NoOutlier[vfat]= r.TH1F('vfat%iChanMaxVT1_NoOutlier'%vfat,"vfat%i - No Outliers"%vfat,255,0,255)
 
     #For each channel determine the maximum thresholds
     chanMaxVT1 = np.zeros((2,vSum[vfat].GetNbinsX()))
@@ -135,14 +143,19 @@ for vfat in range(0,24):
             if(vSum[vfat].ProjectionY("projY",chan,chan,"").GetBinContent(thresh+1) > 1.0):
                 chanMaxVT1[0][chan]=chan
                 chanMaxVT1[1][chan]=(thresh+1)
+                dict_hMaxVT1[vfat].Fill(thresh+1)
                 break
             pass
         pass
 
     #Determine Outliers (e.g. "hot" channels)
-    chanOutliers = isOutlier(chanMaxVT1[1,:])
+    chanOutliers = isOutlierMADOneSided(chanMaxVT1[1,:], thresh=options.zscore)
     for chan in range(0,len(chanOutliers)):
         hot_channels[vfat][chan] = chanOutliers[chan]
+        
+        if not chanOutliers[chan]:
+            dict_hMaxVT1_NoOutlier[vfat].Fill(chanMaxVT1[1][chan])
+            pass
         pass
 
     if options.debug:
@@ -156,8 +169,6 @@ for vfat in range(0,24):
     pass
 
 # Fetch trimDAC & chMask from scurveFitTree
-import root_numpy as rp #note need root_numpy-4.7.2 (may need to run 'pip install root_numpy --upgrade')
-from qcutilities import initVFATArray
 dict_vfatTrimMaskData = {}
 if options.chConfigKnown:
     list_bNames = ["vfatN"]
@@ -226,6 +237,20 @@ for vfat in range(0,24):
     vSum[vfat].ProjectionY().Draw()
     pass
 canv_proj.SaveAs(filename+'/VFATSummary.png')
+
+#Save VT1Max Distributions Before/After Outlier Rejection
+canv_vt1Max = r.TCanvas('canv_vt1Max','canv_vt1Max', 500*8, 500*3)
+canv_vt1Max.Divide(8,3)
+r.gStyle.SetOptStat(0)
+print 'Saving vt1Max distributions'
+for vfat in range(0,24):
+    r.gStyle.SetOptStat(0)
+    canv_vt1Max.cd(vfat+1)
+    dict_hMaxVT1[vfat].Draw("hist")
+    dict_hMaxVT1_NoOutlier[vfat].SetLineColor(r.kRed)
+    dict_hMaxVT1_NoOutlier[vfat].Draw("samehist")
+    pass
+canv_vt1Max.SaveAs(filename+'/VT1MaxSummary.png')
 
 #Subtracting off the hot channels, so the projection shows only usable ones.
 print "Subtracting off hot channels"

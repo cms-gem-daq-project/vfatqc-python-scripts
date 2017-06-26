@@ -10,7 +10,7 @@ from gempython.tools.vfat_user_functions_uhal import *
 
 from qcoptions import parser
 
-parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData",
+parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--latency", type="int", dest = "latency", default = 37,
                   help="Specify Latency", metavar="latency")

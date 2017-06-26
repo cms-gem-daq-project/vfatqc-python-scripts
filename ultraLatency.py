@@ -21,7 +21,7 @@ parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")
 parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
                   help="Specify MSPL.  Must be in the range 1-8 (default is 4)", metavar="MSPL")
-parser.add_option("--filename", type="string", dest="filename", default="LatencyData_Trimmed",
+parser.add_option("--filename", type="string", dest="filename", default="LatencyData_Trimmed.root",
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--internal", action="store_true", dest="internal",
                   help="Run a latency scan using the internal calibration pulse", metavar="internal")
