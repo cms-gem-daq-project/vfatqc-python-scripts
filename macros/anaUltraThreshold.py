@@ -258,7 +258,7 @@ for vfat in range(0,24):
     if (vfat_mask >> vfat) & 0x1: continue
     for chan in range(0,vSum[vfat].GetNbinsX()):
         isHotChan = hot_channels[vfat][chan]
-        
+       
         if options.chConfigKnown:
             isHotChan = (isHotChan or dict_vfatTrimMaskData[vfat][chan]['mask'])
             pass
