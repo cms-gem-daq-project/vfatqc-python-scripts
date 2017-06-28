@@ -212,7 +212,7 @@ try:
         pass
 except Exception as e:
     myT.AutoSave("SaveSelf")
-    print(": An exception occurred", e)
+    print("An exception occurred", e)
 finally:
     myF.cd()
     myT.Write()
