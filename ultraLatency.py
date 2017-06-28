@@ -25,6 +25,13 @@ parser.add_option("--internal", action="store_true", dest="internal",
                   help="Run a latency scan using the internal calibration pulse", metavar="internal")
 parser.add_option("--amc13local", action="store_true", dest="amc13local",
                   help="Set up for using AMC13 local trigger generator", metavar="amc13local")
+parser.add_option("--randoms", type="int", default=0, dest="randoms",
+                  help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
+                  metavar="randoms")
+parser.add_option("--t3trig", action="store_true", dest="t3trig",
+                  help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
+parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
+                  help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
 
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 
@@ -44,9 +51,9 @@ if options.MSPL not in range(1,9):
     exit(1)
 
 if options.debug:
-    uhal.setLogLevelTo( uhal.LogLevel.INFO )
+    uhal.setLogLevelTo(uhal.LogLevel.INFO)
 else:
-    uhal.setLogLevelTo( uhal.LogLevel.ERROR )
+    uhal.setLogLevelTo(uhal.LogLevel.ERROR)
 
 from ROOT import TFile,TTree
 filename = options.filename
@@ -125,24 +132,30 @@ try:
         writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
     elif options.amc13local:
         amcMask = amc13board.parseInputEnableList("%s"%(options.slot), True)
-        print("AMC Mask is 0x%08x"%(amcMask))
         amc13board.reset(amc13board.Board.T1)
         amc13board.resetCounters()
         amc13board.resetDAQ()
-        # will need a switch for this for QC8
-        # amc13board.localTtcSignalEnable( options.fakeTTC)
+        if options.fakeTTC:
+            amc13board.localTtcSignalEnable(options.fakeTTC)
+            pass
         amc13board.AMCInputEnable(amcMask)
         amc13board.startRun()
         # rate should be desired rate * 16
         # mode may be: 0(per-orbit), 1(per-BX), 2(random)
-        # configureLocalL1A( ena, mode, burst, rate, rules)
-        amc13board.configureLocalL1A(True, 2, 1, 10000, 0)
+        # configureLocalL1A(ena, mode, burst, rate, rules)
+        if options.randoms > 0:
+            amc13board.configureLocalL1A(True, 2, 1, options.randoms, 0)
+            pass
+        if options.t3trig:
+            amc13board.write(amc13board.Board.T1, 'CONF.TTC.T3_TRIG', 0x1)
         # to prevent trigger blocking
         amc13board.fakeDataEnable(True)
-        # disable the event builder
-        amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x1)
+        # disable the event builder?
+        # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x1)
         amc13board.enableLocalL1A(True)
-        amc13board.startContinuousL1A()
+        if options.randoms > 0:
+            amc13board.startContinuousL1A()
+            pass
         pass
     else:
         setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
@@ -195,7 +208,7 @@ try:
     elif options.amc13local:
         amc13board.stopContinuousL1A()
         amc13board.fakeDataEnable(False)
-        amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x0)
+        # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x0)
         pass
 except Exception as e:
     myT.AutoSave("SaveSelf")
