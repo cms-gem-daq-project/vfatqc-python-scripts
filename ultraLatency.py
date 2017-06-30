@@ -97,7 +97,8 @@ if options.amc13local:
     amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
     amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
     pass
-ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
+amcboard = getAMCObject(options.slot,options.shelf,options.debug)
+ohboard  = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
 LATENCY_MIN = options.scanmin
 LATENCY_MAX = options.scanmax
@@ -124,13 +125,17 @@ try:
 
     mode = scanmode.LATENCY
 
+    stopLocalT1(ohboard, options.gtx)
+
     if options.internal:
+        blockL1A(amcboard)
         setTriggerSource(ohboard,options.gtx,0x1)
         sendL1ACalPulse(ohboard, options.gtx, delay=20, interval=400, number=0)
         chanReg = ((1&0x1) << 6)|((0&0x1) << 5)|(0&0x1f)
         writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, mask)
         writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
     elif options.amc13local:
+        enableL1A(amcboard)
         amcMask = amc13board.parseInputEnableList("%s"%(options.slot), True)
         amc13board.reset(amc13board.Board.T1)
         amc13board.resetCounters()
@@ -144,7 +149,9 @@ try:
         # mode may be: 0(per-orbit), 1(per-BX), 2(random)
         # configureLocalL1A(ena, mode, burst, rate, rules)
         if options.randoms > 0:
-            amc13board.configureLocalL1A(True, 2, 1, options.randoms, 0)
+            # amc13board.configureLocalL1A(True, 2, 1, options.randoms, 0)
+            # amc13board.configureLocalL1A(True, 1, 1, 1, 0) # per-BX
+            amc13board.configureLocalL1A(True, 0, 1, 1, 0) # per-orbit
             pass
         if options.t3trig:
             amc13board.write(amc13board.Board.T1, 'CONF.TTC.T3_TRIG', 0x1)
@@ -158,6 +165,7 @@ try:
             pass
         pass
     else:
+        enableL1A(amcboard)
         setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
         pass
 
