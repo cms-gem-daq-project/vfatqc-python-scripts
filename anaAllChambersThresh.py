@@ -3,20 +3,17 @@
 def launch(args):
   return launchArgs(*args)
 
-def launchArgs(link,scandate_scurve,scandate_thresh,cName,cType):
+def launchArgs(link,scandate_scurve,scandate_thresh,cName,cType,zTrim):
     import datetime,os,sys
     import subprocess
     from subprocess import CalledProcessError
     from chamberInfo import chamber_config
     from gempython.utils.wrappers import runCommand
 
-    #print "launchArgs(%s,%s,%s,%s,%s)"%(link,scandate_scurve,scandate_thresh,cName,cType)
-
     dataPath = os.getenv('DATA_PATH')
     elogPath = "%s/%s"%(os.getenv('ELOG_PATH'),scandate_thresh)
    
-    #filename_scurve = "%s/%s/scurve/%s/SCurveData/SCurveFitData.root"%(dataPath,cName,scandate_scurve)
-    filename_scurve = "%s/%s/trim/z4.000000/%s/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,cName,scandate_scurve)
+    filename_scurve = "%s/%s/trim/%s/%s/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,cName,zTrim,scandate_scurve)
     filename_thresh = "%s/%s/threshold/channel/%s/ThresholdScanData.root"%(dataPath,cName,scandate_thresh)
     if not os.path.isfile(filename_scurve):
         print "No file containing scurveFitTree to use in analysis. %s does not exist"%(filename_scurve)
@@ -30,11 +27,6 @@ def launchArgs(link,scandate_scurve,scandate_thresh,cName,cType):
     cmd1.append("--chConfigKnown")
     cmd1.append("--fileScurveFitTree=%s"%(filename_scurve))
     cmd1.append("--vfatmask=0x0")
-
-    #print "================="
-    #for item in cmd1:
-    #    print item
-    #print "================="
 
     cmd2 = ["mkdir","-p","%s"%(elogPath)]
     cmd3 = ["cp","%s/%s/threshold/channel/%s/ThresholdScanData/ThreshPrunedSummary.png"%(dataPath,cName,scandate_thresh),
@@ -82,7 +74,7 @@ if __name__ == '__main__':
 
     envCheck('DATA_PATH')
     envCheck('ELOG_PATH')
-    
+   
     #Look for threshold scan directory
     searchPath  = "%s/GEMINI*/threshold/channel/*"%(os.getenv('DATA_PATH'))
     dirs        = glob.glob(searchPath)
@@ -101,8 +93,8 @@ if __name__ == '__main__':
         pass
     
     #Look for trim directory
-    #searchPath  = "%s/GEMINI*/scurve/*"%(os.getenv('DATA_PATH'))
-    searchPath  = "%s/GEMINI*/trim/z4.000000/*"%(os.getenv('DATA_PATH'))
+    ztrimPath   = "z%s.000000"%(int(options.ztrim))
+    searchPath  = "%s/GEMINI*/trim/%s/*"%(os.getenv('DATA_PATH'),ztrimPath)
     dirs        = glob.glob(searchPath)
     foundDir    = False
 
@@ -129,7 +121,8 @@ if __name__ == '__main__':
                                             [options.scandateTrim  for x in range(len(chamber_config))],
                                             [options.scandate  for x in range(len(chamber_config))],
                                             [chamber_config[x] for x in chamber_config.keys()],
-                                            [GEBtype[x]        for x in chamber_config.keys()]#,
+                                            [GEBtype[x]        for x in chamber_config.keys()],
+                                            [ztrimPath for x in range(len(chamber_config))]
                                             )
                              )
         # timeout must be properly set, otherwise tasks will crash
