@@ -139,11 +139,11 @@ for vfat in range(0,24):
     #For each channel determine the maximum thresholds
     chanMaxVT1 = np.zeros((2,vSum[vfat].GetNbinsX()))
     for chan in range(0,vSum[vfat].GetNbinsX()):
-        for thresh in range(VT1_MAX+1,0,-1):
-            if(vSum[vfat].ProjectionY("projY",chan,chan,"").GetBinContent(thresh+1) > 1.0):
+        for thresh in range(vSum[vfat].ProjectionY("projY",chan,chan,"").GetMaximumBin(),VT1_MAX+1):
+            if(vSum[vfat].ProjectionY("projY",chan,chan,"").GetBinContent(thresh) == 0):
                 chanMaxVT1[0][chan]=chan
-                chanMaxVT1[1][chan]=(thresh+1)
-                dict_hMaxVT1[vfat].Fill(thresh+1)
+                chanMaxVT1[1][chan]=(thresh-1)
+                dict_hMaxVT1[vfat].Fill(thresh-1)
                 break
             pass
         pass
