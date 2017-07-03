@@ -134,37 +134,38 @@ try:
         chanReg = ((1&0x1) << 6)|((0&0x1) << 5)|(0&0x1f)
         writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, mask)
         writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
-    elif options.amc13local:
-        enableL1A(amcboard)
-        amcMask = amc13board.parseInputEnableList("%s"%(options.slot), True)
-        amc13board.reset(amc13board.Board.T1)
-        amc13board.resetCounters()
-        amc13board.resetDAQ()
-        if options.fakeTTC:
-            amc13board.localTtcSignalEnable(options.fakeTTC)
-            pass
-        amc13board.AMCInputEnable(amcMask)
-        amc13board.startRun()
-        # rate should be desired rate * 16
-        # mode may be: 0(per-orbit), 1(per-BX), 2(random)
-        # configureLocalL1A(ena, mode, burst, rate, rules)
-        if options.randoms > 0:
-            # amc13board.configureLocalL1A(True, 2, 1, options.randoms, 0)
-            # amc13board.configureLocalL1A(True, 1, 1, 1, 0) # per-BX
-            amc13board.configureLocalL1A(True, 0, 1, 1, 0) # per-orbit
-            pass
-        if options.t3trig:
-            amc13board.write(amc13board.Board.T1, 'CONF.TTC.T3_TRIG', 0x1)
-        # to prevent trigger blocking
-        amc13board.fakeDataEnable(True)
-        # disable the event builder?
-        # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x1)
-        amc13board.enableLocalL1A(True)
-        if options.randoms > 0:
-            amc13board.startContinuousL1A()
-            pass
-        pass
     else:
+        if options.amc13local:
+            enableL1A(amcboard)
+            amcMask = amc13board.parseInputEnableList("%s"%(options.slot), True)
+            amc13board.reset(amc13board.Board.T1)
+            amc13board.resetCounters()
+            amc13board.resetDAQ()
+            if options.fakeTTC:
+                amc13board.localTtcSignalEnable(options.fakeTTC)
+                pass
+            amc13board.AMCInputEnable(amcMask)
+            amc13board.startRun()
+            # rate should be desired rate * 16
+            # mode may be: 0(per-orbit), 1(per-BX), 2(random)
+            # configureLocalL1A(ena, mode, burst, rate, rules)
+            if options.randoms > 0:
+                # amc13board.configureLocalL1A(True, 2, 1, options.randoms, 0)
+                # amc13board.configureLocalL1A(True, 1, 1, 1, 0) # per-BX
+                amc13board.configureLocalL1A(True, 0, 1, 1, 0) # per-orbit
+                pass
+            if options.t3trig:
+                amc13board.write(amc13board.Board.T1, 'CONF.TTC.T3_TRIG', 0x1)
+                pass
+            # to prevent trigger blocking
+            amc13board.fakeDataEnable(True)
+            # disable the event builder?
+            # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x1)
+            amc13board.enableLocalL1A(True)
+            if options.randoms > 0:
+                amc13board.startContinuousL1A()
+                pass
+            pass
         enableL1A(amcboard)
         setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
         pass
