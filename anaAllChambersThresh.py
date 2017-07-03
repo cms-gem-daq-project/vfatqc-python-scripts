@@ -13,7 +13,7 @@ def launchArgs(link,scandate_scurve,scandate_thresh,cName,cType,zTrim):
     dataPath = os.getenv('DATA_PATH')
     elogPath = "%s/%s"%(os.getenv('ELOG_PATH'),scandate_thresh)
    
-    filename_scurve = "%s/%s/trim/%s/%s/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,cName,zTrim,scandate_scurve)
+    filename_scurve = "%s/%s/trim/z%f/%s/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,cName,zTrim,scandate_scurve)
     filename_thresh = "%s/%s/threshold/channel/%s/ThresholdScanData.root"%(dataPath,cName,scandate_thresh)
     if not os.path.isfile(filename_scurve):
         print "No file containing scurveFitTree to use in analysis. %s does not exist"%(filename_scurve)
@@ -93,8 +93,7 @@ if __name__ == '__main__':
         pass
     
     #Look for trim directory
-    ztrimPath   = "z%s.000000"%(int(options.ztrim))
-    searchPath  = "%s/GEMINI*/trim/%s/*"%(os.getenv('DATA_PATH'),ztrimPath)
+    searchPath  = "%s/GEMINI*/trim/z%f/*"%(os.getenv('DATA_PATH'),options.ztrim)
     dirs        = glob.glob(searchPath)
     foundDir    = False
 
@@ -122,7 +121,7 @@ if __name__ == '__main__':
                                             [options.scandate  for x in range(len(chamber_config))],
                                             [chamber_config[x] for x in chamber_config.keys()],
                                             [GEBtype[x]        for x in chamber_config.keys()],
-                                            [ztrimPath for x in range(len(chamber_config))]
+                                            [options.ztrim     for x in range(len(chamber_config))]
                                             )
                              )
         # timeout must be properly set, otherwise tasks will crash
