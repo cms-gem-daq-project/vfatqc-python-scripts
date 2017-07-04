@@ -58,8 +58,9 @@ myT.Branch( 'utime', utime, 'utime/I' )
 import time
 utime[0] = int(time.time())
 
-ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
+ohboard      = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 seenTriggers = 0
+mask         = 0
 
 try:
     print "Setting trigger source"
@@ -102,10 +103,10 @@ try:
                     pass
                 Dly[0]   = dlyValue
                 vfatN[0] = vfat
-                mspl[0]  = msplvals[vfatN]
-                vth1[0]  = vt1vals[vfatN]
-                vth2[0]  = vt2vals[vfatN]
-                vth[0]   = vthvals[vfatN]
+                mspl[0]  = msplvals[vfat]
+                vth1[0]  = vt1vals[vfat]
+                vth2[0]  = vt2vals[vfat]
+                vth[0]   = vthvals[vfat]
                 writeRegister(ohboard,"%s.VFAT%d_LAT_BX.RESET"%(baseNode,vfat),0x1)
                 myT.Fill()
                 pass
