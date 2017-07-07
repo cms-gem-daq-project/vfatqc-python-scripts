@@ -3,6 +3,9 @@
 Script to take VT1 data using OH ultra scans
 By: Cameron Bravo (c.bravo@cern.ch)
     Jared Sturdy  (sturdy@cern.ch)
+
+Modified By:
+    Brian Dorney (brian.l.dorney@cern.ch)
 """
 
 import sys, os, random, time
@@ -81,7 +84,8 @@ CHAN_MAX = 128
 if options.debug:
     CHAN_MAX = 5
     pass
-mask = 0
+
+mask = options.vfatmask
 
 try:
     writeAllVFATs(ohboard, options.gtx, "Latency",     0, mask)
@@ -105,6 +109,7 @@ try:
             scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
             sys.stdout.flush()
             for i in range(0,24):
+            	if (mask >> i) & 0x1: continue
                 vfatN[0] = i
                 dataNow      = scanData[i]
                 trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
@@ -137,6 +142,7 @@ try:
         scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
         sys.stdout.flush()
         for i in range(0,24):
+            if (mask >> i) & 0x1: continue
             vfatN[0] = i
             dataNow      = scanData[i]
             trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))

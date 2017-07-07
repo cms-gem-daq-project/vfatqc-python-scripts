@@ -121,7 +121,8 @@ CHAN_MAX = options.chMax + 1
 if options.debug:
     CHAN_MAX = 5
     pass
-mask = 0
+
+mask = options.vfatmask
 
 try:
     setTriggerSource(ohboard,options.gtx,1)
@@ -139,6 +140,7 @@ try:
     writeAllVFATs(ohboard, options.gtx, "CalPhase",  0xff >> (8 - options.CalPhase), mask)
 
     for vfat in range(0,24):
+        if (mask >> vfat) & 0x1: continue
         for scCH in range(CHAN_MIN,CHAN_MAX):
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
@@ -147,6 +149,7 @@ try:
         vfatCH[0] = scCH
         print "Channel #"+str(scCH)
         for vfat in range(0,24):
+            if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
         configureScanModule(ohboard, options.gtx, scanmode.SCURVE, mask, channel = scCH,
@@ -156,6 +159,7 @@ try:
         startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
         scanData = getUltraScanResults(ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
         for i in range(0,24):
+            if (mask >> i) & 0x1: continue
             vfatN[0] = i
             dataNow = scanData[i]
             trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
@@ -173,6 +177,7 @@ try:
                 finally:
                     myT.Fill()
         for vfat in range(0,24):
+            if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
         myT.AutoSave("SaveSelf")
