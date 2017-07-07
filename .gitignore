@@ -9,3 +9,6 @@
 
 # Don't ignore python
 !*.py
+
+#Don't ignore requirements.txt
+!requirements.txt

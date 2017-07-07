@@ -82,9 +82,11 @@ zeroAllVFATChannels(ohboard,options.gtx,mask=0x0)
 # Scurve scan with trimdac set to 0
 filename0 = "%s/SCurveData_trimdac0_range0.root"%dirPath
 runCommand(["ultraScurve.py",
+            "--shelf=%i"%(options.shelf),
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
-            "--filename=%s"%(filename0)]
+            "--filename=%s"%(filename0),
+	    "--vfatmask=%i"%(options.vfatmask)]
            )
 muFits_0  = fitScanData(filename0)
 for vfat in range(0,24):
@@ -124,7 +126,7 @@ if rangeFile == None:
         
         #Scurve scan with trimdac set to 31 (maximum trimming)
         filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
-        runCommand(["ultraScurve.py","-s%d"%(options.slot),"-g%d"%(options.gtx),"--filename=%s"%(filename31)])
+        runCommand(["ultraScurve.py","--shelf=%i"%(options.shelf),"-s%d"%(options.slot),"-g%d"%(options.gtx),"--filename=%s"%(filename31),"--vfatmask=%i"%(options.vfatmask)])
         
         #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
         muFits_31 = fitScanData(filename31)
@@ -195,9 +197,11 @@ for i in range(0,5):
     # Run an SCurve
     filenameBS = "%s/SCurveData_binarySearch%i.root"%(dirPath,i)
     runCommand(["ultraScurve.py",
+                "--shelf=%i"%(options.shelf),
                 "-s%d"%(options.slot),
                 "-g%d"%(options.gtx),
-                "--filename=%s"%(filenameBS)]
+                "--filename=%s"%(filenameBS),
+		"--vfatmask=%i"%(options.vfatmask)]
                )
     # Fit Scurve data
     fitData = fitScanData(filenameBS)
@@ -213,9 +217,11 @@ for vfat in range(0,24):
 
 filenameFinal = "%s/SCurveData_Trimmed.root"%dirPath
 runCommand(["ultraScurve.py",
+            "--shelf=%i"%(options.shelf),
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
-            "--filename=%s"%(filenameFinal)]
+            "--filename=%s"%(filenameFinal),
+	    "--vfatmask=%i"%(options.vfatmask)]
            )
 
 scanFilename = '%s/scanInfo.txt'%dirPath
