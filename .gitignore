@@ -1,8 +1,13 @@
 # Ignore everything
 *
+
 # Don't ignore git settings
 !*.gitignore
 !*.gitattributes
+
+# Don't ignore special files
+!*.md
+!*.rst
 
 # Don't ignore subdirectories
 !*/
@@ -10,5 +15,5 @@
 # Don't ignore python
 !*.py
 
-#Don't ignore requirements.txt
+# Don't ignore requirements.txt
 !requirements.txt
