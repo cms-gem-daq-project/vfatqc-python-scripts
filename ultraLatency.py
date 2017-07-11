@@ -195,7 +195,7 @@ try:
     print "AMC: %s"%(amcnL1A)
     print "OH%s: %s"%(link,ohnL1A)
     sys.stdout.flush()
-    scanData = getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug, numtrigs, isLatency)
+    scanData = getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug, int(options.nevts), True)
 
     print("Done scanning, processing output")
     amc13nL1Af = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
