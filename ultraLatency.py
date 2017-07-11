@@ -36,7 +36,7 @@ parser.add_option("--t3trig", action="store_true", dest="t3trig",
 parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
                   help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
 
-parser.set_defaults(scanmin=153,scanmax=172,nevts=500, amc13local=False, t3trig=False,fakeTTC=false,internal=False)
+parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 
 (options, args) = parser.parse_args()
 
