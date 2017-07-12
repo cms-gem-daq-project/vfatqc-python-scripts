@@ -8,18 +8,8 @@ from channelMaps import *
 from PanChannelMaps import *
 from gempython.utils.nesteddict import nesteddict as ndict
 
-from qcoptions import parser
+from anaoptions import parser
 
-parser.add_option("-i", "--infilename", type="string", dest="filename", default="ThresholdData.root",
-                  help="Specify Input Filename", metavar="filename")
-parser.add_option("-o", "--outfilename", type="string", dest="outfilename", default="ThresholdPlots.root",
-                  help="Specify Output Filename", metavar="outfilename")
-parser.add_option("-t", "--type", type="string", dest="GEBtype", default="long",
-                  help="Specify GEB (long/short)", metavar="GEBtype")
-parser.add_option("-c","--channels", action="store_true", dest="channels",
-                  help="Make plots vs channels instead of strips", metavar="channels")
-parser.add_option("-p","--panasonic", action="store_true", dest="PanPin",
-                  help="Make plots vs Panasonic pins instead of strips", metavar="PanPin")
 parser.add_option("--chConfigKnown", action="store_true", dest="chConfigKnown",
                   help="Channel config already known and found in --fileScurveFitTree", metavar="chConfigKnown")
 parser.add_option("--fileScurveFitTree", type="string", dest="fileScurveFitTree", default="SCurveFitData.root",
@@ -186,20 +176,6 @@ if options.chConfigKnown:
 
     try:
         array_VFATSCurveData = rp.root2array(options.fileScurveFitTree,treename="scurveFitTree",branches=list_bNames)
-
-        #pyVersion = 1. * sys.version_info[0] + 0.1 *sys.version_info[1]
-
-        ##Initialize (key, value) pairing for dict_vfatTrimMaskData
-        #if pyVersion >= 2.7:
-        #    dict_vfatTrimMaskData = {idx:initVFATArray(array_VFATSCurveData.dtype) for idx in np.unique(array_VFATSCurveData[list_bNames[0]])}
-        #    pass
-        #else:
-        #    dict_vfatTrimMaskData = dict((idx,initVFATArray(array_VFATSCurveData.dtype)) for idx in np.unique(array_VFATSCurveData[list_bNames[0]]))
-        #    pass
-
-        #Store array_VFATSCurveData into a dict for easy access
-        #This dictionary has VFAT position as the key value, returns a structured numpy array
-        #dict_vfatTrimMaskData = {idx:initVFATArray(array_VFATSCurveData.dtype) for idx in np.unique(array_VFATSCurveData[list_bNames[0]])}
         dict_vfatTrimMaskData = dict((idx,initVFATArray(array_VFATSCurveData.dtype)) for idx in np.unique(array_VFATSCurveData[list_bNames[0]]))
         for dataPt in array_VFATSCurveData:
             dict_vfatTrimMaskData[dataPt['vfatN']][dataPt[list_bNames[1]]]['mask'] =  dataPt['mask']
@@ -297,7 +273,6 @@ for vfat in range(0,24):
     vSum[vfat].ProjectionY().Write()
     pass
 canv_proj.SaveAs(filename+'/VFATPrunedSummary.png')
-#outF.Close()
 
 #Now determine what VT1 to use for configuration.  The first threshold bin with no entries for now.
 #Make a text file readable by TTree::ReadFile

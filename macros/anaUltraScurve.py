@@ -7,25 +7,15 @@ from channelMaps import *
 from PanChannelMaps import *
 from gempython.utils.nesteddict import nesteddict as ndict
 
-parser = OptionParser()
+#parser = OptionParser()
+from anaoptions import parser
 
-parser.add_option("-i", "--infilename", type="string", dest="filename", default="SCurveData.root",
-                  help="Specify Input Filename", metavar="filename")
-parser.add_option("-o", "--outfilename", type="string", dest="outfilename", default="SCurveFitData.root",
-                  help="Specify Output Filename", metavar="outfilename")
 parser.add_option("-b", "--drawbad", action="store_true", dest="drawbad",
                   help="Draw fit overlays for Chi2 > 10000", metavar="drawbad")
-parser.add_option("-t", "--type", type="string", dest="GEBtype", default="long",
-                  help="Specify GEB (long/short)", metavar="GEBtype")
 parser.add_option("-f", "--fit", action="store_true", dest="SaveFile",
                   help="Save the Fit values to Root file", metavar="SaveFile")
-parser.add_option("-c","--channels", action="store_true", dest="channels",
-                  help="Make plots vs channels instead of strips", metavar="channels")
-parser.add_option("-p","--panasonic", action="store_true", dest="PanPin",
-                  help="Make plots vs Panasonic pins instead of strips", metavar="PanPin")
 parser.add_option("--IsTrimmed", action="store_true", dest="IsTrimmed",
                   help="If the data is from a trimmed scan, plot the value it tried aligning to", metavar="IsTrimmed")
-
 
 (options, args) = parser.parse_args()
 filename = options.filename[:-5]
@@ -312,7 +302,3 @@ if options.SaveFile:
     myT.Write()
     outF.Close()
     pass
-
-
-
-

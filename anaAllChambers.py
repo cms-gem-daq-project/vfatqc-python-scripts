@@ -46,11 +46,7 @@ if __name__ == '__main__':
     from gempython.utils.wrappers import envCheck
     import glob
 
-    from qcoptions import parser
-
-    parser.add_option("--scandate", type="string", dest="scandate", default="current",
-                      help="Specify specific date to analyze", metavar="scandate")
-
+    from anaoptions import partser
     (options, args) = parser.parse_args()
 
     ztrim = options.ztrim
@@ -62,13 +58,13 @@ if __name__ == '__main__':
     foundDir   = False
 
     for path in dirs:
-        if path.rfind(options.scandate) > 0:
+        if path.rfind(options.scandate1) > 0:
             foundDir = True
     if not foundDir:
-        print "Unable to find %s in output location specified: %s"%(options.scandate,searchPath)
+        print "Unable to find %s in output location specified: %s"%(options.scandate1,searchPath)
         exit(50)
     else:
-        print "Found %s"%(options.scandate)
+        print "Found %s"%(options.scandate1)
 
 
     freeze_support()
@@ -79,7 +75,7 @@ if __name__ == '__main__':
     try:
         res = pool.map_async(launch,
                              itertools.izip(chamber_config.keys(),
-                                            [options.scandate  for x in range(len(chamber_config))],
+                                            [options.scandate1  for x in range(len(chamber_config))],
                                             [chamber_config[x] for x in chamber_config.keys()],
                                             [GEBtype[x]        for x in chamber_config.keys()],
                                             [options.ztrim     for x in range(len(chamber_config))],

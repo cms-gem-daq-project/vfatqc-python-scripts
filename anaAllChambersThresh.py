@@ -63,12 +63,7 @@ if __name__ == '__main__':
     from gempython.utils.wrappers import envCheck
     import glob
 
-    from qcoptions import parser
-
-    parser.add_option("--scandate", type="string", dest="scandate", default="current",
-                      help="Specify specific date to analyze", metavar="scandate")
-    parser.add_option("--scandateTrim", type="string", dest="scandateTrim", default="current",
-                      help="Specify specific date of trim run used to generate chConfig used for --scandate's threshold scan", metavar="scandateTrim")
+    from anaoptions import parser
 
     (options, args) = parser.parse_args()
 
@@ -81,15 +76,15 @@ if __name__ == '__main__':
     foundDir    = False
 
     for path in dirs:
-        if path.rfind(options.scandate) > 0:
+        if path.rfind(options.scandate1) > 0:
             foundDir = True
             pass
         pass
     if not foundDir:
-        print "Unable to find %s in output location specified: %s"%(options.scandate,searchPath)
+        print "Unable to find %s in output location specified: %s"%(options.scandate1,searchPath)
         exit(50)
     else:
-        print "Found %s"%(options.scandate)
+        print "Found %s"%(options.scandate1)
         pass
     
     #Look for trim directory
@@ -98,15 +93,15 @@ if __name__ == '__main__':
     foundDir    = False
 
     for path in dirs:
-        if path.rfind(options.scandateTrim) > 0:
+        if path.rfind(options.scandate2) > 0:
             foundDir = True
             pass
         pass
     if not foundDir:
-        print "Unable to find %s in output location specified: %s"%(options.scandateTrim,searchPath)
+        print "Unable to find %s in output location specified: %s"%(options.scandate2,searchPath)
         exit(51)
     else:
-        print "Found %s"%(options.scandateTrim)
+        print "Found %s"%(options.scandate2)
         pass
 
     freeze_support()
@@ -117,8 +112,8 @@ if __name__ == '__main__':
     try:
         res = pool.map_async(launch,
                              itertools.izip(chamber_config.keys(),
-                                            [options.scandateTrim  for x in range(len(chamber_config))],
-                                            [options.scandate  for x in range(len(chamber_config))],
+                                            [options.scandate2  for x in range(len(chamber_config))],
+                                            [options.scandate1  for x in range(len(chamber_config))],
                                             [chamber_config[x] for x in chamber_config.keys()],
                                             [GEBtype[x]        for x in chamber_config.keys()],
                                             [options.ztrim     for x in range(len(chamber_config))]

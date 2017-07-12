@@ -10,6 +10,24 @@ import sys, os
 import numpy as np
 #import root_numpy as rp
 
+def filePathExists(searchPath, subPath):
+    import glob
+
+    dirs        = glob.glob(searchPath)
+    foundDir    = False
+
+    for path in dirs:
+        if path.rfind(subPath) > 0:
+            foundDir = True
+            pass
+        pass
+    if not foundDir:
+        print "Unable to find %s in location: %s"%(subPath, searchPath)
+        return False
+    else:
+        print "Found %s"%s(subPath)
+        return True
+
 def initVFATArray(array_dtype, nstrips=128):
     list_dtypeTuple = []
 
@@ -27,46 +45,12 @@ def initVFATArray(array_dtype, nstrips=128):
 #See: http://stackoverflow.com/questions/22354094/pythonic-way-of-detecting-outliers-in-one-dimensional-observation-data
 #And also: http://www.itl.nist.gov/div898/handbook/eda/section3/eda35h.htm
 def rejectOutliersMAD(arrayData, thresh=3.5):    
-    #if len(arrayData.shape) == 1:
-    #    arrayData = arrayData[:,None]
-    #    pass
-    #    
-    #median = np.median(arrayData, axis=0)
-    #    
-    #diff = np.sum((arrayData - median)**2, axis=-1)
-    #diff = np.sqrt(diff)
-    #    
-    #med_abs_deviation = np.median(diff)
-    #    
-    #modified_z_score = 0.6745 * diff / med_abs_deviation
-    #    
-    #arrayMask = (modified_z_score < thresh) #true if points are not outliers, false if points are outliers
-    #arrayData = np.multiply(arrayData, arrayMask) #Now outliers are set to zero
-    #    
-    #return arrayData[(arrayData > 0)] #Return only the non-outlier versions
     arrayOutliers = isOutlierMAD(arrayData, thresh)
     return arrayData[arrayOutliers != True]
 
 
 #Use MAD to reject outliers, but consider only high or low tail
 def rejectOutliersMADOneSided(arrayData, thresh=3.5, rejectHighTail=True):
-    #if len(arrayData.shape) == 1:
-    #    arrayData = arrayData[:,None]
-    #    pass
-
-    #median = np.median(arrayData, axis=0)
-    #diff = np.sum(arrayData - median, axis=-1)
-    #med_abs_deviation = np.median(np.abs(diff))
-    #modified_z_score = 0.6745 * diff / med_abs_deviation
-    #
-    #arrayMask = (modified_z_score < thresh) #true if points are not outliers, false if points are outliers
-    #
-    #if not rejectHighTail:
-    #    arrayMask = (modified_z_score > -1.0 * thresh)
-    #    pass
-
-    #arrayData = np.multiply(arrayData, arrayMask) #Now outliers are set to zero
-    #return arrayData[(arrayData > 0)] #Return only the non-outlier versions
     arrayOutliers = isOutlierMADOneSided(arrayData, thresh, rejectHighTail)
     return arrayData[arrayOutliers != True]
 

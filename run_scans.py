@@ -161,7 +161,8 @@ if __name__ == '__main__':
     exit(1)
 
   if options.debug:
-    print itertools.izip([options.tool for x in range(len(chamber_config))],
+    print list(
+            itertools.izip([options.tool for x in range(len(chamber_config))],
                          [options.slot for x in range(len(chamber_config))],
                          chamber_config.keys(),
                          chamber_config.values(),
@@ -176,6 +177,7 @@ if __name__ == '__main__':
                          [options.ztrim   for x in range(len(chamber_config))],
                          [options.config  for x in range(len(chamber_config))],
                          )
+            )
 
   if options.series:
     print "Running jobs in serial mode"
