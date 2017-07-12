@@ -12,7 +12,7 @@ from array import array
 
 from gempython.tools.optohybrid_user_functions_uhal import *
 from gempython.tools.vfat_user_functions_uhal import *
-from gempython.tools.amc_user_functions_uhal import getAMCObject,enableL1A,blockL1A
+from gempython.tools.amc_user_functions_uhal import getAMCObject,enableL1A,blockL1A,getAMCL1Acount
 
 from qcoptions import parser
 
@@ -189,25 +189,25 @@ try:
     printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
     amc13nL1A = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
     amcnL1A = getAMCL1Acount(amcboard)
-    ohnL1A = getLinkL1Acount(amcboard,options.gtx)
+    ohnL1A = getLinkL1Acount(ohboard,options.gtx)
     print "Initial L1A counts:"
     print "AMC13: %s"%(amc13nL1A)
     print "AMC: %s"%(amcnL1A)
-    print "OH%s: %s"%(link,ohnL1A)
+    print "OH%s: %s"%(options.gtx,ohnL1A)
     sys.stdout.flush()
     scanData = getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug, int(options.nevts), True)
 
     print("Done scanning, processing output")
     amc13nL1Af = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
     amcnL1Af = getAMCL1Acount(amcboard)
-    ohnL1Af = getLinkL1Acount(amcboard,options.gtx)
+    ohnL1Af = getLinkL1Acount(ohboard,options.gtx)
     print "Final L1A counts:"
     print "AMC13: %s, difference %s"%(amc13nL1Af,amc13nL1Af-amc13nL1A)
     print "AMC: %s, difference %s"%(amcnL1Af,amcnL1Af-amcnL1A)
-    print "OH%s: %s, difference %s"%(link,ohnL1Af,ohnL1Af-ohnL1A)
+    print "OH%s: %s, difference %s"%(options.gtx,ohnL1Af,ohnL1Af-ohnL1A)
 
     for i in range(24):
-      print "Number of CRC errors for VFAT%s on link %s is %s"%(options.gtx, i, readRegister("GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)))
+      print "Number of CRC errors for VFAT%s on link %s is %s"%(i, options.gtx, readRegister("GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)))
 
     sys.stdout.flush()
     for i in range(0,24):
