@@ -27,12 +27,12 @@ parser.add_option("--internal", action="store_true", dest="internal",
 parser.add_option("--randoms", type="int", default=0, dest="randoms",
                   help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
                   metavar="randoms")
+parser.add_option("--stepSize", type="int",dest="stepSize", help="Supply a step size to the latency scan from scanmin to scanmax",
+                  metavar="stepSize")
 parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--throttle", type="int", default=0, dest="throttle",
                   help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle", metavar="throttle")
-parser.add_option("--vt1", type="int", dest="vt1",
-                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")
 
