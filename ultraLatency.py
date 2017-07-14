@@ -35,6 +35,7 @@ parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
                   help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
+parser.add_option("--stepSize", type="int",dest="stepSize", help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize")
 
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 
@@ -182,6 +183,7 @@ try:
         pass
     configureScanModule(ohboard, options.gtx, mode, mask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
+                        stepsize=options.stepSize,
                         numtrigs=int(options.nevts),
                         useUltra=True, debug=True)
     printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
