@@ -12,7 +12,7 @@ from array import array
 
 import gempython.tools.optohybrid_user_functions_uhal as oh
 from gempython.tools.vfat_user_functions_uhal import *
-import gempython.tools.amc_user_functions_uhal as amc`
+import gempython.tools.amc_user_functions_uhal as amc
 
 from qcoptions import parser
 
