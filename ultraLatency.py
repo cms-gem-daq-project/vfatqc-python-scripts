@@ -53,8 +53,12 @@ if options.MSPL not in range(1,9):
     print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
     exit(1)
 
-if (options.stepSize + options.scanmin > options.scanmax):
-    options.stepSize = options.scanmax - options.scanmin
+if options.stepSize:
+    step = options.stepSize
+    if (step + options.scanmin > options.scanmax):
+        step = options.scanmax - options.scanmin
+else:
+    step = 1
 
 if options.debug:
     uhal.setLogLevelTo(uhal.LogLevel.INFO)
