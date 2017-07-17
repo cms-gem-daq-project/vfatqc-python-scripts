@@ -54,8 +54,12 @@ if options.MSPL not in range(1,9):
     print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
     exit(1)
 
-if (options.stepSize + options.scanmin > options.scanmax):
-    options.stepSize = options.scanmax - options.scanmin
+if options.stepSize:
+    step = options.stepSize
+    if (step + options.scanmin > options.scanmax):
+        step = options.scanmax - options.scanmin
+else:
+    step = 1
 
 if options.debug:
     uhal.setLogLevelTo(uhal.LogLevel.INFO)
@@ -186,7 +190,7 @@ try:
         pass
     configureScanModule(ohboard, options.gtx, mode, mask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
-                        stepsize=options.stepSize,
+                        stepsize=step,
                         numtrigs=int(options.nevts),
                         useUltra=True, debug=True)
     printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
