@@ -198,6 +198,7 @@ try:
     scanData = oh.getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug)
 
     print("Done scanning, processing output")
+    amc13board.enableLocalL1A(False)
     amc13nL1Af = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
     amcnL1Af = amc.getL1ACount(amcboard)
     ohnL1Af = oh.getL1ACount(ohboard,options.gtx)
@@ -207,8 +208,11 @@ try:
     print "OH%s: %s, difference %s"%(options.gtx,ohnL1Af,ohnL1Af-ohnL1A)
 
     for i in range(24):
-      print "Number of CRC errors for VFAT%s on link %s is %s"%(i, options.gtx, readRegister("GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)))
+      print "Total number of CRC packets for VFAT%s on link %s is %s"%(i, options.gtx, readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)) + readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.VALID.VFAT%d"%(options.gtx,i)))
+    for i in range(24):
+      print "Number of CRC errors for VFAT%s on link %s is %s"%(i, options.gtx, readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)))
 
+    amc13board.enableLocalL1A(True)
     sys.stdout.flush()
     for i in range(0,24):
         vfatN[0] = i
