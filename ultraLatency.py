@@ -130,6 +130,31 @@ try:
 
     oh.stopLocalT1(ohboard, options.gtx)
 
+    amc13board.enableLocalL1A(False)
+    amc13board.resetCounters()
+
+    scanBase = "GEM_AMC.OH.OH%d.ScanController.ULTRA"%(options.gtx)
+    if (readRegister(ohboard,"%s.MONITOR.STATUS"%(scanBase)) > 0):
+        print("Scan was already running, resetting module")
+        writeRegister(ohboard,"%s.RESET"%(scanBase),0x1)
+        time.sleep(0.1)
+        pass
+    amc13nL1A = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
+    amcnL1A = amc.getL1ACount(amcboard)
+    ohnL1A = oh.getL1ACount(ohboard,options.gtx)
+    print "Initial L1A counts:"
+    print "AMC13: %s"%(amc13nL1A)
+    print "AMC: %s"%(amcnL1A)
+    print "OH%s: %s"%(options.gtx,ohnL1A)
+    oh.configureScanModule(ohboard, options.gtx, mode, mask,
+                        scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
+                        numtrigs=int(options.nevts),
+                        useUltra=True, debug=True)
+    oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
+    sys.stdout.flush()
+    amc13board.enableLocalL1A(True)
+
+
     if options.internal:
         amc.blockL1A(amcboard)
         oh.setTriggerSource(ohboard,options.gtx,0x1)
@@ -173,25 +198,6 @@ try:
         oh.setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
         pass
 
-    scanBase = "GEM_AMC.OH.OH%d.ScanController.ULTRA"%(options.gtx)
-    if (readRegister(ohboard,"%s.MONITOR.STATUS"%(scanBase)) > 0):
-        print("Scan was already running, resetting module")
-        writeRegister(ohboard,"%s.RESET"%(scanBase),0x1)
-        time.sleep(0.1)
-        pass
-    oh.configureScanModule(ohboard, options.gtx, mode, mask,
-                        scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
-                        numtrigs=int(options.nevts),
-                        useUltra=True, debug=True)
-    oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
-    sys.stdout.flush()
-    amc13nL1A = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
-    amcnL1A = amc.getL1ACount(amcboard)
-    ohnL1A = oh.getL1ACount(ohboard,options.gtx)
-    print "Initial L1A counts:"
-    print "AMC13: %s"%(amc13nL1A)
-    print "AMC: %s"%(amcnL1A)
-    print "OH%s: %s"%(options.gtx,ohnL1A)
     oh.startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
     oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
     sys.stdout.flush()
