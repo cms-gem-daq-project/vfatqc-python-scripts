@@ -12,10 +12,10 @@ parser.add_option("-p","--panasonic", action="store_true", dest="PanPin",
                   help="Make plots vs Panasonic pins instead of strips", metavar="PanPin")
 parser.add_option("-o", "--outfilename", type="string", dest="outfilename",
                   help="Specify Output Filename", metavar="outfilename")
-parser.add_option("--scandate1", type="string", dest="scandate1", default="current",
-                  help="Specify specific date to analyze", metavar="scandate1")
-parser.add_option("--scandate2", type="string", dest="scandate2", default=None,
-                  help="Specify supporting date to be used in analysis", metavar="scandate2")
+parser.add_option("--scandate", type="string", dest="scandate", default="current",
+                  help="Specify specific date to analyze", metavar="scandate")
+parser.add_option("--scandatetrim", type="string", dest="scandatetrim", default=None,
+                  help="Specify the scan date of the trim run that corresponds to the chConfig.txt used in scandate", metavar="scandatetrim")
 parser.add_option("-t", "--type", type="string", dest="GEBtype", default="long",
                   help="Specify GEB (long/short)", metavar="GEBtype")
 parser.add_option("--vfatmask", type="int", dest="vfatmask", 

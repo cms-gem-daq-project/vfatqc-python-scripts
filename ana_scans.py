@@ -3,7 +3,7 @@
 def launchAna(args):
   return launchAnaArgs(*args)
 
-def launchAnaArgs(anaType, cName, cType, scandate1, scandate2=None, ztrim=4.0, chConfigKnown=False, channels=False, panasonic=False):
+def launchAnaArgs(anaType, cName, cType, scandate, scandatetrim=None, ztrim=4.0, chConfigKnown=False, channels=False, panasonic=False):
   import os
   import subprocess
   from subprocess import CalledProcessError
@@ -12,7 +12,7 @@ def launchAnaArgs(anaType, cName, cType, scandate1, scandate2=None, ztrim=4.0, c
 
   dataPath  = os.getenv('DATA_PATH')
   dirPath   = ""
-  elogPath  = "%s/%s"%(os.getenv('ELOG_PATH'),scandate1)
+  elogPath  = "%s/%s"%(os.getenv('ELOG_PATH'),scandate)
     
   print "Analysis Requested: %s"%(anaType)
 
@@ -22,7 +22,7 @@ def launchAnaArgs(anaType, cName, cType, scandate1, scandate2=None, ztrim=4.0, c
   if anaType == "latency":
     #cmd.append("%s/vfatqc-python-scripts/%s"%(os.getenv("BUILD_HOME"),ana_config[anaType]))
     cmd.append("%s/gem-plotting-tools/latency/%s"%(os.getenv("BUILD_HOME"),ana_config[anaType])) 
-    dirPath = "%s/%s/%s/trk/%s/"%(dataPath,cName,anaType,scandate1)
+    dirPath = "%s/%s/%s/trk/%s/"%(dataPath,cName,anaType,scandate)
     filename = dirPath + "LatencyScanData.root"
     if not os.path.isfile(filename):
       print "No file to analyze. %s does not exist"%(filename)
@@ -33,7 +33,7 @@ def launchAnaArgs(anaType, cName, cType, scandate1, scandate2=None, ztrim=4.0, c
     pass
   elif anaType == "scurve":
     cmd.append("%s/vfatqc-python-scripts/macros/%s"%(os.getenv("BUILD_HOME"),ana_config[anaType]))
-    dirPath = "%s/%s/%s/%s/"%(dataPath,cName,anaType,scandate1)
+    dirPath = "%s/%s/%s/%s/"%(dataPath,cName,anaType,scandate)
     filename = dirPath + "SCurveData.root"
     if not os.path.isfile(filename):
       print "No file to analyze. %s does not exist"%(filename)
@@ -58,7 +58,7 @@ def launchAnaArgs(anaType, cName, cType, scandate1, scandate2=None, ztrim=4.0, c
     pass
   elif anaType == "threshold":
     cmd.append("%s/vfatqc-python-scripts/macros/%s"%(os.getenv("BUILD_HOME"),ana_config[anaType]))
-    dirPath = "%s/%s/%s/channel/%s/"%(dataPath,cName,anaType,scandate1)
+    dirPath = "%s/%s/%s/channel/%s/"%(dataPath,cName,anaType,scandate)
     filename = dirPath + "ThresholdScanData.root"
     if not os.path.isfile(filename):
       print "No threshold file to analyze. %s does not exist"%(filename)
@@ -70,7 +70,7 @@ def launchAnaArgs(anaType, cName, cType, scandate1, scandate2=None, ztrim=4.0, c
    
     if chConfigKnown:
       cmd.append("--chConfigKnown")
-      dirPath_Trim = "%s/%s/trim/z%f/%s/SCurveData_Trimmed/"%(dataPath,cName,ztrim,scandate2)
+      dirPath_Trim = "%s/%s/trim/z%f/%s/SCurveData_Trimmed/"%(dataPath,cName,ztrim,scandatetrim)
       filename_Trim = dirPath_Trim + "SCurveFitData.root"
       if not os.path.isfile(filename_Trim):
         print "No scurve fit data file to analyze. %s does not exist"%(filename_Trim)
@@ -92,7 +92,7 @@ def launchAnaArgs(anaType, cName, cType, scandate1, scandate2=None, ztrim=4.0, c
     pass
   elif anaType == "trim":
     cmd.append("%s/vfatqc-python-scripts/macros/%s"%(os.getenv("BUILD_HOME"),ana_config[anaType]))
-    dirPath = "%s/%s/%s/z%f/%s/"%(dataPath,cName,anaType,ztrim,scandate1)
+    dirPath = "%s/%s/%s/z%f/%s/"%(dataPath,cName,anaType,ztrim,scandate)
     filename = dirPath + "SCurveData_Trimmed.root"
     if not os.path.isfile(filename):
       print "No file to analyze. %s does not exist"%(filename)
@@ -165,8 +165,8 @@ if __name__ == '__main__':
     print list(itertools.izip([options.anaType for x in range(len(chamber_config))],
                          chamber_config.values(),
                          [GEBtype[x]        for x in chamber_config.keys()],
-                         [options.scandate1  for x in range(len(chamber_config))],
-                         [options.scandate2  for x in range(len(chamber_config))],
+                         [options.scandate  for x in range(len(chamber_config))],
+                         [options.scandatetrim  for x in range(len(chamber_config))],
                          [options.ztrim   for x in range(len(chamber_config))],
                          [options.chConfigKnown   for x in range(len(chamber_config))],
                          [options.channels   for x in range(len(chamber_config))],
@@ -181,8 +181,8 @@ if __name__ == '__main__':
       launchAna([options.anaType for x in range(len(chamber_config))],
                  chamber_config.values(),
                  [GEBtype[x]        for x in chamber_config.keys()],
-                 [options.scandate1  for x in range(len(chamber_config))],
-                 [options.scandate2  for x in range(len(chamber_config))],
+                 [options.scandate  for x in range(len(chamber_config))],
+                 [options.scandatetrim  for x in range(len(chamber_config))],
                  [options.ztrim   for x in range(len(chamber_config))],
                  [options.chConfigKnown   for x in range(len(chamber_config))],
                  [options.channels   for x in range(len(chamber_config))],
@@ -202,8 +202,8 @@ if __name__ == '__main__':
                            itertools.izip([options.anaType for x in range(len(chamber_config))],
                                           chamber_config.values(),
                                           [GEBtype[x]        for x in chamber_config.keys()],
-                                          [options.scandate1  for x in range(len(chamber_config))],
-                                          [options.scandate2  for x in range(len(chamber_config))],
+                                          [options.scandate  for x in range(len(chamber_config))],
+                                          [options.scandatetrim  for x in range(len(chamber_config))],
                                           [options.ztrim   for x in range(len(chamber_config))],
                                           [options.chConfigKnown   for x in range(len(chamber_config))],
                                           [options.channels   for x in range(len(chamber_config))],

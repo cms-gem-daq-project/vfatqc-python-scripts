@@ -12,6 +12,16 @@ Created on Thu Mar 31 09:28:14 2016
 import sys, os, random, time
 
 if __name__ == "__main__":
+    print "Script depreciated, use instead:"
+    print "\tGEMDAQTestSuite.py,"
+    print "\tultraLatency.py,"
+    print "\tultraScurve.py, or"
+    print "\tultraThreshold.py"
+    print "Exiting"
+    
+    import sys
+    sys.exit()
+
     from qcoptions import parser
 
     parser = OptionParser()
