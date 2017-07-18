@@ -35,7 +35,6 @@ parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
                   help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
-parser.add_option("--stepSize", type="int",dest="stepSize", help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
 
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 
@@ -54,10 +53,13 @@ if options.MSPL not in range(1,9):
     print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
     exit(1)
 
-if options.stepSize:
-    step = options.stepSize
-    if (step + options.scanmin > options.scanmax):
-        step = options.scanmax - options.scanmin
+if options.stepSize <= 0:
+    print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
+    exit(1)
+
+step = options.stepSize
+if (step + options.scanmin > options.scanmax):
+    step = options.scanmax - options.scanmin
 
 if options.debug:
     uhal.setLogLevelTo(uhal.LogLevel.INFO)
