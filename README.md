@@ -6,7 +6,6 @@
 
     - $BUILD_HOME
     - $DATA_PATH
-    - $ELOG_PATH
 
     Then execute:
 
