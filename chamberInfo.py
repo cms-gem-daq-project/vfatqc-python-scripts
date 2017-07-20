@@ -1,5 +1,6 @@
 
 chamber_config = {
+    #0:"GE11-VI-L-CERN-0001"
     0:"GEMINIm01L1",
     1:"GEMINIm01L2",
     2:"GEMINIm27L1",
@@ -13,6 +14,7 @@ chamber_config = {
     }
 
 GEBtype = {
+    #0:"long"
     0:"short",
     1:"short",
     2:"short",
