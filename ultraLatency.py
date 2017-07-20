@@ -24,8 +24,6 @@ parser.add_option("--filename", type="string", dest="filename", default="Latency
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--internal", action="store_true", dest="internal",
                   help="Run a latency scan using the internal calibration pulse", metavar="internal")
-parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
-                  help="Specify MSPL.  Must be in the range 1-8 (default is 4)", metavar="MSPL")
 parser.add_option("--randoms", type="int", default=0, dest="randoms",
                   help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
                   metavar="randoms")
