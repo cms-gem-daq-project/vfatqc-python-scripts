@@ -10,9 +10,9 @@ Modified By:
 import sys, os, random, time
 from array import array
 
-from gempython.tools.optohybrid_user_functions_uhal import *
+import gempython.tools.optohybrid_user_functions_uhal as oh
 from gempython.tools.vfat_user_functions_uhal import *
-from gempython.tools.amc_user_functions_uhal import getAMCObject,enableL1A,blockL1A
+import gempython.tools.amc_user_functions_uhal as amc
 
 from qcoptions import parser
 
@@ -94,14 +94,13 @@ startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print(startTime)
 Date = startTime
 
-if options.amc13local:
-    import amc13
-    connection_file = "%s/connections.xml"%(os.getenv("GEM_ADDRESS_TABLE_PATH"))
-    amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
-    amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
-    pass
-amcboard = getAMCObject(options.slot,options.shelf,options.debug)
-ohboard  = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
+import amc13
+connection_file = "%s/connections.xml"%(os.getenv("GEM_ADDRESS_TABLE_PATH"))
+amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
+amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
+
+amcboard = amc.getAMCObject(options.slot,options.shelf,options.debug)
+ohboard  = oh.getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
 LATENCY_MIN = options.scanmin
 LATENCY_MAX = options.scanmax
@@ -129,18 +128,43 @@ try:
 
     mode = scanmode.LATENCY
 
-    stopLocalT1(ohboard, options.gtx)
+    oh.stopLocalT1(ohboard, options.gtx)
+
+    amc13board.enableLocalL1A(False)
+    amc13board.resetCounters()
+
+    scanBase = "GEM_AMC.OH.OH%d.ScanController.ULTRA"%(options.gtx)
+    if (readRegister(ohboard,"%s.MONITOR.STATUS"%(scanBase)) > 0):
+        print("Scan was already running, resetting module")
+        writeRegister(ohboard,"%s.RESET"%(scanBase),0x1)
+        time.sleep(0.1)
+        pass
+    amc13nL1A = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
+    amcnL1A = amc.getL1ACount(amcboard)
+    ohnL1A = oh.getL1ACount(ohboard,options.gtx)
+    print "Initial L1A counts:"
+    print "AMC13: %s"%(amc13nL1A)
+    print "AMC: %s"%(amcnL1A)
+    print "OH%s: %s"%(options.gtx,ohnL1A)
+    oh.configureScanModule(ohboard, options.gtx, mode, mask,
+                        scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
+                        numtrigs=int(options.nevts),
+                        useUltra=True, debug=True)
+    oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
+    sys.stdout.flush()
+    amc13board.enableLocalL1A(True)
+
 
     if options.internal:
-        blockL1A(amcboard)
-        setTriggerSource(ohboard,options.gtx,0x1)
-        sendL1ACalPulse(ohboard, options.gtx, delay=20, interval=400, number=0)
+        amc.blockL1A(amcboard)
+        oh.setTriggerSource(ohboard,options.gtx,0x1)
+        oh.sendL1ACalPulse(ohboard, options.gtx, delay=20, interval=400, number=0)
         chanReg = ((1&0x1) << 6)|((0&0x1) << 5)|(0&0x1f)
         writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, mask)
         writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
     else:
         if options.amc13local:
-            enableL1A(amcboard)
+            amc.enableL1A(amcboard)
             amcMask = amc13board.parseInputEnableList("%s"%(options.slot), True)
             amc13board.reset(amc13board.Board.T1)
             amc13board.resetCounters()
@@ -170,28 +194,31 @@ try:
                 amc13board.startContinuousL1A()
                 pass
             pass
-        enableL1A(amcboard)
-        setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
+        amc.enableL1A(amcboard)
+        oh.setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
         pass
 
-    scanBase = "GEM_AMC.OH.OH%d.ScanController.ULTRA"%(options.gtx)
-    if (readRegister(ohboard,"%s.MONITOR.STATUS"%(scanBase)) > 0):
-        print("Scan was already running, resetting module")
-        writeRegister(ohboard,"%s.RESET"%(scanBase),0x1)
-        time.sleep(0.1)
-        pass
-    configureScanModule(ohboard, options.gtx, mode, mask,
-                        scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
-                        numtrigs=int(options.nevts),
-                        useUltra=True, debug=True)
-    printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
+    oh.startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
+    oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
     sys.stdout.flush()
-    startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
-    printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
-    sys.stdout.flush()
-    scanData = getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug)
+    scanData = oh.getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug)
 
     print("Done scanning, processing output")
+    amc13board.enableLocalL1A(False)
+    amc13nL1Af = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
+    amcnL1Af = amc.getL1ACount(amcboard)
+    ohnL1Af = oh.getL1ACount(ohboard,options.gtx)
+    print "Final L1A counts:"
+    print "AMC13: %s, difference %s"%(amc13nL1Af,amc13nL1Af-amc13nL1A)
+    print "AMC: %s, difference %s"%(amcnL1Af,amcnL1Af-amcnL1A)
+    print "OH%s: %s, difference %s"%(options.gtx,ohnL1Af,ohnL1Af-ohnL1A)
+
+    for i in range(24):
+      print "Total number of CRC packets for VFAT%s on link %s is %s"%(i, options.gtx, readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)) + readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.VALID.VFAT%d"%(options.gtx,i)))
+    for i in range(24):
+      print "Number of CRC errors for VFAT%s on link %s is %s"%(i, options.gtx, readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)))
+
+    amc13board.enableLocalL1A(True)
     sys.stdout.flush()
     for i in range(0,24):
         vfatN[0] = i
@@ -216,7 +243,7 @@ try:
     myT.AutoSave("SaveSelf")
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
     if options.internal:
-        stopLocalT1(ohboard, options.gtx)
+        oh.stopLocalT1(ohboard, options.gtx)
         pass
     elif options.amc13local:
         amc13board.stopContinuousL1A()
