@@ -3,7 +3,7 @@
 def launchTests(args):
   return launchTestsArgs(*args)
 
-def launchTestsArgs(tool, slot, link, chamber, scanmin, scanmax, nevts,
+def launchTestsArgs(tool, slot, link, chamber, scanmin, scanmax, nevts, stepSize,
                     vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,config=False):
   import datetime,os,sys
   import subprocess
@@ -104,6 +104,11 @@ def launchTestsArgs(tool, slot, link, chamber, scanmin, scanmax, nevts,
     cmd.append( "--scanmin=%d"%(scanmin) )
     cmd.append( "--scanmax=%d"%(scanmax) )
     cmd.append( "--nevts=%d"%(nevts) )
+    if stepSize > 0:
+      step = stepSize
+      if (step + scanmin > scanmax):
+        step = scanmax - scanmin
+      cmd.append( "--stepSize=%d"%(step) )
     if mspl:
       cmd.append( "--mspl=%d"%(mspl) )
     pass
@@ -166,7 +171,8 @@ if __name__ == '__main__':
                          chamber_config.keys(),
                          chamber_config.values(),
                          [options.scanmin for x in range(len(chamber_config))],
-                         [options.scanmax for x in range(len(chamber_config))],
+                         [options.scanmax for x in range(len(chamber_config))], 
+                         # [options.stepSize for x in range(len(chamber_config))], -- required ?
                          [options.nevts   for x in range(len(chamber_config))],
                          [options.vt1     for x in range(len(chamber_config))],
                          [options.vt2     for x in range(len(chamber_config))],
@@ -199,6 +205,7 @@ if __name__ == '__main__':
                                           chamber_config.values(),
                                           [options.scanmin for x in range(len(chamber_config))],
                                           [options.scanmax for x in range(len(chamber_config))],
+                                          # [options.stepSize for x in range(len(chamber_config))], -- required ?
                                           [options.nevts   for x in range(len(chamber_config))],
                                           [options.vt1     for x in range(len(chamber_config))],
                                           [options.vt2     for x in range(len(chamber_config))],
