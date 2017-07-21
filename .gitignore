@@ -12,3 +12,6 @@
 
 #Don't ignore requirements.txt
 !requirements.txt
+
+#Don't ignore setup
+!setup/paths.sh

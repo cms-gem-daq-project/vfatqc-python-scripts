@@ -16,25 +16,25 @@ import gempython.tools.amc_user_functions_uhal as amc
 
 from qcoptions import parser
 
-parser.add_option("--vt1", type="int", dest="vt1",
-                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
-parser.add_option("--vt2", type="int", dest="vt2", default=0,
-                  help="Specify VT2 to use", metavar="vt2")
-parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
-                  help="Specify MSPL.  Must be in the range 1-8 (default is 4)", metavar="MSPL")
+parser.add_option("--amc13local", action="store_true", dest="amc13local",
+                  help="Set up for using AMC13 local trigger generator", metavar="amc13local")
+parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
+                  help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
 parser.add_option("--filename", type="string", dest="filename", default="LatencyData_Trimmed.root",
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--internal", action="store_true", dest="internal",
                   help="Run a latency scan using the internal calibration pulse", metavar="internal")
-parser.add_option("--amc13local", action="store_true", dest="amc13local",
-                  help="Set up for using AMC13 local trigger generator", metavar="amc13local")
 parser.add_option("--randoms", type="int", default=0, dest="randoms",
                   help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
                   metavar="randoms")
 parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
-parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
-                  help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
+parser.add_option("--throttle", type="int", default=0, dest="throttle",
+                  help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle", metavar="throttle")
+parser.add_option("--vt1", type="int", dest="vt1",
+                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
+parser.add_option("--vt2", type="int", dest="vt2", default=0,
+                  help="Specify VT2 to use", metavar="vt2")
 
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 
@@ -198,6 +198,7 @@ try:
         oh.setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
         pass
 
+    oh.setTriggerThrottle(ohboard, options.gtx, options.throttle)
     oh.startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
     oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
     sys.stdout.flush()
