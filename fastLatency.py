@@ -15,8 +15,6 @@ parser.add_option("--filename", type="string", dest="filename", default="Latency
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
-parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
-                  help="Specify MSPL.  Must be in the range 1-8 (default is 4)", metavar="MSPL")
 
 parser.set_defaults(nevts=1000)
 

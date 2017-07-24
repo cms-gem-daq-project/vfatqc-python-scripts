@@ -14,8 +14,6 @@ parser.add_option("-f", "--filename", type="string", dest="filename", default="S
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--latency", type="int", dest = "latency", default = 37,
                   help="Specify Latency", metavar="latency")
-parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,
-                  help="Specify MSPL.  Must be in the range 1-8 (default is 4)", metavar="MSPL")
 parser.add_option("--CalPhase", type="int", dest = "CalPhase", default = 0,
                   help="Specify CalPhase. Must be in range 0-8", metavar="CalPhase")
 parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,

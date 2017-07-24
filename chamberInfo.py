@@ -1,5 +1,10 @@
 
 chamber_config = {
+    #Coffin Setup
+    #11:"GE11-VI-L-CERN-0002"
+    #Cosmic Stand
+    #0:"GE11-VI-L-CERN-0001"
+    #Point 5
     0:"GEMINIm01L1",
     1:"GEMINIm01L2",
     2:"GEMINIm27L1",
@@ -13,6 +18,11 @@ chamber_config = {
     }
 
 GEBtype = {
+    #Coffin Setup
+    #0:"long"
+    #Cosmic Stand
+    #0:"long"
+    #Point 5
     0:"short",
     1:"short",
     2:"short",

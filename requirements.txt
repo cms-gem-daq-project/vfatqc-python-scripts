@@ -1,2 +1,2 @@
-numpy>=1.10.4
-root-numpy>=4.7.2
+#numpy>=1.10.4
+#root-numpy>=4.7.2
