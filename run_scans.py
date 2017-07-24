@@ -5,7 +5,8 @@ def launchTests(args):
 
 def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
                     vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
-                    config=False,amc13local=False,t3trig=False, randoms=0, throttle=0):
+                    config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
+                    internal=False):
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
@@ -21,7 +22,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
   #Build Commands
   setupCmds = []
   preCmd = None
-  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf)]
+  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts)]
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
@@ -90,7 +91,6 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/FastLatencyScanData.root"%dirPath )
-    cmd.append( "--nevts=%d"%(nevts) )
     if mspl:
       cmd.append( "--mspl=%d"%(mspl) )
     pass
@@ -104,7 +104,6 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
     cmd.append( "--filename=%s/LatencyScanData.root"%dirPath )
     cmd.append( "--scanmin=%d"%(scanmin) )
     cmd.append( "--scanmax=%d"%(scanmax) )
-    cmd.append( "--nevts=%d"%(nevts) )
     cmd.append( "--throttle=%i"%(throttle) )
     if stepSize > 0:
       step = stepSize
@@ -122,6 +121,9 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
       pass
     if randoms > 0:
       cmd.append( "--randoms=%i"%(randoms))
+      pass
+    if internal:
+      cmd.append( "--internal")
       pass
     pass
 
@@ -155,6 +157,8 @@ if __name__ == '__main__':
                     help="Set up for using AMC13 local trigger generator", metavar="amc13local")
   parser.add_option("--config", action="store_true", dest="config",
                     help="Configure chambers before running scan", metavar="config")
+  parser.add_option("--internal", action="store_true", dest="internal",
+                    help="Run a latency scan using the internal calibration pulse", metavar="internal")
   parser.add_option("--perchannel", action="store_true", dest="perchannel",
                     help="Run a per-channel VT1 scan", metavar="perchannel")
   parser.add_option("--randoms", type="int", default=0, dest="randoms",
@@ -206,6 +210,7 @@ if __name__ == '__main__':
                          [options.t3trig  for x in range(len(chamber_config))],
                          [options.randoms for x in range(len(chamber_config))],
                          [options.throttle for x in range(len(chamber_config))],
+                         [options.internal for x in range(len(chamber_config))],
                          )
             )
   if options.series:
@@ -226,7 +231,8 @@ if __name__ == '__main__':
                     options.amc13local,
                     options.t3trig,
                     options.randoms,
-                    options.throttle]
+                    options.throttle,
+                    options.internal]
                   )
       pass
     pass
@@ -259,6 +265,7 @@ if __name__ == '__main__':
                                           [options.t3trig  for x in range(len(chamber_config))],
                                           [options.randoms for x in range(len(chamber_config))],
                                           [options.throttle for x in range(len(chamber_config))],
+                                          [options.internal for x in range(len(chamber_config))],
                                           )
                            )
       # timeout must be properly set, otherwise tasks will crash
