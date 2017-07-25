@@ -4,7 +4,7 @@ def launchTests(args):
   return launchTestsArgs(*args)
 
 
-def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, stepSize, nevts,
+def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts, stepSize=1
                     vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
                     config=False,amc13local=False,t3trig=False, randoms=0, throttle=0):
   import datetime,os,sys
@@ -107,10 +107,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, stepSize
     cmd.append( "--scanmax=%d"%(scanmax) )
     cmd.append( "--nevts=%d"%(nevts) )
     cmd.append( "--throttle=%i"%(throttle) )
-    if stepSize > 0:
-      step = stepSize
-      if (step + scanmin > scanmax):
-        step = scanmax - scanmin
+    if stepSize:
       cmd.append( "--stepSize=%d"%(step) )
       pass
     if mspl:
@@ -195,8 +192,8 @@ if __name__ == '__main__':
                          chamber_config.values(),
                          [options.scanmin for x in range(len(chamber_config))],
                          [options.scanmax for x in range(len(chamber_config))], 
-                         [options.stepSize for x in range(len(chamber_config))],
                          [options.nevts   for x in range(len(chamber_config))],
+                         [options.stepSize for x in range(len(chamber_config))],
                          [options.vt1     for x in range(len(chamber_config))],
                          [options.vt2     for x in range(len(chamber_config))],
                          [options.MSPL    for x in range(len(chamber_config))],
@@ -249,8 +246,8 @@ if __name__ == '__main__':
                                           chamber_config.values(),
                                           [options.scanmin for x in range(len(chamber_config))],
                                           [options.scanmax for x in range(len(chamber_config))],
-                                          [options.stepSize for x in range(len(chamber_config))],
                                           [options.nevts   for x in range(len(chamber_config))],
+                                          [options.stepSize for x in range(len(chamber_config))],
                                           [options.vt1     for x in range(len(chamber_config))],
                                           [options.vt2     for x in range(len(chamber_config))],
                                           [options.MSPL    for x in range(len(chamber_config))],
