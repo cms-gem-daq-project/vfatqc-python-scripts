@@ -10,7 +10,5 @@ parser.add_option("--scanmax", type="int", dest="scanmax",
                   help="Maximum value of scan parameter", metavar="scanmax", default=254)
 parser.add_option("--vfatmask", type="int", dest="vfatmask",
 		              help="VFATs to be masked in scan & analysis applications (e.g. 0xFFFFF masks all VFATs)", metavar="vfatmask", default=0x0)
-parser.add_option("--stepSize", type="int", dest="stepSize", 
-                  help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
 parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
                   help="Specify the p value of the trim", metavar="ztrim")

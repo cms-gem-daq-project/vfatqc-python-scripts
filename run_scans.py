@@ -107,8 +107,8 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts, s
     cmd.append( "--scanmax=%d"%(scanmax) )
     cmd.append( "--nevts=%d"%(nevts) )
     cmd.append( "--throttle=%i"%(throttle) )
-    if stepSize:
-      cmd.append( "--stepSize=%d"%(step) )
+    if stepSize > 0:
+      cmd.append( "--stepSize=%d"%(stepSize) )
       pass
     if mspl:
       cmd.append( "--mspl=%d"%(mspl) )
@@ -161,6 +161,8 @@ if __name__ == '__main__':
                     metavar="randoms")
   parser.add_option("--series", action="store_true", dest="series",
                     help="Run tests in series (default is false)", metavar="series")
+  parser.add_option("--stepSize", type="int", dest="stepSize", 
+                    help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
   parser.add_option("--t3trig", action="store_true", dest="t3trig",
                     help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
   parser.add_option("--throttle", type="int", default=0, dest="throttle",
