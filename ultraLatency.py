@@ -27,8 +27,8 @@ parser.add_option("--internal", action="store_true", dest="internal",
 parser.add_option("--randoms", type="int", default=0, dest="randoms",
                   help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
                   metavar="randoms")
-parser.add_option("--stepSize", type="int",dest="stepSize", help="Supply a step size to the latency scan from scanmin to scanmax",
-                  metavar="stepSize")
+parser.add_option("--stepSize", type="int", dest="stepSize", 
+                  help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
 parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--throttle", type="int", default=0, dest="throttle",
