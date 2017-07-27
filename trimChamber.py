@@ -33,7 +33,7 @@ envCheck('BUILD_HOME')
 
 dataPath = os.getenv('DATA_PATH')
 
-from macros.fitScanData import fitScanData
+from fitScanData import fitScanData
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
@@ -86,7 +86,7 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filename0),
-	    "--vfatmask=%i"%(options.vfatmask)]
+	        "--vfatmask=%i"%(options.vfatmask)]
            )
 muFits_0  = fitScanData(filename0)
 for vfat in range(0,24):
@@ -201,7 +201,7 @@ for i in range(0,5):
                 "-s%d"%(options.slot),
                 "-g%d"%(options.gtx),
                 "--filename=%s"%(filenameBS),
-		"--vfatmask=%i"%(options.vfatmask)]
+		        "--vfatmask=%i"%(options.vfatmask)]
                )
     # Fit Scurve data
     fitData = fitScanData(filenameBS)
@@ -221,7 +221,7 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filenameFinal),
-	    "--vfatmask=%i"%(options.vfatmask)]
+	        "--vfatmask=%i"%(options.vfatmask)]
            )
 
 scanFilename = '%s/scanInfo.txt'%dirPath
@@ -233,15 +233,3 @@ for vfat in range(0,24):
 outF.close()
 
 exit(0)
-
-
-
-
-
-
-
-
-
-
-
-
