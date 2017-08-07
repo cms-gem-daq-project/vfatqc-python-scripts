@@ -3,7 +3,7 @@
 def launchTests(args):
   return launchTestsArgs(*args)
 
-def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
+def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nevts,
                     vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
                     config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
                     internal=False):
@@ -22,7 +22,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
   #Build Commands
   setupCmds = []
   preCmd = None
-  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts)]
+  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=%s"%(vfatmask)]
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
@@ -143,7 +143,7 @@ if __name__ == '__main__':
   import subprocess
   import itertools
   from multiprocessing import Pool, freeze_support
-  from chamberInfo import chamber_config
+  from chamberInfo import chamber_config, chamber_vfatMask
   from gempython.utils.wrappers import envCheck
 
   from qcoptions import parser
@@ -190,6 +190,7 @@ if __name__ == '__main__':
                          [options.slot for x in range(len(chamber_config))],
                          chamber_config.keys(),
                          chamber_config.values(),
+                         chamber_vfatMask.values(),
                          [options.scanmin for x in range(len(chamber_config))],
                          [options.scanmax for x in range(len(chamber_config))],
                          [options.nevts   for x in range(len(chamber_config))],
@@ -211,11 +212,13 @@ if __name__ == '__main__':
     print "Running jobs in serial mode"
     for link in chamber_config.keys():
       chamber = chamber_config[link]
+      vfatMask = chamber_vfatMask[link]
       launchTests([ options.tool,
                     options.shelf,
                     options.slot,
                     link,
                     chamber,
+                    vfatMask,
                     options.vt2,
                     options.MSPL,
                     options.perchannel,
@@ -226,8 +229,8 @@ if __name__ == '__main__':
                     options.t3trig,
                     options.randoms,
                     options.throttle,
-                    options.internal]
-                  )
+                    options.internal
+                  ])
       pass
     pass
   else:
@@ -244,6 +247,7 @@ if __name__ == '__main__':
                                           [options.slot for x in range(len(chamber_config))],
                                           chamber_config.keys(),
                                           chamber_config.values(),
+                                          chamber_vfatMask.values(),
                                           [options.scanmin for x in range(len(chamber_config))],
                                           [options.scanmax for x in range(len(chamber_config))],
                                           [options.nevts   for x in range(len(chamber_config))],
