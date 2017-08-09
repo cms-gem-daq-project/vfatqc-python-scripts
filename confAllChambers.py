@@ -24,7 +24,12 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,debug=False):
 
     if config:
         cmd.append("--vt1bump=%d"%(vt1bump))
-        cmd.append("--vfatConfig=%s/configs/z%.1f/vfatConfig_%s.txt"%(dataPath,ztrim,cName))
+        if options.dictConfig:
+            cmd.append("--dictConfig")
+            pass
+        else:
+            cmd.append("--vfatConfig=%s/configs/z%.1f/vfatConfig_%s.txt"%(dataPath,ztrim,cName))
+            pass
         cmd.append("--chConfig=%s/configs/z%.1f/chConfig_%s.txt"%(dataPath,ztrim,cName))
         pass
     else:
@@ -56,6 +61,8 @@ if __name__ == '__main__':
 
     parser.add_option("--config", action="store_true", dest="config",
                       help="Set Configuration from simple txt files", metavar="config")
+    parser.add_option("--dictConfig", action="store_true", dest="dictConfig", default=False,
+                      help="Configure VFATs to custom chamber_default values", metavar="dictConfig")
     parser.add_option("--run", action="store_true", dest="run",
                       help="Set VFATs to run mode", metavar="run")
     parser.add_option("--series", action="store_true", dest="series",
@@ -79,6 +86,7 @@ if __name__ == '__main__':
                         [options.vt1bump   for x in range(len(chamber_config))],
                         [options.config    for x in range(len(chamber_config))],
                         [chamber_config[x] for x in chamber_config.keys()],
+                        [options.dictConfig for x in range(len(chamber_config))],
                         [options.ztrim     for x in range(len(chamber_config))],
                         [options.debug     for x in range(len(chamber_config))]
                   )
@@ -107,6 +115,7 @@ if __name__ == '__main__':
                                                 [options.vt1bump   for x in range(len(chamber_config))],
                                                 [options.config    for x in range(len(chamber_config))],
                                                 [chamber_config[x] for x in chamber_config.keys()],
+                                                [options.dictConfig  for x in range(len(chamber_config))],
                                                 [options.ztrim     for x in range(len(chamber_config))],
                                                 [options.debug     for x in range(len(chamber_config))]
                                                 )
