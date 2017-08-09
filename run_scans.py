@@ -3,7 +3,8 @@
 def launchTests(args):
   return launchTestsArgs(*args)
 
-def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
+
+def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts, stepSize=1,
                     vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
                     config=False,amc13local=False,t3trig=False, randoms=0, throttle=0):
   import datetime,os,sys
@@ -106,6 +107,9 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, scanmin, scanmax, nevts,
     cmd.append( "--scanmax=%d"%(scanmax) )
     cmd.append( "--nevts=%d"%(nevts) )
     cmd.append( "--throttle=%i"%(throttle) )
+    if stepSize > 0:
+      cmd.append( "--stepSize=%d"%(stepSize) )
+      pass
     if mspl:
       cmd.append( "--mspl=%d"%(mspl) )
       pass
@@ -157,6 +161,8 @@ if __name__ == '__main__':
                     metavar="randoms")
   parser.add_option("--series", action="store_true", dest="series",
                     help="Run tests in series (default is false)", metavar="series")
+  parser.add_option("--stepSize", type="int", dest="stepSize", 
+                    help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
   parser.add_option("--t3trig", action="store_true", dest="t3trig",
                     help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
   parser.add_option("--throttle", type="int", default=0, dest="throttle",
@@ -187,8 +193,9 @@ if __name__ == '__main__':
                          chamber_config.keys(),
                          chamber_config.values(),
                          [options.scanmin for x in range(len(chamber_config))],
-                         [options.scanmax for x in range(len(chamber_config))],
+                         [options.scanmax for x in range(len(chamber_config))], 
                          [options.nevts   for x in range(len(chamber_config))],
+                         [options.stepSize for x in range(len(chamber_config))],
                          [options.vt1     for x in range(len(chamber_config))],
                          [options.vt2     for x in range(len(chamber_config))],
                          [options.MSPL    for x in range(len(chamber_config))],
@@ -211,6 +218,7 @@ if __name__ == '__main__':
                     options.slot,
                     link,
                     chamber,
+                    options.stepSize,
                     options.vt2,
                     options.MSPL,
                     options.perchannel,
@@ -241,6 +249,7 @@ if __name__ == '__main__':
                                           [options.scanmin for x in range(len(chamber_config))],
                                           [options.scanmax for x in range(len(chamber_config))],
                                           [options.nevts   for x in range(len(chamber_config))],
+                                          [options.stepSize for x in range(len(chamber_config))],
                                           [options.vt1     for x in range(len(chamber_config))],
                                           [options.vt2     for x in range(len(chamber_config))],
                                           [options.MSPL    for x in range(len(chamber_config))],
