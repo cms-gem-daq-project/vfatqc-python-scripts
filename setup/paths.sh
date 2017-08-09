@@ -38,18 +38,14 @@ else
 fi
 
 # Adding Scan Applications to Path
-#cd $BUILD_HOME/cmsgemos/gempython/tools
-#export PYTHONPATH=$PYTHONPATH:$PWD
+#export "PYTHONPATH=$PYTHONPATH:$BUILD_HOME/cmsgemos/gempython/tools"
 
-cd $BUILD_HOME/vfatqc-python-scripts
-export PATH=$PATH:$PWD
-export PYTHONPATH=$PYTHONPATH:$PWD
+export "PATH=$PATH:$BUILD_HOME/vfatqc-python-scripts"
+export "PYTHONPATH=$PYTHONPATH:$BUILD_HOME/vfatqc-python-scripts"
 
-cd $BUILD_HOME/vfatqc-python-scripts/setup
-export PATH=$PATH:$PWD
+export "PATH=$PATH:$BUILD_HOME/vfatqc-python-scripts/setup"
 
 # Done
-cd $BUILD_HOME/vfatqc-python-scripts
-export GEM_VFATQC_PROJECT=$PWD
+export "GEM_VFATQC_PROJECT=$BUILD_HOME/vfatqc-python-scripts"
 echo GEM_VFATQC_PROJECT $GEM_VFATQC_PROJECT
 echo "Setup Complete"
