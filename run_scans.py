@@ -22,7 +22,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
   #Build Commands
   setupCmds = []
   preCmd = None
-  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=%s"%(vfatmask)]
+  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=%x"%(vfatmask)]
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"

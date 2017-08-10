@@ -86,7 +86,7 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filename0),
-            "--vfatmask=%i"%(options.vfatmask),
+            "--vfatmask=%x"%(options.vfatmask),
             "--nevts=%i"%(options.nevts)]
           )
 
@@ -133,7 +133,7 @@ if rangeFile == None:
                     "-s%d"%(options.slot),
                     "-g%d"%(options.gtx),
                     "--filename=%s"%(filename31),
-                    "--vfatmask=%i"%(options.vfatmask),
+                    "--vfatmask=%x"%(options.vfatmask),
                     "--nevts=%i"%(options.nevts)]
                   )
         
@@ -210,7 +210,7 @@ for i in range(0,5):
                 "-s%d"%(options.slot),
                 "-g%d"%(options.gtx),
                 "--filename=%s"%(filenameBS),
-                "--vfatmask=%i"%(options.vfatmask),
+                "--vfatmask=%x"%(options.vfatmask),
                 "--nevts=%i"%(options.nevts)]
               )
 
@@ -232,7 +232,7 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filenameFinal),
-	        "--vfatmask=%i"%(options.vfatmask),
+	        "--vfatmask=%x"%(options.vfatmask),
             "--nevts=%i"%(options.nevts)]
           )
 
