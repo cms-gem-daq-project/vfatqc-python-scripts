@@ -89,4 +89,3 @@ if options.vfatConfig:
         print e
 print 'Chamber Configured'
 
-

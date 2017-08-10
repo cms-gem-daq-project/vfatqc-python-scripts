@@ -27,6 +27,8 @@ parser.add_option("--internal", action="store_true", dest="internal",
 parser.add_option("--randoms", type="int", default=0, dest="randoms",
                   help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
                   metavar="randoms")
+parser.add_option("--stepSize", type="int", dest="stepSize", 
+                  help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
 parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--throttle", type="int", default=0, dest="throttle",
@@ -52,6 +54,14 @@ if options.vt2 not in range(256):
 if options.MSPL not in range(1,9):
     print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
     exit(1)
+
+if options.stepSize <= 0:
+    print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
+    exit(1)
+
+step = options.stepSize
+if (step + options.scanmin > options.scanmax):
+    step = options.scanmax - options.scanmin
 
 if options.debug:
     uhal.setLogLevelTo(uhal.LogLevel.INFO)
@@ -148,6 +158,7 @@ try:
     print "OH%s: %s"%(options.gtx,ohnL1A)
     oh.configureScanModule(ohboard, options.gtx, mode, mask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
+                        stepsize=step,
                         numtrigs=int(options.nevts),
                         useUltra=True, debug=True)
     oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)

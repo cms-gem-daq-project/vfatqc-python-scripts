@@ -1,7 +1,7 @@
 from gempython.utils.standardopts import parser
 
 parser.add_option("--mspl", type="int", dest = "MSPL", default = 1,
-                  help="Specify MSPL.  Must be in the range 1-8 (default is 1)", metavar="MSPL")
+                  help="Specify MSPL. Must be in the range 1-8 (default is 1)", metavar="MSPL")
 parser.add_option("--nevts", type="int", dest="nevts",
                   help="Number of events to count at each scan point", metavar="nevts", default=1000)
 parser.add_option("--scanmin", type="int", dest="scanmin",

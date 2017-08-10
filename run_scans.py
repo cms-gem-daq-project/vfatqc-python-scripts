@@ -3,7 +3,7 @@
 def launchTests(args):
   return launchTestsArgs(*args)
 
-def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nevts,
+def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nevts, stepSize=1,
                     vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
                     config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
                     internal=False):
@@ -22,7 +22,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
   #Build Commands
   setupCmds = []
   preCmd = None
-  cmd = ["%s"%(tool),"-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=%x"%(vfatmask)]
+  cmd = ["%s"%(tool),"-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=%x"%(vfatmask)]
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
@@ -33,18 +33,18 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/SCurveData.root"%dirPath )
     if mspl:
-      cmd.append( "--mspl=%d"%(mspl) )
-    preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
+      cmd.append( "--mspl=%i"%(mspl) )
+    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link)]
     if vt1 in range(256):
-      preCmd.append("--vt1=%d"%(vt1))
+      preCmd.append("--vt1=%i"%(vt1))
       pass
     pass
   elif tool == "trimChamber.py":
     scanType = "trim"
     dataType = None
-    preCmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link)]
+    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link)]
     if vt1 in range(256):
-      preCmd.append("--vt1=%d"%(vt1))
+      preCmd.append("--vt1=%i"%(vt1))
       pass
     dirPath = "%s/%s/%s/z%f/"%(dataPath,chamber_config[link],scanType,ztrim)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
@@ -53,14 +53,14 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
     dirPath = dirPath+startTime
     cmd.append("--ztrim=%f"%(ztrim))
     if vt1 in range(256):
-      cmd.append("--vt1=%d"%(vt1))
+      cmd.append("--vt1=%i"%(vt1))
       pass
     cmd.append( "--dirPath=%s"%dirPath )
     pass
   elif tool == "ultraThreshold.py":
     scanType = "threshold"
     if vt2 in range(256):
-      cmd.append("--vt2=%d"%(vt2))
+      cmd.append("--vt2=%i"%(vt2))
       pass
     if perchannel:
       cmd.append("--perchannel")
@@ -92,7 +92,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/FastLatencyScanData.root"%dirPath )
     if mspl:
-      cmd.append( "--mspl=%d"%(mspl) )
+      cmd.append( "--mspl=%i"%(mspl) )
     pass
   elif tool == "ultraLatency.py":
     scanType = "latency/trk"
@@ -102,11 +102,14 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/LatencyScanData.root"%dirPath )
-    cmd.append( "--scanmin=%d"%(scanmin) )
-    cmd.append( "--scanmax=%d"%(scanmax) )
+    cmd.append( "--scanmin=%i"%(scanmin) )
+    cmd.append( "--scanmax=%i"%(scanmax) )
     cmd.append( "--throttle=%i"%(throttle) )
+    if stepSize > 0:
+      cmd.append( "--stepSize=%i"%(stepSize) )
+      pass
     if mspl:
-      cmd.append( "--mspl=%d"%(mspl) )
+      cmd.append( "--mspl=%i"%(mspl) )
       pass
     if amc13local:
       cmd.append( "--amc13local")
@@ -161,6 +164,8 @@ if __name__ == '__main__':
                     metavar="randoms")
   parser.add_option("--series", action="store_true", dest="series",
                     help="Run tests in series (default is false)", metavar="series")
+  parser.add_option("--stepSize", type="int", dest="stepSize", 
+                    help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
   parser.add_option("--t3trig", action="store_true", dest="t3trig",
                     help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
   parser.add_option("--throttle", type="int", default=0, dest="throttle",
@@ -192,8 +197,9 @@ if __name__ == '__main__':
                          chamber_config.values(),
                          chamber_vfatMask.values(),
                          [options.scanmin for x in range(len(chamber_config))],
-                         [options.scanmax for x in range(len(chamber_config))],
+                         [options.scanmax for x in range(len(chamber_config))], 
                          [options.nevts   for x in range(len(chamber_config))],
+                         [options.stepSize for x in range(len(chamber_config))],
                          [options.vt1     for x in range(len(chamber_config))],
                          [options.vt2     for x in range(len(chamber_config))],
                          [options.MSPL    for x in range(len(chamber_config))],
@@ -219,6 +225,11 @@ if __name__ == '__main__':
                     link,
                     chamber,
                     vfatMask,
+                    options.scanmin,
+                    options.scanmax,
+                    options.nevts, 
+                    options.stepSize,
+                    options.vt1,
                     options.vt2,
                     options.MSPL,
                     options.perchannel,
@@ -251,6 +262,7 @@ if __name__ == '__main__':
                                           [options.scanmin for x in range(len(chamber_config))],
                                           [options.scanmax for x in range(len(chamber_config))],
                                           [options.nevts   for x in range(len(chamber_config))],
+                                          [options.stepSize for x in range(len(chamber_config))],
                                           [options.vt1     for x in range(len(chamber_config))],
                                           [options.vt2     for x in range(len(chamber_config))],
                                           [options.MSPL    for x in range(len(chamber_config))],

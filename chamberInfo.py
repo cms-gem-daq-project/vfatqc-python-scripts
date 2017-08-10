@@ -1,4 +1,3 @@
-
 chamber_config = {
     #Coffin Setup
     #11:"GE11-VI-L-CERN-0002"
