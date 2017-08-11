@@ -23,18 +23,14 @@ fi
 if [[ -n "$GEM_PYTHON_PATH" ]]; then
     echo GEM_PYTHON_PATH $GEM_PYTHON_PATH
 else
-    echo "GEM_PYTHON_PATH not set"
-    echo "Setting up GEM_PYTHON_PATH"
-    source $BUILD_HOME/cmsgemos/setup/paths.sh
+    echo "GEM_PYTHON_PATH not set, please source \$BUILD_HOME/cmsgemos/setup/paths.sh"
 fi
 
 # Checking GEM_PLOTTING_PROJECT
 if [[ -n "$GEM_PLOTTING_PROJECT" ]]; then
     echo GEM_PLOTTING_PROJECT $GEM_PLOTTING_PROJECT
 else
-    echo "GEM_PLOTTING_PROJECT not set"
-    echo "Setting up GEM_PLOTTING_PROJECT"
-    source $BUILD_HOME/gem-plotting-tools/setup/paths.sh
+    echo "GEM_PLOTTING_PROJECT not set, please source \$BUILD_HOME/gem-plotting-tools/setup/paths.sh"
 fi
 
 # Adding Scan Applications to Path
