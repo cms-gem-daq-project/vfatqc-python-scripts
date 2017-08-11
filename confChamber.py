@@ -2,6 +2,7 @@
 """
 Script to configure the VFATs on a GEM chamber
 By: Cameron Bravo c.bravo@cern.ch
+Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
 """
 
 from array import array
