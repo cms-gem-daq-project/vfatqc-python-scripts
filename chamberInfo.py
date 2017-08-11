@@ -1,6 +1,6 @@
 chamber_config = {
     #Coffin Setup
-    #11:"GE11-VI-L-CERN-0002"
+    #0:"GE11-VI-L-CERN-0002"
     #Cosmic Stand
     #0:"GE11-VI-L-CERN-0001"
     #Point 5
@@ -36,18 +36,36 @@ GEBtype = {
 
 chamber_vfatMask = {
     #Coffin Setup
-    #0:"0x0"
+    #0:0x"
     #Cosmic Stand
-    #0:"0xF40400"
+    #0:0xF40400
     #Point 5
-    0:"0x0",
-    1:"0x0",
-    2:"0x0",
-    3:"0x0",
-    4:"0x0",
-    5:"0x0",
-    6:"0x0",
-    7:"0x0",
-    8:"0x0",
-    9:"0x0"
+    0:0x0,
+    1:0x0,
+    2:0x0,
+    3:0x0,
+    4:0x0,
+    5:0x0,
+    6:0x0,
+    7:0x0,
+    8:0x0,
+    9:0x0
+    }
+    
+chamber_vfatDACSettings = {
+    #Coffin Setup
+    #0: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    #Cosmic Stand
+    #0: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    #Point 5
+    0: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    1: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    2: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    3: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    4: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    5: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    6: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    7: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    8: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    9: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,}
     }

@@ -22,7 +22,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
   #Build Commands
   setupCmds = []
   preCmd = None
-  cmd = ["%s"%(tool),"-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=%x"%(vfatmask)]
+  cmd = ["%s"%(tool),"-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=%i"%(vfatmask)]
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
@@ -134,7 +134,8 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
     if preCmd and config:
       runCommand(preCmd,log)
       pass
-    runCommand(cmd,log)
+    #runCommand(cmd,log)
+    runCommand(cmd)
   except CalledProcessError as e:
     print "Caught exception",e
     pass
