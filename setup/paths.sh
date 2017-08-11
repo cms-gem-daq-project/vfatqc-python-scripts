@@ -23,33 +23,19 @@ fi
 if [[ -n "$GEM_PYTHON_PATH" ]]; then
     echo GEM_PYTHON_PATH $GEM_PYTHON_PATH
 else
-    echo "GEM_PYTHON_PATH not set"
-    echo "Setting up GEM_PYTHON_PATH"
-    source $BUILD_HOME/cmsgemos/setup/paths.sh
+    echo "GEM_PYTHON_PATH not set, please source \$BUILD_HOME/cmsgemos/setup/paths.sh"
 fi
 
 # Checking GEM_PLOTTING_PROJECT
 if [[ -n "$GEM_PLOTTING_PROJECT" ]]; then
     echo GEM_PLOTTING_PROJECT $GEM_PLOTTING_PROJECT
 else
-    echo "GEM_PLOTTING_PROJECT not set"
-    echo "Setting up GEM_PLOTTING_PROJECT"
-    source $BUILD_HOME/gem-plotting-tools/setup/paths.sh
+    echo "GEM_PLOTTING_PROJECT not set, please source \$BUILD_HOME/gem-plotting-tools/setup/paths.sh"
 fi
 
 # Adding Scan Applications to Path
-#cd $BUILD_HOME/cmsgemos/gempython/tools
-#export PYTHONPATH=$PYTHONPATH:$PWD
-
-cd $BUILD_HOME/vfatqc-python-scripts
-export PATH=$PATH:$PWD
-export PYTHONPATH=$PYTHONPATH:$PWD
-
-cd $BUILD_HOME/vfatqc-python-scripts/setup
-export PATH=$PATH:$PWD
+export "PATH=$PATH:$BUILD_HOME/vfatqc-python-scripts"
+export "PYTHONPATH=$PYTHONPATH:$BUILD_HOME/vfatqc-python-scripts"
 
 # Done
-cd $BUILD_HOME/vfatqc-python-scripts
-export GEM_VFATQC_PROJECT=$PWD
-echo GEM_VFATQC_PROJECT $GEM_VFATQC_PROJECT
 echo "Setup Complete"
