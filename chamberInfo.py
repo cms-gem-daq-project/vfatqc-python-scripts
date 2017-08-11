@@ -34,7 +34,7 @@ GEBtype = {
     9:"long"
     }
 
-chamber_defaults = {
+chamber_vfatDACSettings = {
     #Coffin Setup
     #0: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
     #Cosmic Stand
