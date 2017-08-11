@@ -51,3 +51,6 @@ chamber_vfatMask = {
     8:"0x0",
     9:"0x0"
     }
+
+chamber_vfatDACSettings = {
+}
