@@ -5,7 +5,6 @@ def launch(args):
 
 def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim):
     import datetime,os,sys
-    import subprocess
     from subprocess import CalledProcessError
     from chamberInfo import chamber_config
     from gempython.utils.wrappers import runCommand
@@ -23,6 +22,7 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim):
         cmd.append("--vt1bump=%d"%(vt1bump))
         cmd.append("--vfatConfig=%s/configs/z%.1f/vfatConfig_%s.txt"%(dataPath,ztrim,cName))
         cmd.append("--chConfig=%s/configs/z%.1f/chConfig_%s.txt"%(dataPath,ztrim,cName))
+        pass
     else:
         if not os.path.isfile(filename):
             print "No trim configuration exists for z = %f for %s"%(ztrim,cName)

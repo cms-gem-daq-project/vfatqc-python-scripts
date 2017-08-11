@@ -2,26 +2,26 @@
 """
 Script to configure the VFATs on a GEM chamber
 By: Cameron Bravo c.bravo@cern.ch
+Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
 """
 
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
-
+from chamberInfo import chamber_vfatDACSettings
 from qcoptions import parser
 
-parser.add_option("--filename", type="string", dest="filename", default=None,
-                  help="Specify file containing settings information", metavar="filename")
 parser.add_option("--chConfig", type="string", dest="chConfig", default=None,
                   help="Specify file containing channel settings from anaUltraSCurve", metavar="chConfig")
+parser.add_option("--filename", type="string", dest="filename", default=None,
+                  help="Specify file containing settings information", metavar="filename")
+parser.add_option("--run", action="store_true", dest="run",
+                  help="Set VFATs to run mode", metavar="run")
 parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None,
                   help="Specify file containing VFAT settings from anaUltraThreshold", metavar="vfatConfig")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 parser.add_option("--vt1bump", type="int", dest="vt1bump",
                   help="VThreshold1 DAC bump value for all VFATs", metavar="vt1bump", default=0)
-parser.add_option("--run", action="store_true", dest="run",
-                  help="Set VFATs to run mode", metavar="run")
-
 
 (options, args) = parser.parse_args()
 
@@ -87,5 +87,18 @@ if options.vfatConfig:
     except Exception as e:
         print '%s does not seem to exist'%options.filename
         print e
-print 'Chamber Configured'
 
+if options.gtx in chamber_vfatDACSettings.keys():
+    try:
+        print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
+        writeAllVFATs(ohboard, options.gtx, "IPreampIn", chamber_vfatDACSettings[options.gtx]["IPreampIn"], 0)
+        writeAllVFATs(ohboard, options.gtx, "IPreampFeed", chamber_vfatDACSettings[options.gtx]["IPreampFeed"], 0)
+        writeAllVFATs(ohboard, options.gtx, "IPreampOut", chamber_vfatDACSettings[options.gtx]["IPreampOut"], 0)
+        writeAllVFATs(ohboard, options.gtx, "IShaper", chamber_vfatDACSettings[options.gtx]["IShaper"], 0)
+        writeAllVFATs(ohboard, options.gtx, "IShaperFeed", chamber_vfatDACSettings[options.gtx]["IShaperFeed"], 0)
+        writeAllVFATs(ohboard, options.gtx, "IComp", chamber_vfatDACSettings[options.gtx]["IComp"], 0)
+    except Exception as e:
+        print 'Error configuring the VFATs with chamber_vfatDACSettings dictionary values'
+        print e
+
+print 'Chamber Configured'

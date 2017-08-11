@@ -33,3 +33,21 @@ GEBtype = {
     8:"long",
     9:"long"
     }
+
+chamber_vfatDACSettings = {
+    #Coffin Setup
+    #0: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    #Cosmic Stand
+    #0: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    #Point 5
+    0: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    1: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    2: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    3: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    4: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    5: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    6: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    7: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    8: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,},
+    9: {"IPreampIn": 168, "IPreampFeed": 80, "IPreampOut": 150, "IShaper": 150, "IShaperFeed": 100, "IComp": 90,}
+    }
