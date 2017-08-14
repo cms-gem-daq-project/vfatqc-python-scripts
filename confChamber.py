@@ -125,5 +125,5 @@ if options.vfatConfig:
     except Exception as e:
         print '%s does not seem to exist'%options.filename
         print e
-        
+
 print 'Chamber Configured'
