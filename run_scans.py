@@ -10,7 +10,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
-  from chamberInfo import chamber_config
+  from mapping.chamberInfo import chamber_config
   from gempython.utils.wrappers import runCommand
 
   startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
@@ -147,7 +147,7 @@ if __name__ == '__main__':
   import subprocess
   import itertools
   from multiprocessing import Pool, freeze_support
-  from chamberInfo import chamber_config, chamber_vfatMask
+  from mapping.chamberInfo import chamber_config, chamber_vfatMask
   from gempython.utils.wrappers import envCheck
 
   from qcoptions import parser
