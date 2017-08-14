@@ -1,7 +1,7 @@
 #!/bin/env python
 import os
 import threading
-from chamberInfo import chamber_config,GEBtype
+from mapping.chamberInfo import chamber_config,GEBtype
 from qcoptions import parser
 from gempython.utils.wrappers import envCheck
 
