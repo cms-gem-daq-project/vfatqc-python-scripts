@@ -33,7 +33,7 @@ envCheck('BUILD_HOME')
 
 dataPath = os.getenv('DATA_PATH')
 
-from fitScanData import fitScanData
+from fitting.fitScanData import fitScanData
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
@@ -86,7 +86,7 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filename0),
-            "--vfatmask=%x"%(options.vfatmask),
+            "--vfatmask=0x%x"%(options.vfatmask),
             "--nevts=%i"%(options.nevts)]
           )
 
@@ -133,7 +133,7 @@ if rangeFile == None:
                     "-s%d"%(options.slot),
                     "-g%d"%(options.gtx),
                     "--filename=%s"%(filename31),
-                    "--vfatmask=%x"%(options.vfatmask),
+                    "--vfatmask=0x%x"%(options.vfatmask),
                     "--nevts=%i"%(options.nevts)]
                   )
         
@@ -210,7 +210,7 @@ for i in range(0,5):
                 "-s%d"%(options.slot),
                 "-g%d"%(options.gtx),
                 "--filename=%s"%(filenameBS),
-                "--vfatmask=%x"%(options.vfatmask),
+                "--vfatmask=0x%x"%(options.vfatmask),
                 "--nevts=%i"%(options.nevts)]
               )
 
@@ -232,7 +232,7 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filenameFinal),
-            "--vfatmask=%x"%(options.vfatmask),
+            "--vfatmask=0x%x"%(options.vfatmask),
             "--nevts=%i"%(options.nevts)]
           )
 
