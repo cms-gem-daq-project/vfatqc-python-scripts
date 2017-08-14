@@ -232,7 +232,7 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filenameFinal),
-	        "--vfatmask=%x"%(options.vfatmask),
+            "--vfatmask=%x"%(options.vfatmask),
             "--nevts=%i"%(options.nevts)]
           )
 
