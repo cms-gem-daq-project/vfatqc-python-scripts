@@ -9,7 +9,7 @@ from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 from gempython.utils.nesteddict import nesteddict as ndict
 from gempython.utils.wrappers import runCommand, envCheck
-from chamberInfo import chamber_config
+from mapping.chamberInfo import chamber_config
 
 from qcoptions import parser
 
@@ -33,7 +33,7 @@ envCheck('BUILD_HOME')
 
 dataPath = os.getenv('DATA_PATH')
 
-from fitScanData import fitScanData
+from fitting.fitScanData import fitScanData
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
@@ -86,8 +86,10 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filename0),
-	        "--vfatmask=%i"%(options.vfatmask)]
-           )
+            "--vfatmask=0x%x"%(options.vfatmask),
+            "--nevts=%i"%(options.nevts)]
+          )
+
 muFits_0  = fitScanData(filename0)
 for vfat in range(0,24):
     for ch in range(CHAN_MIN,CHAN_MAX):
@@ -126,7 +128,14 @@ if rangeFile == None:
         
         #Scurve scan with trimdac set to 31 (maximum trimming)
         filename31 = "%s/SCurveData_trimdac31_range%i.root"%(dirPath,trimRange)
-        runCommand(["ultraScurve.py","--shelf=%i"%(options.shelf),"-s%d"%(options.slot),"-g%d"%(options.gtx),"--filename=%s"%(filename31),"--vfatmask=%i"%(options.vfatmask)])
+        runCommand(["ultraScurve.py",
+                    "--shelf=%i"%(options.shelf),
+                    "-s%d"%(options.slot),
+                    "-g%d"%(options.gtx),
+                    "--filename=%s"%(filename31),
+                    "--vfatmask=0x%x"%(options.vfatmask),
+                    "--nevts=%i"%(options.nevts)]
+                  )
         
         #For each channel, check that the infimum of the scan with trimDAC = 31 is less than the subprimum of the scan with trimDAC = 0. The difference should be greater than the trimdac range.
         muFits_31 = fitScanData(filename31)
@@ -201,8 +210,10 @@ for i in range(0,5):
                 "-s%d"%(options.slot),
                 "-g%d"%(options.gtx),
                 "--filename=%s"%(filenameBS),
-		        "--vfatmask=%i"%(options.vfatmask)]
-               )
+                "--vfatmask=0x%x"%(options.vfatmask),
+                "--nevts=%i"%(options.nevts)]
+              )
+
     # Fit Scurve data
     fitData = fitScanData(filenameBS)
     # Now use data to determine the new trimDAC value
@@ -221,8 +232,9 @@ runCommand(["ultraScurve.py",
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
             "--filename=%s"%(filenameFinal),
-	        "--vfatmask=%i"%(options.vfatmask)]
-           )
+            "--vfatmask=0x%x"%(options.vfatmask),
+            "--nevts=%i"%(options.nevts)]
+          )
 
 scanFilename = '%s/scanInfo.txt'%dirPath
 outF = open(scanFilename,'w')

@@ -7,7 +7,7 @@ Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
 
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
-from chamberInfo import chamber_vfatDACSettings
+from mapping.chamberInfo import chamber_vfatDACSettings
 from qcoptions import parser
 
 parser.add_option("--chConfig", type="string", dest="chConfig", default=None,

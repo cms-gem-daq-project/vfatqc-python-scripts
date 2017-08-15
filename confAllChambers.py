@@ -6,7 +6,7 @@ def launch(args):
 def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim):
     import datetime,os,sys
     from subprocess import CalledProcessError
-    from chamberInfo import chamber_config
+    from mapping.chamberInfo import chamber_config
     from gempython.utils.wrappers import runCommand
 
     dataPath = os.getenv('DATA_PATH')
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     import subprocess
     import itertools
     from multiprocessing import Pool, freeze_support
-    from chamberInfo import chamber_config
+    from mapping.chamberInfo import chamber_config
     from gempython.utils.wrappers import envCheck
 
     from qcoptions import parser

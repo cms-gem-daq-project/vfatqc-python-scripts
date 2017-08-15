@@ -24,6 +24,7 @@ if [[ -n "$GEM_PYTHON_PATH" ]]; then
     echo GEM_PYTHON_PATH $GEM_PYTHON_PATH
 else
     echo "GEM_PYTHON_PATH not set, please source \$BUILD_HOME/cmsgemos/setup/paths.sh"
+    return
 fi
 
 # Checking GEM_PLOTTING_PROJECT
