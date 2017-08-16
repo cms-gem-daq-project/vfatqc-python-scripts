@@ -1,4 +1,6 @@
 # vfatqc-python-scripts
+[![Coverage Status](https://coveralls.io/repos/github/jsturdy/vfatqc-python-scripts/badge.svg?branch=master)](https://coveralls.io/github/jsturdy/vfatqc-python-scripts?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/jsturdy/vfatqc-python-scripts/badge.svg?branch=develop)](https://coveralls.io/github/jsturdy/vfatqc-python-scripts?branch=develop)
 
 1. Setup:
 
