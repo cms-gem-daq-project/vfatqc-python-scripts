@@ -1,4 +1,6 @@
 # vfatqc-python-scripts
+[![Coverage Status](https://coveralls.io/repos/github/jsturdy/vfatqc-python-scripts/badge.svg?branch=master)](https://coveralls.io/github/jsturdy/vfatqc-python-scripts?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/jsturdy/vfatqc-python-scripts/badge.svg?branch=develop)](https://coveralls.io/github/jsturdy/vfatqc-python-scripts?branch=develop)
 
 Branch|[![Travis CI logo](TravisCI.png)](https://travis-ci.org)|[![Coveralls logo](Coveralls.png)](https://www.coveralls.io)|[![Codecov logo](Codecov.png)](https://www.codecov.io)|[![Codacy logo](Codacy.png)](https://www.codacy.com)|[![Landscape logo](Landscape.png)](https://www.landscape.io)|[![CodeClimate logo](Codeclimate.png)](https://www.codeclimate.com)
 ---|---|---|---|---|---|---
