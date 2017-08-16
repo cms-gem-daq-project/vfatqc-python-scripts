@@ -1,1 +1,16 @@
+language: python
 
+python:
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "pypy"
+  - "pypy3"
+
+script:
+  - pip install -r requirements.txt
+
+after_script:
+  bash <(curl -s https://codecov.io/bash) &&
+ ￼ echo "Uploaded code coverage"
+ 
