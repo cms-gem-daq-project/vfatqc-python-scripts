@@ -9,8 +9,9 @@ python:
 
 script:
   - pip install -r requirements.txt
-
+  - pip install codecov
+  
 after_script:
-  bash <(curl -s https://codecov.io/bash) &&
- ￼ echo "Uploaded code coverage"
+  - bash <(curl -s https://codecov.io/bash) && echo "Uploaded code coverage"
+  - codecov
  
