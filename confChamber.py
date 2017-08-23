@@ -39,6 +39,15 @@ Date = startTime
 ohboard = getOHObject(options.slot,options.gtx,options.shelf)
 print 'opened connection'
 
+if options.gtx in chamber_vfatDACSettings.keys():
+    print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
+    parameters.defaultValues["IPreampIn"] = chamber_vfatDACSettings[options.gtx]["IPreampIn"]
+    parameters.defaultValues["IPreampFeed"] = chamber_vfatDACSettings[options.gtx]["IPreampFeed"]
+    parameters.defaultValues["IPreampOut"] = chamber_vfatDACSettings[options.gtx]["IPreampOut"]
+    parameters.defaultValues["IShaper"] = chamber_vfatDACSettings[options.gtx]["IShaper"]
+    parameters.defaultValues["IShaperFeed"] = chamber_vfatDACSettings[options.gtx]["IShaperFeed"]
+    parameters.defaultValues["IComp"] = chamber_vfatDACSettings[options.gtx]["IComp"]
+
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
 print 'biased VFATs'
 writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
@@ -86,19 +95,6 @@ if options.vfatConfig:
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
     except Exception as e:
         print '%s does not seem to exist'%options.filename
-        print e
-
-if options.gtx in chamber_vfatDACSettings.keys():
-    try:
-        print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
-        writeAllVFATs(ohboard, options.gtx, "IPreampIn", chamber_vfatDACSettings[options.gtx]["IPreampIn"], 0)
-        writeAllVFATs(ohboard, options.gtx, "IPreampFeed", chamber_vfatDACSettings[options.gtx]["IPreampFeed"], 0)
-        writeAllVFATs(ohboard, options.gtx, "IPreampOut", chamber_vfatDACSettings[options.gtx]["IPreampOut"], 0)
-        writeAllVFATs(ohboard, options.gtx, "IShaper", chamber_vfatDACSettings[options.gtx]["IShaper"], 0)
-        writeAllVFATs(ohboard, options.gtx, "IShaperFeed", chamber_vfatDACSettings[options.gtx]["IShaperFeed"], 0)
-        writeAllVFATs(ohboard, options.gtx, "IComp", chamber_vfatDACSettings[options.gtx]["IComp"], 0)
-    except Exception as e:
-        print 'Error configuring the VFATs with chamber_vfatDACSettings dictionary values'
         print e
 
 print 'Chamber Configured'
