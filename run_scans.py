@@ -21,7 +21,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
 
   #Build Commands
   setupCmds = []
-  preCmd = None 
+  preCmd = None
   cmd = ["%s"%(tool),"-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=0x%x"%(vfatmask)]
   if debug:
     cmd.append( "--debug")
@@ -134,8 +134,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
       pass
     log = file("%s/scanLog.log"%(dirPath),"w")
     if preCmd and config:
-      #runCommand(preCmd,log)
-      runCommand(preCmd)
+      runCommand(preCmd,log)
       pass
     runCommand(cmd,log)
   except CalledProcessError as e:
