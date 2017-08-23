@@ -21,7 +21,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
 
   #Build Commands
   setupCmds = []
-  preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
+  preCmd = None 
   cmd = ["%s"%(tool),"-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=0x%x"%(vfatmask)]
   if debug:
     cmd.append( "--debug")
