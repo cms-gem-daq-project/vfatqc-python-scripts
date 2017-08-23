@@ -21,7 +21,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
 
   #Build Commands
   setupCmds = []
-  preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
+  preCmd = None 
   cmd = ["%s"%(tool),"-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=0x%x"%(vfatmask)]
   if tool == "ultraScurve.py":
     scanType = "scurve"
@@ -34,6 +34,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
     cmd.append( "--filename=%s/SCurveData.root"%dirPath )
     if mspl:
       cmd.append( "--mspl=%i"%(mspl) )
+    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
       pass
@@ -41,6 +42,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
   elif tool == "trimChamber.py":
     scanType = "trim"
     dataType = None
+    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
       pass
