@@ -34,7 +34,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
     cmd.append( "--filename=%s/SCurveData.root"%dirPath )
     if mspl:
       cmd.append( "--mspl=%i"%(mspl) )
-    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link)]
+    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
       pass
@@ -42,7 +42,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
   elif tool == "trimChamber.py":
     scanType = "trim"
     dataType = None
-    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link)]
+    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
       pass
@@ -134,8 +134,7 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
     if preCmd and config:
       runCommand(preCmd,log)
       pass
-    #runCommand(cmd,log)
-    runCommand(cmd)
+    runCommand(cmd,log)
   except CalledProcessError as e:
     print "Caught exception",e
     pass
@@ -196,7 +195,7 @@ if __name__ == '__main__':
                          [options.slot for x in range(len(chamber_config))],
                          chamber_config.keys(),
                          chamber_config.values(),
-                         chamber_vfatMask.values(),
+                         [hex(vfatmask) for vfatmask in chamber_vfatMask.values()],
                          [options.scanmin for x in range(len(chamber_config))],
                          [options.scanmax for x in range(len(chamber_config))], 
                          [options.nevts   for x in range(len(chamber_config))],
