@@ -3,12 +3,14 @@
 Script to configure the VFATs on a GEM chamber
 By: Cameron Bravo c.bravo@cern.ch
 Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
+             Brian Dorney brian.l.dorney@cern.ch
 """
 
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 from mapping.chamberInfo import chamber_vfatDACSettings
 from qcoptions import parser
+from qcutilities import readBackCheck 
 
 parser.add_option("--chConfig", type="string", dest="chConfig", default=None,
                   help="Specify file containing channel settings from anaUltraSCurve", metavar="chConfig")
@@ -16,6 +18,8 @@ parser.add_option("--filename", type="string", dest="filename", default=None,
                   help="Specify file containing settings information", metavar="filename")
 parser.add_option("--run", action="store_true", dest="run",
                   help="Set VFATs to run mode", metavar="run")
+parser.add_option("--verify", action="store_true", dest="verify",
+                  help="Performs a readback of registers and compares stored values with written values", metavar="verify")
 parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None,
                   help="Specify file containing VFAT settings from anaUltraThreshold", metavar="vfatConfig")
 parser.add_option("--vt1", type="int", dest="vt1",
@@ -93,6 +97,13 @@ if options.vfatConfig:
             print 'Set link %d VFAT%d VThreshold1 to %i'%(options.gtx,event.vfatN,event.vt1+options.vt1bump)
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1+options.vt1bump),0)
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+
+        if options.verify:
+            if options.vt1bump > 0:
+                print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
+            dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
+            readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
+
     except Exception as e:
         print '%s does not seem to exist'%options.filename
         print e
