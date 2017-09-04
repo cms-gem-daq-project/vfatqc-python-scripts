@@ -5,11 +5,16 @@ import root_numpy as rp
 import ROOT as r
 import sys
 
-# rootTree - name of a TTree that has values that should have been written
-# dict_Names - dictionary where key names are the branch names in rootTree and the values are the register names they correspond too
-# device - optohybrid  the vfats belong to that you want to check
-# gtx - link of this optohybrid
 def readBackCheck(rootTree, dict_Names, device, gtx):
+    """
+    Given an input set of registers, and expected values of those registers, read from all VFATs on device.gtx to see if there are any differences between written and read values.
+
+    rootTree - name of a TTree that has values that should have been written
+    dict_Names - dictionary where key names are the branch names in rootTree and the values are the register names they correspond too
+    device - optohybrid the vfats belong to that you want to check
+    gtx - link of this optohybrid
+    """
+    
     # Check that the requested register is supported
     list_KnownRegs = parameters.defaultValues.keys()
     list_KnownRegs.append("VThreshold1")

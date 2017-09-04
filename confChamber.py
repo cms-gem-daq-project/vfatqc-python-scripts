@@ -98,14 +98,14 @@ if options.vfatConfig:
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1+options.vt1bump),0)
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
 
-        if options.verify:
-            if options.vt1bump > 0:
-                print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
-            dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
-            readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
-
     except Exception as e:
         print '%s does not seem to exist'%options.filename
         print e
+        
+if options.verify:
+    if options.vt1bump != 0:
+        print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
+    dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
+    readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
 
 print 'Chamber Configured'
