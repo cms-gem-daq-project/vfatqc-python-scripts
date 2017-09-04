@@ -26,6 +26,8 @@ parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 parser.add_option("--vt1bump", type="int", dest="vt1bump",
                   help="VThreshold1 DAC bump value for all VFATs", metavar="vt1bump", default=0)
+#parser.add_option("-w","--write",action="store_true", dest="write",
+#                  help="Write the current settings to a file", metavar="write")
 
 (options, args) = parser.parse_args()
 
@@ -71,6 +73,12 @@ if options.filename:
         for event in inF.scurveFitTree :
             writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+        
+        if options.verify:
+            chTree = inF.Get("scurveFitTree")
+            dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
+            readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
+
     except Exception as e:
         print '%s does not seem to exist'%options.filename
         print e
@@ -83,6 +91,11 @@ if options.chConfig:
 
         for event in chTree :
             writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
+        
+        if options.verify:
+            dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
+            readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
+
     except Exception as e:
         print '%s does not seem to exist'%options.filename
         print e
@@ -98,14 +111,14 @@ if options.vfatConfig:
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1+options.vt1bump),0)
             writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
 
+        if options.verify:
+            if options.vt1bump != 0:
+                print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
+            dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
+            readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
+
     except Exception as e:
         print '%s does not seem to exist'%options.filename
         print e
         
-if options.verify:
-    if options.vt1bump != 0:
-        print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
-    dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
-    readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
-
 print 'Chamber Configured'
