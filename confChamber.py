@@ -14,20 +14,18 @@ from qcutilities import readBackCheck
 
 parser.add_option("--chConfig", type="string", dest="chConfig", default=None,
                   help="Specify file containing channel settings from anaUltraSCurve", metavar="chConfig")
+parser.add_option("--compare", action="store_true", dest="compare",
+                  help="When supplied with {chConfig, filename, vfatConfig} compares current reg values with those stored in input files", metavar="compare")
 parser.add_option("--filename", type="string", dest="filename", default=None,
                   help="Specify file containing settings information", metavar="filename")
 parser.add_option("--run", action="store_true", dest="run",
                   help="Set VFATs to run mode", metavar="run")
-parser.add_option("--verify", action="store_true", dest="verify",
-                  help="Performs a readback of registers and compares stored values with written values", metavar="verify")
 parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None,
                   help="Specify file containing VFAT settings from anaUltraThreshold", metavar="vfatConfig")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 parser.add_option("--vt1bump", type="int", dest="vt1bump",
                   help="VThreshold1 DAC bump value for all VFATs", metavar="vt1bump", default=0)
-#parser.add_option("-w","--write",action="store_true", dest="write",
-#                  help="Write the current settings to a file", metavar="write")
 
 (options, args) = parser.parse_args()
 
@@ -67,16 +65,21 @@ else:
 
 if options.filename:
     try:
-        print 'Configuring Trims with %s'%options.filename
         inF = r.TFile(options.filename)
+        chTree = inF.Get("scurveFitTree")
+        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
 
-        for event in inF.scurveFitTree :
-            writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
-            writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+        if options.compare:
+            print 'Comparing Currently Stored Channel Registers with %s'%options.filename
+
+            readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
+        else:
+            print 'Configuring Channel Registers based on %s'%options.filename
+            
+            for event in inF.scurveFitTree :
+                writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
+                writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
         
-        if options.verify:
-            chTree = inF.Get("scurveFitTree")
-            dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
             readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
 
     except Exception as e:
@@ -85,15 +88,20 @@ if options.filename:
 
 if options.chConfig:
     try:
-        print 'Configuring Channels with %s'%options.chConfig
         chTree = r.TTree('chTree','Tree holding Channel Configuration Parameters')
         chTree.ReadFile(options.chConfig)
+        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
 
-        for event in chTree :
-            writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
-        
-        if options.verify:
-            dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
+        if options.compare:
+            print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
+            
+            readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
+        else:
+            print 'Configuring Channel Registers based on %s'%options.chConfig
+            
+            for event in chTree :
+                writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
+            
             readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
 
     except Exception as e:
@@ -102,19 +110,28 @@ if options.chConfig:
 
 if options.vfatConfig:
     try:
-        print 'Configuring VFATs with %s'%options.vfatConfig
         vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
         vfatTree.ReadFile(options.vfatConfig)
+        dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
 
-        for event in vfatTree :
-            print 'Set link %d VFAT%d VThreshold1 to %i'%(options.gtx,event.vfatN,event.vt1+options.vt1bump)
-            writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1+options.vt1bump),0)
-            writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+        if options.compare:
+            print 'Comparing Curently Stored VFAT Registers with %s'%options.vfatConfig
 
-        if options.verify:
             if options.vt1bump != 0:
                 print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
-            dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
+            
+            readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
+        else:
+            print 'Configuring VFAT Registers based on %s'%options.vfatConfig
+
+            for event in vfatTree :
+                print 'Set link %d VFAT%d VThreshold1 to %i'%(options.gtx,event.vfatN,event.vt1+options.vt1bump)
+                writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1+options.vt1bump),0)
+                writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
+            
+            if options.vt1bump != 0:
+                print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
+            
             readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
 
     except Exception as e:
