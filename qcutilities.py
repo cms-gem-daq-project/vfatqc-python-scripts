@@ -1,10 +1,3 @@
-from gempython.tools.vfat_user_functions_uhal import *
-
-import numpy as np
-import root_numpy as rp
-import ROOT as r
-import sys
-
 def readBackCheck(rootTree, dict_Names, device, gtx):
     """
     Given an input set of registers, and expected values of those registers, read from all VFATs on device.gtx to see if there are any differences between written and read values.
@@ -14,6 +7,13 @@ def readBackCheck(rootTree, dict_Names, device, gtx):
     device - optohybrid the vfats belong to that you want to check
     gtx - link of this optohybrid
     """
+
+    from gempython.tools.vfat_user_functions_uhal import *
+    
+    import numpy as np
+    import root_numpy as rp
+    import ROOT as r
+    import sys
     
     # Check that the requested register is supported
     list_KnownRegs = parameters.defaultValues.keys()
