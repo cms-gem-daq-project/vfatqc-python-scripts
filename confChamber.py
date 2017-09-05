@@ -54,8 +54,9 @@ if options.gtx in chamber_vfatDACSettings.keys():
 
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
 print 'biased VFATs'
-writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
-print 'Set VThreshold1 to %i'%options.vt1
+if not options.compare:
+    writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
+    print 'Set VThreshold1 to %i'%options.vt1
 
 if options.run:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37,        0)
