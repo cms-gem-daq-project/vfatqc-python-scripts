@@ -70,18 +70,15 @@ if options.filename:
         chTree = inF.Get("scurveFitTree")
         dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
 
-        if options.compare:
-            print 'Comparing Currently Stored Channel Registers with %s'%options.filename
-
-            readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
-        else:
+        if not options.compare:
             print 'Configuring Channel Registers based on %s'%options.filename
             
-            for event in inF.scurveFitTree :
+            for event in inF.scurveFitTree:
                 writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
                 writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
-        
-            readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
+ 
+        print 'Comparing Currently Stored Channel Registers with %s'%options.filename
+        readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
 
     except Exception as e:
         print '%s does not seem to exist'%options.filename
@@ -93,17 +90,14 @@ if options.chConfig:
         chTree.ReadFile(options.chConfig)
         dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
 
-        if options.compare:
-            print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
-            
-            readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
-        else:
+        if not options.compare:
             print 'Configuring Channel Registers based on %s'%options.chConfig
             
             for event in chTree :
                 writeVFAT(ohboard,options.gtx,int(event.vfatN),"VFATChannels.ChanReg%d"%(int(event.vfatCH)),int(event.trimDAC)+32*int(event.mask))
-            
-            readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
+        
+        print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
+        readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
 
     except Exception as e:
         print '%s does not seem to exist'%options.filename
@@ -115,25 +109,18 @@ if options.vfatConfig:
         vfatTree.ReadFile(options.vfatConfig)
         dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
 
-        if options.compare:
-            print 'Comparing Curently Stored VFAT Registers with %s'%options.vfatConfig
-
-            if options.vt1bump != 0:
-                print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
-            
-            readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
-        else:
+        if not options.compare:
             print 'Configuring VFAT Registers based on %s'%options.vfatConfig
 
             for event in vfatTree :
                 print 'Set link %d VFAT%d VThreshold1 to %i'%(options.gtx,event.vfatN,event.vt1+options.vt1bump)
                 writeVFAT(ohboard, options.gtx, int(event.vfatN), "VThreshold1", int(event.vt1+options.vt1bump),0)
                 writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
-            
-            if options.vt1bump != 0:
-                print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
-            
-            readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
+        
+        print 'Comparing Curently Stored VFAT Registers with %s'%options.vfatConfig
+        if options.vt1bump != 0:
+            print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
+        readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
 
     except Exception as e:
         print '%s does not seem to exist'%options.filename
