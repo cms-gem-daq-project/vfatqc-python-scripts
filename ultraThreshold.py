@@ -159,6 +159,10 @@ try:
             stopLocalT1(ohboard, options.gtx)
             pass
         pass
+
+    # Place VFATs back in sleep mode
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
+
 except Exception as e:
     myT.AutoSave("SaveSelf")
     print "An exception occurred", e
