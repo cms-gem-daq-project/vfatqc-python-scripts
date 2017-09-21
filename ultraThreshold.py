@@ -92,7 +92,9 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
+    trgSrc = getTriggerSource(ohboard,options.gtx)
     if options.perchannel:
+        setTriggerSource(ohboard,options.gtx,0x1)
         mode[0] = scanmode.THRESHCH
         sendL1A(ohboard, options.gtx, interval=250, number=0)
 
@@ -123,10 +125,12 @@ try:
             myT.AutoSave("SaveSelf")
             pass
 
+        setTriggerSource(ohboard,options.gtx,trgSrc)
         stopLocalT1(ohboard, options.gtx)
         pass
     else:
         if options.trkdata:
+            setTriggerSource(ohboard,options.gtx,0x1)
             mode[0] = scanmode.THRESHTRK
             sendL1A(ohboard, options.gtx, interval=250, number=0)
         else:
@@ -156,6 +160,7 @@ try:
         myT.AutoSave("SaveSelf")
 
         if options.trkdata:
+            setTriggerSource(ohboard,options.gtx,trgSrc)
             stopLocalT1(ohboard, options.gtx)
             pass
         pass
