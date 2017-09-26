@@ -124,15 +124,15 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
-    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", mask)
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
-    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", mask)
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", 0x0)
     vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
     vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
                         range(0,24)))
-    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    mask)
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
     msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
                          range(0,24)))
 
