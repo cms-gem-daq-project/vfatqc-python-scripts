@@ -17,16 +17,14 @@ parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 
 parser.set_defaults(nevts=1000)
-
 (options, args) = parser.parse_args()
-uhal.setLogLevelTo( uhal.LogLevel.WARNING )
 
 if options.MSPL not in range(1,9):
     print "Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL)
     exit(1)
 
 if options.debug:
-    uhal.setLogLevelTo( uhal.LogLevel.INFO )
+    uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
@@ -58,18 +56,15 @@ utime[0] = int(time.time())
 
 ohboard      = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 seenTriggers = 0
-mask         = 0
 
 try:
     print "Setting trigger source"
-    # setTriggerSource(ohboard,options.gtx,0x0) # GTX
     setTriggerSource(ohboard,options.gtx,0x5) # GBT
 
     print "Setting run mode"
     writeAllVFATs(ohboard, options.gtx, "ContReg0",   0x37)
     print "Setting MSPL to %d"%(options.MSPL)
     writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
-    # writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1)
 
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
@@ -127,4 +122,3 @@ finally:
     myF.cd()
     myT.Write()
     myF.Close()
-

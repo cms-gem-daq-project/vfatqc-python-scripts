@@ -33,13 +33,10 @@ parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--throttle", type="int", default=0, dest="throttle",
                   help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle", metavar="throttle")
-parser.add_option("--vt1", type="int", dest="vt1",
-                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")
 
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
-
 (options, args) = parser.parse_args()
 
 if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
@@ -64,7 +61,7 @@ if (step + options.scanmin > options.scanmax):
     step = options.scanmax - options.scanmin
 
 if options.debug:
-    uhal.setLogLevelTo(uhal.LogLevel.INFO)
+    uhal.setLogLevelTo(uhal.LogLevel.DEBUG)
 else:
     uhal.setLogLevelTo(uhal.LogLevel.ERROR)
 
@@ -117,12 +114,10 @@ LATENCY_MAX = options.scanmax
 
 N_EVENTS = Nev[0]
 
-mask = options.vfatmask
-
 try:
-    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, options.vfatmask)
     writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
-    writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
+    writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, options.vfatmask)
 
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
@@ -156,7 +151,7 @@ try:
     print "AMC13: %s"%(amc13nL1A)
     print "AMC: %s"%(amcnL1A)
     print "OH%s: %s"%(options.gtx,ohnL1A)
-    oh.configureScanModule(ohboard, options.gtx, mode, mask,
+    oh.configureScanModule(ohboard, options.gtx, mode, options.vfatmask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
                         stepsize=step,
                         numtrigs=int(options.nevts),
@@ -165,14 +160,13 @@ try:
     sys.stdout.flush()
     amc13board.enableLocalL1A(True)
 
-
     if options.internal:
         amc.blockL1A(amcboard)
         oh.setTriggerSource(ohboard,options.gtx,0x1)
         oh.sendL1ACalPulse(ohboard, options.gtx, delay=20, interval=400, number=0)
         chanReg = ((1&0x1) << 6)|((0&0x1) << 5)|(0&0x1f)
-        writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, mask)
-        writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
+        writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, options.vfatmask)
+        writeAllVFATs(ohboard, options.gtx, "VCal",     250, options.vfatmask)
     else:
         if options.amc13local:
             amc.enableL1A(amcboard)
@@ -253,7 +247,7 @@ try:
             pass
         pass
     myT.AutoSave("SaveSelf")
-    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, options.vfatmask)
     if options.internal:
         oh.stopLocalT1(ohboard, options.gtx)
         pass
