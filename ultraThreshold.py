@@ -92,12 +92,10 @@ if options.debug:
     CHAN_MAX = 5
     pass
 
-mask = options.vfatmask
-
 try:
-    writeAllVFATs(ohboard, options.gtx, "Latency",     0, mask)
-    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
-    writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
+    writeAllVFATs(ohboard, options.gtx, "Latency",     0, options.vfatmask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, options.vfatmask)
+    writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, options.vfatmask)
 
     trgSrc = getTriggerSource(ohboard,options.gtx)
     if options.perchannel:
@@ -108,7 +106,7 @@ try:
         for scCH in range(CHAN_MIN,CHAN_MAX):
             vfatCH[0] = scCH
             print "Channel #"+str(scCH)
-            configureScanModule(ohboard, options.gtx, mode[0], mask, channel=scCH,
+            configureScanModule(ohboard, options.gtx, mode[0], options.vfatmask, channel=scCH,
                                 scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                                 numtrigs=int(N_EVENTS),
                                 useUltra=True, debug=options.debug)
@@ -118,7 +116,7 @@ try:
             scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
             sys.stdout.flush()
             for i in range(0,24):
-            	if (mask >> i) & 0x1: continue
+            	if (options.vfatmask >> i) & 0x1: continue
                 vfatN[0] = i
                 vfatID[0] = getChipID(ohboard, options.gtx, i, options.debug)
                 dataNow      = scanData[i]
@@ -144,7 +142,7 @@ try:
         else:
             mode[0] = scanmode.THRESHTRG
             pass
-        configureScanModule(ohboard, options.gtx, mode[0], mask,
+        configureScanModule(ohboard, options.gtx, mode[0], options.vfatmask,
                             scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                             numtrigs=int(N_EVENTS),
                             useUltra=True, debug=options.debug)
@@ -175,7 +173,7 @@ try:
         pass
 
     # Place VFATs back in sleep mode
-    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, options.vfatmask)
 
 except Exception as e:
     myT.AutoSave("SaveSelf")
