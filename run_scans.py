@@ -6,7 +6,7 @@ def launchTests(args):
 def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nevts, stepSize=1,
                     vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
                     config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
-                    internal=False):
+                    internal=False, debug=False):
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
@@ -23,6 +23,8 @@ def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax
   setupCmds = []
   preCmd = None
   cmd = ["%s"%(tool),"-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=0x%x"%(vfatmask)]
+  if debug:
+    cmd.append( "--debug")
   if tool == "ultraScurve.py":
     scanType = "scurve"
     dataType = "SCurve"
@@ -213,6 +215,7 @@ if __name__ == '__main__':
                          [options.randoms for x in range(len(chamber_config))],
                          [options.throttle for x in range(len(chamber_config))],
                          [options.internal for x in range(len(chamber_config))],
+                         [options.debug for x in range(len(chamber_config))]
                          )
             )
   if options.series:
@@ -236,7 +239,8 @@ if __name__ == '__main__':
                     options.t3trig,
                     options.randoms,
                     options.throttle,
-                    options.internal
+                    options.internal,
+                    options.debug
                   ])
       pass
     pass
@@ -272,6 +276,7 @@ if __name__ == '__main__':
                                           [options.randoms for x in range(len(chamber_config))],
                                           [options.throttle for x in range(len(chamber_config))],
                                           [options.internal for x in range(len(chamber_config))],
+                                          [options.debug for x in range(len(chamber_config))]
                                           )
                            )
       # timeout must be properly set, otherwise tasks will crash

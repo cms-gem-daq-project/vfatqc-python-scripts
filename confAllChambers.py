@@ -3,7 +3,7 @@
 def launch(args):
   return launchArgs(*args)
 
-def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim):
+def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,debug=False):
     import datetime,os,sys
     from subprocess import CalledProcessError
     from mapping.chamberInfo import chamber_config
@@ -13,6 +13,10 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim):
     filename="%s/%s/trim/z%f/config/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,cName,options.ztrim)
 
     cmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf)]
+
+    if debug:
+        cmd.append("--debug")
+        pass
 
     if run:
         cmd.append("--run")
@@ -76,6 +80,7 @@ if __name__ == '__main__':
                         [options.config    for x in range(len(chamber_config))],
                         [chamber_config[x] for x in chamber_config.keys()],
                         [options.ztrim     for x in range(len(chamber_config))],
+                        [options.debug     for x in range(len(chamber_config))]
                   )
             )
         pass
@@ -83,7 +88,7 @@ if __name__ == '__main__':
         print "Configuring chambers in serial mode"
         for link in chamber_config.keys():
             chamber = chamber_config[link]
-            launchArgs(options.shelf,link,options.slot,options.run,options.vt1,options.vt1bump,options.config,chamber,options.ztrim)
+            launchArgs(options.shelf,link,options.slot,options.run,options.vt1,options.vt1bump,options.config,chamber,options.ztrim,options.debug)
             pass
         pass
     else:
@@ -103,6 +108,7 @@ if __name__ == '__main__':
                                                 [options.config    for x in range(len(chamber_config))],
                                                 [chamber_config[x] for x in chamber_config.keys()],
                                                 [options.ztrim     for x in range(len(chamber_config))],
+                                                [options.debug     for x in range(len(chamber_config))]
                                                 )
                                  )
             # timeout must be properly set, otherwise tasks will crash
