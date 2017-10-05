@@ -41,7 +41,7 @@ if not (0 <= options.chMin <= options.chMax < 128):
     pass
 
 if options.debug:
-    uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
+    uhal.setLogLevelTo( uhal.LogLevel.INFO )
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 

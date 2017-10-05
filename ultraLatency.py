@@ -61,7 +61,7 @@ if (step + options.scanmin > options.scanmax):
     step = options.scanmax - options.scanmin
 
 if options.debug:
-    uhal.setLogLevelTo(uhal.LogLevel.DEBUG)
+    uhal.setLogLevelTo(uhal.LogLevel.INFO)
 else:
     uhal.setLogLevelTo(uhal.LogLevel.ERROR)
 

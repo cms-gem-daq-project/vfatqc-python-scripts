@@ -23,7 +23,7 @@ parser.add_option("--vt1", type="int", dest="vt1",
 (options, args) = parser.parse_args()
 
 if options.debug:
-    uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
+    uhal.setLogLevelTo( uhal.LogLevel.INFO )
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
