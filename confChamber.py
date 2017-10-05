@@ -30,7 +30,7 @@ parser.add_option("--vt1bump", type="int", dest="vt1bump",
 (options, args) = parser.parse_args()
 
 if options.debug:
-    uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
+    uhal.setLogLevelTo( uhal.LogLevel.INFO )
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
