@@ -80,7 +80,7 @@ for vfat in range(0,24):
 for vfat in range(0,24):
     writeVFAT(ohboard, options.gtx, vfat, "ContReg3", tRanges[vfat], options.debug)
 
-zeroAllVFATChannels(ohboard,options.gtx,mask=0x0,options.debug)
+zeroAllVFATChannels(ohboard,options.gtx,mask=0x0,debug=options.debug)
 
 # Scurve scan with trimdac set to 0
 filename0 = "%s/SCurveData_trimdac0_range0.root"%dirPath
