@@ -114,10 +114,12 @@ LATENCY_MAX = options.scanmax
 
 N_EVENTS = Nev[0]
 
+mask = options.vfatmask
+
 try:
-    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, options.vfatmask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
     writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
-    writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, options.vfatmask)
+    writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
@@ -151,7 +153,7 @@ try:
     print "AMC13: %s"%(amc13nL1A)
     print "AMC: %s"%(amcnL1A)
     print "OH%s: %s"%(options.gtx,ohnL1A)
-    oh.configureScanModule(ohboard, options.gtx, mode, options.vfatmask,
+    oh.configureScanModule(ohboard, options.gtx, mode, mask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
                         numtrigs=int(options.nevts),
                         useUltra=True, debug=True)
@@ -164,8 +166,8 @@ try:
         oh.setTriggerSource(ohboard,options.gtx,0x1)
         oh.sendL1ACalPulse(ohboard, options.gtx, delay=20, interval=400, number=0)
         chanReg = ((1&0x1) << 6)|((0&0x1) << 5)|(0&0x1f)
-        writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, options.vfatmask)
-        writeAllVFATs(ohboard, options.gtx, "VCal",     250, options.vfatmask)
+        writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, mask)
+        writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
     else:
         if options.amc13local:
             amc.enableL1A(amcboard)
@@ -246,7 +248,7 @@ try:
             pass
         pass
     myT.AutoSave("SaveSelf")
-    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, options.vfatmask)
+    writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
     if options.internal:
         oh.stopLocalT1(ohboard, options.gtx)
         pass
