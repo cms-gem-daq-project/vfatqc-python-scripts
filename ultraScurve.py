@@ -41,7 +41,7 @@ if not (0 <= options.chMin <= options.chMax < 128):
     pass
 
 if options.debug:
-    uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
+    uhal.setLogLevelTo( uhal.LogLevel.INFO )
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
@@ -129,9 +129,6 @@ try:
 
     print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
 
-    #biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
-    #writeAllVFATs(ohboard, options.gtx, "VThreshold1", 100, 0)
-
     writeAllVFATs(ohboard, options.gtx, "Latency",    options.latency, mask)
     writeAllVFATs(ohboard, options.gtx, "ContReg0", 0x37, mask)
     writeAllVFATs(ohboard, options.gtx, "ContReg2",   (options.MSPL - 1) << 4, mask)
@@ -191,7 +188,3 @@ finally:
     myF.cd()
     myT.Write()
     myF.Close()
-
-
-
-

@@ -32,7 +32,7 @@ if options.vt2 not in range(256):
     exit(1)
 
 if options.debug:
-    uhal.setLogLevelTo( uhal.LogLevel.DEBUG )
+    uhal.setLogLevelTo( uhal.LogLevel.INFO )
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 

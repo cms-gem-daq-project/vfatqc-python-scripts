@@ -33,13 +33,10 @@ parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--throttle", type="int", default=0, dest="throttle",
                   help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle", metavar="throttle")
-parser.add_option("--vt1", type="int", dest="vt1",
-                  help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")
 
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
-
 (options, args) = parser.parse_args()
 
 if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
@@ -164,7 +161,6 @@ try:
     oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
     sys.stdout.flush()
     amc13board.enableLocalL1A(True)
-
 
     if options.internal:
         amc.blockL1A(amcboard)
