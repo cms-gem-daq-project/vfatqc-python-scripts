@@ -9,7 +9,6 @@ Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
 from array import array
 from gempython.tools.vfat_user_functions_xhal import *
 from gempython.gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
-from gempython.gemplotting.mapping.amcInfo import ctp7Params 
 from gempython.vfatqc.qcoptions import parser
 #from gempython.vfatqc.qcutilities import readBackCheck 
 
