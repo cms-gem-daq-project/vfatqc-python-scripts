@@ -26,7 +26,7 @@ parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 or CFG_THR_ARM_DAC value for all VFATs", metavar="vt1", default=100)
 parser.add_option("--vt2", type="int", dest="vt2",
-                  help="VThreshold2 DAC value for all VFATs", metavar="vt2", default=0)
+                  help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0)
 parser.add_option("--vt1bump", type="int", dest="vt1bump",
                   help="VThreshold1 DAC bump value for all VFATs", metavar="vt1bump", default=0)
 
