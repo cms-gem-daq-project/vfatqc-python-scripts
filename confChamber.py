@@ -76,6 +76,10 @@ if options.filename:
             print 'Configuring Channel Registers based on %s'%options.filename
             
             for event in inF.scurveFitTree:
+                # Skip masked vfats
+                if (options.vfatmask >> int(event.vfatN)) & 0x1:
+                    continue
+                
                 vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
                 if not (vfatBoard.parentOH.parentAMC.fwVersion > 2):
                     vfatBoard.writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),options.debug)
@@ -103,6 +107,10 @@ if options.chConfig:
             print 'Configuring Channel Registers based on %s'%options.chConfig
             
             for event in chTree :
+                # Skip masked vfats
+                if (options.vfatmask >> int(event.vfatN)) & 0x1:
+                    continue
+                
                 vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
         
         #print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
