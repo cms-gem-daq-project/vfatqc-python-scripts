@@ -10,8 +10,7 @@ import sys, os, random, time
 from array import array
 from ctypes import *
 
-#from gempython.tools.optohybrid_user_functions_uhal import *
-#from gempython.tools.vfat_user_functions_uhal import *
+from gempython.tools.vfat_user_functions_xhal import *
 
 from gempython.vfatqc.qcoptions import parser
 
@@ -30,10 +29,10 @@ parser.add_option("--vt2", type="int", dest="vt2", default=0,
 
 (options, args) = parser.parse_args()
 
-#if options.vt2 not in range(256):
-#    print "Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2)
-#    exit(1)
-#
+if options.vt2 not in range(256):
+    print "Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2)
+    exit(1)
+
 #if options.debug:
 #    uhal.setLogLevelTo( uhal.LogLevel.INFO )
 #else:
@@ -48,16 +47,8 @@ startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 
-from rpcService import *
-from gempython.gemplotting.mapping.amcInfo import ctp7Params 
-rpc_connect(ctp7Params.cardLocation[(options.shelf, options.slot)])
-print 'opened connection'
-#ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
+vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
 
-#THRESH_MIN = 0
-#THRESH_MAX = 254
-
-# N_EVENTS = options.nevts
 CHAN_MIN = options.chMin
 CHAN_MAX = options.chMax + 1
 if options.debug:
@@ -67,14 +58,14 @@ if options.debug:
 mask = options.vfatmask
 
 try:
-    #writeAllVFATs(ohboard, options.gtx, "Latency",     0, mask)
-    #writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
-    #writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
+    vfatBoard.setVFATLatencyAll(mask=options.vfatmask, lat=0, debug=options.debug)
+    vfatBoard.setRunModeAll(mask, True, options.debug)
+    vfatBoard.setVFATThresholdAll(mask=options.vfatmask, vt1=100, vt2=options.vt2, debug=options.debug)
 
     #trgSrc = getTriggerSource(ohboard,options.gtx)
     if options.perchannel:
         # Configure TTC
-        if 0 == ttcGenConf(options.L1Atime, options.pDel):
+        if 0 == vfatBoard.parentOH.parentAMC.ttcGenConf(options.L1Atime, options.pDel):
             print "TTC configured successfully"
         else:
             print "TTC configuration failed"
@@ -98,9 +89,9 @@ try:
 
             #startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
             #scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
-            rpcResp = genScan(  options.nevts, options.gtx,
-                            options.scanmin,options.scanmax,options.stepSize,
-                            chan,1,options.vfatmask,"THR_ARM_DAC",scanData)
+            rpcResp = vfatBoard.parentOH.genScan(options.nevts, options.gtx,
+                                                 options.scanmin,options.scanmax,options.stepSize,
+                                                 chan,1,options.vfatmask,"THR_ARM_DAC",scanData)
 
             if rpcResp != 0:
                 print("threshold scan for channel %i failed"%chan)
@@ -123,7 +114,7 @@ try:
                             vth1[0] = threshDAC - vfat*scanDataSizeVFAT
                         Nev[0] = scanData[threshDAC] & 0xffff
                         Nhits[0] = (scanData[threshDAC]>>16) & 0xffff
-                        print vfat,chan,threshDAC,vth1[0],Nhits[0],Nev[0]
+                        #print vfat,chan,threshDAC,vth1[0],Nhits[0],Nev[0]
                     except IndexError:
                         print 'Unable to index data for channel %i'%chan
                         print scanData[threshDAC]
