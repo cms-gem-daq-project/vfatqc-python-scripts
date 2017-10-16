@@ -41,6 +41,33 @@ if options.vt2 not in range(256):
 import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
+myT = r.TTree('thrTree','Tree Holding CMS GEM VT1 Data')
+
+Nev = array( 'i', [ 0 ] )
+Nev[0] = -1
+myT.Branch( 'Nev', Nev, 'Nev/I' )
+vth = array( 'i', [ 0 ] )
+myT.Branch( 'vth', vth, 'vth/I' )
+vth1 = array( 'i', [ 0 ] )
+myT.Branch( 'vth1', vth1, 'vth1/I' )
+vth2 = array( 'i', [ 0 ] )
+myT.Branch( 'vth2', vth2, 'vth2/I' )
+vth2[0] = options.vt2
+Nhits = array( 'i', [ 0 ] )
+myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
+vfatN = array( 'i', [ 0 ] )
+myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+vfatCH = array( 'i', [ 0 ] )
+myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
+trimRange = array( 'i', [ 0 ] )
+myT.Branch( 'trimRange', trimRange, 'trimRange/I' )
+link = array( 'i', [ 0 ] )
+myT.Branch( 'link', link, 'link/I' )
+link[0] = options.gtx
+mode = array( 'i', [ 0 ] )
+myT.Branch( 'mode', mode, 'mode/I' )
+utime = array( 'i', [ 0 ] )
+myT.Branch( 'utime', utime, 'utime/I' )
 
 import subprocess,datetime,time
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
