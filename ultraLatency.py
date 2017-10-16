@@ -10,9 +10,7 @@ import sys, os, random, time
 from array import array
 from ctypes import *
 
-#import gempython.tools.optohybrid_user_functions_uhal as oh
-#from gempython.tools.vfat_user_functions_uhal import *
-#import gempython.tools.amc_user_functions_uhal as amc
+from gempython.tools.vfat_user_functions_xhal import *
 
 from gempython.vfatqc.qcoptions import parser
 
@@ -31,8 +29,8 @@ parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--throttle", type="int", default=0, dest="throttle",
                   help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle", metavar="throttle")
-parser.add_option("--vt2", type="int", dest="vt2", default=0,
-                  help="Specify VT2 to use", metavar="vt2")
+parser.add_option("--vt2", type="int", dest="vt2",
+                  help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0)
 
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 (options, args) = parser.parse_args()
@@ -58,15 +56,35 @@ step = options.stepSize
 if (step + options.scanmin > options.scanmax):
     step = options.scanmax - options.scanmin
 
-import uhal
-if options.debug:
-    uhal.setLogLevelTo(uhal.LogLevel.DEBUG)
-else:
-    uhal.setLogLevelTo(uhal.LogLevel.ERROR)
-
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
+myT = TTree('latTree','Tree Holding CMS GEM Latency Data')
+
+Nev = array( 'i', [ 0 ] )
+Nev[0] = -1
+myT.Branch( 'Nev', Nev, 'Nev/I' )
+vth = array( 'i', [ 0 ] )
+myT.Branch( 'vth', vth, 'vth/I' )
+vth1 = array( 'i', [ 0 ] )
+myT.Branch( 'vth1', vth1, 'vth1/I' )
+vth2 = array( 'i', [ 0 ] )
+myT.Branch( 'vth2', vth2, 'vth2/I' )
+lat = array( 'i', [ 0 ] )
+myT.Branch( 'lat', lat, 'lat/I' )
+Nhits = array( 'i', [ 0 ] )
+myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
+vfatN = array( 'i', [ 0 ] )
+myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+mspl = array( 'i', [ -1 ] )
+myT.Branch( 'mspl', mspl, 'mspl/I' )
+vfatCH = array( 'i', [ 0 ] )
+myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
+link = array( 'i', [ 0 ] )
+myT.Branch( 'link', link, 'link/I' )
+link[0] = options.gtx
+utime = array( 'i', [ 0 ] )
+myT.Branch( 'utime', utime, 'utime/I' )
 
 import subprocess,datetime,time
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
@@ -83,36 +101,35 @@ connection_file = "%s/connections.xml"%(os.getenv("GEM_ADDRESS_TABLE_PATH"))
 amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
 amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
 
-from rpcService import *
-from gempython.gemplotting.mapping.amcInfo import ctp7Params 
-rpc_connect(ctp7Params.cardLocation[(options.shelf, options.slot)])
-print 'opened connection'
-#amcboard = amc.getAMCObject(options.slot,options.shelf,options.debug)
-#ohboard  = oh.getOHObject(options.slot,options.gtx,options.shelf,options.debug)
-
-#LATENCY_MIN = options.scanmin
-#LATENCY_MAX = options.scanmax
-
-# N_EVENTS = options.nevts
+vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
 
 mask = options.vfatmask
 
 try:
-    #writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
-    #writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
-    #writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
+    vfatBoard.setRunModeAll(mask, True, options.debug)
+    vfatBoard.setVFATMSPLAll(mask, options.MSPL, options.debug)
+    
+    if vfatBoard.parentOH.parentAMC.fwVersion > 2:
+        vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", mask)
+        vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                            range(0,24)))
+        vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
+        msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),
+                             range(0,24)))
+    else:
+        vfatBoard.writeAllVFATs("VThreshold2", options.vt2, mask)
 
-    #vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
-    #vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-    #                    range(0,24)))
-    #vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", 0x0)
-    #vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-    #                    range(0,24)))
-    #vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
-    #                    range(0,24)))
-    #vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
-    #msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
-    #                     range(0,24)))
+        vals  = vfatBoard.readAllVFATs("VThreshold1", 0x0)
+        vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                            range(0,24)))
+        vals  = vfatBoard.readAllVFATs("VThreshold2", 0x0)
+        vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                            range(0,24)))
+        vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
+                            range(0,24)))
+        vals = vfatBoard.readAllVFATs("ContReg2",    0x0)
+        msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
+                             range(0,24)))
 
     #mode = scanmode.LATENCY
 
@@ -150,9 +167,9 @@ try:
         #chanReg = ((1&0x1) << 6)|((0&0x1) << 5)|(0&0x1f)
         #writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, mask)
         #writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
-        
+
         # Configure TTC
-        if 0 == ttcGenConf(options.L1Atime, options.pDel):
+        if 0 == vfatBoard.parentOH.parentAMC.ttcGenConf(options.L1Atime, options.pDel):
             print "TTC configured successfully"
         else:
             print "TTC configuration failed"
@@ -198,9 +215,9 @@ try:
     scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
     scanDataSizeNet = scanDataSizeVFAT * 24
     scanData = (c_uint32 * scanDataSizeNet)()
-    rpcResp = genScan(  options.nevts, options.gtx,
-                    options.scanmin,options.scanmax,options.stepSize,
-                    chan,1,options.vfatmask,"LATENCY",scanData)
+    rpcResp = vfatBoard.parentOH.genScan(options.nevts, options.gtx,
+                                         options.scanmin,options.scanmax,options.stepSize,
+                                         chan,1,options.vfatmask,"LATENCY",scanData)
 
     if rpcResp != 0:
         print("latency scan for channel %i failed"%chan)
@@ -226,8 +243,8 @@ try:
     for vfat in range(0,24):
         vfatN[0] = vfat
         #dataNow = scanData[i]
-        #mspl[0]  = msplvals[vfatN[0]]
-        #vth1[0]  = vt1vals[vfatN[0]]
+        mspl[0]  = msplvals[vfatN[0]]
+        vth1[0]  = vt1vals[vfatN[0]]
         #vth2[0]  = vt2vals[vfatN[0]]
         #vth[0]   = vthvals[vfatN[0]]
         if options.debug:
@@ -247,7 +264,7 @@ try:
                     lat[0] = latReg - vfat*scanDataSizeVFAT
                 Nev[0] = scanData[latReg] & 0xffff
                 Nhits[0] = (scanData[latReg]>>16) & 0xffff
-                print vfat,chan,latReg,lat[0],Nhits[0],Nev[0]
+                #print vfat,chan,latReg,lat[0],Nhits[0],Nev[0]
             except IndexError:
                 print 'Unable to index data for channel %i'%chan
                 print scanData[latReg]
@@ -258,7 +275,7 @@ try:
             pass
         pass
     myT.AutoSave("SaveSelf")
-    #writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
+    vfatBoard.setRunModeAll(mask, False, options.debug)
     if options.internal:
         #oh.stopLocalT1(ohboard, options.gtx)
         pass
