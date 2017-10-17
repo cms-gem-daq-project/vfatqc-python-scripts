@@ -65,6 +65,10 @@ if options.debug:
 else:
     uhal.setLogLevelTo(uhal.LogLevel.ERROR)
 
+from gempython.utils.wrappers import runCommand
+cmd = ["amc_info_uhal.py","--shelf=%i"%options.shelf,"-s%i"%options.slot,"--short"]
+runCommand(cmd)
+
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
