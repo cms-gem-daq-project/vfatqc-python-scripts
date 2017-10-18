@@ -65,10 +65,6 @@ if options.debug:
 else:
     uhal.setLogLevelTo(uhal.LogLevel.ERROR)
 
-from gempython.utils.wrappers import runCommand
-cmd = ["amc_info_uhal.py","--shelf=%i"%options.shelf,"-s%i"%options.slot,"--short"]
-runCommand(cmd)
-
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
@@ -111,6 +107,9 @@ amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
 amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
 
 amcboard = amc.getAMCObject(options.slot,options.shelf,options.debug)
+amc.printSystemSCAInfo(amcboard, options.debug)
+amc.printSystemTTCInfo(amcboard, options.debug)
+
 ohboard  = oh.getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
 LATENCY_MIN = options.scanmin
