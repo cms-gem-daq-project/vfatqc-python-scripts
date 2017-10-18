@@ -28,9 +28,10 @@ if options.debug:
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
-from gempython.utils.wrappers import runCommand
-cmd = ["amc_info_uhal.py","--shelf=%i"%options.shelf,"-s%i"%options.slot,"--short"]
-runCommand(cmd)
+from gempython.tools.amc_user_functions_uhal import *
+amcBoard = getAMCObject(options.slot, options.shelf, options.debug)
+printSystemSCAInfo(amcBoard, options.debug)
+printSystemTTCInfo(amcBoard, options.debug)
 
 from ROOT import TFile,TTree
 filename = options.filename

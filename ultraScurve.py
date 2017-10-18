@@ -45,10 +45,6 @@ if options.debug:
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
-from gempython.utils.wrappers import runCommand
-cmd = ["amc_info_uhal.py","--shelf=%i"%options.shelf,"-s%i"%options.slot,"--short"]
-runCommand(cmd)
-
 import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
@@ -111,6 +107,11 @@ utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
+
+from gempython.tools.amc_user_functions_uhal import *
+amcBoard = getAMCObject(options.slot, options.shelf, options.debug)
+printSystemSCAInfo(amcBoard, options.debug)
+printSystemTTCInfo(amcBoard, options.debug)
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
