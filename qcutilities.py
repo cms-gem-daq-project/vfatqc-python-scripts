@@ -64,7 +64,7 @@ def readBackCheck(rootTree, dict_Names, device, gtx):
                 valsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
                 valOfReg = np.asscalar(writeValsPerVFAT['%s'%bName])
                 if valOfReg != regValues[vfat]:
-                    print "VFAT%i: %s mismatch, expected = %i, readback = %i"%(vfat, regName, valOfReg, regValues[vfat])
+                    print "VFAT%i: %s mismatch, expected = %i, readback = %i"%(vfat, regName, hex(valOfReg), hex(regValues[vfat]))
         else: #VFAT Register, use 0xff
             regValues = readAllVFATs(device, gtx, regName, 0x0)
             regMap = map(lambda chip: chip&0xff, regValues)
