@@ -1,4 +1,4 @@
-def readBackCheck(rootTree, dict_Names, device, gtx):
+def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     """
     Given an input set of registers, and expected values of those registers, read from all VFATs on device.gtx to see if there are any differences between written and read values.
 
@@ -72,6 +72,8 @@ def readBackCheck(rootTree, dict_Names, device, gtx):
             for vfat,readBackVal in enumerate(regMap):
                 writeValsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
                 writeValOfReg = np.asscalar(writeValsPerVFAT['%s'%bName])
+                if regName == "VThreshold1":
+                    writeValOfReg+=vt1bump
                 if writeValOfReg != readBackVal:
                     print "VFAT%i: %s mismatch, write val = %i, readback = %i"%(vfat, regName, writeValOfReg, readBackVal)
 
