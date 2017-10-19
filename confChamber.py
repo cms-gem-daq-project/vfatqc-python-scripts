@@ -68,7 +68,7 @@ if options.filename:
     try:
         inF = r.TFile(options.filename)
         chTree = inF.Get("scurveFitTree")
-        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg", "vfatID:ChipID1" }
+        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg", "vfatID":"ChipID1" }
 
         if not options.compare:
             print 'Configuring Channel Registers based on %s'%options.filename
@@ -88,7 +88,7 @@ if options.chConfig:
     try:
         chTree = r.TTree('chTree','Tree holding Channel Configuration Parameters')
         chTree.ReadFile(options.chConfig)
-        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg", "vfatID:ChipID1" }
+        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg", "vfatID":"ChipID1" }
 
         if not options.compare:
             print 'Configuring Channel Registers based on %s'%options.chConfig
@@ -107,7 +107,7 @@ if options.vfatConfig:
     try:
         vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
         vfatTree.ReadFile(options.vfatConfig)
-        dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3", "vfatID:ChipID1" }
+        dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3", "vfatID":"ChipID1" }
 
         if not options.compare:
             print 'Configuring VFAT Registers based on %s'%options.vfatConfig
