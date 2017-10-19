@@ -63,6 +63,9 @@ myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
 
+vfatID = array( 'i', [-1] )
+myT.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
+
 vfatCH = array( 'i', [ 0 ] )
 myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
 
@@ -161,6 +164,7 @@ try:
         for i in range(0,24):
             if (mask >> i) & 0x1: continue
             vfatN[0] = i
+            vfatID[0] = getChipID(ohboard, options.gtx, vfat, options.debug)
             dataNow = scanData[i]
             trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
             trimDAC[0]   = (0x1f & readVFAT(ohboard,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))

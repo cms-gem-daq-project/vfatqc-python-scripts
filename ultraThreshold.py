@@ -55,6 +55,8 @@ Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+vfatID = array( 'i', [-1] )
+myT.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
 vfatCH = array( 'i', [ 0 ] )
 myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
 trimRange = array( 'i', [ 0 ] )
@@ -118,6 +120,7 @@ try:
             for i in range(0,24):
             	if (mask >> i) & 0x1: continue
                 vfatN[0] = i
+                vfatID[0] = getChipID(ohboard, options.gtx, vfat, options.debug)
                 dataNow      = scanData[i]
                 trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
                 for VC in range(THRESH_MAX-THRESH_MIN+1):
