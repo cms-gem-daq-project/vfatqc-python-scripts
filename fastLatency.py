@@ -37,6 +37,8 @@ Dly = array( 'i', [ -1 ] )
 myT.Branch( 'Dly', Dly, 'Dly/I' )
 vfatN = array( 'i', [ -1 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+vfatID = array( 'i', [-1] )
+myT.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
 vth = array( 'i', [ 0 ] )
 myT.Branch( 'vth', vth, 'vth/I' )
 vth1 = array( 'i', [ 0 ] )
@@ -96,6 +98,7 @@ try:
                     pass
                 Dly[0]   = dlyValue
                 vfatN[0] = vfat
+                vfatID[0] = getChipID(ohboard, options.gtx, vfat, options.debug)
                 mspl[0]  = msplvals[vfat]
                 vth1[0]  = vt1vals[vfat]
                 vth2[0]  = vt2vals[vfat]

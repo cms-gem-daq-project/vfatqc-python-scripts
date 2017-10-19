@@ -85,6 +85,8 @@ Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+vfatID = array( 'i', [-1] )
+myT.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
 mspl = array( 'i', [ -1 ] )
 myT.Branch( 'mspl', mspl, 'mspl/I' )
 vfatCH = array( 'i', [ 0 ] )
@@ -230,6 +232,7 @@ try:
     sys.stdout.flush()
     for i in range(0,24):
         vfatN[0] = i
+        vfatID[0] = getChipID(ohboard, options.gtx, vfat, options.debug)
         dataNow = scanData[i]
         mspl[0]  = msplvals[vfatN[0]]
         vth1[0]  = vt1vals[vfatN[0]]
