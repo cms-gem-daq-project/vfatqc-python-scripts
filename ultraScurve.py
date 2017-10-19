@@ -159,7 +159,7 @@ try:
         for i in range(0,24):
             if (mask >> i) & 0x1: continue
             vfatN[0] = i
-            vfatID[0] = getChipID(ohboard, options.gtx, vfat, options.debug)
+            vfatID[0] = getChipID(ohboard, options.gtx, i, options.debug)
             dataNow = scanData[i]
             trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
             trimDAC[0]   = (0x1f & readVFAT(ohboard,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))
