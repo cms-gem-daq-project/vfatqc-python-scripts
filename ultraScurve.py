@@ -48,59 +48,17 @@ else:
 import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
-myT = r.TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
 
-Nev = array( 'i', [ 0 ] )
-Nev[0] = options.nevts
-myT.Branch( 'Nev', Nev, 'Nev/I' )
-
-vcal = array( 'i', [ 0 ] )
-myT.Branch( 'vcal', vcal, 'vcal/I' )
-
-Nhits = array( 'i', [ 0 ] )
-myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
-
-vfatN = array( 'i', [ 0 ] )
-myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-
-vfatCH = array( 'i', [ 0 ] )
-myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
-
-trimRange = array( 'i', [ 0 ] )
-myT.Branch( 'trimRange', trimRange, 'trimRange/I' )
-
-vthr = array( 'i', [ 0 ] )
-myT.Branch( 'vthr', vthr, 'vthr/I' )
-
-trimDAC = array( 'i', [ 0 ] )
-myT.Branch( 'trimDAC', trimDAC, 'trimDAC/I' )
-
-l1aTime = array( 'i', [ 0 ] )
-myT.Branch( 'l1aTime', l1aTime, 'l1aTime/I' )
-l1aTime[0] = options.L1Atime
-
-mspl = array( 'i', [ 0 ] )
-myT.Branch( 'mspl', mspl, 'mspl/I' )
-mspl[0] = options.MSPL
-
-latency = array( 'i', [ 0 ] )
-myT.Branch( 'latency', latency, 'latency/I' )
-latency[0] = options.latency
-
-pDel = array( 'i', [ 0 ] )
-myT.Branch( 'pDel', pDel, 'pDel/I' )
-pDel[0] = options.pDel
-
-calPhase = array( 'i', [ 0 ] )
-myT.Branch( 'calPhase', calPhase, 'calPhase/I' )
-calPhase[0] = options.CalPhase
-
-link = array( 'i', [ 0 ] )
-myT.Branch( 'link', link, 'link/I' )
-link[0] = options.gtx
-
-utime = array( 'i', [ 0 ] )
-myT.Branch( 'utime', utime, 'utime/I' )
+# Setup the output TTree
+from treeStructure import gemTreeStructure
+gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data')
+gemData.calPhase[0] = options.CalPhase
+gemData.l1aTime[0] = options.L1Atime
+gemData.latency[0] = options.latency
+gemData.link[0] = options.gtx
+gemData.mspl[0] = options.MSPL
+gemData.Nev[0] = options.nevts
+gemData.pDel[0] = options.pDel
 
 import subprocess,datetime,time
 utime[0] = int(time.time())
@@ -141,7 +99,7 @@ try:
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
 
     for scCH in range(CHAN_MIN,CHAN_MAX):
-        vfatCH[0] = scCH
+        gemData.vfatCH[0] = scCH
         print "Channel #"+str(scCH)
         for vfat in range(0,24):
             if (mask >> vfat) & 0x1: continue
@@ -155,27 +113,27 @@ try:
         scanData = getUltraScanResults(ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
         for i in range(0,24):
             if (mask >> i) & 0x1: continue
-            vfatN[0] = i
+            gemData.vfatN[0] = i
             dataNow = scanData[i]
-            trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
-            trimDAC[0]   = (0x1f & readVFAT(ohboard,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))
-            vthr[0]      = (0xff & readVFAT(ohboard,options.gtx, i,"VThreshold1"))
+            gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
+            gemData.trimDAC[0]   = (0x1f & readVFAT(ohboard,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))
+            gemData.vth1[0]      = (0xff & readVFAT(ohboard,options.gtx, i,"VThreshold1"))
             for VC in range(SCURVE_MAX-SCURVE_MIN+1):
                 try:
-                    vcal[0]  = int((dataNow[VC] & 0xff000000) >> 24)
-                    Nhits[0] = int(dataNow[VC] & 0xffffff)
+                    gemData.vcal[0]  = int((dataNow[VC] & 0xff000000) >> 24)
+                    gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
                 except IndexError:
                     print 'Unable to index data for channel %i'%scCH
                     print dataNow
-                    vcal[0]  = -99
-                    Nhits[0] = -99
+                    gemData.vcal[0]  = -99
+                    gemData.Nhits[0] = -99
                 finally:
-                    myT.Fill()
+                    gemData.gemTree.Fill()
         for vfat in range(0,24):
             if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
-        myT.AutoSave("SaveSelf")
+        gemData.gemTree.AutoSave("SaveSelf")
         sys.stdout.flush()
         pass
     stopLocalT1(ohboard, options.gtx)
@@ -186,5 +144,5 @@ except Exception as e:
     print "An exception occurred", e
 finally:
     myF.cd()
-    myT.Write()
+    gemData.gemTree.Write()
     myF.Close()
