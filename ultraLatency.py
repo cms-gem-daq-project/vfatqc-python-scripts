@@ -232,7 +232,7 @@ try:
     sys.stdout.flush()
     for i in range(0,24):
         vfatN[0] = i
-        vfatID[0] = getChipID(ohboard, options.gtx, vfat, options.debug)
+        vfatID[0] = getChipID(ohboard, options.gtx, i, options.debug)
         dataNow = scanData[i]
         mspl[0]  = msplvals[vfatN[0]]
         vth1[0]  = vt1vals[vfatN[0]]
