@@ -75,6 +75,11 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
+    # Get mspl value
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
+    msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
+                         range(0,24)))
+
     trgSrc = getTriggerSource(ohboard,options.gtx)
     if options.perchannel:
         setTriggerSource(ohboard,options.gtx,0x1)
@@ -97,6 +102,7 @@ try:
             	if (mask >> i) & 0x1: continue
                 dataNow      = scanData[i]
                 gemData.vfatN[0] = i
+                gemData.mspl[0]  = msplvals[gemData.vfatN[0]]
                 gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
                 for VC in range(THRESH_MAX-THRESH_MIN+1):
                     gemData.vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
