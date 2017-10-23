@@ -1,8 +1,10 @@
+from array import array
 import ROOT as r
+#import time
 
 class gemTreeStructure:
     def __init__(self, name, description="Generic GEM TTree"):
-        gemTree = r.TTree(name,description)
+        self.gemTree = r.TTree(name,description)
 
         self.calPhase = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'calPhase', self.calPhase, 'calPhase/I' )

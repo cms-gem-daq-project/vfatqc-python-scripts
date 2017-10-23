@@ -61,7 +61,7 @@ gemData.Nev[0] = options.nevts
 gemData.pDel[0] = options.pDel
 
 import subprocess,datetime,time
-utime[0] = int(time.time())
+gemData.utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
@@ -71,7 +71,7 @@ ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 SCURVE_MIN = 0
 SCURVE_MAX = 254
 
-N_EVENTS = Nev[0]
+N_EVENTS = gemData.Nev[0]
 CHAN_MIN = options.chMin
 CHAN_MAX = options.chMax + 1
 if options.debug:
