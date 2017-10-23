@@ -98,6 +98,7 @@ try:
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
 
+    gemData.mode[0] = scanmode.SCURVE
     for scCH in range(CHAN_MIN,CHAN_MAX):
         gemData.vfatCH[0] = scCH
         print "Channel #"+str(scCH)
@@ -105,7 +106,7 @@ try:
             if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
-        configureScanModule(ohboard, options.gtx, scanmode.SCURVE, mask, channel = scCH,
+        configureScanModule(ohboard, options.gtx, gemData.mode[0], mask, channel = scCH,
                             scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS),
                             useUltra = True, debug = options.debug)
         printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
