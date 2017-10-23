@@ -141,7 +141,7 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
 
 except Exception as e:
-    myT.AutoSave("SaveSelf")
+    gemData.gemTree.AutoSave("SaveSelf")
     print "An exception occurred", e
 finally:
     myF.cd()
