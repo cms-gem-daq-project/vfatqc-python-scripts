@@ -68,35 +68,15 @@ else:
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
-myT = TTree('latTree','Tree Holding CMS GEM Latency Data')
 
-Nev = array( 'i', [ 0 ] )
-Nev[0] = options.nevts
-myT.Branch( 'Nev', Nev, 'Nev/I' )
-vth = array( 'i', [ 0 ] )
-myT.Branch( 'vth', vth, 'vth/I' )
-vth1 = array( 'i', [ 0 ] )
-myT.Branch( 'vth1', vth1, 'vth1/I' )
-vth2 = array( 'i', [ 0 ] )
-myT.Branch( 'vth2', vth2, 'vth2/I' )
-lat = array( 'i', [ 0 ] )
-myT.Branch( 'lat', lat, 'lat/I' )
-Nhits = array( 'i', [ 0 ] )
-myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
-vfatN = array( 'i', [ 0 ] )
-myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-mspl = array( 'i', [ -1 ] )
-myT.Branch( 'mspl', mspl, 'mspl/I' )
-vfatCH = array( 'i', [ 0 ] )
-myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
-link = array( 'i', [ 0 ] )
-myT.Branch( 'link', link, 'link/I' )
-link[0] = options.gtx
-utime = array( 'i', [ 0 ] )
-myT.Branch( 'utime', utime, 'utime/I' )
+# Setup the output TTree
+from treeStructure import gemTreeStructure
+gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data')
+gemData.link[0] = options.gtx
+gemData.Nev[0] = options.nevts
 
 import subprocess,datetime,time
-utime[0] = int(time.time())
+gemData.utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print(startTime)
 Date = startTime
@@ -112,7 +92,7 @@ ohboard  = oh.getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 LATENCY_MIN = options.scanmin
 LATENCY_MAX = options.scanmax
 
-N_EVENTS = Nev[0]
+N_EVENTS = gemData.Nev[0]
 
 mask = options.vfatmask
 
@@ -133,7 +113,7 @@ try:
     msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
                          range(0,24)))
 
-    mode = scanmode.LATENCY
+    gemData.mode[0] = scanmode.LATENCY
 
     oh.stopLocalT1(ohboard, options.gtx)
 
@@ -153,7 +133,7 @@ try:
     print "AMC13: %s"%(amc13nL1A)
     print "AMC: %s"%(amcnL1A)
     print "OH%s: %s"%(options.gtx,ohnL1A)
-    oh.configureScanModule(ohboard, options.gtx, mode, mask,
+    oh.configureScanModule(ohboard, options.gtx, gemData.mode[0], mask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
                         stepsize=step,
                         numtrigs=int(options.nevts),
@@ -229,26 +209,31 @@ try:
     amc13board.enableLocalL1A(True)
     sys.stdout.flush()
     for i in range(0,24):
-        vfatN[0] = i
         dataNow = scanData[i]
-        mspl[0]  = msplvals[vfatN[0]]
-        vth1[0]  = vt1vals[vfatN[0]]
-        vth2[0]  = vt2vals[vfatN[0]]
-        vth[0]   = vthvals[vfatN[0]]
+        gemData.vfatN[0] = i
+        gemData.mspl[0]  = msplvals[gemData.vfatN[0]]
+        gemData.vth1[0]  = vt1vals[gemData.vfatN[0]]
+        gemData.vth2[0]  = vt2vals[gemData.vfatN[0]]
+        gemData.vth[0]   = vthvals[gemData.vfatN[0]]
         if options.debug:
-            print("{0} {1} {2} {3} {4}".format(vfatN[0], mspl[0], vth1[0], vth2[0], vth[0]))
+            print("{0} {1} {2} {3} {4}".format(
+                gemData.vfatN[0], 
+                gemData.mspl[0], 
+                gemData.vth1[0], 
+                gemData.vth2[0], 
+                gemData.vth[0]))
             sys.stdout.flush()
             pass
         for VC in range(LATENCY_MAX-LATENCY_MIN+1):
-            lat[0]   = int((dataNow[VC] & 0xff000000) >> 24)
-            Nhits[0] = int(dataNow[VC] & 0xffffff)
+            gemData.latency[0]   = int((dataNow[VC] & 0xff000000) >> 24)
+            gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
             if options.debug:
-                print("{0} {1} 0x{2:x} {3} {4}".format(i,VC,dataNow[VC],lat[0],Nhits[0]))
+                print("{0} {1} 0x{2:x} {3} {4}".format(i,VC,dataNow[VC],gemData.latency[0],gemData.Nhits[0]))
                 pass
-            myT.Fill()
+            gemData.gemTree.Fill()
             pass
         pass
-    myT.AutoSave("SaveSelf")
+    gemData.gemTree.AutoSave("SaveSelf")
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
     if options.internal:
         oh.stopLocalT1(ohboard, options.gtx)
@@ -259,9 +244,9 @@ try:
         # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x0)
         pass
 except Exception as e:
-    myT.AutoSave("SaveSelf")
+    gemData.gemTree.AutoSave("SaveSelf")
     print("An exception occurred", e)
 finally:
     myF.cd()
-    myT.Write()
+    gemData.gemTree.Write()
     myF.Close()
