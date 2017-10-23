@@ -4,7 +4,7 @@ def launch(args):
   return launchArgs(*args)
 
 def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nevts, stepSize=1,
-               vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
+               vt1=None,vt2=0,l1atime=None,latency=None,pDel=None,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
                config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
                internal=False, debug=False):
   import datetime,os,sys
@@ -34,8 +34,14 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/SCurveData.root"%dirPath )
+    if l1atime:
+      cmd.append( "--L1Atime=%i"%(l1atime) )
+    if latency:
+      cmd.append( "--latency=%i"%(latency) )
     if mspl:
       cmd.append( "--mspl=%i"%(mspl) )
+    if pDel:
+      cmd.append( "--pulseDelay=%i"%(pDel) )
     preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
@@ -54,6 +60,12 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append("--ztrim=%f"%(ztrim))
+    if l1atime:
+      cmd.append( "--L1Atime=%i"%(l1atime) )
+    if latency:
+      cmd.append( "--latency=%i"%(latency) )
+    if pDel:
+      cmd.append( "--pulseDelay=%i"%(pDel) )
     if vt1 in range(256):
       cmd.append("--vt1=%i"%(vt1))
       pass
@@ -159,14 +171,20 @@ if __name__ == '__main__':
                     help="Configure chambers before running scan", metavar="config")
   parser.add_option("--internal", action="store_true", dest="internal",
                     help="Run a latency scan using the internal calibration pulse", metavar="internal")
+  parser.add_option("--latency", type="int", dest = "latency", default = 37,
+                    help="Specify Latency", metavar="latency")
+  parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
+                    help="Specify time between L1As in bx", metavar="L1Atime")
   parser.add_option("--perchannel", action="store_true", dest="perchannel",
                     help="Run a per-channel VT1 scan", metavar="perchannel")
+  parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
+                    help="Specify time of pulse before L1A in bx", metavar="pDel")
   parser.add_option("--randoms", type="int", default=0, dest="randoms",
                     help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
                     metavar="randoms")
   parser.add_option("--series", action="store_true", dest="series",
                     help="Run tests in series (default is false)", metavar="series")
-  parser.add_option("--stepSize", type="int", dest="stepSize", 
+  parser.add_option("--stepSize", type="int", dest="stepSize",
                     help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
   parser.add_option("--t3trig", action="store_true", dest="t3trig",
                     help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
@@ -190,32 +208,34 @@ if __name__ == '__main__':
     exit(1)
 
   if options.debug:
-    print list(
-            itertools.izip([options.tool for x in range(len(chamber_config))],
-                         [options.shelf for x in range(len(chamber_config))],
-                         [options.slot for x in range(len(chamber_config))],
-                         chamber_config.keys(),
-                         chamber_config.values(),
-                         [hex(vfatmask) for vfatmask in chamber_vfatMask.values()],
-                         [options.scanmin for x in range(len(chamber_config))],
-                         [options.scanmax for x in range(len(chamber_config))], 
-                         [options.nevts   for x in range(len(chamber_config))],
-                         [options.stepSize for x in range(len(chamber_config))],
-                         [options.vt1     for x in range(len(chamber_config))],
-                         [options.vt2     for x in range(len(chamber_config))],
-                         [options.MSPL    for x in range(len(chamber_config))],
-                         [options.perchannel for x in range(len(chamber_config))],
-                         [options.trkdata for x in range(len(chamber_config))],
-                         [options.ztrim   for x in range(len(chamber_config))],
-                         [options.config  for x in range(len(chamber_config))],
-                         [options.amc13local  for x in range(len(chamber_config))],
-                         [options.t3trig  for x in range(len(chamber_config))],
-                         [options.randoms for x in range(len(chamber_config))],
-                         [options.throttle for x in range(len(chamber_config))],
-                         [options.internal for x in range(len(chamber_config))],
-                         [options.debug for x in range(len(chamber_config))]
-                         )
-            )
+    print list(itertools.izip([options.tool for x in range(len(chamber_config))],
+                              [options.shelf for x in range(len(chamber_config))],
+                              [options.slot for x in range(len(chamber_config))],
+                              chamber_config.keys(),
+                              chamber_config.values(),
+                              [hex(vfatmask) for vfatmask in chamber_vfatMask.values()],
+                              [options.scanmin for x in range(len(chamber_config))],
+                              [options.scanmax for x in range(len(chamber_config))],
+                              [options.nevts   for x in range(len(chamber_config))],
+                              [options.stepSize for x in range(len(chamber_config))],
+                              [options.vt1     for x in range(len(chamber_config))],
+                              [options.vt2     for x in range(len(chamber_config))],
+                              [options.L1Atime for x in range(len(chamber_config))],
+                              [options.latency for x in range(len(chamber_config))],
+                              [options.pDel for x in range(len(chamber_config))],
+                              [options.MSPL    for x in range(len(chamber_config))],
+                              [options.perchannel for x in range(len(chamber_config))],
+                              [options.trkdata for x in range(len(chamber_config))],
+                              [options.ztrim   for x in range(len(chamber_config))],
+                              [options.config  for x in range(len(chamber_config))],
+                              [options.amc13local  for x in range(len(chamber_config))],
+                              [options.t3trig  for x in range(len(chamber_config))],
+                              [options.randoms for x in range(len(chamber_config))],
+                              [options.throttle for x in range(len(chamber_config))],
+                              [options.internal for x in range(len(chamber_config))],
+                              [options.debug for x in range(len(chamber_config))]
+    )
+    )
   if options.series:
     print "Running jobs in serial mode"
     for link in chamber_config.keys():
@@ -229,10 +249,13 @@ if __name__ == '__main__':
                vfatMask,
                options.scanmin,
                options.scanmax,
-               options.nevts, 
+               options.nevts,
                options.stepSize,
                options.vt1,
                options.vt2,
+               options.L1Atime,
+               options.latency,
+               options.pDel,
                options.MSPL,
                options.perchannel,
                options.trkdata,
@@ -268,6 +291,9 @@ if __name__ == '__main__':
                                           [options.stepSize for x in range(len(chamber_config))],
                                           [options.vt1     for x in range(len(chamber_config))],
                                           [options.vt2     for x in range(len(chamber_config))],
+                                          [options.L1Atime for x in range(len(chamber_config))],
+                                          [options.latency for x in range(len(chamber_config))],
+                                          [options.pDel for x in range(len(chamber_config))],
                                           [options.MSPL    for x in range(len(chamber_config))],
                                           [options.perchannel for x in range(len(chamber_config))],
                                           [options.trkdata for x in range(len(chamber_config))],

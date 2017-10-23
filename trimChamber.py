@@ -13,10 +13,16 @@ from gempython.gemplotting.mapping.chamberInfo import chamber_config
 
 from gempython.vfatqc.qcoptions import parser
 
-parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
-                  help="Specify the file to take trim ranges from", metavar="rangeFile")
 parser.add_option("--dirPath", type="string", dest="dirPath", default=None,
                   help="Specify the path where the scan data should be stored", metavar="dirPath")
+parser.add_option("--latency", type="int", dest = "latency", default = 37,
+                  help="Specify Latency", metavar="latency")
+parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
+                  help="Specify time between L1As in bx", metavar="L1Atime")
+parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
+                  help="Specify time of pulse before L1A in bx", metavar="pDel")
+parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
+                  help="Specify the file to take trim ranges from", metavar="rangeFile")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
 
@@ -87,6 +93,9 @@ cmd = [ "ultraScurve.py",
         "--shelf=%i"%(options.shelf),
         "-s%d"%(options.slot),
         "-g%d"%(options.gtx),
+        "--latency=%i"%(options.latency),
+        "--L1Atime=%i"%(options.L1Atime),
+        "--pulseDelay=%i"%(options.pDel),
         "--filename=%s"%(filename0),
         "--vfatmask=0x%x"%(options.vfatmask),
         "--nevts=%i"%(options.nevts)]
@@ -135,6 +144,9 @@ if rangeFile == None:
                 "--shelf=%i"%(options.shelf),
                 "-s%d"%(options.slot),
                 "-g%d"%(options.gtx),
+                "--latency=%i"%(options.latency),
+                "--L1Atime=%i"%(options.L1Atime),
+                "--pulseDelay=%i"%(options.pDel),
                 "--filename=%s"%(filename31),
                 "--vfatmask=0x%x"%(options.vfatmask),
                 "--nevts=%i"%(options.nevts)]
@@ -214,6 +226,9 @@ for i in range(0,5):
             "--shelf=%i"%(options.shelf),
             "-s%d"%(options.slot),
             "-g%d"%(options.gtx),
+            "--latency=%i"%(options.latency),
+            "--L1Atime=%i"%(options.L1Atime),
+            "--pulseDelay=%i"%(options.pDel),
             "--filename=%s"%(filenameBS),
             "--vfatmask=0x%x"%(options.vfatmask),
             "--nevts=%i"%(options.nevts)]
@@ -238,6 +253,9 @@ cmd = [ "ultraScurve.py",
         "--shelf=%i"%(options.shelf),
         "-s%d"%(options.slot),
         "-g%d"%(options.gtx),
+        "--latency=%i"%(options.latency),
+        "--L1Atime=%i"%(options.L1Atime),
+        "--pulseDelay=%i"%(options.pDel),
         "--filename=%s"%(filenameFinal),
         "--vfatmask=0x%x"%(options.vfatmask),
         "--nevts=%i"%(options.nevts)]
