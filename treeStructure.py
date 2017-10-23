@@ -15,9 +15,6 @@ class gemTreeStructure:
         self.l1aTime = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'l1aTime', self.l1aTime, 'l1aTime/I' )
         
-        #self.lat = array( 'i', [ 0 ] )
-        #self.gemTree.Branch( 'lat', lat, 'lat/I' ) #used by ultraLatency
-        
         self.latency = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'latency', self.latency, 'latency/I' ) #used by ultraScurve, same physical quantity
         
@@ -59,9 +56,6 @@ class gemTreeStructure:
         
         self.vth = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vth', self.vth, 'vth/I' )
-        
-        #self.vthr = array( 'i', [ 0 ] )
-        #self.gemTree.Branch( 'vthr', vthr, 'vthr/I' ) # this is vth1, for some reason ultraScurve used different name
         
         self.vth1 = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vth1', self.vth1, 'vth1/I' )
