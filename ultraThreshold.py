@@ -102,10 +102,10 @@ try:
                     gemData.vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
                     gemData.vth[0]   = gemData.vth2[0] - gemData.vth1[0]
                     gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
-                    myT.Fill()
+                    gemData.gemTree.Fill()
                     pass
                 pass
-            myT.AutoSave("SaveSelf")
+            gemData.gemTree.AutoSave("SaveSelf")
             pass
 
         setTriggerSource(ohboard,options.gtx,trgSrc)
@@ -137,10 +137,10 @@ try:
                 gemData.vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
                 gemData.vth[0]   = gemData.vth2[0] - gemData.vth1[0]
                 gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
-                myT.Fill()
+                gemData.gemTree.Fill()
                 pass
             pass
-        myT.AutoSave("SaveSelf")
+        gemData.gemTree.AutoSave("SaveSelf")
 
         if options.trkdata:
             setTriggerSource(ohboard,options.gtx,trgSrc)
@@ -152,9 +152,9 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
 
 except Exception as e:
-    myT.AutoSave("SaveSelf")
+    gemData.gemTree.AutoSave("SaveSelf")
     print "An exception occurred", e
 finally:
     myF.cd()
-    myT.Write()
+    gemData.gemTree.Write()
     myF.Close()
