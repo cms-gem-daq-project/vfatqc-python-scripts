@@ -39,36 +39,17 @@ else:
 import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
-myT = r.TTree('thrTree','Tree Holding CMS GEM VT1 Data')
 
-Nev = array( 'i', [ 0 ] )
-Nev[0] = options.nevts
-myT.Branch( 'Nev', Nev, 'Nev/I' )
-vth = array( 'i', [ 0 ] )
-myT.Branch( 'vth', vth, 'vth/I' )
-vth1 = array( 'i', [ 0 ] )
-myT.Branch( 'vth1', vth1, 'vth1/I' )
-vth2 = array( 'i', [ 0 ] )
-myT.Branch( 'vth2', vth2, 'vth2/I' )
-vth2[0] = options.vt2
-Nhits = array( 'i', [ 0 ] )
-myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
-vfatN = array( 'i', [ 0 ] )
-myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-vfatCH = array( 'i', [ 0 ] )
-myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
-trimRange = array( 'i', [ 0 ] )
-myT.Branch( 'trimRange', trimRange, 'trimRange/I' )
-link = array( 'i', [ 0 ] )
-myT.Branch( 'link', link, 'link/I' )
-link[0] = options.gtx
-mode = array( 'i', [ 0 ] )
-myT.Branch( 'mode', mode, 'mode/I' )
-utime = array( 'i', [ 0 ] )
-myT.Branch( 'utime', utime, 'utime/I' )
+
+# Setup the output TTree
+from treeStructure import gemTreeStructure
+gemData = gemTreeStructure('thrTree','Tree Holding CMS GEM VT1 Data')
+gemData.link[0] = options.gtx
+gemData.Nev[0] = options.nevts
+gemData.vth2[0] = options.vt2
 
 import subprocess,datetime,time
-utime[0] = int(time.time())
+gemData.utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
@@ -78,7 +59,7 @@ ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 THRESH_MIN = 0
 THRESH_MAX = 254
 
-N_EVENTS = Nev[0]
+N_EVENTS = gemData.Nev[0]
 CHAN_MIN = 0
 CHAN_MAX = 128
 if options.debug:
@@ -89,19 +70,21 @@ mask = options.vfatmask
 
 try:
     writeAllVFATs(ohboard, options.gtx, "Latency",     0, mask)
+    gemData.latency[0] = options.latency
+    
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
     trgSrc = getTriggerSource(ohboard,options.gtx)
     if options.perchannel:
         setTriggerSource(ohboard,options.gtx,0x1)
-        mode[0] = scanmode.THRESHCH
+        gemData.mode[0] = scanmode.THRESHCH
         sendL1A(ohboard, options.gtx, interval=250, number=0)
 
         for scCH in range(CHAN_MIN,CHAN_MAX):
-            vfatCH[0] = scCH
+            gemData.vfatCH[0] = scCH
             print "Channel #"+str(scCH)
-            configureScanModule(ohboard, options.gtx, mode[0], mask, channel=scCH,
+            configureScanModule(ohboard, options.gtx, gemData.mode[0], mask, channel=scCH,
                                 scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                                 numtrigs=int(N_EVENTS),
                                 useUltra=True, debug=options.debug)
@@ -112,13 +95,13 @@ try:
             sys.stdout.flush()
             for i in range(0,24):
             	if (mask >> i) & 0x1: continue
-                vfatN[0] = i
                 dataNow      = scanData[i]
-                trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
+                gemData.vfatN[0] = i
+                gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
                 for VC in range(THRESH_MAX-THRESH_MIN+1):
-                    vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
-                    vth[0]   = vth2[0] - vth1[0]
-                    Nhits[0] = int(dataNow[VC] & 0xffffff)
+                    gemData.vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
+                    gemData.vth[0]   = gemData.vth2[0] - gemData.vth1[0]
+                    gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
                     myT.Fill()
                     pass
                 pass
@@ -131,12 +114,12 @@ try:
     else:
         if options.trkdata:
             setTriggerSource(ohboard,options.gtx,0x1)
-            mode[0] = scanmode.THRESHTRK
+            gemData.mode[0] = scanmode.THRESHTRK
             sendL1A(ohboard, options.gtx, interval=250, number=0)
         else:
-            mode[0] = scanmode.THRESHTRG
+            gemData.mode[0] = scanmode.THRESHTRG
             pass
-        configureScanModule(ohboard, options.gtx, mode[0], mask,
+        configureScanModule(ohboard, options.gtx, gemData.mode[0], mask,
                             scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                             numtrigs=int(N_EVENTS),
                             useUltra=True, debug=options.debug)
@@ -147,13 +130,13 @@ try:
         sys.stdout.flush()
         for i in range(0,24):
             if (mask >> i) & 0x1: continue
-            vfatN[0] = i
             dataNow      = scanData[i]
-            trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
+            gemData.vfatN[0] = i
+            gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
             for VC in range(THRESH_MAX-THRESH_MIN+1):
-                vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
-                vth[0]   = vth2[0] - vth1[0]
-                Nhits[0] = int(dataNow[VC] & 0xffffff)
+                gemData.vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
+                gemData.vth[0]   = gemData.vth2[0] - gemData.vth1[0]
+                gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
                 myT.Fill()
                 pass
             pass
