@@ -70,7 +70,7 @@ mask = options.vfatmask
 
 try:
     writeAllVFATs(ohboard, options.gtx, "Latency",     0, mask)
-    gemData.latency[0] = options.latency
+    gemData.latency[0] = 0
     
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
