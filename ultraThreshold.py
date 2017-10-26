@@ -111,7 +111,7 @@ try:
                     vth1  = int((dataNow[VC] & 0xff000000) >> 24)
                     Nhits = int(dataNow[VC] & 0xffffff)
                     gemData.setScanResults(vth1, Nhits)
-                    gemData.vth[0]   = gemData.vth2[0] - vth1[0]
+                    gemData.vth[0]   = gemData.vth2[0] - vth1
                     gemData.fill()
                     pass
                 pass
@@ -144,11 +144,12 @@ try:
             gemData.vfatN[0] = i
             gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
             for VC in range(THRESH_MAX-THRESH_MIN+1):
-                    vth1  = int((dataNow[VC] & 0xff000000) >> 24)
-                    Nhits = int(dataNow[VC] & 0xffffff)
-                    gemData.setScanResults(vth1, Nhits)
-                    gemData.vth[0]   = gemData.vth2[0] - vth1[0]
-                    gemData.fill()
+                vth1  = int((dataNow[VC] & 0xff000000) >> 24)
+                print "ultraThreshold vth1 = ", vth1
+                Nhits = int(dataNow[VC] & 0xffffff)
+                gemData.setScanResults(vth1, Nhits)
+                gemData.vth[0]   = gemData.vth2[0] - vth1
+                gemData.fill()
                 pass
             pass
         gemData.autoSave()

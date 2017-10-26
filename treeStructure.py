@@ -33,7 +33,7 @@ class gemTreeStructure:
         self.gemTree.Branch( 'pDel', self.pDel, 'pDel/I' )
         
         self.mode = array( 'i', [ 0 ] )
-        self.mode = scanmode
+        self.mode[0] = scanmode
         self.gemTree.Branch( 'mode', self.mode, 'mode/I' )
         
         self.mspl = array( 'i', [ -1 ] )
@@ -112,11 +112,12 @@ class gemTreeStructure:
 
         if self.mode[0] == scanmode.THRESHTRG or self.mode[0] == scanmode.THRESHCH or self.mode[0] == scanmode.THRESHTRK:
             self.vth1[0] == dacValue
+            print "treestructure vth1 = ", self.vth1[0]
         elif self.mode[0] == scanmode.SCURVE:
             self.vcal[0] = dacValue
         elif self.mode[0] == scanmode.LATENCY:
             self.latency[0] = dacValue
-        else
+        else:
             print "scanmode %i not understood"%(self.mode[0])
             print "Available scan modes are:"
             print "\tThreshold scan: %i"%(scanmode.THRESHTRG)

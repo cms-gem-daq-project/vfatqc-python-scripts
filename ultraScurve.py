@@ -108,6 +108,8 @@ try:
             if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
+        
+        
         configureScanModule(ohboard, options.gtx, gemData.getMode(), mask, channel = scCH,
                             scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS),
                             useUltra = True, debug = options.debug)
