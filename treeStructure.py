@@ -111,8 +111,7 @@ class gemTreeStructure:
         self.Nhits[0] = Nhits
 
         if self.mode[0] == scanmode.THRESHTRG or self.mode[0] == scanmode.THRESHCH or self.mode[0] == scanmode.THRESHTRK:
-            self.vth1[0] == dacValue
-            print "treestructure vth1 = ", self.vth1[0]
+            self.vth1[0] = dacValue
         elif self.mode[0] == scanmode.SCURVE:
             self.vcal[0] = dacValue
         elif self.mode[0] == scanmode.LATENCY:
