@@ -19,7 +19,7 @@ def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     list_KnownRegs = parameters.defaultValues.keys()
     list_KnownRegs.append("VThreshold1")
     list_KnownRegs.append("VFATChannels.ChanReg")
-    list_KnownRegs.append("ChipID1")
+    list_KnownRegs.append("ChipID")
     for regName in dict_Names.values():
         if regName not in list_KnownRegs:
             print "readBackCheck() does not understand %s"%(regName)
@@ -57,7 +57,7 @@ def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
                     else:
                         if writeValOfReg != (readBackVal&0x1f):
                             print "VFAT%i Chan%i: %s mismatch, write val = %i, readback = %i"%(vfat, chan, bName, writeValOfReg, readBackVal&0x1f)
-        elif regName == "ChipID1": #ChipID
+        elif regName == "ChipID": #ChipID
             regValues = getAllChipIDs(device, gtx, 0x0) # dict of { vfatN:chipID }
             for vfat in regValues:
                 valsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
