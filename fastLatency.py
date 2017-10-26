@@ -28,6 +28,11 @@ if options.debug:
 else:
     uhal.setLogLevelTo( uhal.LogLevel.ERROR )
 
+from gempython.tools.amc_user_functions_uhal import *
+amcBoard = getAMCObject(options.slot, options.shelf, options.debug)
+printSystemSCAInfo(amcBoard, options.debug)
+printSystemTTCInfo(amcBoard, options.debug)
+
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
