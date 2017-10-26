@@ -103,13 +103,13 @@ try:
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
     vals = readAllVFATs(ohboard, options.gtx, "CalPhase",   0x0)
-    calPhasevals = dict(map(lambda slotID: (slotID, (vals[slotID] + 8)&0xff),
+    calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),
                          range(0,24)))
     vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
     msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
                          range(0,24)))
     vals = readAllVFATs(ohboard, options.gtx, "ContReg3",    0x0)
-    trimRangvals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
+    trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
                          range(0,24)))
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
@@ -217,7 +217,7 @@ try:
                    latency = int((dataNow[VC] & 0xff000000) >> 24),
                    mspl = msplvals[vfat],
                    Nhits = int(dataNow[VC] & 0xffffff),
-                   trimRange = trimRangvals[vfat],
+                   trimRange = trimRangevals[vfat],
                    vfatN = vfat,
                    vth = vthvals[vfat],
                    vth1 = vt1vals[vfat],
