@@ -81,14 +81,61 @@ class gemTreeStructure:
         self.gemTree.AutoSave(option)
         return
 
-    def fill(self):
+    def fill(self, **kwargs):
+        """
+        Updates the values stored in the arrays gemTree's branchs map to,
+        then it fills the tree.
+
+        The keyword is assumed to the same as the variable name for 
+        simplicity.
+        """
+        
+        if "calPhase" in kwargs:
+            self.calPhase[0] = kwargs["calPhase"]
+        if "Dly" in kwargs:
+            self.Dly[0] = kwargs["Dly"]
+        if "l1aTime" in kwargs:
+            self.l1aTime[0] = kwargs["l1aTime"]
+        if "latency" in kwargs:
+            self.latency[0] = kwargs["latency"]
+        if "link" in kwargs:
+            self.link[0] = kwargs["kwargs"]
+        if "pDel" in kwargs:
+            self.pDel[0] = kwargs["pDel"]
+        if "mspl" in kwargs:
+            self.mspl[0] = kwargs["mspl"]
+        if "Nev" in kwargs:
+            self.Nev[0] = kwargs["Nev"]
+        if "Nhits" in kwargs:
+            self.Nhits[0] = kwargs["Nhits"]
+        if "trimDAC" in kwargs:
+            self.trimDAC[0] = kwargs["trimDAC"]
+        if "trimRange" in kwargs:
+            self.trimRange[0] = kwargs["trimRange"]
+        if "utime" in kwargs:
+            self.utime[0] = kwargs["utime"]
+        if "vcal" in kwargs:
+            self.vcal[0] = kwargs["vcal"]
+        if "vfatCH" in kwargs:
+            self.vfatCH[0] = kwargs["vfatCH"]
+        if "vfatN" in kwargs:
+            self.vfatN[0] = kwargs["vfatN"]
+        if "vth" in kwargs:
+            self.vth[0] = kwargs["vth"]
+        if "vth1" in kwargs:
+            self.vth1[0] = kwargs["vth1"]
+        if "vth2" in kwargs:
+            self.vth2[0] = kwargs["vth2"]
+        if "ztrim" in kwargs:
+            self.ztrim[0] = kwargs["ztrim"]
+
         self.gemTree.Fill()
         return
 
     def getMode(self):
         return self.mode[0]
-
-    def setDefaults(self, options):
+    
+    def setDefaults(self, options, time):
         """
         Takes as input the options object returned by OptParser.parse_args()
         see: https://docs.python.org/2/library/optparse.html
@@ -97,33 +144,34 @@ class gemTreeStructure:
         """
 
         self.link[0] = options.gtx
-        self.mspl[0] = options.MSPL
-        self.ztrim[0] = options.ztrim
         self.Nev[0] = options.nevts
+        #self.mspl[0] = options.MSPL
+        self.utime[0] = time
+        self.ztrim[0] = options.ztrim
 
         return
 
-    def setScanResults(self, dacValue, Nhits):
-        """
-        For each scan mode sets the appropriate dacValue (e.g. VThreshold1)
-        and Nhits determined by the scan module
-        """
-        self.Nhits[0] = Nhits
+    #def setScanResults(self, dacValue, Nhits):
+    #    """
+    #    For each scan mode sets the appropriate dacValue (e.g. VThreshold1)
+    #    and Nhits determined by the scan module
+    #    """
+    #    self.Nhits[0] = Nhits
 
-        if self.mode[0] == scanmode.THRESHTRG or self.mode[0] == scanmode.THRESHCH or self.mode[0] == scanmode.THRESHTRK:
-            self.vth1[0] = dacValue
-        elif self.mode[0] == scanmode.SCURVE:
-            self.vcal[0] = dacValue
-        elif self.mode[0] == scanmode.LATENCY:
-            self.latency[0] = dacValue
-        else:
-            print "scanmode %i not understood"%(self.mode[0])
-            print "Available scan modes are:"
-            print "\tThreshold scan: %i"%(scanmode.THRESHTRG)
-            print "\tThreshold scan per channel: %i"%(scanmode.THRESHCH)
-            print "\tLatency scan: %i"%(scanmode.LATENCY)
-            print "\tThreshold scan with tracking data: %i"%(scanmode.THRESHTRK)
-            exit(os.EX_USAGE)
+    #    if self.mode[0] == scanmode.THRESHTRG or self.mode[0] == scanmode.THRESHCH or self.mode[0] == scanmode.THRESHTRK:
+    #        self.vth1[0] = dacValue
+    #    elif self.mode[0] == scanmode.SCURVE:
+    #        self.vcal[0] = dacValue
+    #    elif self.mode[0] == scanmode.LATENCY:
+    #        self.latency[0] = dacValue
+    #    else:
+    #        print "scanmode %i not understood"%(self.mode[0])
+    #        print "Available scan modes are:"
+    #        print "\tThreshold scan: %i"%(scanmode.THRESHTRG)
+    #        print "\tThreshold scan per channel: %i"%(scanmode.THRESHCH)
+    #        print "\tLatency scan: %i"%(scanmode.LATENCY)
+    #        print "\tThreshold scan with tracking data: %i"%(scanmode.THRESHTRK)
+    #        exit(os.EX_USAGE)
 
     def write(self):
         self.gemTree.Write()

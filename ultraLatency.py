@@ -69,16 +69,15 @@ from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
 
-# Setup the output TTree
-from treeStructure import gemTreeStructure
-gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
-gemData.setDefaults(options)
-
 import subprocess,datetime,time
-gemData.utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print(startTime)
 Date = startTime
+
+# Setup the output TTree
+from treeStructure import gemTreeStructure
+gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
+gemData.setDefaults(options, int(time.time()))
 
 import amc13
 connection_file = "%s/connections.xml"%(os.getenv("GEM_ADDRESS_TABLE_PATH"))
@@ -94,7 +93,7 @@ ohboard  = oh.getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 LATENCY_MIN = options.scanmin
 LATENCY_MAX = options.scanmax
 
-N_EVENTS = gemData.Nev[0]
+N_EVENTS = options.nevts
 
 mask = options.vfatmask
 
@@ -103,6 +102,15 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
+    vals = readAllVFATs(ohboard, options.gtx, "CalPhase",   0x0)
+    calPhasevals = dict(map(lambda slotID: (slotID, (vals[slotID] + 8)&0xff),
+                         range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
+    msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
+                         range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg3",    0x0)
+    trimRangvals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
+                         range(0,24)))
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
@@ -111,10 +119,7 @@ try:
                         range(0,24)))
     vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
                         range(0,24)))
-    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
-    msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
-                         range(0,24)))
-
+    
     oh.stopLocalT1(ohboard, options.gtx)
 
     amc13board.enableLocalL1A(False)
@@ -165,8 +170,6 @@ try:
             # mode may be: 0(per-orbit), 1(per-BX), 2(random)
             # configureLocalL1A(ena, mode, burst, rate, rules)
             if options.randoms > 0:
-                # amc13board.configureLocalL1A(True, 2, 1, options.randoms, 0)
-                # amc13board.configureLocalL1A(True, 1, 1, 1, 0) # per-BX
                 amc13board.configureLocalL1A(True, 0, 1, 1, 0) # per-orbit
                 pass
             if options.t3trig:
@@ -174,8 +177,6 @@ try:
                 pass
             # to prevent trigger blocking
             amc13board.fakeDataEnable(True)
-            # disable the event builder?
-            # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x1)
             amc13board.enableLocalL1A(True)
             if options.randoms > 0:
                 amc13board.startContinuousL1A()
@@ -208,13 +209,24 @@ try:
 
     amc13board.enableLocalL1A(True)
     sys.stdout.flush()
-    for i in range(0,24):
-        dataNow = scanData[i]
-        gemData.vfatN[0] = i
-        gemData.mspl[0]  = msplvals[gemData.vfatN[0]]
-        gemData.vth1[0]  = vt1vals[gemData.vfatN[0]]
-        gemData.vth2[0]  = vt2vals[gemData.vfatN[0]]
-        gemData.vth[0]   = vthvals[gemData.vfatN[0]]
+    for vfat in range(0,24):
+        dataNow = scanData[vfat]
+        for VC in range(LATENCY_MAX-LATENCY_MIN+1):
+            gemData.fill(
+                   calPhase = calPhasevals[vfat],
+                   latency = int((dataNow[VC] & 0xff000000) >> 24),
+                   mspl = msplvals[vfat],
+                   Nhits = int(dataNow[VC] & 0xffffff),
+                   trimRange = trimRangvals[vfat],
+                   vfatN = vfat,
+                   vth = vthvals[vfat],
+                   vth1 = vt1vals[vfat],
+                   vth2 = vt2vals[vfat]
+                 )
+            if options.debug:
+                print("{0} {1} 0x{2:x} {3} {4}".format(vfat,VC,dataNow[VC],gemData.latency[0],gemData.Nhits[0]))
+                pass
+            pass
         if options.debug:
             print("{0} {1} {2} {3} {4}".format(
                 gemData.vfatN[0], 
@@ -223,15 +235,6 @@ try:
                 gemData.vth2[0], 
                 gemData.vth[0]))
             sys.stdout.flush()
-            pass
-        for VC in range(LATENCY_MAX-LATENCY_MIN+1):
-            latency   = int((dataNow[VC] & 0xff000000) >> 24)
-            Nhits = int(dataNow[VC] & 0xffffff)
-            gemData.setScanResults(latency, Nhits)
-            if options.debug:
-                print("{0} {1} 0x{2:x} {3} {4}".format(i,VC,dataNow[VC],gemData.latency[0],gemData.Nhits[0]))
-                pass
-            gemData.fill()
             pass
         pass
     gemData.autoSave()
