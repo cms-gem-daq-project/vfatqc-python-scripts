@@ -71,9 +71,8 @@ myF = TFile(filename,'recreate')
 
 # Setup the output TTree
 from treeStructure import gemTreeStructure
-gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data')
-gemData.link[0] = options.gtx
-gemData.Nev[0] = options.nevts
+gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
+gemData.setDefaults(options)
 
 import subprocess,datetime,time
 gemData.utime[0] = int(time.time())
@@ -116,8 +115,6 @@ try:
     msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
                          range(0,24)))
 
-    gemData.mode[0] = scanmode.LATENCY
-
     oh.stopLocalT1(ohboard, options.gtx)
 
     amc13board.enableLocalL1A(False)
@@ -136,7 +133,7 @@ try:
     print "AMC13: %s"%(amc13nL1A)
     print "AMC: %s"%(amcnL1A)
     print "OH%s: %s"%(options.gtx,ohnL1A)
-    oh.configureScanModule(ohboard, options.gtx, gemData.mode[0], mask,
+    oh.configureScanModule(ohboard, options.gtx, gemData.getMode(), mask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
                         stepsize=step,
                         numtrigs=int(options.nevts),
@@ -228,15 +225,16 @@ try:
             sys.stdout.flush()
             pass
         for VC in range(LATENCY_MAX-LATENCY_MIN+1):
-            gemData.latency[0]   = int((dataNow[VC] & 0xff000000) >> 24)
-            gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
+            latency   = int((dataNow[VC] & 0xff000000) >> 24)
+            Nhits = int(dataNow[VC] & 0xffffff)
+            gemData.setScanResults(latency, Nhits)
             if options.debug:
                 print("{0} {1} 0x{2:x} {3} {4}".format(i,VC,dataNow[VC],gemData.latency[0],gemData.Nhits[0]))
                 pass
-            gemData.gemTree.Fill()
+            gemData.fill()
             pass
         pass
-    gemData.gemTree.AutoSave("SaveSelf")
+    gemData.autoSave()
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
     if options.internal:
         oh.stopLocalT1(ohboard, options.gtx)
@@ -247,9 +245,9 @@ try:
         # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x0)
         pass
 except Exception as e:
-    gemData.gemTree.AutoSave("SaveSelf")
+    gemData.autoSave()
     print("An exception occurred", e)
 finally:
     myF.cd()
-    gemData.gemTree.Write()
+    gemData.write()
     myF.Close()

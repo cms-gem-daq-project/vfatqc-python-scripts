@@ -51,13 +51,11 @@ myF = r.TFile(filename,'recreate')
 
 # Setup the output TTree
 from treeStructure import gemTreeStructure
-gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data')
+gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data',scanmode.SCURVE)
+gemData.setDefaults(options)
 gemData.calPhase[0] = options.CalPhase
 gemData.l1aTime[0] = options.L1Atime
 gemData.latency[0] = options.latency
-gemData.link[0] = options.gtx
-gemData.mspl[0] = options.MSPL
-gemData.Nev[0] = options.nevts
 gemData.pDel[0] = options.pDel
 
 import subprocess,datetime,time
@@ -103,7 +101,6 @@ try:
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
 
-    gemData.mode[0] = scanmode.SCURVE
     for scCH in range(CHAN_MIN,CHAN_MAX):
         gemData.vfatCH[0] = scCH
         print "Channel #"+str(scCH)
@@ -111,7 +108,7 @@ try:
             if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
-        configureScanModule(ohboard, options.gtx, gemData.mode[0], mask, channel = scCH,
+        configureScanModule(ohboard, options.gtx, gemData.getMode(), mask, channel = scCH,
                             scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS),
                             useUltra = True, debug = options.debug)
         printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
@@ -126,29 +123,31 @@ try:
             gemData.vth1[0]      = (0xff & readVFAT(ohboard,options.gtx, i,"VThreshold1"))
             for VC in range(SCURVE_MAX-SCURVE_MIN+1):
                 try:
-                    gemData.vcal[0]  = int((dataNow[VC] & 0xff000000) >> 24)
-                    gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
+                    vcal  = int((dataNow[VC] & 0xff000000) >> 24)
+                    Nhits = int(dataNow[VC] & 0xffffff)
+                    gemData.setScanResults(vcal, Nhits)
                 except IndexError:
                     print 'Unable to index data for channel %i'%scCH
                     print dataNow
-                    gemData.vcal[0]  = -99
-                    gemData.Nhits[0] = -99
+                    vcal  = -99
+                    Nhits = -99
+                    gemData.setScanResults(vcal, Nhits)
                 finally:
-                    gemData.gemTree.Fill()
+                    gemData.fill()
         for vfat in range(0,24):
             if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
-        gemData.gemTree.AutoSave("SaveSelf")
+        gemData.autoSave()
         sys.stdout.flush()
         pass
     stopLocalT1(ohboard, options.gtx)
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
 
 except Exception as e:
-    gemData.gemTree.AutoSave("SaveSelf")
+    gemData.autoSave()
     print "An exception occurred", e
 finally:
     myF.cd()
-    gemData.gemTree.Write()
+    gemData.write()
     myF.Close()

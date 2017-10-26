@@ -36,13 +36,11 @@ printSystemTTCInfo(amcBoard, options.debug)
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
-myT = TTree('latencyTree','Tree Holding CMS GEM Latency Data')
 
 # Setup the output TTree
 from treeStructure import gemTreeStructure
-gemData = gemTreeStructure('latencyTree','Tree Holding CMS GEM Latency Data')
-gemData.link[0] = options.gtx
-gemData.Nev[0] = options.nevts
+gemData = gemTreeStructure('latencyTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
+gemData.setDefaults(options)
 gemData.vth2[0] = options.vt2
 
 import time
@@ -95,13 +93,13 @@ try:
                 gemData.vth2[0]  = vt2vals[vfat]
                 gemData.vth[0]   = vthvals[vfat]
                 writeRegister(ohboard,"%s.VFAT%d_LAT_BX.RESET"%(baseNode,vfat),0x1)
-                gemData.gemTree.Fill()
+                gemData.fill()
                 pass
             if (seenTriggers%100 == 0):
                 print "Saw %d triggers"%(seenTriggers)
                 pass
             pass
-        myT.AutoSave("SaveSelf")
+        gemData.autoSave()
         sys.stdout.flush()
         if seenTriggers > options.nevts:
             print "Saw %d triggers, exiting"%(seenTriggers)
@@ -109,10 +107,10 @@ try:
             break
 
 except Exception as e:
-    myT.AutoSave("SaveSelf")
+    gemData.autoSave()
     print "An exception occurred", e
     sys.stdout.flush()
 finally:
     myF.cd()
-    gemData.gemTree.Fill()
+    gemData.write()
     myF.Close()

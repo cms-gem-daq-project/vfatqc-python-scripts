@@ -40,12 +40,10 @@ import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
 
-
 # Setup the output TTree
 from treeStructure import gemTreeStructure
 gemData = gemTreeStructure('thrTree','Tree Holding CMS GEM VT1 Data')
-gemData.link[0] = options.gtx
-gemData.Nev[0] = options.nevts
+gemData.setDefaults(options)
 gemData.vth2[0] = options.vt2
 
 import subprocess,datetime,time
@@ -94,7 +92,7 @@ try:
         for scCH in range(CHAN_MIN,CHAN_MAX):
             gemData.vfatCH[0] = scCH
             print "Channel #"+str(scCH)
-            configureScanModule(ohboard, options.gtx, gemData.mode[0], mask, channel=scCH,
+            configureScanModule(ohboard, options.gtx, gemData.getMode(), mask, channel=scCH,
                                 scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                                 numtrigs=int(N_EVENTS),
                                 useUltra=True, debug=options.debug)
@@ -110,13 +108,14 @@ try:
                 gemData.mspl[0]  = msplvals[gemData.vfatN[0]]
                 gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
                 for VC in range(THRESH_MAX-THRESH_MIN+1):
-                    gemData.vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
-                    gemData.vth[0]   = gemData.vth2[0] - gemData.vth1[0]
-                    gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
-                    gemData.gemTree.Fill()
+                    vth1  = int((dataNow[VC] & 0xff000000) >> 24)
+                    Nhits = int(dataNow[VC] & 0xffffff)
+                    gemData.setScanResults(vth1, Nhits)
+                    gemData.vth[0]   = gemData.vth2[0] - vth1[0]
+                    gemData.fill()
                     pass
                 pass
-            gemData.gemTree.AutoSave("SaveSelf")
+            gemData.autoSave()
             pass
 
         setTriggerSource(ohboard,options.gtx,trgSrc)
@@ -130,7 +129,7 @@ try:
         else:
             gemData.mode[0] = scanmode.THRESHTRG
             pass
-        configureScanModule(ohboard, options.gtx, gemData.mode[0], mask,
+        configureScanModule(ohboard, options.gtx, gemData.getMode(), mask,
                             scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                             numtrigs=int(N_EVENTS),
                             useUltra=True, debug=options.debug)
@@ -145,13 +144,14 @@ try:
             gemData.vfatN[0] = i
             gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
             for VC in range(THRESH_MAX-THRESH_MIN+1):
-                gemData.vth1[0]  = int((dataNow[VC] & 0xff000000) >> 24)
-                gemData.vth[0]   = gemData.vth2[0] - gemData.vth1[0]
-                gemData.Nhits[0] = int(dataNow[VC] & 0xffffff)
-                gemData.gemTree.Fill()
+                    vth1  = int((dataNow[VC] & 0xff000000) >> 24)
+                    Nhits = int(dataNow[VC] & 0xffffff)
+                    gemData.setScanResults(vth1, Nhits)
+                    gemData.vth[0]   = gemData.vth2[0] - vth1[0]
+                    gemData.fill()
                 pass
             pass
-        gemData.gemTree.AutoSave("SaveSelf")
+        gemData.autoSave()
 
         if options.trkdata:
             setTriggerSource(ohboard,options.gtx,trgSrc)
@@ -163,9 +163,9 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
 
 except Exception as e:
-    gemData.gemTree.AutoSave("SaveSelf")
+    gemData.autoSave()
     print "An exception occurred", e
 finally:
     myF.cd()
-    gemData.gemTree.Write()
+    gemData.write()
     myF.Close()
