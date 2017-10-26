@@ -75,6 +75,11 @@ startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 
+from gempython.tools.amc_user_functions_uhal import *
+amcBoard = getAMCObject(options.slot, options.shelf, options.debug)
+printSystemSCAInfo(amcBoard, options.debug)
+printSystemTTCInfo(amcBoard, options.debug)
+
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
 THRESH_MIN = 0
