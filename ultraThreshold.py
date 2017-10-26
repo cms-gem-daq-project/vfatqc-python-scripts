@@ -40,17 +40,15 @@ import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
 
-# Setup the output TTree
-from treeStructure import gemTreeStructure
-gemData = gemTreeStructure('thrTree','Tree Holding CMS GEM VT1 Data')
-gemData.setDefaults(options)
-gemData.vth2[0] = options.vt2
-
 import subprocess,datetime,time
-gemData.utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
+
+# Setup the output TTree
+from treeStructure import gemTreeStructure
+gemData = gemTreeStructure('thrTree','Tree Holding CMS GEM VT1 Data')
+gemData.setDefaults(options, int(time.time()))
 
 from gempython.tools.amc_user_functions_uhal import *
 amcBoard = getAMCObject(options.slot, options.shelf, options.debug)
@@ -62,7 +60,7 @@ ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 THRESH_MIN = 0
 THRESH_MAX = 254
 
-N_EVENTS = gemData.Nev[0]
+N_EVENTS = options.nevts
 CHAN_MIN = 0
 CHAN_MAX = 128
 if options.debug:
@@ -73,15 +71,26 @@ mask = options.vfatmask
 
 try:
     writeAllVFATs(ohboard, options.gtx, "Latency",     0, mask)
-    gemData.latency[0] = 0
-    
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37, mask)
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
-    # Get mspl value
+    vals = readAllVFATs(ohboard, options.gtx, "CalPhase",   0x0)
+    calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),
+                         range(0,24)))
     vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
     msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
                          range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg3",    0x0)
+    trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
+                         range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "Latency",    0x0)
+    latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                         range(0,24)))
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", 0x0)
+    vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                        range(0,24)))
+    vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
+                        range(0,24)))
 
     trgSrc = getTriggerSource(ohboard,options.gtx)
     if options.perchannel:
@@ -89,9 +98,16 @@ try:
         gemData.mode[0] = scanmode.THRESHCH
         sendL1A(ohboard, options.gtx, interval=250, number=0)
 
+        l1AInterval = readRegister(ohboard,"GEM_AMC.OH.OH%d.T1Controller.INTERVAL"%(options.gtx),options.debug)
+        
         for scCH in range(CHAN_MIN,CHAN_MAX):
-            gemData.vfatCH[0] = scCH
             print "Channel #"+str(scCH)
+        
+            # Get trimDAC vals for output TTree
+            vals = readAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg%d"%(scCH),   0x0)
+            trimDACvals = dict(map(lambda slotID: (slotID, 0x1f & vals[slotID]),
+                                 range(0,24)))
+        
             configureScanModule(ohboard, options.gtx, gemData.getMode(), mask, channel=scCH,
                                 scanmin=THRESH_MIN, scanmax=THRESH_MAX,
                                 numtrigs=int(N_EVENTS),
@@ -101,18 +117,26 @@ try:
             startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
             scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
             sys.stdout.flush()
-            for i in range(0,24):
-            	if (mask >> i) & 0x1: continue
-                dataNow      = scanData[i]
-                gemData.vfatN[0] = i
-                gemData.mspl[0]  = msplvals[gemData.vfatN[0]]
-                gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
+            for vfat in range(0,24):
+            	if (mask >> vfat) & 0x1: continue
+                dataNow      = scanData[vfat]
                 for VC in range(THRESH_MAX-THRESH_MIN+1):
                     vth1  = int((dataNow[VC] & 0xff000000) >> 24)
                     Nhits = int(dataNow[VC] & 0xffffff)
-                    gemData.setScanResults(vth1, Nhits)
-                    gemData.vth[0]   = gemData.vth2[0] - vth1
-                    gemData.fill()
+                    gemData.fill(
+                           calPhase = calPhasevals[vfat],
+                           l1aTime = l1AInterval,
+                           latency = latvals[vfat],
+                           mspl = msplvals[vfat],
+                           Nhits = Nhits, 
+                           trimDAC = trimDACvals[vfat],
+                           trimRange = trimRangevals[vfat],
+                           vfatCH = scCH,
+                           vfatN = vfat,
+                           vth = vthvals[vfat],
+                           vth1 = vth1,
+                           vth2 = vt2vals[vfat]
+                         )
                     pass
                 pass
             gemData.autoSave()
@@ -126,6 +150,8 @@ try:
             setTriggerSource(ohboard,options.gtx,0x1)
             gemData.mode[0] = scanmode.THRESHTRK
             sendL1A(ohboard, options.gtx, interval=250, number=0)
+    
+            l1AInterval = readRegister(ohboard,"GEM_AMC.OH.OH%d.T1Controller.INTERVAL"%(options.gtx),options.debug)
         else:
             gemData.mode[0] = scanmode.THRESHTRG
             pass
@@ -138,17 +164,25 @@ try:
         startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
         scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
         sys.stdout.flush()
-        for i in range(0,24):
-            if (mask >> i) & 0x1: continue
-            dataNow      = scanData[i]
-            gemData.vfatN[0] = i
-            gemData.trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
+        for vfat in range(0,24):
+            if (mask >> vfat) & 0x1: continue
+            dataNow      = scanData[vfat]
             for VC in range(THRESH_MAX-THRESH_MIN+1):
                 vth1  = int((dataNow[VC] & 0xff000000) >> 24)
                 Nhits = int(dataNow[VC] & 0xffffff)
-                gemData.setScanResults(vth1, Nhits)
-                gemData.vth[0]   = gemData.vth2[0] - vth1
-                gemData.fill()
+                gemData.fill(
+                       calPhase = calPhasevals[vfat],
+                       l1aTime = l1AInterval,
+                       latency = latvals[vfat],
+                       mspl = msplvals[vfat],
+                       Nhits = Nhits, 
+                       trimRange = trimRangevals[vfat],
+                       vfatCH = scCH,
+                       vfatN = vfat,
+                       vth = vthvals[vfat],
+                       vth1 = vth1,
+                       vth2 = vt2vals[vfat]
+                     )
                 pass
             pass
         gemData.autoSave()
