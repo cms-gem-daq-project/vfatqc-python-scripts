@@ -85,6 +85,8 @@ Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+vfatID = array( 'i', [-1] )
+myT.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
 mspl = array( 'i', [ -1 ] )
 myT.Branch( 'mspl', mspl, 'mspl/I' )
 vfatCH = array( 'i', [ 0 ] )
@@ -107,6 +109,9 @@ amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
 amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
 
 amcboard = amc.getAMCObject(options.slot,options.shelf,options.debug)
+amc.printSystemSCAInfo(amcboard, options.debug)
+amc.printSystemTTCInfo(amcboard, options.debug)
+
 ohboard  = oh.getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
 LATENCY_MIN = options.scanmin
@@ -230,6 +235,7 @@ try:
     sys.stdout.flush()
     for i in range(0,24):
         vfatN[0] = i
+        vfatID[0] = getChipID(ohboard, options.gtx, i, options.debug)
         dataNow = scanData[i]
         mspl[0]  = msplvals[vfatN[0]]
         vth1[0]  = vt1vals[vfatN[0]]

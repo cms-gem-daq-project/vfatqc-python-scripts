@@ -55,6 +55,8 @@ Nhits = array( 'i', [ 0 ] )
 myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
+vfatID = array( 'i', [-1] )
+myT.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
 vfatCH = array( 'i', [ 0 ] )
 myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
 trimRange = array( 'i', [ 0 ] )
@@ -72,6 +74,11 @@ utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
+
+from gempython.tools.amc_user_functions_uhal import *
+amcBoard = getAMCObject(options.slot, options.shelf, options.debug)
+printSystemSCAInfo(amcBoard, options.debug)
+printSystemTTCInfo(amcBoard, options.debug)
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
@@ -113,6 +120,7 @@ try:
             for i in range(0,24):
             	if (mask >> i) & 0x1: continue
                 vfatN[0] = i
+                vfatID[0] = getChipID(ohboard, options.gtx, i, options.debug)
                 dataNow      = scanData[i]
                 trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
                 for VC in range(THRESH_MAX-THRESH_MIN+1):
