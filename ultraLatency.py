@@ -68,38 +68,16 @@ else:
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
-myT = TTree('latTree','Tree Holding CMS GEM Latency Data')
-
-Nev = array( 'i', [ 0 ] )
-Nev[0] = options.nevts
-myT.Branch( 'Nev', Nev, 'Nev/I' )
-vth = array( 'i', [ 0 ] )
-myT.Branch( 'vth', vth, 'vth/I' )
-vth1 = array( 'i', [ 0 ] )
-myT.Branch( 'vth1', vth1, 'vth1/I' )
-vth2 = array( 'i', [ 0 ] )
-myT.Branch( 'vth2', vth2, 'vth2/I' )
-lat = array( 'i', [ 0 ] )
-myT.Branch( 'lat', lat, 'lat/I' )
-Nhits = array( 'i', [ 0 ] )
-myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
-vfatN = array( 'i', [ 0 ] )
-myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-mspl = array( 'i', [ -1 ] )
-myT.Branch( 'mspl', mspl, 'mspl/I' )
-vfatCH = array( 'i', [ 0 ] )
-myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
-link = array( 'i', [ 0 ] )
-myT.Branch( 'link', link, 'link/I' )
-link[0] = options.gtx
-utime = array( 'i', [ 0 ] )
-myT.Branch( 'utime', utime, 'utime/I' )
 
 import subprocess,datetime,time
-utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print(startTime)
 Date = startTime
+
+# Setup the output TTree
+from treeStructure import gemTreeStructure
+gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
+gemData.setDefaults(options, int(time.time()))
 
 import amc13
 connection_file = "%s/connections.xml"%(os.getenv("GEM_ADDRESS_TABLE_PATH"))
@@ -115,7 +93,7 @@ ohboard  = oh.getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 LATENCY_MIN = options.scanmin
 LATENCY_MAX = options.scanmax
 
-N_EVENTS = Nev[0]
+N_EVENTS = options.nevts
 
 mask = options.vfatmask
 
@@ -124,6 +102,15 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
     writeAllVFATs(ohboard, options.gtx, "VThreshold2", options.vt2, mask)
 
+    vals = readAllVFATs(ohboard, options.gtx, "CalPhase",   0x0)
+    calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),
+                         range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
+    msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
+                         range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg3",    0x0)
+    trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
+                         range(0,24)))
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
@@ -132,12 +119,7 @@ try:
                         range(0,24)))
     vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
                         range(0,24)))
-    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
-    msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
-                         range(0,24)))
-
-    mode = scanmode.LATENCY
-
+    
     oh.stopLocalT1(ohboard, options.gtx)
 
     amc13board.enableLocalL1A(False)
@@ -156,7 +138,7 @@ try:
     print "AMC13: %s"%(amc13nL1A)
     print "AMC: %s"%(amcnL1A)
     print "OH%s: %s"%(options.gtx,ohnL1A)
-    oh.configureScanModule(ohboard, options.gtx, mode, mask,
+    oh.configureScanModule(ohboard, options.gtx, gemData.getMode(), mask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
                         stepsize=step,
                         numtrigs=int(options.nevts),
@@ -188,8 +170,6 @@ try:
             # mode may be: 0(per-orbit), 1(per-BX), 2(random)
             # configureLocalL1A(ena, mode, burst, rate, rules)
             if options.randoms > 0:
-                # amc13board.configureLocalL1A(True, 2, 1, options.randoms, 0)
-                # amc13board.configureLocalL1A(True, 1, 1, 1, 0) # per-BX
                 amc13board.configureLocalL1A(True, 0, 1, 1, 0) # per-orbit
                 pass
             if options.t3trig:
@@ -197,8 +177,6 @@ try:
                 pass
             # to prevent trigger blocking
             amc13board.fakeDataEnable(True)
-            # disable the event builder?
-            # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x1)
             amc13board.enableLocalL1A(True)
             if options.randoms > 0:
                 amc13board.startContinuousL1A()
@@ -231,27 +209,35 @@ try:
 
     amc13board.enableLocalL1A(True)
     sys.stdout.flush()
-    for i in range(0,24):
-        vfatN[0] = i
-        dataNow = scanData[i]
-        mspl[0]  = msplvals[vfatN[0]]
-        vth1[0]  = vt1vals[vfatN[0]]
-        vth2[0]  = vt2vals[vfatN[0]]
-        vth[0]   = vthvals[vfatN[0]]
+    for vfat in range(0,24):
+        dataNow = scanData[vfat]
+        for VC in range(LATENCY_MAX-LATENCY_MIN+1):
+            gemData.fill(
+                   calPhase = calPhasevals[vfat],
+                   latency = int((dataNow[VC] & 0xff000000) >> 24),
+                   mspl = msplvals[vfat],
+                   Nhits = int(dataNow[VC] & 0xffffff),
+                   trimRange = trimRangevals[vfat],
+                   vfatN = vfat,
+                   vth = vthvals[vfat],
+                   vth1 = vt1vals[vfat],
+                   vth2 = vt2vals[vfat]
+                 )
+            if options.debug:
+                print("{0} {1} 0x{2:x} {3} {4}".format(vfat,VC,dataNow[VC],gemData.latency[0],gemData.Nhits[0]))
+                pass
+            pass
         if options.debug:
-            print("{0} {1} {2} {3} {4}".format(vfatN[0], mspl[0], vth1[0], vth2[0], vth[0]))
+            print("{0} {1} {2} {3} {4}".format(
+                gemData.vfatN[0], 
+                gemData.mspl[0], 
+                gemData.vth1[0], 
+                gemData.vth2[0], 
+                gemData.vth[0]))
             sys.stdout.flush()
             pass
-        for VC in range(LATENCY_MAX-LATENCY_MIN+1):
-            lat[0]   = int((dataNow[VC] & 0xff000000) >> 24)
-            Nhits[0] = int(dataNow[VC] & 0xffffff)
-            if options.debug:
-                print("{0} {1} 0x{2:x} {3} {4}".format(i,VC,dataNow[VC],lat[0],Nhits[0]))
-                pass
-            myT.Fill()
-            pass
         pass
-    myT.AutoSave("SaveSelf")
+    gemData.autoSave()
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
     if options.internal:
         oh.stopLocalT1(ohboard, options.gtx)
@@ -262,9 +248,9 @@ try:
         # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x0)
         pass
 except Exception as e:
-    myT.AutoSave("SaveSelf")
+    gemData.autoSave()
     print("An exception occurred", e)
 finally:
     myF.cd()
-    myT.Write()
+    gemData.write()
     myF.Close()

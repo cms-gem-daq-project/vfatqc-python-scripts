@@ -48,65 +48,16 @@ else:
 import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
-myT = r.TTree('scurveTree','Tree Holding CMS GEM SCurve Data')
-
-Nev = array( 'i', [ 0 ] )
-Nev[0] = options.nevts
-myT.Branch( 'Nev', Nev, 'Nev/I' )
-
-vcal = array( 'i', [ 0 ] )
-myT.Branch( 'vcal', vcal, 'vcal/I' )
-
-Nhits = array( 'i', [ 0 ] )
-myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
-
-vfatN = array( 'i', [ 0 ] )
-myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-
-vfatCH = array( 'i', [ 0 ] )
-myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
-
-trimRange = array( 'i', [ 0 ] )
-myT.Branch( 'trimRange', trimRange, 'trimRange/I' )
-
-vthr = array( 'i', [ 0 ] )
-myT.Branch( 'vthr', vthr, 'vthr/I' )
-
-trimDAC = array( 'i', [ 0 ] )
-myT.Branch( 'trimDAC', trimDAC, 'trimDAC/I' )
-
-l1aTime = array( 'i', [ 0 ] )
-myT.Branch( 'l1aTime', l1aTime, 'l1aTime/I' )
-l1aTime[0] = options.L1Atime
-
-mspl = array( 'i', [ 0 ] )
-myT.Branch( 'mspl', mspl, 'mspl/I' )
-mspl[0] = options.MSPL
-
-latency = array( 'i', [ 0 ] )
-myT.Branch( 'latency', latency, 'latency/I' )
-latency[0] = options.latency
-
-pDel = array( 'i', [ 0 ] )
-myT.Branch( 'pDel', pDel, 'pDel/I' )
-pDel[0] = options.pDel
-
-calPhase = array( 'i', [ 0 ] )
-myT.Branch( 'calPhase', calPhase, 'calPhase/I' )
-calPhase[0] = options.CalPhase
-
-link = array( 'i', [ 0 ] )
-myT.Branch( 'link', link, 'link/I' )
-link[0] = options.gtx
-
-utime = array( 'i', [ 0 ] )
-myT.Branch( 'utime', utime, 'utime/I' )
 
 import subprocess,datetime,time
-utime[0] = int(time.time())
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
+
+# Setup the output TTree
+from treeStructure import gemTreeStructure
+gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data',scanmode.SCURVE)
+gemData.setDefaults(options, int(time.time()))
 
 from gempython.tools.amc_user_functions_uhal import *
 amcBoard = getAMCObject(options.slot, options.shelf, options.debug)
@@ -118,7 +69,7 @@ ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 SCURVE_MIN = 0
 SCURVE_MAX = 254
 
-N_EVENTS = Nev[0]
+N_EVENTS = options.nevts
 CHAN_MIN = options.chMin
 CHAN_MAX = options.chMax + 1
 if options.debug:
@@ -132,6 +83,9 @@ try:
     configureLocalT1(ohboard, options.gtx, 1, 0, options.pDel, options.L1Atime, 0, options.debug)
     startLocalT1(ohboard, options.gtx)
 
+    l1AInterval = readRegister(ohboard,"GEM_AMC.OH.OH%d.T1Controller.INTERVAL"%(options.gtx),options.debug)
+    pulseDelay = readRegister(ohboard,"GEM_AMC.OH.OH%d.T1Controller.DELAY"%(options.gtx),options.debug)
+
     print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
 
     writeAllVFATs(ohboard, options.gtx, "Latency",    options.latency, mask)
@@ -139,6 +93,28 @@ try:
     writeAllVFATs(ohboard, options.gtx, "ContReg2",   (options.MSPL - 1) << 4, mask)
     writeAllVFATs(ohboard, options.gtx, "CalPhase",  0xff >> (8 - options.CalPhase), mask)
 
+    vals = readAllVFATs(ohboard, options.gtx, "CalPhase",   0x0)
+    calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),
+                         range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
+    msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
+                         range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "ContReg3",    0x0)
+    trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
+                         range(0,24)))
+    vals = readAllVFATs(ohboard, options.gtx, "Latency",    0x0)
+    latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                         range(0,24)))
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
+    vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                        range(0,24)))
+    vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", 0x0)
+    vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                        range(0,24)))
+    vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
+                        range(0,24)))
+
+    # Make sure no channels are receiving a cal pulse
     for vfat in range(0,24):
         if (mask >> vfat) & 0x1: continue
         for scCH in range(CHAN_MIN,CHAN_MAX):
@@ -146,50 +122,71 @@ try:
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
 
     for scCH in range(CHAN_MIN,CHAN_MAX):
-        vfatCH[0] = scCH
         print "Channel #"+str(scCH)
+
+        # Turn on the calpulse for channel scCH
         for vfat in range(0,24):
             if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
-        configureScanModule(ohboard, options.gtx, scanmode.SCURVE, mask, channel = scCH,
+        
+        # Get trimDAC vals for output TTree
+        vals = readAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg%d"%(scCH),   0x0)
+        trimDACvals = dict(map(lambda slotID: (slotID, 0x1f & vals[slotID]),
+                             range(0,24)))
+
+        configureScanModule(ohboard, options.gtx, gemData.getMode(), mask, channel = scCH,
                             scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS),
                             useUltra = True, debug = options.debug)
         printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
         startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
         scanData = getUltraScanResults(ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
-        for i in range(0,24):
-            if (mask >> i) & 0x1: continue
-            vfatN[0] = i
-            dataNow = scanData[i]
-            trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
-            trimDAC[0]   = (0x1f & readVFAT(ohboard,options.gtx, i,"VFATChannels.ChanReg%d"%(scCH)))
-            vthr[0]      = (0xff & readVFAT(ohboard,options.gtx, i,"VThreshold1"))
+        for vfat in range(0,24):
+            if (mask >> vfat) & 0x1: continue
+            dataNow = scanData[vfat]
             for VC in range(SCURVE_MAX-SCURVE_MIN+1):
                 try:
-                    vcal[0]  = int((dataNow[VC] & 0xff000000) >> 24)
-                    Nhits[0] = int(dataNow[VC] & 0xffffff)
+                    vcal  = int((dataNow[VC] & 0xff000000) >> 24)
+                    Nhits = int(dataNow[VC] & 0xffffff)
                 except IndexError:
                     print 'Unable to index data for channel %i'%scCH
                     print dataNow
-                    vcal[0]  = -99
-                    Nhits[0] = -99
+                    vcal  = -99
+                    Nhits = -99
                 finally:
-                    myT.Fill()
+                    gemData.fill(
+                           calPhase = calPhasevals[vfat],
+                           l1aTime = l1AInterval,
+                           latency = latvals[vfat],
+                           mspl = msplvals[vfat],
+                           Nhits = Nhits, 
+                           pDel = pulseDelay,
+                           trimDAC = trimDACvals[vfat],
+                           trimRange = trimRangevals[vfat],
+                           vcal = vcal,
+                           vfatCH = scCH,
+                           vfatN = vfat,
+                           vth = vthvals[vfat],
+                           vth1 = vt1vals[vfat],
+                           vth2 = vt2vals[vfat]
+                         )
+
+        # Turn off the calpulse for channel scCH
         for vfat in range(0,24):
             if (mask >> vfat) & 0x1: continue
             trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
             writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
-        myT.AutoSave("SaveSelf")
+        
+        gemData.autoSave()
         sys.stdout.flush()
         pass
     stopLocalT1(ohboard, options.gtx)
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x36, mask)
 
 except Exception as e:
-    myT.AutoSave("SaveSelf")
+    gemData.autoSave()
     print "An exception occurred", e
 finally:
     myF.cd()
-    myT.Write()
+    gemData.write()
     myF.Close()

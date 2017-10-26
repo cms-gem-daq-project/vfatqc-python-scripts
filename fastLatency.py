@@ -36,28 +36,15 @@ printSystemTTCInfo(amcBoard, options.debug)
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
-myT = TTree('latencyTree','Tree Holding CMS GEM Latency Data')
 
-Dly = array( 'i', [ -1 ] )
-myT.Branch( 'Dly', Dly, 'Dly/I' )
-vfatN = array( 'i', [ -1 ] )
-myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-vth = array( 'i', [ 0 ] )
-myT.Branch( 'vth', vth, 'vth/I' )
-vth1 = array( 'i', [ 0 ] )
-myT.Branch( 'vth1', vth1, 'vth1/I' )
-vth2 = array( 'i', [ 0 ] )
-myT.Branch( 'vth2', vth2, 'vth2/I' )
-mspl = array( 'i', [ -1 ] )
-myT.Branch( 'mspl', mspl, 'mspl/I' )
-link = array( 'i', [ -1 ] )
-myT.Branch( 'link', link, 'link/I' )
-link[0] = options.gtx
-utime = array( 'i', [ 0 ] )
-myT.Branch( 'utime', utime, 'utime/I' )
+# Setup the output TTree
+from treeStructure import gemTreeStructure
+gemData = gemTreeStructure('latencyTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
+gemData.setDefaults(options)
+gemData.vth2[0] = options.vt2
 
 import time
-utime[0] = int(time.time())
+gemData.utime[0] = int(time.time())
 
 ohboard      = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 seenTriggers = 0
@@ -99,20 +86,20 @@ try:
                     sys.stdout.flush()
                     seenTriggers += 1
                     pass
-                Dly[0]   = dlyValue
-                vfatN[0] = vfat
-                mspl[0]  = msplvals[vfat]
-                vth1[0]  = vt1vals[vfat]
-                vth2[0]  = vt2vals[vfat]
-                vth[0]   = vthvals[vfat]
+                gemData.Dly[0]   = dlyValue
+                gemData.vfatN[0] = vfat
+                gemData.mspl[0]  = msplvals[vfat]
+                gemData.vth1[0]  = vt1vals[vfat]
+                gemData.vth2[0]  = vt2vals[vfat]
+                gemData.vth[0]   = vthvals[vfat]
                 writeRegister(ohboard,"%s.VFAT%d_LAT_BX.RESET"%(baseNode,vfat),0x1)
-                myT.Fill()
+                gemData.fill()
                 pass
             if (seenTriggers%100 == 0):
                 print "Saw %d triggers"%(seenTriggers)
                 pass
             pass
-        myT.AutoSave("SaveSelf")
+        gemData.autoSave()
         sys.stdout.flush()
         if seenTriggers > options.nevts:
             print "Saw %d triggers, exiting"%(seenTriggers)
@@ -120,10 +107,10 @@ try:
             break
 
 except Exception as e:
-    myT.AutoSave("SaveSelf")
+    gemData.autoSave()
     print "An exception occurred", e
     sys.stdout.flush()
 finally:
     myF.cd()
-    myT.Write()
+    gemData.write()
     myF.Close()
