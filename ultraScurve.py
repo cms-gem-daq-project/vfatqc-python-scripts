@@ -27,15 +27,11 @@ parser.add_option("--latency", type="int", dest = "latency", default = 37,
 
 if options.MSPL < 1 or options.MSPL > 8:
     print 'MSPL must be in the range 1-8'
-    exit(1)
+    exit(os.EX_USAGE)
     pass
-#if options.CalPhase < 0 or options.CalPhase > 8:
-#    print 'CalPhase must be in the range 0-8'
-#    exit(1)
-#    pass
 if not (0 <= options.chMin <= options.chMax < 128):
     print "chMin %d not in [0,%d] or chMax %d not in [%d,127] or chMax < chMin"%(options.chMin,options.chMax,options.chMax,options.chMin)
-    exit(1)
+    exit(os.EX_USAGE)
     pass
 
 import ROOT as r
@@ -102,6 +98,17 @@ Date = startTime
 
 vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
 
+if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+    if options.CalPhase < 0 or options.CalPhase > 8:
+        print 'CalPhase must be in the range 0-8'
+        exit(os.EX_USAGE)
+        pass
+else:
+    if options.CalPhase < 0 or options.CalPhase > 7:
+        print 'CalPhase must be in the range 0-7'
+        exit(os.EX_USAGE)
+        pass
+
 CHAN_MIN = options.chMin
 CHAN_MAX = options.chMax + 1
 if options.debug:
@@ -111,15 +118,17 @@ if options.debug:
 mask = options.vfatmask
 
 try:
-    #setTriggerSource(ohboard,options.gtx,1)
-    #configureLocalT1(ohboard, options.gtx, 1, 0, options.pDel, options.L1Atime, 0, options.debug)
-    #startLocalT1(ohboard, options.gtx)
-
-    #print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
+    # Set Trigger Source for v2b electronics
+    print "setting trigger source"
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.OH.OH%d.CONTROL.TRIGGER.SOURCE"%(options.gtx),1)
 
     # Configure TTC
-    if 0 == vfatBoard.parentOH.parentAMC.ttcGenConf(options.L1Atime, options.pDel):
+    print "attempting to configure TTC"
+    #if 0 == vfatBoard.parentOH.parentAMC.ttcGenConf(options.L1Atime, options.pDel):
+    if 0 == vfatBoard.parentOH.parentAMC.configureTTC(options.pDel,options.L1Atime,options.gtx,1,0,0,True):
         print "TTC configured successfully"
+        #print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
     else:
         print "TTC configuration failed"
         sys.exit(os.EX_CONFIG)
@@ -127,13 +136,17 @@ try:
     vfatBoard.setVFATLatencyAll(mask=options.vfatmask, lat=options.latency, debug=options.debug)
     vfatBoard.setRunModeAll(mask, True, options.debug)
     vfatBoard.setVFATMSPLAll(mask, options.MSPL, options.debug)
-    #writeAllVFATs(ohboard, options.gtx, "CalPhase",  0xff >> (8 - options.CalPhase), mask)
+    vfatBoard.setVFATCalPhaseAll(mask, 0xff >> (8 - options.CalPhase), options.debug)
 
-    #for vfat in range(0,24):
-    #    if (mask >> vfat) & 0x1: continue
-    #    for scCH in range(CHAN_MIN,CHAN_MAX):
-    #        trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
-    #        writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
+    # Make sure no channels are receiving a cal pulse
+    # This needs to be done on the CTP7 otherwise it takes an hour...
+    vfatBoard.stopCalPulses(mask, CHAN_MIN, CHAN_MAX)
+    #if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+    #    for vfat in range(0,24):
+    #        if (mask >> vfat) & 0x1: continue
+    #        for chan in range(CHAN_MIN,CHAN_MAX):
+    #            trimVal = (0x3f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
+    #            vfatBoard.writeVFAT(vfat,"VFATChannels.ChanReg%d"%(chan),trimVal)
 
     scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
     scanDataSizeNet = scanDataSizeVFAT * 24
@@ -141,19 +154,15 @@ try:
     for chan in range(CHAN_MIN,CHAN_MAX):
         vfatCH[0] = chan
         print "Channel #"+str(chan)
-        #for vfat in range(0,24):
-        #    if (mask >> vfat) & 0x1: continue
-        #    trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
-        #    writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal+64)
-        #configureScanModule(ohboard, options.gtx, scanmode.SCURVE, mask, channel = scCH,
-        #                    scanmin = SCURVE_MIN, scanmax = SCURVE_MAX, numtrigs = int(N_EVENTS),
-        #                    useUltra = True, debug = options.debug)
-        #printScanConfiguration(ohboard, options.gtx, useUltra = True, debug = options.debug)
-        #startScanModule(ohboard, options.gtx, useUltra = True, debug = options.debug)
-        #scanData = getUltraScanResults(ohboard, options.gtx, SCURVE_MAX - SCURVE_MIN + 1, options.debug)
-        rpcResp = vfatBoard.parentOH.genScan(options.nevts, options.gtx,
-                                             options.scanmin,options.scanmax,options.stepSize,
-                                             chan,1,options.vfatmask,"CAL_DAC",scanData)
+        
+        # Determine the scanReg
+        scanReg = "CAL_DAC"
+        if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+            scanReg = "VCal"
+        rpcResp = vfatBoard.parentOH.performCalibrationScan(options.gtx, chan, scanReg, scanData, 
+                                                            nevts=options.nevts, dacMin=options.scanmin, 
+                                                            dacMax=options.scanmax, stepSize=options.stepSize, 
+                                                            mask=options.vfatmask)
 
         if rpcResp != 0:
             print("scurve for channel %i failed"%chan)
@@ -162,7 +171,6 @@ try:
         for vfat in range(0,24):
             if (mask >> vfat) & 0x1: continue
             vfatN[0] = vfat
-            #dataNow = scanData[vfat]
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
                 trimDAC[0]   = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
                 vthr[0]      = (0xff & vfatBoard.readVFAT(vfat,"CFG_THR_ARM_DAC"))
@@ -173,17 +181,17 @@ try:
             
             for vcalDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT,options.stepSize):
                 try:
-                    #vcal[0]  = int((dataNow[VC] & 0xff000000) >> 24)
-                    #Nhits[0] = int(dataNow[VC] & 0xffffff)
-                    if vfat == 0:
-                        #vcal[0] = vcalDAC
-                        vcal[0] = scanDataSizeVFAT - vcalDAC
+                    # Set Nev, Nhits & vcal
+                    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+                        vcal[0]  = int((scanData[vcalDAC] & 0xff000000) >> 24)
+                        Nhits[0] = int(scanData[vcalDAC] & 0xffffff)
                     else:
-                        #vcal[0] = vcalDAC - vfat*scanDataSizeVFAT
-                        vcal[0] = (vfat+1)*scanDataSizeVFAT - vcalDAC
-                    Nev[0] = scanData[vcalDAC] & 0xffff
-                    Nhits[0] = (scanData[vcalDAC]>>16) & 0xffff
-                    #print vfat,chan,vcalDAC,vcal[0],Nhits[0],Nev[0]
+                        if vfat == 0:
+                            vcal[0] = scanDataSizeVFAT - vcalDAC
+                        else:
+                            vcal[0] = (vfat+1)*scanDataSizeVFAT - vcalDAC
+                        Nev[0] = scanData[vcalDAC] & 0xffff
+                        Nhits[0] = (scanData[vcalDAC]>>16) & 0xffff
                 except IndexError:
                     print 'Unable to index data for channel %i'%chan
                     print scanData[vcalDAC]
@@ -191,16 +199,11 @@ try:
                     Nhits[0] = -99
                 finally:
                     myT.Fill()
-        #for vfat in range(0,24):
-        #    if (mask >> vfat) & 0x1: continue
-        #    trimVal = (0x3f & readVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH)))
-        #    writeVFAT(ohboard,options.gtx,vfat,"VFATChannels.ChanReg%d"%(scCH),trimVal)
-        #myT.AutoSave("SaveSelf")
-        #sys.stdout.flush()
-        #pass
-    #stopLocalT1(ohboard, options.gtx)
+        myT.AutoSave("SaveSelf")
+        sys.stdout.flush()
+        pass
+    vfatBoard.parentOH.parentAMC.toggleTTC(options.gtx, False)
     vfatBoard.setRunModeAll(mask, False, options.debug)
-
 except Exception as e:
     gemData.autoSave()
     print "An exception occurred", e
