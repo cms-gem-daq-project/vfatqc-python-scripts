@@ -84,13 +84,15 @@ try:
     vfatBoard.setRunModeAll(mask, True, options.debug)
     vfatBoard.setVFATThresholdAll(mask=options.vfatmask, vt1=100, vt2=options.vt2, debug=options.debug)
 
-    trgSrc = vfatBoard.parentOH.parentAMC.readRegister("GEM_AMC.OH.OH%d.CONTROL.TRIGGER.SOURCE"%(options.gtx))
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        print "getting trigger source"
+        trgSrc = vfatBoard.parentOH.parentAMC.readRegister("GEM_AMC.OH.OH%d.CONTROL.TRIGGER.SOURCE"%(options.gtx))
             
     scanReg = "THR_ARM_DAC"
     if options.perchannel: 
         # Set Trigger Source for v2b electronics
-        print "setting trigger source"
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+            print "setting trigger source"
             vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.OH.OH%d.CONTROL.TRIGGER.SOURCE"%(options.gtx),1)
        
        # Configure TTC
@@ -170,12 +172,12 @@ try:
             scanReg = "VThreshold1Trk"
             
             # Configure TTC
-             print "attempting to configure TTC"
-             if 0 == vfatBoard.parentOH.parentAMC.configureTTC(pulseDelay=0,L1Ainterval=250,ohN=options.gtx,bRun=True):
-                 print "TTC configured successfully"
-             else:
-                 print "TTC configuration failed"
-                 sys.exit(os.EX_CONFIG)
+            print "attempting to configure TTC"
+            if 0 == vfatBoard.parentOH.parentAMC.configureTTC(pulseDelay=0,L1Ainterval=250,ohN=options.gtx,bRun=True):
+                print "TTC configured successfully"
+            else:
+                print "TTC configuration failed"
+                sys.exit(os.EX_CONFIG)
         else:
             scanReg = "VThreshold1"
             pass
