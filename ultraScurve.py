@@ -125,7 +125,6 @@ try:
 
     # Configure TTC
     print "attempting to configure TTC"
-    #if 0 == vfatBoard.parentOH.parentAMC.ttcGenConf(options.L1Atime, options.pDel):
     if 0 == vfatBoard.parentOH.parentAMC.configureTTC(options.pDel,options.L1Atime,options.gtx,1,0,0,True):
         print "TTC configured successfully"
         #print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
@@ -140,13 +139,8 @@ try:
 
     # Make sure no channels are receiving a cal pulse
     # This needs to be done on the CTP7 otherwise it takes an hour...
+    print "stopping cal pulse to all channels"
     vfatBoard.stopCalPulses(mask, CHAN_MIN, CHAN_MAX)
-    #if vfatBoard.parentOH.parentAMC.fwVersion < 3:
-    #    for vfat in range(0,24):
-    #        if (mask >> vfat) & 0x1: continue
-    #        for chan in range(CHAN_MIN,CHAN_MAX):
-    #            trimVal = (0x3f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
-    #            vfatBoard.writeVFAT(vfat,"VFATChannels.ChanReg%d"%(chan),trimVal)
 
     scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
     scanDataSizeNet = scanDataSizeVFAT * 24
@@ -159,6 +153,8 @@ try:
         scanReg = "CAL_DAC"
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             scanReg = "VCal"
+            
+        # Perform the scan
         rpcResp = vfatBoard.parentOH.performCalibrationScan(options.gtx, chan, scanReg, scanData, 
                                                             nevts=options.nevts, dacMin=options.scanmin, 
                                                             dacMax=options.scanmax, stepSize=options.stepSize, 
@@ -171,13 +167,13 @@ try:
         for vfat in range(0,24):
             if (mask >> vfat) & 0x1: continue
             vfatN[0] = vfat
-            if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                trimDAC[0]   = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
-                vthr[0]      = (0xff & vfatBoard.readVFAT(vfat,"CFG_THR_ARM_DAC"))
-            else:
+            if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                 trimRange[0] = (0x07 & vfatBoard.readVFAT(vfat,"ContReg3"))
                 trimDAC[0]   = (0x1f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
                 vthr[0]      = (0xff & vfatBoard.readVFAT(vfat,"VThreshold1"))
+            else:
+                trimDAC[0]   = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
+                vthr[0]      = (0xff & vfatBoard.readVFAT(vfat,"CFG_THR_ARM_DAC"))
             
             for vcalDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT,options.stepSize):
                 try:
