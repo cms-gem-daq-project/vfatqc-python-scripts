@@ -121,7 +121,7 @@ try:
     # Set Trigger Source for v2b electronics
     print "setting trigger source"
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
-        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.OH.OH%d.CONTROL.TRIGGER.SOURCE"%(options.gtx),1)
+        vfatBoard.parentOH.setTriggerSource(0x1)
 
     # Configure TTC
     print "attempting to configure TTC"
@@ -155,10 +155,9 @@ try:
             scanReg = "VCal"
             
         # Perform the scan
-        rpcResp = vfatBoard.parentOH.performCalibrationScan(options.gtx, chan, scanReg, scanData, 
-                                                            nevts=options.nevts, dacMin=options.scanmin, 
-                                                            dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                            mask=options.vfatmask)
+        rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, nevts=options.nevts, 
+                                                            dacMin=options.scanmin, dacMax=options.scanmax, 
+                                                            stepSize=options.stepSize, mask=options.vfatmask)
 
         if rpcResp != 0:
             print("scurve for channel %i failed"%chan)

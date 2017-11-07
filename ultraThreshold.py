@@ -93,7 +93,7 @@ try:
         # Set Trigger Source for v2b electronics
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             print "setting trigger source"
-            vfatBoard.parentOH.setTriggerSource(1)
+            vfatBoard.parentOH.setTriggerSource(0x1)
        
        # Configure TTC
         print "attempting to configure TTC"
@@ -115,10 +115,9 @@ try:
                 scanReg = "VThreshold1PerChan"
 
             # Perform the scan
-            rpcResp = vfatBoard.parentOH.performCalibrationScan(options.gtx, chan, scanReg, scanData, 
-                                                                nevts=options.nevts, dacMin=options.scanmin, 
-                                                                dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                                mask=options.vfatmask)
+            rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, nevts=options.nevts, 
+                                                                dacMin=options.scanmin, dacMax=options.scanmax, 
+                                                                stepSize=options.stepSize, mask=options.vfatmask)
 
             if rpcResp != 0:
                 print("threshold scan for channel %i failed"%chan)
@@ -167,7 +166,7 @@ try:
 
         if options.trkdata:
             print "setting trigger source"
-            vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.OH.OH%d.CONTROL.TRIGGER.SOURCE"%(options.gtx),1)
+            vfatBoard.parentOH.setTriggerSource(0x1)
             
             scanReg = "VThreshold1Trk"
             
@@ -187,13 +186,12 @@ try:
         scanData = (c_uint32 * scanDataSizeNet)()
         
         # Perform the scan
-        rpcResp = vfatBoard.parentOH.performCalibrationScan(options.gtx, 0, scanReg, scanData, 
-                                                            nevts=options.nevts, dacMin=options.scanmin, 
-                                                            dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                            mask=options.vfatmask)
+        rpcResp = vfatBoard.parentOH.performCalibrationScan(0, scanReg, scanData, nevts=options.nevts, 
+                                                            dacMin=options.scanmin, dacMax=options.scanmax, 
+                                                            stepSize=options.stepSize, mask=options.vfatmask)
 
         if rpcResp != 0:
-            print("threshold scan for channel %i failed"%chan)
+            print("threshold scan failed")
             sys.exit(os.EX_SOFTWARE)
 
         sys.stdout.flush()
