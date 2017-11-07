@@ -97,7 +97,7 @@ try:
        
        # Configure TTC
         print "attempting to configure TTC"
-        if 0 == vfatBoard.parentOH.parentAMC.configureTTC(pulseDelay=0,L1Ainterval=250,ohN=options.gtx,bRun=True):
+        if 0 == vfatBoard.parentOH.parentAMC.configureTTC(pulseDelay=0,L1Ainterval=250,ohN=options.gtx,enable=True):
             print "TTC configured successfully"
         else:
             print "TTC configuration failed"
@@ -163,7 +163,7 @@ try:
         if not (vfatBoard.parentOH.parentAMC.fwVersion < 3):
             print "For v3 electronics please use the --perchannel option"
             print "Exiting"
-            os.exit(os.EX_USAGE)
+            sys.exit(os.EX_USAGE)
 
         if options.trkdata:
             print "setting trigger source"
@@ -173,7 +173,7 @@ try:
             
             # Configure TTC
             print "attempting to configure TTC"
-            if 0 == vfatBoard.parentOH.parentAMC.configureTTC(pulseDelay=0,L1Ainterval=250,ohN=options.gtx,bRun=True):
+            if 0 == vfatBoard.parentOH.parentAMC.configureTTC(pulseDelay=0,L1Ainterval=250,ohN=options.gtx,enable=True):
                 print "TTC configured successfully"
             else:
                 print "TTC configuration failed"
