@@ -11,6 +11,7 @@ from array import array
 from ctypes import *
 
 from gempython.tools.vfat_user_functions_xhal import *
+from gempython.tools.vfat_user_functions_uhal import * #remove this later after making it so amc13 communication doesn't spit bullshit messages
 
 from gempython.vfatqc.qcoptions import parser
 
@@ -52,9 +53,15 @@ if options.stepSize <= 0:
     print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
     exit(1)
 
-step = options.stepSize
-if (step + options.scanmin > options.scanmax):
-    step = options.scanmax - options.scanmin
+remainder = (options.scanmax-options.scanmin+1) % options.stepSize
+if remainder != 0:
+    options.scanmax = options.scanmax + remainder
+    print "extending scanmax to: ", options.scanmax
+
+if options.debug:
+    uhal.setLogLevelTo(uhal.LogLevel.INFO)
+else:
+    uhal.setLogLevelTo(uhal.LogLevel.ERROR)
 
 from ROOT import TFile,TTree
 filename = options.filename
@@ -109,14 +116,7 @@ try:
     vfatBoard.setRunModeAll(mask, True, options.debug)
     vfatBoard.setVFATMSPLAll(mask, options.MSPL, options.debug)
     
-    if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-        vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", mask)
-        vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                            range(0,24)))
-        vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
-        msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),
-                             range(0,24)))
-    else:
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
         vfatBoard.writeAllVFATs("VThreshold2", options.vt2, mask)
 
         vals  = vfatBoard.readAllVFATs("VThreshold1", 0x0)
@@ -130,53 +130,67 @@ try:
         vals = vfatBoard.readAllVFATs("ContReg2",    0x0)
         msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
                              range(0,24)))
+    else:
+        vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", mask)
+        vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                            range(0,24)))
+        vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
+        msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),
+                             range(0,24)))
 
-    #mode = scanmode.LATENCY
+    # Stop triggers
+    vfatBoard.parentOH.parentAMC.toggleTTC(options.gtx, False)
+    amc13board.enableLocalL1A(False)
+    amc13board.resetCounters()
 
-    #oh.stopLocalT1(ohboard, options.gtx)
-
-    #amc13board.enableLocalL1A(False)
-    #amc13board.resetCounters()
-
-    #scanBase = "GEM_AMC.OH.OH%d.ScanController.ULTRA"%(options.gtx)
-    #if (readRegister(ohboard,"%s.MONITOR.STATUS"%(scanBase)) > 0):
-    #    print("Scan was already running, resetting module")
-    #    writeRegister(ohboard,"%s.RESET"%(scanBase),0x1)
-    #    time.sleep(0.1)
-    #    pass
+    # Check to see if an ultra scan is already running
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        scanBase = "GEM_AMC.OH.OH%d.ScanController.ULTRA"%(options.gtx)
+        if (vfatBoard.parentOH.parentAMC.readRegister("%s.MONITOR.STATUS"%(scanBase)) > 0):
+            print("Scan was already running, resetting module")
+            vfatBoard.parentOH.parentAMC.writeRegister("%s.RESET"%(scanBase),0x1)
+            time.sleep(0.1)
+            pass
+    
     amc13nL1A = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
-    #amcnL1A = amc.getL1ACount(amcboard)
-    #ohnL1A = oh.getL1ACount(ohboard,options.gtx)
-    #print "Initial L1A counts:"
+    amcnL1A = vfatBoard.parentOH.parentAMC.getL1ACount()
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        ohnL1A = vfatBoard.parentOH.getL1ACount()
+    
+    print "Initial L1A counts:"
     print "AMC13: %s"%(amc13nL1A)
-    #print "AMC: %s"%(amcnL1A)
-    #print "OH%s: %s"%(options.gtx,ohnL1A)
-    #oh.configureScanModule(ohboard, options.gtx, mode, mask,
-    #                    scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
-    #                    stepsize=step,
-    #                    numtrigs=int(options.nevts),
-    #                    useUltra=True, debug=True)
-    #oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
-    #sys.stdout.flush()
-    #amc13board.enableLocalL1A(True)
+    print "AMC: %s"%(amcnL1A)
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        print "OH%s: %s"%(options.gtx,ohnL1A)
+    sys.stdout.flush()
+    amc13board.enableLocalL1A(True)
 
+    scanChan=128
+    enableCalPulse=False
     if options.internal:
-        #amc.blockL1A(amcboard)
-        #oh.setTriggerSource(ohboard,options.gtx,0x1)
-        #oh.sendL1ACalPulse(ohboard, options.gtx, delay=20, interval=400, number=0)
-        #chanReg = ((1&0x1) << 6)|((0&0x1) << 5)|(0&0x1f)
-        #writeAllVFATs(ohboard, options.gtx, "VFATChannels.ChanReg0", chanReg, mask)
-        #writeAllVFATs(ohboard, options.gtx, "VCal",     250, mask)
+        enableCalPulse=True
+        scanChan=0
+        vfatBoard.parentOH.parentAMC.blockL1A()
+        if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+            vfatBoard.parentOH.setTriggerSource(0x1)
+        
+        print "stopping cal pulse to all channels"
+        vfatBoard.stopCalPulses(mask, 0, 128)
+        
+        print "Setting channel %i to calpulse"%(scanChan)
+        vfatBoard.setChannelRegisterAll(chan=scanChan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
+        vfatBoard.setVFATCalHeightAll(mask, 250)
 
         # Configure TTC
-        if 0 == vfatBoard.parentOH.parentAMC.ttcGenConf(options.L1Atime, options.pDel):
+        print "attempting to configure TTC"
+        if 0 == vfatBoard.parentOH.parentAMC.configureTTC(options.pDel,options.L1Atime,options.gtx,1,0,0,True):
             print "TTC configured successfully"
         else:
             print "TTC configuration failed"
             sys.exit(os.EX_CONFIG)
     else:
         if options.amc13local:
-            #amc.enableL1A(amcboard)
+            vfatBoard.parentOH.parentAMC.enableL1A()
             amcMask = amc13board.parseInputEnableList("%s"%(options.slot), True)
             amc13board.reset(amc13board.Board.T1)
             amc13board.resetCounters()
@@ -202,82 +216,103 @@ try:
                 amc13board.startContinuousL1A()
                 pass
             pass
-        #amc.enableL1A(amcboard)
-        #oh.setTriggerSource(ohboard,options.gtx,0x5) # GBT, 0x0 for GTX
+        
+        print "attempting to configure TTC"
+        vfatBoard.parentOH.parentAMC.enableL1A()
+        if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+            vfatBoard.parentOH.setTriggerSource(0x5) # GBT, 0x0 for GTX
+        print "TTC configured successfully"
         pass
 
-    #oh.setTriggerThrottle(ohboard, options.gtx, options.throttle)
-    #oh.startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
-    #oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)
+    # Throttle the trigger if requested
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        vfatBoard.parentOH.setTriggerThrottle(options.throttle)
     sys.stdout.flush()
-    #scanData = oh.getUltraScanResults(ohboard, options.gtx, LATENCY_MAX - LATENCY_MIN + 1, options.debug)
-    chan = 69
+    
     scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
     scanDataSizeNet = scanDataSizeVFAT * 24
     scanData = (c_uint32 * scanDataSizeNet)()
-    rpcResp = vfatBoard.parentOH.genScan(options.nevts, options.gtx,
-                                         options.scanmin,options.scanmax,options.stepSize,
-                                         chan,1,options.vfatmask,"LATENCY",scanData)
+        
+    # Determine the scanReg
+    scanReg = "LATENCY"
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        scanReg = "Latency"
+ 
+    # Perform the scan
+    print("Starting scan for channel %i; pulseDelay: %i; L1Atime: %i"%(scanChan, options.pDel, options.L1Atime))
+    # Not sure I understand why it has to be scanChan+1 below...
+    rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan+1, scanReg, scanData, enableCal=enableCalPulse, nevts=options.nevts, 
+                                                        dacMin=options.scanmin, dacMax=options.scanmax, 
+                                                        stepSize=options.stepSize, mask=options.vfatmask)
 
     if rpcResp != 0:
-        print("latency scan for channel %i failed"%chan)
+        print("latency scan failed")
         sys.exit(os.EX_SOFTWARE)
-
     print("Done scanning, processing output")
+    
+    print "Final L1A counts:"
     amc13board.enableLocalL1A(False)
     amc13nL1Af = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
-    #amcnL1Af = amc.getL1ACount(amcboard)
-    #ohnL1Af = oh.getL1ACount(ohboard,options.gtx)
-    print "Final L1A counts:"
+    amcnL1Af = vfatBoard.parentOH.parentAMC.getL1ACount()
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        ohnL1Af = vfatBoard.parentOH.getL1ACount()
     print "AMC13: %s, difference %s"%(amc13nL1Af,amc13nL1Af-amc13nL1A)
-    #print "AMC: %s, difference %s"%(amcnL1Af,amcnL1Af-amcnL1A)
-    #print "OH%s: %s, difference %s"%(options.gtx,ohnL1Af,ohnL1Af-ohnL1A)
+    print "AMC: %s, difference %s"%(amcnL1Af,amcnL1Af-amcnL1A)
+    
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        print "OH%s: %s, difference %s"%(options.gtx,ohnL1Af,ohnL1Af-ohnL1A)
 
+    print("Information on CRC packets")
+    print("\tActually still needs to be implemented (oops) - Brian")
+    # this is the way to do this for v2b
     #for i in range(24):
     #  print "Total number of CRC packets for VFAT%s on link %s is %s"%(i, options.gtx, readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)) + readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.VALID.VFAT%d"%(options.gtx,i)))
     #for i in range(24):
     #  print "Number of CRC errors for VFAT%s on link %s is %s"%(i, options.gtx, readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)))
+    # for v3 evaldas says I can count number of good & bad CRC eventss w/DAQ_MONITPR as well as number of L1As received by the CTP7 and forwarded to the VFATs with GEM_AMC.TTC.CMD_COUNTERS.L1A
 
     amc13board.enableLocalL1A(True)
     sys.stdout.flush()
+    print("parsing scan data")
     for vfat in range(0,24):
+        if (mask >> vfat) & 0x1: continue
         vfatN[0] = vfat
-        #dataNow = scanData[i]
         mspl[0]  = msplvals[vfatN[0]]
         vth1[0]  = vt1vals[vfatN[0]]
         #vth2[0]  = vt2vals[vfatN[0]]
         #vth[0]   = vthvals[vfatN[0]]
         if options.debug:
-            #print("{0} {1} {2} {3} {4}".format(vfatN[0], mspl[0], vth1[0], vth2[0], vth[0]))
             sys.stdout.flush()
             pass
-        for latReg in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT,options.stepSize):
-            #lat[0]   = int((dataNow[VC] & 0xff000000) >> 24)
-            #Nhits[0] = int(dataNow[VC] & 0xffffff)
-            #if options.debug:
-            #    print("{0} {1} 0x{2:x} {3} {4}".format(i,VC,dataNow[VC],lat[0],Nhits[0]))
-            #    pass
+        for latReg in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
             try:
-                if vfat == 0:
-                    lat[0] = latReg
+                if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+                    lat[0]   = int((scanData[latReg] & 0xff000000) >> 24)
+                    Nev[0] = options.nevts
+                    Nhits[0] = int(scanData[latReg] & 0xffffff)
                 else:
-                    lat[0] = latReg - vfat*scanDataSizeVFAT
-                Nev[0] = scanData[latReg] & 0xffff
-                Nhits[0] = (scanData[latReg]>>16) & 0xffff
-                #print vfat,chan,latReg,lat[0],Nhits[0],Nev[0]
+                    if vfat == 0:
+                        lat[0] = options.scanmin + (latReg * options.stepSize)
+                    else:
+                        lat[0] = options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize
+                    Nev[0] = scanData[latReg] & 0xffff
+                    Nhits[0] = (scanData[latReg]>>16) & 0xffff
             except IndexError:
                 print 'Unable to index data for channel %i'%chan
                 print scanData[latReg]
-                vth1[0]  = -99
+                lat[0]  = -99
                 Nhits[0] = -99
             finally:
+                if options.debug:
+                    print "vfat%i; lat %i; Nev %i; Nhits %i"%(vfatN[0],lat[0],Nev[0],Nhits[0])
                 myT.Fill()
             pass
         pass
     myT.AutoSave("SaveSelf")
+
     vfatBoard.setRunModeAll(mask, False, options.debug)
     if options.internal:
-        #oh.stopLocalT1(ohboard, options.gtx)
+        vfatBoard.parentOH.parentAMC.toggleTTC(options.gtx, False)
         pass
     elif options.amc13local:
         amc13board.stopContinuousL1A()

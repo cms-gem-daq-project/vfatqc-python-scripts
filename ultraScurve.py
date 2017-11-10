@@ -34,6 +34,11 @@ if not (0 <= options.chMin <= options.chMax < 128):
     exit(os.EX_USAGE)
     pass
 
+remainder = (options.scanmax-options.scanmin+1) % options.stepSize
+if remainder != 0:
+    options.scanmax = options.scanmax + remainder
+    print "extending scanmax to: ", options.scanmax
+
 import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
@@ -111,9 +116,9 @@ else:
 
 CHAN_MIN = options.chMin
 CHAN_MAX = options.chMax + 1
-if options.debug:
-    CHAN_MAX = 5
-    pass
+#if options.debug:
+#    CHAN_MAX = 5
+#    pass
 
 mask = options.vfatmask
 
@@ -122,12 +127,13 @@ try:
     print "setting trigger source"
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
         vfatBoard.parentOH.setTriggerSource(0x1)
+        print("OH%i: Trigger Source %i"%(vfatBoard.parentOH.link,vfatBoard.parentOH.getTriggerSource()))
 
     # Configure TTC
     print "attempting to configure TTC"
     if 0 == vfatBoard.parentOH.parentAMC.configureTTC(options.pDel,options.L1Atime,options.gtx,1,0,0,True):
         print "TTC configured successfully"
-        #print 'Link %i T1 controller status: %i'%(options.gtx,getLocalT1Status(ohboard,options.gtx))
+        vfatBoard.parentOH.parentAMC.getTTCStatus(options.gtx,True)
     else:
         print "TTC configuration failed"
         sys.exit(os.EX_CONFIG)
@@ -154,8 +160,13 @@ try:
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             scanReg = "VCal"
             
+        print "Setting channel %i to calpulse"%(chan)
+        vfatBoard.setChannelRegisterAll(chan=chan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
+        vfatBoard.setVFATCalHeightAll(mask, 250)
+        
         # Perform the scan
-        rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, nevts=options.nevts, 
+        print("Starting scan; pulseDelay: %i; L1Atime: %i; Latency: %i"%(options.pDel, options.L1Atime, options.latency))
+        rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=True, nevts=options.nevts, 
                                                             dacMin=options.scanmin, dacMax=options.scanmax, 
                                                             stepSize=options.stepSize, mask=options.vfatmask)
 
@@ -174,16 +185,19 @@ try:
                 trimDAC[0]   = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
                 vthr[0]      = (0xff & vfatBoard.readVFAT(vfat,"CFG_THR_ARM_DAC"))
             
-            for vcalDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT,options.stepSize):
+            for vcalDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                 try:
                     # Set Nev, Nhits & vcal
                     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                         vcal[0]  = int((scanData[vcalDAC] & 0xff000000) >> 24)
+                        Nev[0] = options.nevts
                         Nhits[0] = int(scanData[vcalDAC] & 0xffffff)
                     else:
                         if vfat == 0:
+                            # what happens if we don't scan from 0 to 255?
                             vcal[0] = scanDataSizeVFAT - vcalDAC
                         else:
+                            # what happens if we don't scan from 0 to 255?
                             vcal[0] = (vfat+1)*scanDataSizeVFAT - vcalDAC
                         Nev[0] = scanData[vcalDAC] & 0xffff
                         Nhits[0] = (scanData[vcalDAC]>>16) & 0xffff
@@ -193,6 +207,8 @@ try:
                     vcal[0]  = -99
                     Nhits[0] = -99
                 finally:
+                    if options.debug:
+                        print "vfat%i; vcal %i; Nev %i; Nhits %i"%(vfatN[0],vcal[0],Nev[0],Nhits[0])
                     myT.Fill()
         myT.AutoSave("SaveSelf")
         sys.stdout.flush()
