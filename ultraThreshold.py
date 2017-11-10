@@ -33,6 +33,11 @@ if options.vt2 not in range(256):
     print "Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2)
     exit(1)
 
+remainder = (options.scanmax-options.scanmin+1) % options.stepSize
+if remainder != 0:
+    options.scanmax = options.scanmax + remainder
+    print "extending scanmax to: ", options.scanmax
+
 import ROOT as r
 filename = options.filename
 myF = r.TFile(filename,'recreate')
@@ -115,7 +120,7 @@ try:
                 scanReg = "VThreshold1PerChan"
 
             # Perform the scan
-            rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, nevts=options.nevts, 
+            rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=False, nevts=options.nevts, 
                                                                 dacMin=options.scanmin, dacMax=options.scanmax, 
                                                                 stepSize=options.stepSize, mask=options.vfatmask)
 
@@ -130,16 +135,19 @@ try:
                 if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                     trimRange[0] = (0x07 & vfatBoard.readVFAT(vfat,"ContReg3"))
                 
-                for threshDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT,options.stepSize):
+                for threshDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                     try:
                         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                             vth1[0]  = int((scanData[threshDAC] & 0xff000000) >> 24)
                             vth[0]   = vth2[0] - vth1[0]
+                            Nev[0] = options.nevts
                             Nhits[0] = int(scanData[threshDAC] & 0xffffff)
                         else:
                             if vfat == 0:
+                                # what happens if we don't scan from 0 to 255?
                                 vth1[0] = threshDAC
                             else:
+                                # what happens if we don't scan from 0 to 255?
                                 vth1[0] = threshDAC - vfat*scanDataSizeVFAT
                             Nev[0] = scanData[threshDAC] & 0xffff
                             Nhits[0] = (scanData[threshDAC]>>16) & 0xffff
@@ -200,9 +208,20 @@ try:
             vfatN[0] = vfat
             trimRange[0] = (0x07 & vfatBoard.readVFAT(vfat,"ContReg3"))
             for threshDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT,options.stepSize):
-                vth1[0]  = int((scanData[threshDAC] & 0xff000000) >> 24)
-                vth[0]   = vth2[0] - vth1[0]
-                Nhits[0] = int(scanData[threshDAC] & 0xffffff)
+                if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+                    vth1[0]  = int((scanData[threshDAC] & 0xff000000) >> 24)
+                    vth[0]   = vth2[0] - vth1[0]
+                    Nev[0] = options.nevts
+                    Nhits[0] = int(scanData[threshDAC] & 0xffffff)
+                else:
+                    if vfat == 0:
+                        # what happens if we don't scan from 0 to 255?
+                        vth1[0] = threshDAC
+                    else:
+                        # what happens if we don't scan from 0 to 255?
+                        vth1[0] = threshDAC - vfat*scanDataSizeVFAT
+                    Nev[0] = scanData[threshDAC] & 0xffff
+                    Nhits[0] = (scanData[threshDAC]>>16) & 0xffff
                 myT.Fill()
                 pass
             pass
