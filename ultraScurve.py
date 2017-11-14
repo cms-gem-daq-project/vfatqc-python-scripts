@@ -160,12 +160,13 @@ try:
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             scanReg = "VCal"
             
-        print "Setting channel %i to calpulse"%(chan)
-        vfatBoard.setChannelRegisterAll(chan=chan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
-        vfatBoard.setVFATCalHeightAll(mask, 250)
+        #print "Setting channel %i to calpulse"%(chan)
+        #vfatBoard.setChannelRegisterAll(chan=chan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
+        #vfatBoard.setVFATCalHeightAll(mask, 250)
         
         # Perform the scan
-        print("Starting scan; pulseDelay: %i; L1Atime: %i; Latency: %i"%(options.pDel, options.L1Atime, options.latency))
+        if options.debug: 
+            print("Starting scan; pulseDelay: %i; L1Atime: %i; Latency: %i"%(options.pDel, options.L1Atime, options.latency))
         rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=True, nevts=options.nevts, 
                                                             dacMin=options.scanmin, dacMax=options.scanmax, 
                                                             stepSize=options.stepSize, mask=options.vfatmask)
