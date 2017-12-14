@@ -111,8 +111,8 @@ if options.chConfig:
                 if (options.vfatmask >> int(event.vfatN)) & 0x1:
                     continue
                 
-                #if event.mask==0 and event.trimDAC==0:
-                #    continue
+                if event.mask==0 and event.trimDAC==0:
+                    continue
 
                 vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
         

@@ -164,7 +164,7 @@ try:
 
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vfatBoard.parentOH.setTriggerSource(trgSrc)
-        vfatBoard.parentOH.parentAMC.toggleTTC(options.gtx, False)
+        vfatBoard.parentOH.parentAMC.toggleTTCGen(options.gtx, False)
         pass
     else:
         if not (vfatBoard.parentOH.parentAMC.fwVersion < 3):
@@ -230,7 +230,7 @@ try:
         if options.trkdata:
             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                 vfatBoard.parentOH.setTriggerSource(trgSrc)
-            vfatBoard.parentOH.parentAMC.toggleTTC(options.gtx, False)
+            vfatBoard.parentOH.parentAMC.toggleTTCGen(options.gtx, False)
             pass
         pass
 
