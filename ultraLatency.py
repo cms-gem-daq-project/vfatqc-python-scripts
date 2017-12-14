@@ -36,10 +36,10 @@ parser.add_option("--vt2", type="int", dest="vt2",
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 (options, args) = parser.parse_args()
 
-if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
-    print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
-    print("Scan parameters must be in range [0,255] and min < max")
-    exit(1)
+#if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
+#    print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
+#    print("Scan parameters must be in range [0,255] and min < max")
+#    exit(1)
 
 if options.vt2 not in range(256):
     print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
@@ -139,7 +139,7 @@ try:
                              range(0,24)))
 
     # Stop triggers
-    vfatBoard.parentOH.parentAMC.toggleTTC(options.gtx, False)
+    vfatBoard.parentOH.parentAMC.blockL1A()
     amc13board.enableLocalL1A(False)
     amc13board.resetCounters()
 
@@ -163,14 +163,14 @@ try:
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
         print "OH%s: %s"%(options.gtx,ohnL1A)
     sys.stdout.flush()
-    amc13board.enableLocalL1A(True)
+    #amc13board.enableLocalL1A(True)
 
     scanChan=128
     enableCalPulse=False
     if options.internal:
         enableCalPulse=True
         scanChan=0
-        vfatBoard.parentOH.parentAMC.blockL1A()
+        #vfatBoard.parentOH.parentAMC.blockL1A()
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vfatBoard.parentOH.setTriggerSource(0x1)
         
@@ -190,7 +190,6 @@ try:
             sys.exit(os.EX_CONFIG)
     else:
         if options.amc13local:
-            vfatBoard.parentOH.parentAMC.enableL1A()
             amcMask = amc13board.parseInputEnableList("%s"%(options.slot), True)
             amc13board.reset(amc13board.Board.T1)
             amc13board.resetCounters()
@@ -211,14 +210,16 @@ try:
                 pass
             # to prevent trigger blocking
             amc13board.fakeDataEnable(True)
-            amc13board.enableLocalL1A(True)
+            # disable the event builder?
+            # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x1)
+            #amc13board.enableLocalL1A(True)
             if options.randoms > 0:
                 amc13board.startContinuousL1A()
                 pass
             pass
         
         print "attempting to configure TTC"
-        vfatBoard.parentOH.parentAMC.enableL1A()
+        #vfatBoard.parentOH.parentAMC.enableL1A()
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vfatBoard.parentOH.setTriggerSource(0x5) # GBT, 0x0 for GTX
         print "TTC configured successfully"
@@ -239,11 +240,16 @@ try:
         scanReg = "Latency"
  
     # Perform the scan
-    print("Starting scan for channel %i; pulseDelay: %i; L1Atime: %i"%(scanChan, options.pDel, options.L1Atime))
+    if options.internal:
+        print("Starting scan for channel %i; pulseDelay: %i; L1Atime: %i"%(scanChan, options.pDel, options.L1Atime))
+    else:
+        print("Starting scan")
     # Not sure I understand why it has to be scanChan+1 below...
-    rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan+1, scanReg, scanData, enableCal=enableCalPulse, nevts=options.nevts, 
-                                                        dacMin=options.scanmin, dacMax=options.scanmax, 
-                                                        stepSize=options.stepSize, mask=options.vfatmask)
+    amc13board.enableLocalL1A(True)
+    vfatBoard.parentOH.parentAMC.enableL1A()
+    rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan, scanReg, scanData, enableCal=enableCalPulse, nevts=options.nevts, 
+                                                        dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
+                                                        mask=options.vfatmask, useExtTrig=(not options.internal))
 
     if rpcResp != 0:
         print("latency scan failed")
@@ -252,6 +258,7 @@ try:
     
     print "Final L1A counts:"
     amc13board.enableLocalL1A(False)
+    vfatBoard.parentOH.parentAMC.blockL1A()
     amc13nL1Af = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
     amcnL1Af = vfatBoard.parentOH.parentAMC.getL1ACount()
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
@@ -271,7 +278,7 @@ try:
     #  print "Number of CRC errors for VFAT%s on link %s is %s"%(i, options.gtx, readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)))
     # for v3 evaldas says I can count number of good & bad CRC eventss w/DAQ_MONITPR as well as number of L1As received by the CTP7 and forwarded to the VFATs with GEM_AMC.TTC.CMD_COUNTERS.L1A
 
-    amc13board.enableLocalL1A(True)
+    #amc13board.enableLocalL1A(True)
     sys.stdout.flush()
     print("parsing scan data")
     for vfat in range(0,24):
@@ -291,10 +298,11 @@ try:
                     Nev[0] = options.nevts
                     Nhits[0] = int(scanData[latReg] & 0xffffff)
                 else:
-                    if vfat == 0:
-                        lat[0] = options.scanmin + (latReg * options.stepSize)
-                    else:
-                        lat[0] = options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize
+                    #if vfat == 0:
+                    #    lat[0] = options.scanmin + (latReg * options.stepSize)
+                    #else:
+                    #    lat[0] = options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize
+                    lat[0] = options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize
                     Nev[0] = scanData[latReg] & 0xffff
                     Nhits[0] = (scanData[latReg]>>16) & 0xffff
             except IndexError:
@@ -312,7 +320,7 @@ try:
 
     vfatBoard.setRunModeAll(mask, False, options.debug)
     if options.internal:
-        vfatBoard.parentOH.parentAMC.toggleTTC(options.gtx, False)
+        vfatBoard.parentOH.parentAMC.toggleTTCGen(options.gtx, False)
         pass
     elif options.amc13local:
         amc13board.stopContinuousL1A()
