@@ -58,6 +58,7 @@ try:
     print "Setting MSPL to %d"%(options.MSPL)
     writeAllVFATs(ohboard, options.gtx, "ContReg2",    ((options.MSPL-1)<<4))
 
+    vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
@@ -89,6 +90,7 @@ try:
                 gemData.Dly[0]   = dlyValue
                 gemData.vfatN[0] = vfat
                 gemData.mspl[0]  = msplvals[vfat]
+                gemData.vfatID[0] = vfatIDvals[vfat]
                 gemData.vth1[0]  = vt1vals[vfat]
                 gemData.vth2[0]  = vt2vals[vfat]
                 gemData.vth[0]   = vthvals[vfat]
