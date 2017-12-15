@@ -1,4 +1,4 @@
-def readBackCheck(rootTree, dict_Names, device, gtx):
+def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     """
     Given an input set of registers, and expected values of those registers, read from all VFATs on device.gtx to see if there are any differences between written and read values.
 
@@ -19,6 +19,7 @@ def readBackCheck(rootTree, dict_Names, device, gtx):
     list_KnownRegs = parameters.defaultValues.keys()
     list_KnownRegs.append("VThreshold1")
     list_KnownRegs.append("VFATChannels.ChanReg")
+    list_KnownRegs.append("ChipID")
     for regName in dict_Names.values():
         if regName not in list_KnownRegs:
             print "readBackCheck() does not understand %s"%(regName)
@@ -28,6 +29,7 @@ def readBackCheck(rootTree, dict_Names, device, gtx):
     # Get data from tree
     list_bNames = dict_Names.keys()
     list_bNames.append('vfatN')
+    #list_bNames.append('vfatID')
     if "trimDAC" in dict_Names.keys() or "mask" in dict_Names.keys():
         list_bNames.append('vfatCH')
     array_writeVals = rp.tree2array(tree=rootTree, branches=list_bNames)
@@ -55,6 +57,13 @@ def readBackCheck(rootTree, dict_Names, device, gtx):
                     else:
                         if writeValOfReg != (readBackVal&0x1f):
                             print "VFAT%i Chan%i: %s mismatch, write val = %i, readback = %i"%(vfat, chan, bName, writeValOfReg, readBackVal&0x1f)
+        elif regName == "ChipID": #ChipID
+            regValues = getAllChipIDs(device, gtx, 0x0) # dict of { vfatN:chipID }
+            for vfat in regValues:
+                valsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
+                valOfReg = np.asscalar(np.unique(valsPerVFAT['%s'%bName]))
+                if valOfReg != regValues[vfat]:
+                    print "VFAT%i: %s mismatch, expected = %s, readback = %s"%(vfat, regName, hex(valOfReg), hex(regValues[vfat]))
         else: #VFAT Register, use 0xff
             regValues = readAllVFATs(device, gtx, regName, 0x0)
             regMap = map(lambda chip: chip&0xff, regValues)
@@ -62,6 +71,8 @@ def readBackCheck(rootTree, dict_Names, device, gtx):
             for vfat,readBackVal in enumerate(regMap):
                 writeValsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
                 writeValOfReg = np.asscalar(writeValsPerVFAT['%s'%bName])
+                if regName == "VThreshold1":
+                    writeValOfReg+=vt1bump
                 if writeValOfReg != readBackVal:
                     print "VFAT%i: %s mismatch, write val = %i, readback = %i"%(vfat, regName, writeValOfReg, readBackVal)
 

@@ -68,7 +68,7 @@ if options.filename:
     try:
         inF = r.TFile(options.filename)
         chTree = inF.Get("scurveFitTree")
-        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
+        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg", "vfatID":"ChipID" }
 
         if not options.compare:
             print 'Configuring Channel Registers based on %s'%options.filename
@@ -88,7 +88,7 @@ if options.chConfig:
     try:
         chTree = r.TTree('chTree','Tree holding Channel Configuration Parameters')
         chTree.ReadFile(options.chConfig)
-        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
+        dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg", "vfatID":"ChipID" }
 
         if not options.compare:
             print 'Configuring Channel Registers based on %s'%options.chConfig
@@ -107,7 +107,7 @@ if options.vfatConfig:
     try:
         vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
         vfatTree.ReadFile(options.vfatConfig)
-        dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
+        dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3", "vfatID":"ChipID" }
 
         if not options.compare:
             print 'Configuring VFAT Registers based on %s'%options.vfatConfig
@@ -118,9 +118,9 @@ if options.vfatConfig:
                 writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),0)
         
         print 'Comparing Curently Stored VFAT Registers with %s'%options.vfatConfig
-        if options.vt1bump != 0:
-            print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
-        readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
+        #if options.vt1bump != 0:
+        #    print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
+        readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx, options.vt1bump)
 
     except Exception as e:
         print '%s does not seem to exist'%options.filename

@@ -111,6 +111,7 @@ try:
     vals = readAllVFATs(ohboard, options.gtx, "ContReg3",    0x0)
     trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
                          range(0,24)))
+    vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
     vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
@@ -218,6 +219,7 @@ try:
                    mspl = msplvals[vfat],
                    Nhits = int(dataNow[VC] & 0xffffff),
                    trimRange = trimRangevals[vfat],
+                   vfatID = vfatIDvals[vfat],
                    vfatN = vfat,
                    vth = vthvals[vfat],
                    vth1 = vt1vals[vfat],

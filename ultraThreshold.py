@@ -86,6 +86,7 @@ try:
     vals = readAllVFATs(ohboard, options.gtx, "Latency",    0x0)
     latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                          range(0,24)))
+    vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", 0x0)
     vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
@@ -132,6 +133,7 @@ try:
                            trimDAC = trimDACvals[vfat],
                            trimRange = trimRangevals[vfat],
                            vfatCH = scCH,
+                           vfatID = vfatIDvals[vfat],
                            vfatN = vfat,
                            vth = vthvals[vfat],
                            vth1 = vth1,
@@ -178,6 +180,7 @@ try:
                        Nhits = Nhits, 
                        trimRange = trimRangevals[vfat],
                        vfatCH = scCH,
+                       vfatID = vfatIDvals[vfat],
                        vfatN = vfat,
                        vth = vthvals[vfat],
                        vth1 = vth1,
