@@ -60,6 +60,9 @@ class gemTreeStructure:
         self.vfatCH = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vfatCH', self.vfatCH, 'vfatCH/I' )
         
+        self.vfatID = array( 'i', [-1] )
+        self.gemTree.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
+
         self.vfatN = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'vfatN', self.vfatN, 'vfatN/I' )
         
@@ -118,6 +121,8 @@ class gemTreeStructure:
             self.vcal[0] = kwargs["vcal"]
         if "vfatCH" in kwargs:
             self.vfatCH[0] = kwargs["vfatCH"]
+        if "vfatID" in kwargs:
+            self.vfatID[0] = kwargs["vfatID"]
         if "vfatN" in kwargs:
             self.vfatN[0] = kwargs["vfatN"]
         if "vth" in kwargs:
@@ -145,33 +150,10 @@ class gemTreeStructure:
 
         self.link[0] = options.gtx
         self.Nev[0] = options.nevts
-        #self.mspl[0] = options.MSPL
         self.utime[0] = time
         self.ztrim[0] = options.ztrim
 
         return
-
-    #def setScanResults(self, dacValue, Nhits):
-    #    """
-    #    For each scan mode sets the appropriate dacValue (e.g. VThreshold1)
-    #    and Nhits determined by the scan module
-    #    """
-    #    self.Nhits[0] = Nhits
-
-    #    if self.mode[0] == scanmode.THRESHTRG or self.mode[0] == scanmode.THRESHCH or self.mode[0] == scanmode.THRESHTRK:
-    #        self.vth1[0] = dacValue
-    #    elif self.mode[0] == scanmode.SCURVE:
-    #        self.vcal[0] = dacValue
-    #    elif self.mode[0] == scanmode.LATENCY:
-    #        self.latency[0] = dacValue
-    #    else:
-    #        print "scanmode %i not understood"%(self.mode[0])
-    #        print "Available scan modes are:"
-    #        print "\tThreshold scan: %i"%(scanmode.THRESHTRG)
-    #        print "\tThreshold scan per channel: %i"%(scanmode.THRESHCH)
-    #        print "\tLatency scan: %i"%(scanmode.LATENCY)
-    #        print "\tThreshold scan with tracking data: %i"%(scanmode.THRESHTRK)
-    #        exit(os.EX_USAGE)
 
     def write(self):
         self.gemTree.Write()
