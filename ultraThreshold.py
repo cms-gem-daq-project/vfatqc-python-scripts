@@ -45,6 +45,8 @@ filename = options.filename
 myF = r.TFile(filename,'recreate')
 myT = r.TTree('thrTree','Tree Holding CMS GEM VT1 Data')
 
+isZCC = array( 'i', [0] )
+myT.Branch( 'isZCC', isZCC, 'isZCC/I' )
 Nev = array( 'i', [ 0 ] )
 Nev[0] = -1
 myT.Branch( 'Nev', Nev, 'Nev/I' )
@@ -96,19 +98,49 @@ try:
         trgSrc = vfatBoard.parentOH.getTriggerSource()
             
     scanReg = "THR_ARM_DAC"
-    if options.scanZCC and vfatBoard.parentOH.parentAMC.fwVersion >= 3:
-        scanReg = "THR_ZCC_DAC"
-        
+    if vfatBoard.parentOH.parentAMC.fwVersion >= 3:
         #Store original CFG_SEL_COMP_MODE
         vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
-        selCompvals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                                     range(0,24)))
-        
-        print "Setting CFG_SEL_COMP_MODE to 0x2 (ZCC Mode)"
-        vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE", 0x2, mask)
-        vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
-        selCompvals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                                range(0,24)))
+        selCompVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+            range(0,24)))
+        print selCompVals_orig
+
+        #Store original CFG_FORCE_EN_ZCC
+        vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", mask)
+        forceEnZCCVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+            range(0,24)))
+        print forceEnZCCVals_orig
+
+        if options.scanZCC:
+            isZCC[0] = 1
+
+            #Reset scanReg
+            scanReg = "THR_ZCC_DAC"
+            
+            print "Setting CFG_SEL_COMP_MODE to 0x2 (ZCC Mode)"
+            vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE", 0x2, mask)
+            vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
+            selCompVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                range(0,24)))
+
+            print "Forcing the ZCC output to be enabled independent of the ARM comparator"
+            vfatBoard.writeAllVFATs("CFG_FORCE_EN_ZCC", 0x1, mask)
+            vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", mask)
+            forceEnZCCVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                range(0,24)))
+        else:
+            print "Setting CFG_SEL_COMP_MODE to 0x1 (ARM Mode)"
+            vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE", 0x1, mask)
+            vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
+            selCompVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                range(0,24)))
+
+            print "Do not force ZCC output"
+            vfatBoard.writeAllVFATs("CFG_FORCE_EN_ZCC", 0x0, mask)
+            vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", mask)
+            forceEnZCCVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                range(0,24)))
+            
 
     if options.perchannel: 
         # Set Trigger Source for v2b electronics
@@ -252,6 +284,12 @@ try:
 
     # Place VFATs back in sleep mode
     vfatBoard.setRunModeAll(mask, False, options.debug)
+
+    # Return to original comparator settings
+    for key,val in selCompVals_orig.iteritems():
+        vfatBoard.writeVFAT(key,"CFG_SEL_COMP_MODE",val)
+    for key,val in forceEnZCCVals_orig.iteritems():
+        vfatBoard.writeVFAT(key,"CFG_FORCE_EN_ZCC",val)
 
 except Exception as e:
     gemData.autoSave()
