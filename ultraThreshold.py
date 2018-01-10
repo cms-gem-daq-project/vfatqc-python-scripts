@@ -26,6 +26,8 @@ parser.add_option("--trkdata", action="store_true", dest="trkdata",
                   help="Run a per-VFAT VT1 scan using tracking data (default is to use trigger data)", metavar="trkdata")
 parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")
+parser.add_option("--zcc", action="store_true", dest="scanZCC",
+                  help="V3 Electronics only, scan the threshold on the ZCC instead of the ARM comparator", metavar="scanZCC")
 
 (options, args) = parser.parse_args()
 
@@ -94,6 +96,20 @@ try:
         trgSrc = vfatBoard.parentOH.getTriggerSource()
             
     scanReg = "THR_ARM_DAC"
+    if options.scanZCC and vfatBoard.parentOH.parentAMC.fwVersion >= 3:
+        scanReg = "THR_ZCC_DAC"
+        
+        #Store original CFG_SEL_COMP_MODE
+        vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
+        selCompvals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                                     range(0,24)))
+        
+        print "Setting CFG_SEL_COMP_MODE to 0x2 (ZCC Mode)"
+        vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE", 0x2, mask)
+        vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
+        selCompvals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
+                                range(0,24)))
+
     if options.perchannel: 
         # Set Trigger Source for v2b electronics
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
