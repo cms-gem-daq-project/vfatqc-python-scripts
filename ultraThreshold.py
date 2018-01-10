@@ -287,8 +287,10 @@ try:
 
     # Return to original comparator settings
     for key,val in selCompVals_orig.iteritems():
+        if (mask >> key) & 0x1: continue
         vfatBoard.writeVFAT(key,"CFG_SEL_COMP_MODE",val)
     for key,val in forceEnZCCVals_orig.iteritems():
+        if (mask >> key) & 0x1: continue
         vfatBoard.writeVFAT(key,"CFG_FORCE_EN_ZCC",val)
 
 except Exception as e:
