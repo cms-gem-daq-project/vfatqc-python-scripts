@@ -30,6 +30,8 @@ parser.add_option("--t3trig", action="store_true", dest="t3trig",
                   help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
 parser.add_option("--throttle", type="int", default=0, dest="throttle",
                   help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle", metavar="throttle")
+parser.add_option("--vcal", type="int", dest="vcal",
+                  help="Height of CalPulse in DAC units for all VFATs", metavar="vcal", default=250)
 parser.add_option("--vt2", type="int", dest="vt2",
                   help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0)
 
@@ -45,9 +47,9 @@ if options.vt2 not in range(256):
     print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
     exit(1)
 
-if options.MSPL not in range(1,9):
-    print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
-    exit(1)
+#if options.MSPL not in range(1,9):
+#    print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
+#    exit(1)
 
 if options.stepSize <= 0:
     print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
@@ -179,7 +181,8 @@ try:
         
         print "Setting channel %i to calpulse"%(scanChan)
         vfatBoard.setChannelRegisterAll(chan=scanChan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
-        vfatBoard.setVFATCalHeightAll(mask, 250)
+        #vfatBoard.setVFATCalHeightAll(mask, 250)
+        vfatBoard.setVFATCalHeightAll(mask, options.vcal)
 
         # Configure TTC
         print "attempting to configure TTC"
