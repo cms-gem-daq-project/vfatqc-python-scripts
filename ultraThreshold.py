@@ -103,13 +103,11 @@ try:
         vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
         selCompVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
             range(0,24)))
-        print selCompVals_orig
 
         #Store original CFG_FORCE_EN_ZCC
         vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", mask)
         forceEnZCCVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
             range(0,24)))
-        print forceEnZCCVals_orig
 
         if options.scanZCC:
             isZCC[0] = 1
