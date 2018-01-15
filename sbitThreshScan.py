@@ -108,7 +108,7 @@ try:
         else:
             listMaskOh[2+(23-vfat)]='1'
         #print(''.join(listMaskOh))
-        maskOh=hex(~(int(''.join(listMaskOh),2)) & 0xFFFFFF)
+        maskOh=(~(int(''.join(listMaskOh),2)) & 0xFFFFFF)
         print("maskOh =",hex(maskOh))
 
         #Set the OH VFAT_MASK to block sbits from every vfat except one
