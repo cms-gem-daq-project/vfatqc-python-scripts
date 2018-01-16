@@ -25,9 +25,12 @@ parser.add_option("--invertVFATPos", action="store_true", dest="invertVFATPos",
                   help="Invert VFAT Position ordered, e.g. VFAT0 is idx 23 and vice versa", metavar="invertVFATPos")
 parser.add_option("--perchannel", action="store_true", dest="perchannel",
                   help="Run a per-channel VT1 scan", metavar="perchannel")
+parser.add_option("--time", type="int", dest="time", default = 3000,
+                  help="Acquire time per point in milliseconds", metavar="time")
 #parser.add_option("--zcc", action="store_true", dest="scanZCC",
 #                  help="V3 Electronics only, scan the threshold on the ZCC instead of the ARM comparator", metavar="scanZCC")
 
+parser.set_defaults(stepSize=2)
 (options, args) = parser.parse_args()
 
 remainder = (options.scanmax-options.scanmin+1) % options.stepSize
@@ -45,8 +48,8 @@ isCFD[0] = 1
 myT.Branch( 'isCFD', isCFD, 'isCFD/I' )
 vth = array( 'i', [ 0 ] )
 myT.Branch( 'vth', vth, 'vth/I' )
-Rate = array( 'i', [ 0 ] )
-myT.Branch( 'Rate', Rate, 'Rate/I' )
+Rate = array( 'd', [ 0. ] )
+myT.Branch( 'Rate', Rate, 'Rate/D' )
 vfatN = array( 'i', [ 0 ] )
 myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
 vfatCH = array( 'i', [ 0 ] )
@@ -72,6 +75,10 @@ try:
         print("Only implemented for v3 electronics, exiting")
         sys.exit(os.EX_USAGE)
     
+    #Place chips into run mode & set MSPL
+    vfatBoard.setRunModeAll(mask, True, options.debug)
+    vfatBoard.setVFATMSPLAll(mask, options.MSPL, options.debug)
+    
     #Store original CFG_SEL_COMP_MODE
     vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
     selCompVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
@@ -89,8 +96,6 @@ try:
     else:               #Use CFD Mode (default)
         vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE",0x0,mask)
         vfatBoard.writeAllVFATs("CFG_FORCE_EN_ZCC",0x0,mask)
-
-    #Get VFAT Parameters
 
     #Perform Scan
     scanReg = "THR_ARM_DAC"
@@ -120,8 +125,9 @@ try:
             print("scanning %s of VFAT%i for all channels"%(scanReg, vfat))
             
             # Perform the scan
-            rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=maskOh, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, 
-                                                             dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, scanReg=scanReg)
+            rpcResp = vfatBoard.parentOH.performSBitRateScan(vfat=vfat, maskOh=maskOh, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, 
+                                                             dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
+                                                             scanReg=scanReg, time=options.time)
              
             if rpcResp != 0:
                 print("sbit rate scan for VFAT%i failed"%vfat)
@@ -133,13 +139,13 @@ try:
                 print("VFAT\tDAC\tRate")
             for idx in range(0,scanDataSizeVFAT):
                 try:
-                    Rate[0] = outDataTrigRate[idx]
+                    Rate[0] = scanDataRate[idx]
                     vfatCH[0]=128
                     vfatN[0] = vfat
-                    vth[0] = outDataDacVal[idx]
+                    vth[0] = scanDataDAC[idx]
 
                     if options.debug:
-                        print("%i\t%i\t%i"%(vfat,outDataDacVal[idx],outDataTrigRate[idx]))
+                        print("%i\t%i\t%i"%(vfat,scanDataDAC[idx],scanDataRate[idx]))
                 except IndexError:
                     Rate[0] = -99
                     vfatCH[0]=128
@@ -150,7 +156,10 @@ try:
                     myT.Fill()
         myT.AutoSave("SaveSelf")
 
-    # Return to original comparator settings
+    # Take chips out of run mode
+    vfatBoard.setRunModeAll(mask, False, options.debug)
+  
+  # Return to original comparator settings
     for key,val in selCompVals_orig.iteritems():
         if (mask >> key) & 0x1: continue
         vfatBoard.writeVFAT(key,"CFG_SEL_COMP_MODE",val)
