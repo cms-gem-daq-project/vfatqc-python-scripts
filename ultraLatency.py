@@ -188,9 +188,9 @@ try:
         print "attempting to configure TTC"
         if 0 == vfatBoard.parentOH.parentAMC.configureTTC(options.pDel,options.L1Atime,options.gtx,1,0,0,True):
             print "TTC configured successfully"
+            vfatBoard.parentOH.parentAMC.getTTCStatus(options.gtx,True)
         else:
-            print "TTC configuration failed"
-            sys.exit(os.EX_CONFIG)
+            raise Exception('RPC response was non-zero, TTC configuration failed')
     else:
         if options.amc13local:
             amcMask = amc13board.parseInputEnableList("%s"%(options.slot), True)
@@ -255,8 +255,7 @@ try:
                                                         mask=options.vfatmask, useExtTrig=(not options.internal))
 
     if rpcResp != 0:
-        print("latency scan failed")
-        sys.exit(os.EX_SOFTWARE)
+        raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
     print("Done scanning, processing output")
     
     print "Final L1A counts:"

@@ -135,8 +135,7 @@ try:
         print "TTC configured successfully"
         vfatBoard.parentOH.parentAMC.getTTCStatus(options.gtx,True)
     else:
-        print "TTC configuration failed"
-        sys.exit(os.EX_CONFIG)
+        raise Exception('RPC response was non-zero, TTC configuration failed')
 
     vfatBoard.setVFATLatencyAll(mask=options.vfatmask, lat=options.latency, debug=options.debug)
     vfatBoard.setRunModeAll(mask, True, options.debug)
@@ -172,8 +171,7 @@ try:
                                                             stepSize=options.stepSize, mask=options.vfatmask)
 
         if rpcResp != 0:
-            print("scurve for channel %i failed"%chan)
-            sys.exit(os.EX_SOFTWARE)
+            raise Exception('RPC response was non-zero, scurve for channel %i failed'%chan)
         
         for vfat in range(0,24):
             if (mask >> vfat) & 0x1: continue
