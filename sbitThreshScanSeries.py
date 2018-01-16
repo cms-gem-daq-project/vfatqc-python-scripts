@@ -131,8 +131,7 @@ try:
              
             if rpcResp != 0:
                 print("sbit rate scan for VFAT%i failed"%vfat)
-                #sys.exit(os.EX_SOFTWARE)
-                raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
+                raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
 
             #Store Output Data
             if options.debug:
