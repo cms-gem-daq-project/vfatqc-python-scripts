@@ -21,12 +21,8 @@ parser.add_option("--chMax", type="int", dest = "chMax", default = 127,
                   help="Specify maximum channel number to scan", metavar="chMax")
 parser.add_option("-f", "--filename", type="string", dest="filename", default="SBitRateData.root",
                   help="Specify Output Filename", metavar="filename")
-parser.add_option("--invertVFATPos", action="store_true", dest="invertVFATPos",
-                  help="Invert VFAT Position ordered, e.g. VFAT0 is idx 23 and vice versa", metavar="invertVFATPos")
 parser.add_option("--perchannel", action="store_true", dest="perchannel",
                   help="Run a per-channel sbit rate scan", metavar="perchannel")
-parser.add_option("--time", type="int", dest="time", default = 3000,
-                  help="Acquire time per point in milliseconds", metavar="time")
 #parser.add_option("--zcc", action="store_true", dest="scanZCC",
 #                  help="V3 Electronics only, scan the threshold on the ZCC instead of the ARM comparator", metavar="scanZCC")
 
@@ -97,14 +93,9 @@ try:
         vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE",0x0,mask)
         vfatBoard.writeAllVFATs("CFG_FORCE_EN_ZCC",0x0,mask)
 
-    #Determine number of unmasked VFATs
-    numUnmaskedVFATs=0
-    for vfat in range(0,24):
-        if (mask >> vfat) & 0x1: continue
-        numUnmaskedVFATs+=1
+    #determine total time in hours
     if options.perchannel:
-        #determine total time in hours
-        totalTime=(options.scanmax-options.scanmin)*(options.chMax-options.chMin)*numUnmaskedVFATs*(options.time/1000.)*(1./3600.)
+        totalTime=(options.scanmax-options.scanmin)*(options.chMax-options.chMin)*(1./3600.)
         
         print("I see you've asked for a perchannel scan")
         print("Right now this is done in series, are you sure you want to continue?")
@@ -116,7 +107,7 @@ try:
             performTest=performTest.upper()
             if performTest == "NO":
                 print("Okay, exiting!")
-                print("Please run again and change the '--vfatmask', '--chMin', '--chMax', '--scanmin', and/or '--scanmax' parameters")
+                print("Please run again and change the '--chMin', '--chMax', '--scanmin', and/or '--scanmax' parameters")
                 sys.exit(os.EX_USAGE)
             elif performTest == "YES":
                 bInputUnderstood = True
@@ -129,80 +120,83 @@ try:
     scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
     scanDataDAC = (c_uint32 * scanDataSizeVFAT)()
     scanDataRate = (c_uint32 * scanDataSizeVFAT)()
-    for vfat in range(0,24):
-        if (mask >> vfat) & 0x1: continue
+    scanDataRatePerVFAT = 24 * (c_uint32 * scanDataSizeVFAT)()
+    
+    # Scan over all channels or just a channel OR???
+    if options.perchannel:
+        for chan in range(options.chMin,options.chMax+1):
+            print("scanning %s of VFAT%i channel %i"%(scanReg, vfat, chan))
 
-        #Make the OH Mask
-        print("making OH mask for VFAT%i"%vfat)
-        listMaskOh = list('0b'+'0'*24)
-        if options.invertVFATPos:
-            listMaskOh[2+vfat]='1'
-        else:
-            listMaskOh[2+(23-vfat)]='1'
-        #print(''.join(listMaskOh))
-        maskOh=(~(int(''.join(listMaskOh),2)) & 0xFFFFFF)
-        print("maskOh =",hex(maskOh))
-
-        #Set the OH VFAT_MASK to block sbits from every vfat except one
-        #vfatBoard.parentOH.setSBitMask(maskOh) #Now done by the rpc module called by hwOptohybrid::performSBitRateScan(...)
-
-        if options.perchannel:
-            for chan in range(options.chMin,options.chMax+1):
-                print("scanning %s of VFAT%i channel %i"%(scanReg, vfat, chan))
-
-                # Perform the scan
-                rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=maskOh, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, 
-                                                                 dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                                 chan=chan, scanReg=scanReg, time=options.time, invertVFATPos=options.invertVFATPos)
-                 
-                if rpcResp != 0:
-                    print("sbit rate scan for VFAT%i channel %i failed"%(vfat,chan))
-                    #raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
-                    continue #For now just skip instead of crash
-        
-                #Store Output Data
-                if options.debug:
-                    print("VFAT\tChan\tDAC\tRate")
-                for idx in range(0,scanDataSizeVFAT):
+            # Perform the scan
+            rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=mask, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT, 
+                                                             dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
+                                                             chan=chan, scanReg=scanReg, isParallel=True)
+             
+            if rpcResp != 0:
+                print("sbit rate scan for VFAT%i channel %i failed"%(vfat,chan))
+                #raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
+                continue #For now just skip instead of crash
+    
+            #Store Output Data - Per VFAT
+            if options.debug:
+                print("VFAT\tChan\tDAC\tRate")
+            for vfat in range(0,23):
+                for idx in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                     try:
-                        Rate[0] = scanDataRate[idx]
+                        Rate[0] = scanDataRatePerVFAT[idx]
                         vfatCH[0] = chan
                         vfatN[0] = vfat
-                        vth[0] = scanDataDAC[idx]
+                        vth[0] = scanDataDAC[idx-vfat*scanDataSizeVFAT]
 
                         if options.debug:
-                            print("%i\t%i\t%i\t%i"%(vfat,chan,scanDataDAC[idx],scanDataRate[idx]))
+                            print("%i\t%i\t%i\t%i"%(vfat,chan,scanDataDAC[idx-vfat*scanDataSizeVFAT],scanDataRatePerVFAT[idx]))
                     except IndexError:
                         Rate[0] = -99
-                        vfatCH[0]=128
+                        vfatCH[0]= chan
                         vfatN[0] = vfat
-                        vth[0] = options.scanmin+1+options.stepSize*idx
+                        vth[0] = options.scanmin+1+options.stepSize*(idx-vfat*scanDataSizeVFAT)
                         print("Unable to index data for VFAT%i idx %i expected DAC val"%(vfat, idx, vth[0]))
                     finally:
                         myT.Fill()
 
-                myT.AutoSave("SaveSelf")
-        else:
-            print("scanning %s of VFAT%i for all channels"%(scanReg, vfat))
-            
-            # Perform the scan
-            rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=maskOh, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, 
-                                                             dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                             scanReg=scanReg, time=options.time, invertVFATPos=options.invertVFATPos)
-             
-            if rpcResp != 0:
-                print("sbit rate scan for VFAT%i failed"%vfat)
-                raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
+            # Store Output Data - Overall
+            for idx in range(0, scanDataSizeVFAT):
+                try:
+                    Rate[0] = scanDataRate[idx]
+                    vfatCH[0] = chan
+                    vfatN[0] = 24
+                    vth[0] = scanDataDAC[idx]
+                except IndexError:
+                    Rate[0] = -99
+                    vfatCH[0] = chan
+                    vfatN[0] = 24
+                    vth[0] = options.scanmin+1+options.stepSize*(idx)
+                finally:
+                    myT.Fill()
 
-            #Store Output Data
-            if options.debug:
-                print("VFAT\tDAC\tRate")
-            for idx in range(0,scanDataSizeVFAT):
+            myT.AutoSave("SaveSelf")
+    else:
+        print("scanning %s of VFAT%i for all channels"%(scanReg, vfat))
+        
+        # Perform the scan
+        rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=mask, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT,
+                                                         dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
+                                                         scanReg=scanReg, isParallel=True)
+         
+        if rpcResp != 0:
+            print("sbit rate scan for VFAT%i failed"%vfat)
+            raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
+
+        # Store Output Data - Per VFAT
+        if options.debug:
+            print("VFAT\tDAC\tRate")
+        for vfat in range(0,23):
+            for idx in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                 try:
                     Rate[0] = scanDataRate[idx]
                     vfatCH[0]=128
                     vfatN[0] = vfat
-                    vth[0] = scanDataDAC[idx]
+                    vth[0] = scanDataDAC[idx-vfat*scanDataSizeVFAT]
 
                     if options.debug:
                         print("%i\t%i\t%i"%(vfat,scanDataDAC[idx],scanDataRate[idx]))
@@ -210,16 +204,32 @@ try:
                     Rate[0] = -99
                     vfatCH[0]=128
                     vfatN[0] = vfat
-                    vth[0] = options.scanmin+1+options.stepSize*idx
+                    vth[0] = options.scanmin+1+options.stepSize*(idx-vfat*scanDataSizeVFAT)
                     print("Unable to index data for VFAT%i idx %i expected DAC val"%(vfat, idx, vth[0]))
                 finally:
                     myT.Fill()
+        
+            # Store Output Data - Overall
+            for idx in range(0, scanDataSizeVFAT):
+                try:
+                    Rate[0] = scanDataRate[idx]
+                    vfatCH[0] = 128
+                    vfatN[0] = 24
+                    vth[0] = scanDataDAC[idx]
+                except IndexError:
+                    Rate[0] = -99
+                    vfatCH[0] = 128
+                    vfatN[0] = 24
+                    vth[0] = options.scanmin+1+options.stepSize*(idx)
+                finally:
+                    myT.Fill()
+        
         myT.AutoSave("SaveSelf")
 
     # Take chips out of run mode
     vfatBoard.setRunModeAll(mask, False, options.debug)
   
-  # Return to original comparator settings
+    # Return to original comparator settings
     for key,val in selCompVals_orig.iteritems():
         if (mask >> key) & 0x1: continue
         vfatBoard.writeVFAT(key,"CFG_SEL_COMP_MODE",val)
