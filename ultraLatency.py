@@ -19,7 +19,7 @@ parser.add_option("--amc13local", action="store_true", dest="amc13local",
                   help="Set up for using AMC13 local trigger generator", metavar="amc13local")
 parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
                   help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
-parser.add_option("--filename", type="string", dest="filename", default="LatencyData_Trimmed.root",
+parser.add_option("--filename", type="string", dest="filename", default="LatencyScanData.root",
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--internal", action="store_true", dest="internal",
                   help="Run a latency scan using the internal calibration pulse", metavar="internal")
