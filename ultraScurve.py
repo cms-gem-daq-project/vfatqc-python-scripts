@@ -22,6 +22,9 @@ parser.add_option("-f", "--filename", type="string", dest="filename", default="S
                   help="Specify Output Filename", metavar="filename")
 parser.add_option("--latency", type="int", dest = "latency", default = 37,
                   help="Specify Latency", metavar="latency")
+parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
+                  help="Calibration Module is set to use voltage step pulsing instead of default
+                        current pulse injection", metavar="voltageStepPulse")
 
 (options, args) = parser.parse_args()
 
@@ -88,6 +91,10 @@ pDel[0] = options.pDel
 calPhase = array( 'i', [ 0 ] )
 myT.Branch( 'calPhase', calPhase, 'calPhase/I' )
 calPhase[0] = options.CalPhase
+
+isCurrentPulse = array( 'i', [ 0 ] )
+myT.Branch( 'isCurrentPulse', isCurrentPulse, 'isCurrentPulse/I')
+isCurrentPulse[0] = not options.voltageStepPulse
 
 link = array( 'i', [ 0 ] )
 myT.Branch( 'link', link, 'link/I' )
@@ -159,14 +166,11 @@ try:
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             scanReg = "VCal"
             
-        #print "Setting channel %i to calpulse"%(chan)
-        #vfatBoard.setChannelRegisterAll(chan=chan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
-        #vfatBoard.setVFATCalHeightAll(mask, 250)
-        
         # Perform the scan
         if options.debug: 
             print("Starting scan; pulseDelay: %i; L1Atime: %i; Latency: %i"%(options.pDel, options.L1Atime, options.latency))
-        rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=True, nevts=options.nevts, 
+        rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=True, currentPulse=isCurrentPulse[0], 
+                                                            nevts=options.nevts, 
                                                             dacMin=options.scanmin, dacMax=options.scanmax, 
                                                             stepSize=options.stepSize, mask=options.vfatmask)
 
@@ -192,12 +196,11 @@ try:
                         Nev[0] = options.nevts
                         Nhits[0] = int(scanData[vcalDAC] & 0xffffff)
                     else:
-                        if vfat == 0:
-                            # what happens if we don't scan from 0 to 255?
-                            vcal[0] = scanDataSizeVFAT - vcalDAC
-                        else:
-                            # what happens if we don't scan from 0 to 255?
-                            vcal[0] = (vfat+1)*scanDataSizeVFAT - vcalDAC
+                        #if vfat == 0:
+                        #    vcal[0] = scanDataSizeVFAT - vcalDAC
+                        #else:
+                        #    vcal[0] = (vfat+1)*scanDataSizeVFAT - vcalDAC
+                        vcal[0] = options.scanmin + (vcalDAC - vfat*scanDataSizeVFAT) * options.stepSize
                         Nev[0] = scanData[vcalDAC] & 0xffff
                         Nhits[0] = (scanData[vcalDAC]>>16) & 0xffff
                 except IndexError:
