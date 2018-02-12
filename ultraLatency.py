@@ -32,6 +32,9 @@ parser.add_option("--throttle", type="int", default=0, dest="throttle",
                   help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle", metavar="throttle")
 parser.add_option("--vcal", type="int", dest="vcal",
                   help="Height of CalPulse in DAC units for all VFATs", metavar="vcal", default=250)
+parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
+                  help="Calibration Module is set to use voltage step pulsing instead of default
+                        current pulse injection", metavar="voltageStepPulse")
 parser.add_option("--vt2", type="int", dest="vt2",
                   help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0)
 
@@ -70,6 +73,9 @@ filename = options.filename
 myF = TFile(filename,'recreate')
 myT = TTree('latTree','Tree Holding CMS GEM Latency Data')
 
+isCurrentPulse = array( 'i', [ 0 ] )
+myT.Branch( 'isCurrentPulse', isCurrentPulse, 'isCurrentPulse/I')
+isCurrentPulse[0] = not options.voltageStepPulse
 Nev = array( 'i', [ 0 ] )
 Nev[0] = -1
 myT.Branch( 'Nev', Nev, 'Nev/I' )
@@ -181,8 +187,7 @@ try:
         
         print "Setting channel %i to calpulse"%(scanChan)
         vfatBoard.setChannelRegisterAll(chan=scanChan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
-        #vfatBoard.setVFATCalHeightAll(mask, 250)
-        vfatBoard.setVFATCalHeightAll(mask, options.vcal)
+        vfatBoard.setVFATCalHeightAll(mask, options.vcal, currentPulse=isCurrentPulse[0])
 
         # Configure TTC
         print "attempting to configure TTC"
@@ -250,7 +255,7 @@ try:
     # Not sure I understand why it has to be scanChan+1 below...
     amc13board.enableLocalL1A(True)
     vfatBoard.parentOH.parentAMC.enableL1A()
-    rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan, scanReg, scanData, enableCal=enableCalPulse, nevts=options.nevts, 
+    rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan, scanReg, scanData, enableCal=enableCalPulse, currentPulse=isCurrentPulse[0], nevts=options.nevts, 
                                                         dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
                                                         mask=options.vfatmask, useExtTrig=(not options.internal))
 
@@ -300,10 +305,6 @@ try:
                     Nev[0] = options.nevts
                     Nhits[0] = int(scanData[latReg] & 0xffffff)
                 else:
-                    #if vfat == 0:
-                    #    lat[0] = options.scanmin + (latReg * options.stepSize)
-                    #else:
-                    #    lat[0] = options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize
                     lat[0] = options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize
                     Nev[0] = scanData[latReg] & 0xffff
                     Nhits[0] = (scanData[latReg]>>16) & 0xffff
