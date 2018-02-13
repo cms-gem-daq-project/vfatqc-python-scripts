@@ -33,8 +33,8 @@ parser.add_option("--throttle", type="int", default=0, dest="throttle",
 parser.add_option("--vcal", type="int", dest="vcal",
                   help="Height of CalPulse in DAC units for all VFATs", metavar="vcal", default=250)
 parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
-                  help="Calibration Module is set to use voltage step pulsing instead of default
-                        current pulse injection", metavar="voltageStepPulse")
+                  help="Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
+                  metavar="voltageStepPulse")
 parser.add_option("--vt2", type="int", dest="vt2",
                   help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0)
 
