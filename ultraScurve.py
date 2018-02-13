@@ -14,6 +14,8 @@ import os, sys
 
 parser.add_option("--CalPhase", type="int", dest = "CalPhase", default = 0,
                   help="Specify CalPhase. Must be in range 0-8", metavar="CalPhase")
+parser.add_option("--calSF", type="int", dest = "calSF", default = 0,
+                  help="V3 electroncis only. Value of the CFG_CAL_FS register", metavar="calSF")
 parser.add_option("--chMin", type="int", dest = "chMin", default = 0,
                   help="Specify minimum channel number to scan", metavar="chMin")
 parser.add_option("--chMax", type="int", dest = "chMax", default = 127,
@@ -23,8 +25,8 @@ parser.add_option("-f", "--filename", type="string", dest="filename", default="S
 parser.add_option("--latency", type="int", dest = "latency", default = 37,
                   help="Specify Latency", metavar="latency")
 parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
-                  help="Calibration Module is set to use voltage step pulsing instead of default
-                        current pulse injection", metavar="voltageStepPulse")
+                  help="V3 electronics only. Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
+                  metavar="voltageStepPulse")
 
 (options, args) = parser.parse_args()
 
@@ -34,6 +36,11 @@ if options.MSPL < 1 or options.MSPL > 8:
     pass
 if not (0 <= options.chMin <= options.chMax < 128):
     print "chMin %d not in [0,%d] or chMax %d not in [%d,127] or chMax < chMin"%(options.chMin,options.chMax,options.chMax,options.chMin)
+    exit(os.EX_USAGE)
+    pass
+
+if options.calSF < 0 or options.calSF > 3:
+    print 'calSF must be in the range 0-3'
     exit(os.EX_USAGE)
     pass
 
@@ -91,6 +98,10 @@ pDel[0] = options.pDel
 calPhase = array( 'i', [ 0 ] )
 myT.Branch( 'calPhase', calPhase, 'calPhase/I' )
 calPhase[0] = options.CalPhase
+
+calSF = array( 'i', [0] )
+myT.Branch( 'calSF', calSF, 'calSF/I')
+calSF[0] = options.calSF
 
 isCurrentPulse = array( 'i', [ 0 ] )
 myT.Branch( 'isCurrentPulse', isCurrentPulse, 'isCurrentPulse/I')
@@ -170,7 +181,7 @@ try:
         if options.debug: 
             print("Starting scan; pulseDelay: %i; L1Atime: %i; Latency: %i"%(options.pDel, options.L1Atime, options.latency))
         rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=True, currentPulse=isCurrentPulse[0], 
-                                                            nevts=options.nevts, 
+                                                            calSF=options.calSF, nevts=options.nevts, 
                                                             dacMin=options.scanmin, dacMax=options.scanmax, 
                                                             stepSize=options.stepSize, mask=options.vfatmask)
 
@@ -181,9 +192,10 @@ try:
             if (mask >> vfat) & 0x1: continue
             vfatN[0] = vfat
             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
-                trimRange[0] = (0x07 & vfatBoard.readVFAT(vfat,"ContReg3"))
-                trimDAC[0]   = (0x1f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
-                vthr[0]      = (0xff & vfatBoard.readVFAT(vfat,"VThreshold1"))
+                isCurrentPulse[0]   = not options.voltageStepPulse
+                trimRange[0]        = (0x07 & vfatBoard.readVFAT(vfat,"ContReg3"))
+                trimDAC[0]          = (0x1f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
+                vthr[0]             = (0xff & vfatBoard.readVFAT(vfat,"VThreshold1"))
             else:
                 trimDAC[0]   = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
                 vthr[0]      = (0xff & vfatBoard.readVFAT(vfat,"CFG_THR_ARM_DAC"))
