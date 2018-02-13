@@ -120,12 +120,12 @@ try:
     scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
     scanDataDAC = (c_uint32 * scanDataSizeVFAT)()
     scanDataRate = (c_uint32 * scanDataSizeVFAT)()
-    scanDataRatePerVFAT = 24 * (c_uint32 * scanDataSizeVFAT)()
+    scanDataRatePerVFAT = (c_uint32 * (24 * scanDataSizeVFAT))()
     
     # Scan over all channels or just a channel OR???
     if options.perchannel:
         for chan in range(options.chMin,options.chMax+1):
-            print("scanning %s of VFAT%i channel %i"%(scanReg, vfat, chan))
+            print("scanning %s for all VFATs channel %i"%(scanReg, chan))
 
             # Perform the scan
             rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=mask, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT, 
@@ -133,7 +133,7 @@ try:
                                                              chan=chan, scanReg=scanReg, isParallel=True)
              
             if rpcResp != 0:
-                print("sbit rate scan for VFAT%i channel %i failed"%(vfat,chan))
+                print("sbit rate scan for all VFATs channel %i failed"%(chan))
                 #raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
                 continue #For now just skip instead of crash
     
@@ -176,7 +176,7 @@ try:
 
             myT.AutoSave("SaveSelf")
     else:
-        print("scanning %s of VFAT%i for all channels"%(scanReg, vfat))
+        print("scanning %s for all VFATs  channel OR"%(scanReg))
         
         # Perform the scan
         rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=mask, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT,
@@ -184,8 +184,8 @@ try:
                                                          scanReg=scanReg, isParallel=True)
          
         if rpcResp != 0:
-            print("sbit rate scan for VFAT%i failed"%vfat)
-            raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
+            print("sbit rate scan failed")
+            raise Exception('RPC response was non-zero, sbit rate scan failed')
 
         # Store Output Data - Per VFAT
         if options.debug:
