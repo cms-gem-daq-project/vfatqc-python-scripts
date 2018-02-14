@@ -166,9 +166,12 @@ try:
         startScanModule(ohboard, options.gtx, useUltra=True, debug=options.debug)
         scanData = getUltraScanResults(ohboard, options.gtx, THRESH_MAX - THRESH_MIN + 1, options.debug)
         sys.stdout.flush()
-        for vfat in range(0,24):
-            if (mask >> vfat) & 0x1: continue
-            dataNow      = scanData[vfat]
+        for i in range(0,24):
+            if (mask >> i) & 0x1: continue
+            vfatN[0]     = i
+            vfatID[0]    = getChipID(ohboard, options.gtx, i, options.debug)
+            dataNow      = scanData[i]
+            trimRange[0] = (0x07 & readVFAT(ohboard,options.gtx, i,"ContReg3"))
             for VC in range(THRESH_MAX-THRESH_MIN+1):
                 vth1  = int((dataNow[VC] & 0xff000000) >> 24)
                 Nhits = int(dataNow[VC] & 0xffffff)
