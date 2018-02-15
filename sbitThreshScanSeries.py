@@ -129,6 +129,7 @@ try:
     scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
     scanDataDAC = (c_uint32 * scanDataSizeVFAT)()
     scanDataRate = (c_uint32 * scanDataSizeVFAT)()
+    scanDataRatePerVFAT = (c_uint32 * (24 * scanDataSizeVFAT))()
     for vfat in range(0,24):
         if (mask >> vfat) & 0x1: continue
 
@@ -151,10 +152,10 @@ try:
                 print("scanning %s of VFAT%i channel %i"%(scanReg, vfat, chan))
 
                 # Perform the scan
-                rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=maskOh, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, 
+                rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=maskOh, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT,
                                                                  dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                                 chan=chan, scanReg=scanReg, time=options.time, invertVFATPos=options.invertVFATPos)
-                 
+                                                                 chan=chan, scanReg=scanReg, time=options.time, invertVFATPos=options.invertVFATPos, isParallel=False)
+        
                 if rpcResp != 0:
                     print("sbit rate scan for VFAT%i channel %i failed"%(vfat,chan))
                     #raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
@@ -186,10 +187,10 @@ try:
             print("scanning %s of VFAT%i for all channels"%(scanReg, vfat))
             
             # Perform the scan
-            rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=maskOh, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, 
+            rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=maskOh, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT,
                                                              dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                             scanReg=scanReg, time=options.time, invertVFATPos=options.invertVFATPos)
-             
+                                                             scanReg=scanReg, time=options.time, invertVFATPos=options.invertVFATPos, isParallel=False)
+        
             if rpcResp != 0:
                 print("sbit rate scan for VFAT%i failed"%vfat)
                 raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
