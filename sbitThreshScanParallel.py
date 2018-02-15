@@ -182,11 +182,6 @@ try:
         rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=mask, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT,
                                                          dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
                                                          scanReg=scanReg, isParallel=True)
-         
-        print "scanDataSizeVFAT = %i"%scanDataSizeVFAT
-        print "len(scanDataDAC) = %i"%len(scanDataDAC)
-        print "len(scanDataRate) = %i"%len(scanDataRate)
-        print "len(scanDataRatePerVFAT) = %i"%len(scanDataRatePerVFAT)
     
         if rpcResp != 0:
             print("sbit rate scan failed")
