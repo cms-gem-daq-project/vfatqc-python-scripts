@@ -140,7 +140,7 @@ try:
             #Store Output Data - Per VFAT
             if options.debug:
                 print("VFAT\tChan\tDAC\tRate")
-            for vfat in range(0,23):
+            for vfat in range(0,24):
                 for idx in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                     try:
                         Rate[0] = scanDataRatePerVFAT[idx]
@@ -183,6 +183,11 @@ try:
                                                          dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
                                                          scanReg=scanReg, isParallel=True)
          
+        print "scanDataSizeVFAT = %i"%scanDataSizeVFAT
+        print "len(scanDataDAC) = %i"%len(scanDataDAC)
+        print "len(scanDataRate) = %i"%len(scanDataRate)
+        print "len(scanDataRatePerVFAT) = %i"%len(scanDataRatePerVFAT)
+    
         if rpcResp != 0:
             print("sbit rate scan failed")
             raise Exception('RPC response was non-zero, sbit rate scan failed')
@@ -190,7 +195,7 @@ try:
         # Store Output Data - Per VFAT
         if options.debug:
             print("VFAT\tDAC\tRate")
-        for vfat in range(0,23):
+        for vfat in range(0,24):
             for idx in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                 try:
                     Rate[0] = scanDataRatePerVFAT[idx]
@@ -205,7 +210,7 @@ try:
                     vfatCH[0]=128
                     vfatN[0] = vfat
                     vth[0] = options.scanmin+1+options.stepSize*(idx-vfat*scanDataSizeVFAT)
-                    print("Unable to index data for VFAT%i idx %i expected DAC val%i"%(vfat, idx, vth[0]))
+                    print("Unable to index data for VFAT%i idx %i expected DAC val %i"%(vfat, idx, vth[0]))
                 finally:
                     myT.Fill()
         
@@ -221,7 +226,7 @@ try:
                     vfatCH[0] = 128
                     vfatN[0] = 24
                     vth[0] = options.scanmin+1+options.stepSize*(idx)
-                    print("Unable to index data for Overall Case, idx %i expected DAC val%i"%(idx, vth[0]))
+                    print("Unable to index data for Overall Case, idx %i expected DAC val %i"%(idx, vth[0]))
                 finally:
                     myT.Fill()
         
