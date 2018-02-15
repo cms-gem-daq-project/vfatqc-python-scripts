@@ -204,7 +204,7 @@ try:
                     vth[0] = scanDataDAC[idx-vfat*scanDataSizeVFAT]
 
                     if options.debug:
-                        print("%i\t%i\t%i"%(vfat,scanDataDAC[idx],scanDataRatePerVFAT[idx]))
+                        print("%i\t%i\t%i"%(vfat,scanDataDAC[idx-vfat*scanDataSizeVFAT],scanDataRatePerVFAT[idx]))
                 except IndexError:
                     Rate[0] = -99
                     vfatCH[0]=128
