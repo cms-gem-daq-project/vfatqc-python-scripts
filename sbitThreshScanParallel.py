@@ -176,7 +176,7 @@ try:
 
             myT.AutoSave("SaveSelf")
     else:
-        print("scanning %s for all VFATs  channel OR"%(scanReg))
+        print("scanning %s for all VFATs channel OR"%(scanReg))
         
         # Perform the scan
         rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=mask, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT,
@@ -193,19 +193,19 @@ try:
         for vfat in range(0,23):
             for idx in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                 try:
-                    Rate[0] = scanDataRate[idx]
+                    Rate[0] = scanDataRatePerVFAT[idx]
                     vfatCH[0]=128
                     vfatN[0] = vfat
                     vth[0] = scanDataDAC[idx-vfat*scanDataSizeVFAT]
 
                     if options.debug:
-                        print("%i\t%i\t%i"%(vfat,scanDataDAC[idx],scanDataRate[idx]))
+                        print("%i\t%i\t%i"%(vfat,scanDataDAC[idx],scanDataRatePerVFAT[idx]))
                 except IndexError:
                     Rate[0] = -99
                     vfatCH[0]=128
                     vfatN[0] = vfat
                     vth[0] = options.scanmin+1+options.stepSize*(idx-vfat*scanDataSizeVFAT)
-                    print("Unable to index data for VFAT%i idx %i expected DAC val"%(vfat, idx, vth[0]))
+                    print("Unable to index data for VFAT%i idx %i expected DAC val%i"%(vfat, idx, vth[0]))
                 finally:
                     myT.Fill()
         
@@ -221,6 +221,7 @@ try:
                     vfatCH[0] = 128
                     vfatN[0] = 24
                     vth[0] = options.scanmin+1+options.stepSize*(idx)
+                    print("Unable to index data for Overall Case, idx %i expected DAC val%i"%(idx, vth[0]))
                 finally:
                     myT.Fill()
         
