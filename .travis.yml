@@ -1,9 +1,25 @@
 language: python
 
+sudo: enabled
+
+stages:
+  - setup
+  - build
+  - test
+  - docs
+  - name: deploy
+    if: tag =~ ^(v(\d+\.)?(\d+\.)?(\*|\d+)?(-pre(\d+))?|(master))$
+  - cleanup
+
 python:
   - "2.6"
   - "2.7"
   - "3.2"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7"
   - "pypy"
   - "pypy3"
 
@@ -14,4 +30,43 @@ script:
 after_script:
   - bash <(curl -s https://codecov.io/bash) && echo "Uploaded code coverage"
   - codecov
- 
+  - docs
+    if: tag =~ ^(v(\d+\.)?(\d+\.)?(\*|\d+)|(master))$
+  - deploy
+    if: tag =~ ^(v(\d+\.)?(\d+\.)?(\*|\d+)|(master))$
+  
+after_success:
+  bash <(curl -s https://codecov.io/bash) &&
+  echo "Uploaded code coverage"
+
+# before_release:
+#   # Set up git user name and tag this commit
+#   - git config --local user.name "gemdaq"
+#   - git config --local user.email "gemdaq@cern.ch"
+#   ?create the changelog
+#   ?update release notes
+#   Sign the tags
+#   - git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
+
+release:
+  # deploy to Github releases
+  provider: releases
+  api_key:
+    secure: "GITHUB OAUTH TOKEN"
+  file_glob: true
+  file:
+    - *.tbz2
+    - *.tgz
+    - *.rpm
+    - README.md
+    - CHANGELOG.md
+#    - docs # only to docserver
+  prerelease: true
+  skip_cleanup: true
+  on:
+    tags: true
+
+deploy:
+# deploy to Github PaaS host
+#    - *.rpm # push rpm's to rpm hosting
+#    - docs # push docs to update docserver/<tag>
