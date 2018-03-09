@@ -31,8 +31,14 @@ parser.set_defaults(stepSize=2)
 
 remainder = (options.scanmax-options.scanmin+1) % options.stepSize
 if remainder != 0:
-    options.scanmax = options.scanmax + remainder
-    print "extending scanmax to: ", options.scanmax
+    options.scanmax = options.scanmax - remainder
+    print "Reducing scanmax to: ", options.scanmax
+
+if options.scanmax > 255:
+    print "CFG_THR_ARM_DAC and CFG_THR_ZCC_DAC only go up to 0xff (255)"
+    print "Current value %i will roll over to 0"%(options.scanmax)
+    print "Seting scanmax to 255"
+    options.scanmax=255
 
 import ROOT as r
 filename = options.filename
@@ -189,7 +195,7 @@ try:
 
         # Store Output Data - Per VFAT
         if options.debug:
-            print("VFAT\tDAC\tRate")
+            print("VFAT\tidx\tDAC\tRate")
         for vfat in range(0,24):
             for idx in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                 try:
@@ -199,7 +205,7 @@ try:
                     vth[0] = scanDataDAC[idx-vfat*scanDataSizeVFAT]
 
                     if options.debug:
-                        print("%i\t%i\t%i"%(vfat,scanDataDAC[idx-vfat*scanDataSizeVFAT],scanDataRatePerVFAT[idx]))
+                        print("%i\t%i\t%i\t%i"%(vfat,idx,scanDataDAC[idx-vfat*scanDataSizeVFAT],scanDataRatePerVFAT[idx]))
                 except IndexError:
                     Rate[0] = -99
                     vfatCH[0]=128
