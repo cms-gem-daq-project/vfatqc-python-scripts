@@ -19,7 +19,7 @@ def getscripts():
     return ['{0:s}/{1:s}'.format(scriptdir,x) for x in scripts if isfile(join(scriptdir,x)) ]
 
 def getpkgdata():
-    # actal package data
+    # actual package data
     data = dict((pkg,['*.txt','*.so']) for pkg in __pythonmodules__)
     # hack just to get the build to work
     data['gempython/bin'] = ['gempython/vfatqc/bin/*.py']
@@ -51,8 +51,7 @@ setup(name             = '__packagename__',
       package_data     = getpkgdata(),
       # dependency_links   = ['http://cmsgemos.web.cern.ch/cmsgemos/repo/tarball/master#egg=package-1.0']
       zip_safe         = False,
-      # data_files       = [('/opt/cmsgemos/bin', ['gempython/vfatqc/bin/*.py'])],
       data_files       = [('/opt/cmsgemos/bin', ['{0:s}/{1:s}'.format(scriptdir,x) for x in scripts if isfile(join(scriptdir,x))])],
       # setup_requires   = ['setuptools_scm'],
-      license          = '__license__',
+      license          = 'MIT',
 )
