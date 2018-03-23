@@ -26,7 +26,7 @@ def getpkgdata():
     return data
 
 def getreqs():
-    with open('requirements.txt') as f:
+    with open('gempython/vfatqc/requirements.txt') as f:
         reqs = f.readlines()
         return [x.strip() for x in reqs]
 
@@ -41,7 +41,8 @@ setup(name             = '__packagename__',
       author_email     = 'cms-gem-online-sw@cern.ch',
       # url              = __url__,
       url              = 'https://cms-gem-daq-project.github.io/vfatqc-python-tools',
-      install_requires = ['numpy>=1.7', 'root_numpy>=4.7'],
+      install_requires = getreqs(),
+      # install_requires = ['numpy>=1.7'],
       # scripts          = getscripts(),
       # build_requires   = '__build_requires__',
       # namespace_package = "gempython",
@@ -52,6 +53,7 @@ setup(name             = '__packagename__',
       # dependency_links   = ['http://cmsgemos.web.cern.ch/cmsgemos/repo/tarball/master#egg=package-1.0']
       zip_safe         = False,
       data_files       = [('/opt/cmsgemos/bin', ['{0:s}/{1:s}'.format(scriptdir,x) for x in scripts if isfile(join(scriptdir,x))])],
-      # setup_requires   = ['setuptools_scm'],
+      build_requires   = ['importlib; python_version=="2.6"','setuptools>=25.0','setuptools_scm'],
+      setup_requires   = ['importlib; python_version=="2.6"','setuptools>=25.0'],
       license          = 'MIT',
 )
