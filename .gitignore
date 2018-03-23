@@ -9,6 +9,9 @@
 !*.md
 !*.rst
 
+# Don't ignore makefiles
+!Makefile
+
 # Don't ignore subdirectories
 !*/
 
