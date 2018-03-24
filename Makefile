@@ -16,9 +16,7 @@ PackageDir   := pkg/$(Namespace)/$(ShortPackage)
 
 
 # Explicitly define the modules that are being exported (for PEP420 compliance)
-PythonModules = ["$(Namespace).$(ShortPackage)", \
-                 "$(Namespace).$(ShortPackage).macros", \
-]
+PythonModules = ["$(Namespace).$(ShortPackage)"]
 $(info PythonModules=${PythonModules})
 
 VFATQC_VER_MAJOR=0
@@ -35,7 +33,6 @@ include $(BUILD_HOME)/$(Project)/config/mfPythonRPM.mk
 default:
 	@echo "Running default target"
 	$(MakeDir) $(PackageDir)
-	@cp -rfp macros $(PackageDir)
 	@echo "__path__ = __import__('pkgutil').extend_path(__path__, __name__)" > pkg/$(Namespace)/__init__.py
 	@cp -rfp __init__.py $(PackageDir)
 
@@ -56,7 +53,6 @@ preprpm: default
 
 clean:
 	@echo "Running clean target"
-	@rm -rf $(PackageDir)/macros
 	@rm -rf $(PackageDir)/bin
 	@rm -f  $(PackageDir)/LICENSE
 	@rm -f  $(PackageDir)/MANIFEST.in
