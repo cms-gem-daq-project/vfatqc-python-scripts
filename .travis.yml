@@ -7,27 +7,16 @@ stages:
   - compile
   - test
   - coverage
-  - name: build
-    env:
-      - OS_TYPE=centos PY_VER=python OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-      # - OS_TYPE=centos PY_VER=python2.7 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-      # - OS_TYPE=centos PY_VER=python3.4 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-      # - OS_TYPE=centos PY_VER=python3.6 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-      ### CC7 jobs
-      - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-      # - OS_TYPE=centos PY_VER=python3.4 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-      # - OS_TYPE=centos PY_VER=python3.6 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
+  - buildrpm
   - name: docs
     if: ((branch = master) OR (tag =~ ^v?(\d+).(\d+).(\d+)(-(alpha|dev|pre|rc))?((\d+$)|(-git[0-9a-z]{6,8})?)$))
+    # tags: true
   - name: prerelease
     if: (tag =~ ^v?(\d+).(\d+).(\d+)(-(pre|rc))((\d+$)|(-git[0-9a-z]{6,8})?)$)
-    # tags: true
   - name: devrelease
     if: (tag =~ ^v?(\d+).(\d+).(\d+)(-(alpha|dev))((\d+$)|(-git[0-9a-z]{6,8})?)$)
-    # tags: true
   - name: release
     if: ((branch = master) AND (tag =~ ^v?(\d+).(\d+).(\d+)(-git[0-9a-z]{6,8})?)$))
-    # tags: true
   - name: deploy
     if: tag =~ ^v?(\d+).(\d+).(\d+)(-(alpha|dev|pre|rc))?((\d+$)|(-git[0-9a-z]{6,8})?)$
 
@@ -78,7 +67,7 @@ script:
   - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec ". /home/daqbuild/vfatqc-python-scripts/.ci/test_on_docker.sh ${OS_VERSION} ${PY_VER} ${ROOT_VER}"
 
 # How to link the environments/outputs from above with the jobs below?
-.build: &build_template
+.rpmbuild: &rpmbuild_template
   before_install:
     - ./.ci/docker.sh ${OS_VERSION} ${PY_VER} ${DOCKER_IMAGE} setup
     - sleep 2
@@ -129,16 +118,16 @@ jobs:
     - stage: build
       env:
         - OS_TYPE=centos PY_VER=python OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-      <<: *build_template
+      <<: *rpmbuild_template
     - stage: build
       env:
         - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-      <<: *build_template
+      <<: *rpmbuild_template
     - stage: docs
       before_script: skip
       before_install: skip
       script:
-        - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "echo Building documentation"
+        # - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "echo Building documentation"
         - ls -laZ
       after_success: skip
 
