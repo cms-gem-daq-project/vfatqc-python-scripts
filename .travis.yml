@@ -21,6 +21,11 @@ stages:
     if: tag =~ ^v?(\d+).(\d+).(\d+)(-(alpha|dev|pre|rc))?((\d+$)|(-git[0-9a-z]{6,8})?)$
 
 env: ## this is *only* for the built-in 'test' stage, doesn't currently transfer to other stages, beta feature
+  global:
+    ## Encrypted variables:
+      ##  * CHANGELOG_GITHUB_TOKEN: for running github_changelog_generator without API rate limits
+    secure: "v++lbGb9+j0SpvyVtXo2/zS0GTlnjMsCF8KFrv74wXdbUmdXT8AIonJXmgVjkO5NuiK52v2IqhT162VlmAFqtkZjHa4QHug1SPT6CgF+eBBlfJ86lQqB2NO7dnn8ppBeranQIwIZr8Tms4fByk2M4fIHbfBPat0/rTVtMncmTQGPe0f8PXvNqAl8ArxaJMnDlmjvOyMgzMJhxkYbtVek23sD9a/anf6IhFInGPk36fKavb+oqTKv7kSO/3st8ls2wcT8CDj05TgfDR0kZNvymiM0+L9beSx4vxnVvYddum5KqJkU5MCLisGVtv6p+jYCA3v+Qtm9wV2DEyynt1NXY7V8uJpfAypjy/NESNPbjShlnOn3rv9jcJ8/kNGWTQwqhuFy2v6Ng58h6VwHMr/fBd+np1yM4cKxNM5o9/0/7CuBkunJD1Lvdq01rUeCljtDQaM7T7CK8en3r1gPnVsll/H6YZ5OL5uqlx0ybxd8eWZ9cuIVlGEeINW/mqIFMyY62o1RK76cUbvq5NtTrioyeRtwIa6b6ngjeH76WBuHC+HVDe6J4qyX75C0sKjKIF6HdP9nt2Psrhb+RvqlDT127CPKJ1mO4S3BEuobzO99JQU4LhyDgKvR47D/N4jzl5EojjgqKShORuHJKNzX8MCQZXCRmqw/1mpmc7/lPwxrclQ="
+    
   matrix:
     - OS_TYPE=centos PY_VER=python OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6 ROOT_VER=v5.34.36-gcc4.4
     # - OS_TYPE=centos PY_VER=python2.6 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
