@@ -7,19 +7,18 @@ By: Brian Dorney (brian.l.dorney@cern.ch)
 if __name__ == '__main__':
     from anautilities import getEmptyPerVFATList, rejectOutliersMADOneSided
     from array import array
-    from fitting.fitScanData import ScanDataFitter
+    from ctypes import *
+    #from fitting.fitScanData import ScanDataFitter
+    from fitting.fitScanData import fitScanData
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.utils.nesteddict import nesteddict as ndict
     from gempython.utils.wrappers import runCommand, envCheck
-    from mapping.chamberInfo import chamber_config
+    from mapping.chamberInfo import chamber_config, chamber_vfatDACSettings
     from qcoptions import parser
     
     import datetime, subprocess, sys
     import numpy as np
     
-    #parser.add_option("--calFile", type="string", dest="calFile", default=None,
-    #                  help="File specifying CAL_DAC to fC equations per VFAT",
-    #                  metavar="calFile")
     parser.add_option("--calSF", type="int", dest = "calSF", default = 0,
                       help="Value of the CFG_CAL_FS register", metavar="calSF")
     parser.add_option("--chMin", type="int", dest = "chMin", default = 0,
@@ -30,12 +29,14 @@ if __name__ == '__main__':
                       help="Specify the path where the scan data should be stored", metavar="dirPath")
     parser.add_option("--latency", type="int", dest = "latency", default = 37,
                       help="Specify Latency", metavar="latency")
+    parser.add_option("--resume", action="store_true",dest="resume",
+                      help="Tries to resume a previous scurve scan by searching the --dirPath directory for the SCurveData_trimdac0.root file, if this scan completed successfully resuming will be attempted", 
+                      metavar="resume")
     parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
                       help="Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
                       metavar="voltageStepPulse")
     (options, args) = parser.parse_args()
     
-    rangeFile = options.rangeFile
     ztrim = options.ztrim
     chMin = options.chMin
     chMax = options.chMax + 1
@@ -50,63 +51,77 @@ if __name__ == '__main__':
     else: 
         dirPath = options.dirPath
         pass
-    
-    # Declare the hardware board and bias all vfats
-    vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
-    if options.gtx in chamber_vfatDACSettings.keys():
-        print("Configuring VFATs with chamber_vfatDACSettings dictionary values")
-        for key in chamber_vfatDACSettings[options.gtx]:
-            vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[options.gtx][key]
-    vfatBoard.biasAllVFATs(options.vfatmask)
-    print('biased VFATs')
-    
-    ###############
-    # TRIMDAC = 0
-    ###############
-    # Configure for initial scan
-    # Zero all channel registers for an initial starting point
-    for chan in range(0,128):
-        vfatBoard.setChannelRegisterAll(chan)
-    
-    # Scurve scan with trimdac set to 0
-    filename_untrimmed = "%s/SCurveData_trimdac0.root"%dirPath
-    cmd = [ "ultraScurve.py",
-            "--shelf=%i"%(options.shelf),
-            "-s%d"%(options.slot),
-            "-g%d"%(options.gtx),
-            "--chMin=%i"%(options.chMin),
-            "--chMax=%i"%(options.chMax),
-            "--latency=%i"%(options.latency),
-            "--mspl=%i"%(options.mspl),
-            "--nevts=%i"%(options.nevts),
-            "--vfatmask=0x%x"%(options.vfatmask),
-            "--filename=%s"%(filename_untrimmed)
-            ]
-    # Calibration File? No, do everything in DAQ units *first*
-    #if options.calFile is not None:
-    #    cmd.append("--calFile=%s"%(options.calFile) )
-    # Debug Flag?
-    if options.debug:
-        cmd.append("--debug")
-    # Voltage or current pulse?
-    if options.voltageStepPulse:
-        cmd.append("--voltageStepPulse")
+   
+    if not options.resume:
+        # Declare the hardware board and bias all vfats
+        vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+        if options.gtx in chamber_vfatDACSettings.keys():
+            print("Configuring VFATs with chamber_vfatDACSettings dictionary values")
+            for key in chamber_vfatDACSettings[options.gtx]:
+                vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[options.gtx][key]
+        vfatBoard.biasAllVFATs(options.vfatmask)
+        print('biased VFATs')
+        
+        ###############
+        # TRIMDAC = 0
+        ###############
+        # Configure for initial scan
+        # Zero all channel registers for an initial starting point
+        print("zero'ing all channel registers")
+        rpcResp = vfatBoard.setAllChannelRegisters(vfatMask=options.vfatmask)
+        
+        if rpcResp != 0:
+            raise Exception("RPC response was non-zero, zero'ing all channel registers failed")
+
+        # Scurve scan with trimdac set to 0
+        print("taking an initial s-curve")
+        filename_untrimmed = "%s/SCurveData_trimdac0.root"%dirPath
+        cmd = [ "ultraScurve.py",
+                "--shelf=%i"%(options.shelf),
+                "-s%d"%(options.slot),
+                "-g%d"%(options.gtx),
+                "--chMin=%i"%(options.chMin),
+                "--chMax=%i"%(options.chMax),
+                "--latency=%i"%(options.latency),
+                "--mspl=%i"%(options.MSPL),
+                "--nevts=%i"%(options.nevts),
+                "--vfatmask=0x%x"%(options.vfatmask),
+                "--filename=%s"%(filename_untrimmed)
+                ]
+        # Debug Flag?
+        #if options.debug:
+        #    cmd.append("--debug")
+        # Voltage or current pulse?
+        if options.voltageStepPulse:
+            cmd.append("--voltageStepPulse")
+        else:
+            cmd.append("--calSF=%i"%(options.calSF) )
+        runCommand(cmd)
+        print("initial scurve finished")
     else:
-        cmd.append("--calSF=%i"%(options.calSF) )
-    runCommand(cmd)
-    
+        filename_untrimmed = "%s/SCurveData_trimdac0.root"%dirPath
+
     # Get the initial fit results
-    fitResults_Untrimmed = fitScanData(filename_untrimmed, isVFAT3=True, calFileName=options.calFile)
+    print("fitting results, this may take some time")
+    fitResults_Untrimmed = fitScanData(treeFileName=filename_untrimmed, isVFAT3=True)
+    print("fitting has completed")
+
+    # Create the output file which will store the channel configurations
+    chConfig = open("%s/chConfig.txt","w")
+    chConfig.write('vfatN/I:vfatID/I:vfatCH/I:trimDAC/I:trimPolarity/I:mask/I\n')
     
+    # Make the cArrays
+    cArray_Masks = (c_uint32 * 3072)()
+    cArray_trimVal = (c_uint32 * 3072)()
+    cArray_trimPol = (c_uint32 * 3072)()
+
     # Determine the position of interest (POI) for all s-curves
     # This is the position (X = scurve_mean - ztrim * scurve_sigma) on the curve
     array_avgScurvePOIPerVFAT = np.zeros(24)
     dict_scurvePOIPerChan = { vfat:np.zeros(128) for vfat in range(0,24) }
     dict_trimVal = { vfat:np.zeros(128) for vfat in range(0,24) }
     dict_vfatID = { vfat:0 for vfat in range(0,24) } # placeholder
-    masks = ndict()
-    chConfig = open("%s/chConfig.txt","w")
-    chConfig.write('vfatN/I:vfatID/I:vfatCH/I:trimDAC/I:trimPolarity/I:mask/I\n')
+    print("Analyzing the fit data to determine the trim values")
     for vfat in range(0,24):
         # skip masked vfats
         if (options.vfatmask >> vfat) & 0x1: 
@@ -114,12 +129,14 @@ if __name__ == '__main__':
         
         # Determine scurve point of interest by channel
         for chan in range(chMin,chMax):
+            idx = 128*vfatN + chan
+
             # initial setpoint for masked channels
             if fitResults_Untrimmed[4][vfat][chan] < 0.1: 
-                masks[vfat][chan] = True
+                cArray_Masks[idx] = 1 # True
                 continue # do not consider channels w/empty s-curves
             else:
-                masks[vfat][chan] = False
+                cArray_Masks[idx] = 0 # False
                 pass
             
             # store the position
@@ -158,12 +175,14 @@ if __name__ == '__main__':
                 pass
             pass
 
-        # Set the trim value
+        # Set the c-arrays
         for chan in range(chMin,chMax):
+            idx = 128*vfatN + chan
+
             # Check if it's possible to trim
             # If not, include the channel in the masks
             if ( abs(dict_trimVal[vfat][chan]) > 0x7f):
-                masks[vfat][chan] = True
+                cArray_Masks[idx] = 1 # True
 
             # Determine trim polarity
             # if dict_trimVal[vfat] >= 0 scurve is above the average, need negative trim polarity
@@ -172,6 +191,7 @@ if __name__ == '__main__':
             if (dict_trimVal[vfat][chan] >= 0):
                 trimPol = 0x1
                 pass
+            cArray_trimPol[idx] = trimPol
 
             # Store the trim config
             chConfig.write('vfatN/I:vfatID/I:vfatCH/I:trimDAC/I:trimPolarity/I:mask/I\n')
@@ -181,28 +201,32 @@ if __name__ == '__main__':
                 chan,
                 abs(dict_trimVal[vfat][chan]),
                 trimPol,
-                masks[vfat][chan]))
+                cArray_Masks[vfat][chan]))
 
             # Set the trim value
-            if options.debug:
-                print("setting channel registers for vfat%i channel %i"%(vfat,chan))
-                pass
-            vfatBoard.setChannelRegister(
-                    vfat,
-                    chan,
-                    mask=masks[vfat][chan],
-                    trimARM=int(dict_trimVal[vfat][chan]),
-                    trimARMPol=trimPol
-                    )
+            cArray_trimVal[idx] = abs(dict_trimVal[vfat][chan])
             pass
         pass
 
-    # close the config file
+    # Close the config file
     chConfig.close()
 
+    # Set the trim values
+    print("Setting trim values for all channels")
+    rpcResp = vfatBoard.setAllChannelRegisters(
+                    chMasks=cArray_Masks,
+                    trimARM=cArray_trimVal,
+                    trimARMPol=cArray_trimPol,
+                    vfatMask=options.vfatmask,
+                    debug=options.debug)
+
+    if rpcResp != 0:
+        raise Exception("RPC response was non-zero, setting trim values for all channels failed")
+    
     #####################
     # TRIMDAC = Trimmed #
     #####################
+    print("taking an scurve with the trim values set")
     # Scurve scan with trims set to the determined values
     filename_trimmed = "%s/SCurveData_trimmed.root"%dirPath
     cmd = [ "ultraScurve.py",
@@ -212,17 +236,14 @@ if __name__ == '__main__':
             "--chMin=%i"%(options.chMin),
             "--chMax=%i"%(options.chMax),
             "--latency=%i"%(options.latency),
-            "--mspl=%i"%(options.mspl),
+            "--mspl=%i"%(options.MSPL),
             "--nevts=%i"%(options.nevts),
             "--vfatmask=0x%x"%(options.vfatmask),
             "--filename=%s"%(filename_trimmed)
             ]
-    # Calibration File? No, do everything in DAQ units *first*
-    #if options.calFile is not None:
-    #    cmd.append("--calFile=%s"%(options.calFile) )
     # Debug Flag?
-    if options.debug:
-        cmd.append("--debug")
+    #if options.debug:
+    #    cmd.append("--debug")
     # Voltage or current pulse?
     if options.voltageStepPulse:
         cmd.append("--voltageStepPulse")
