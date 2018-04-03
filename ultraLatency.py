@@ -186,7 +186,7 @@ try:
         vfatBoard.stopCalPulses(mask, 0, 128)
         
         print "Setting channel %i to calpulse"%(scanChan)
-        vfatBoard.setChannelRegisterAll(chan=scanChan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
+        vfatBoard.setSpecificChannelAllRegisters(chan=scanChan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
         vfatBoard.setVFATCalHeightAll(mask, options.vcal, currentPulse=isCurrentPulse[0])
 
         # Configure TTC
