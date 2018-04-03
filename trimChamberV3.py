@@ -107,7 +107,7 @@ if __name__ == '__main__':
     print("fitting has completed")
 
     # Create the output file which will store the channel configurations
-    chConfig = open("%s/chConfig.txt","w")
+    chConfig = open("%s/chConfig.txt"%dirPath,"w")
     chConfig.write('vfatN/I:vfatID/I:vfatCH/I:trimDAC/I:trimPolarity/I:mask/I\n')
     
     # Make the cArrays
