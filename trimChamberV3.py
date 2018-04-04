@@ -99,6 +99,7 @@ if __name__ == '__main__':
         runCommand(cmd)
         print("initial scurve finished")
     else:
+        vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
         filename_untrimmed = "%s/SCurveData_trimdac0.root"%dirPath
 
     # Get the initial fit results
@@ -129,7 +130,7 @@ if __name__ == '__main__':
         
         # Determine scurve point of interest by channel
         for chan in range(chMin,chMax):
-            idx = 128*vfatN + chan
+            idx = 128*vfat + chan
 
             # initial setpoint for masked channels
             if fitResults_Untrimmed[4][vfat][chan] < 0.1: 
@@ -139,14 +140,17 @@ if __name__ == '__main__':
                 cArray_Masks[idx] = 0 # False
                 pass
             
-            # store the position
-            dict_scurvePOIPerChan = int(round(fitResults_Untrimmed[0][vfat][chan] - ztrim * fitResults_Untrimmed[1][vfat][chan]))
+            # store the position and mask negative scurve POI's
+            dict_scurvePOIPerChan[vfat][chan] = int(round(fitResults_Untrimmed[0][vfat][chan] - ztrim * fitResults_Untrimmed[1][vfat][chan]))
+            if (dict_scurvePOIPerChan[vfat][chan] < 0):
+                cArray_Masks[idx] = 1 # True
+                pass
             pass
 
         # Determine the position to trim to
         array_avgScurvePOIPerVFAT[vfat] = np.mean(
                 rejectOutliersMADOneSided(
-                    dict_scurvePOIPerChan[dict_scurvePOIPerChan > 0.],
+                    dict_scurvePOIPerChan[vfat][dict_scurvePOIPerChan[vfat] > 0.],
                     rejectHighTail=False
                     )
                 )
@@ -158,8 +162,8 @@ if __name__ == '__main__':
             print("| vfatN | chan | scurvePOI | avgScurvePOI | trimVal | trimPol | Note |")
             print("| :---: | :--: | :-------: | :----------: | :-----: | :-----: | :--- |")
             for chan in range(chMin,chMax):
-                chNote = ""
-                if ( abs(dict_scurvePOIPerChan[vfat][chan]) > 0x7f):
+                chNote = " - "
+                if ( abs(dict_trimVal[vfat][chan]) > 0x7f):
                     chNote = "Needed TrimVal Exceeds Range"
                     pass
                 print("| %i | %i | %i | %i | %i | %i | %s |"%(
@@ -167,8 +171,8 @@ if __name__ == '__main__':
                         chan,
                         dict_scurvePOIPerChan[vfat][chan],
                         array_avgScurvePOIPerVFAT[vfat],
-                        dict_trimVal[vfat][chan],
-                        int(dict_trimVal[vfat] >= 0),
+                        abs(dict_trimVal[vfat][chan]),
+                        int(dict_trimVal[vfat][chan] >= 0),
                         chNote
                         )
                     )
@@ -177,7 +181,7 @@ if __name__ == '__main__':
 
         # Set the c-arrays
         for chan in range(chMin,chMax):
-            idx = 128*vfatN + chan
+            idx = 128*vfat + chan
 
             # Check if it's possible to trim
             # If not, include the channel in the masks
@@ -201,10 +205,10 @@ if __name__ == '__main__':
                 chan,
                 abs(dict_trimVal[vfat][chan]),
                 trimPol,
-                cArray_Masks[vfat][chan]))
+                cArray_Masks[idx]))
 
             # Set the trim value
-            cArray_trimVal[idx] = abs(dict_trimVal[vfat][chan])
+            cArray_trimVal[idx] = int(abs(dict_trimVal[vfat][chan]))
             pass
         pass
 
@@ -214,7 +218,7 @@ if __name__ == '__main__':
     # Set the trim values
     print("Setting trim values for all channels")
     rpcResp = vfatBoard.setAllChannelRegisters(
-                    chMasks=cArray_Masks,
+                    chMask=cArray_Masks,
                     trimARM=cArray_trimVal,
                     trimARMPol=cArray_trimPol,
                     vfatMask=options.vfatmask,
