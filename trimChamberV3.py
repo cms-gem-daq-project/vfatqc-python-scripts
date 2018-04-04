@@ -29,6 +29,9 @@ if __name__ == '__main__':
                       help="Specify the path where the scan data should be stored", metavar="dirPath")
     parser.add_option("--latency", type="int", dest = "latency", default = 37,
                       help="Specify Latency", metavar="latency")
+    parser.add_option("--printSummary", action="store_true", dest="printSummary",
+                      help="Prints a summary table describing the results before and after trimming",
+                      metavar="printSummary")
     parser.add_option("--resume", action="store_true",dest="resume",
                       help="Tries to resume a previous scurve scan by searching the --dirPath directory for the SCurveData_trimdac0.root file, if this scan completed successfully resuming will be attempted", 
                       metavar="resume")
@@ -148,14 +151,20 @@ if __name__ == '__main__':
             pass
 
         # Determine the position to trim to
-        array_avgScurvePOIPerVFAT[vfat] = np.mean(
-                rejectOutliersMADOneSided(
-                    dict_scurvePOIPerChan[vfat][dict_scurvePOIPerChan[vfat] > 0.],
-                    rejectHighTail=False
+        dict_scurvePOIPerChan_OnlyNonzero = dict_scurvePOIPerChan[vfat][dict_scurvePOIPerChan[vfat] > 0.]
+        if len(dict_scurvePOIPerChan_OnlyNonzero) > 0:
+            array_avgScurvePOIPerVFAT[vfat] = np.mean(
+                    rejectOutliersMADOneSided(
+                        dict_scurvePOIPerChan_OnlyNonzero,
+                        rejectHighTail=False
+                        )
                     )
-                )
-        array_avgScurvePOIPerVFAT[vfat] = int(round(array_avgScurvePOIPerVFAT[vfat]))
-        dict_trimVal[vfat] = dict_scurvePOIPerChan[vfat] - array_avgScurvePOIPerVFAT[vfat] 
+            array_avgScurvePOIPerVFAT[vfat] = int(round(array_avgScurvePOIPerVFAT[vfat]))
+            dict_trimVal[vfat] = dict_scurvePOIPerChan[vfat] - array_avgScurvePOIPerVFAT[vfat] 
+        else:
+            array_avgScurvePOIPerVFAT[vfat] = -1
+            dict_trimVal[vfat] = dict_scurvePOIPerChan[vfat] * 0 # Set all trim's to zero
+            pass
 
         # Tell the user what we are doing
         if options.debug:
@@ -232,7 +241,7 @@ if __name__ == '__main__':
     #####################
     print("taking an scurve with the trim values set")
     # Scurve scan with trims set to the determined values
-    filename_trimmed = "%s/SCurveData_trimmed.root"%dirPath
+    filename_trimmed = "%s/SCurveData_Trimmed.root"%dirPath
     cmd = [ "ultraScurve.py",
             "--shelf=%i"%(options.shelf),
             "-s%d"%(options.slot),
@@ -255,4 +264,93 @@ if __name__ == '__main__':
         cmd.append("--calSF=%i"%(options.calSF) )
     runCommand(cmd)
 
-    print("trimming completed")
+    print("s-curve with trim values set completed")
+
+    if options.printSummary:
+        # Get the initial fit results
+        print("fitting results, this may take some time")
+        fitResults_Trimmed = fitScanData(treeFileName=filename_trimmed, isVFAT3=True)
+        print("fitting has completed")
+
+        # Determine post trim settings
+        dict_scurvePOIPerChan_PostTrim = { vfat:np.zeros(128) for vfat in range(0,24) }
+        print("Analyzing the fit data to determine the trim values")
+        for vfat in range(0,24):
+            # skip masked vfats
+            if (options.vfatmask >> vfat) & 0x1: 
+                continue
+            
+            # Print a table
+            print("| vfatN | chan | scurvePOI | avgScurvePOI | scurvePOIPostTrim | trimVal | trimPol | Note |")
+            print("| :---: | :--: | :-------: | :----------: | :---------------: | :-----: | :-----: | :--- |")
+            
+            # Determine scurve point of interest by channel after trimming
+            for chan in range(chMin,chMax):
+                idx = 128*vfat + chan
+
+                # Skip empty s-curves
+                if fitResults_Trimmed[4][vfat][chan] < 0.1: 
+                    continue # do not consider channels w/empty s-curves
+                
+                # store the position and mask negative scurve POI's
+                dict_scurvePOIPerChan_PostTrim[vfat][chan] = int(round(fitResults_Trimmed[0][vfat][chan] - ztrim * fitResults_Trimmed[1][vfat][chan]))
+        
+                # Tell the user what we are doing
+                chNote = " - "
+                if ( abs(dict_trimVal[vfat][chan]) > 0x7f):
+                    chNote = "Needed TrimVal Exceeds Range"
+                    pass
+                print("| %i | %i | %i | %i | %i | %i | %i | %s |"%(
+                        vfat, 
+                        chan,
+                        dict_scurvePOIPerChan[vfat][chan],
+                        array_avgScurvePOIPerVFAT[vfat],
+                        dict_scurvePOIPerChan_PostTrim[vfat][chan],
+                        abs(dict_trimVal[vfat][chan]),
+                        int(dict_trimVal[vfat][chan] >= 0),
+                        chNote
+                        )
+                    )
+                pass # End loop over channels
+            pass # End loop over vfats
+        
+        # Provide summary information
+        print("| vfatN | numUnMaskedChan | avgScurvePOI | avgDeltaPreTrim | stdDevDeltaPreTrim | avgDeltaPostTrim | stdDevDeltaPostTrim |")
+        print("| :---: | :-------------: | :----------: | :------------: | :----------------: | :--------------: | :-----------------: |")
+        for vfat in range(0,24):
+            # skip masked vfats
+            if (options.vfatmask >> vfat) & 0x1: 
+                continue
+            
+            avgDeltaPreTrim = np.mean(dict_trimVal[vfat])
+            stdDevDeltaPreTrim = np.std(dict_trimVal[vfat])
+            if array_avgScurvePOIPerVFAT[vfat] == -1:
+                avgDeltaPostTrim = 0
+                stdDevDeltaPostTrim = 0
+            else:
+                avgDeltaPostTrim = np.mean(
+                        np.abs(
+                            dict_scurvePOIPerChan_PostTrim[vfat] - array_avgScurvePOIPerVFAT[vfat] 
+                            )
+                        )
+                stdDevDeltaPostTrim = np.std(
+                        np.abs(
+                            dict_scurvePOIPerChan_PostTrim[vfat] - array_avgScurvePOIPerVFAT[vfat] 
+                            )
+                        )
+                pass
+
+            print("| %i | %i | %i | %f | %f | %f | %f |"%(
+                    vfat,
+                    len(dict_scurvePOIPerChan_PostTrim[vfat][dict_scurvePOIPerChan_PostTrim[vfat] > 0]),
+                    array_avgScurvePOIPerVFAT[vfat],
+                    avgDeltaPreTrim,
+                    stdDevDeltaPreTrim,
+                    avgDeltaPostTrim,
+                    stdDevDeltaPostTrim
+                    )
+                )
+            pass
+        pass # End print summary
+
+    print("Trimming Completed")
