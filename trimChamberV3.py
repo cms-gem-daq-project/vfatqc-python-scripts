@@ -207,7 +207,6 @@ if __name__ == '__main__':
             cArray_trimPol[idx] = trimPol
 
             # Store the trim config
-            chConfig.write('vfatN/I:vfatID/I:vfatCH/I:trimDAC/I:trimPolarity/I:mask/I\n')
             chConfig.write('%i\t%i\t%i\t%i\t%i\t%i\n'%(
                 vfat,
                 dict_vfatID[vfat],
