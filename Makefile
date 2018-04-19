@@ -12,7 +12,7 @@ ShortPackage := vfatqc
 LongPackage  := vfatqc
 PackageName  := $(Namespace)_$(ShortPackage)
 PackageDir   := pkg/$(Namespace)/$(ShortPackage)
-# PackageDir   := pkg/vfatqc_python_scripts
+ScriptDir    := pkg/$(Namespace)/scripts
 
 
 # Explicitly define the modules that are being exported (for PEP420 compliance)
@@ -42,26 +42,28 @@ _rpmprep: preprpm
 	@echo "Running _rpmprep target"
 preprpm: default
 	@echo "Running preprpm target"
-	@cp -rfp requirements.txt README.md CHANGELOG.md LICENSE $(PackageDir)
-	@cp -rfp requirements.txt README.md CHANGELOG.md pkg
-	$(MakeDir) $(PackageDir)/bin
-	@cp -rfp run_scans.py   $(PackageDir)/bin
-	@cp -rfp trimChamber.py $(PackageDir)/bin
-	@cp -rfp fastLatency.py $(PackageDir)/bin
-	@cp -rfp ultra*.py      $(PackageDir)/bin
-	@cp -rfp conf*.py       $(PackageDir)/bin
+	$(MakeDir) $(ScriptDir)
+	@cp -rfp run_scans.py   $(ScriptDir)
+	@cp -rfp trimChamber.py $(ScriptDir)
+	@cp -rfp fastLatency.py $(ScriptDir)
+	@cp -rfp ultra*.py      $(ScriptDir)
+	@cp -rfp conf*.py       $(ScriptDir)
+	-cp -rfp README.md LICENSE CHANGELOG.md MANIFEST.in requirements.txt $(PackageDir)
+	-cp -rfp README.md LICENSE CHANGELOG.md MANIFEST.in requirements.txt pkg
 
 clean:
 	@echo "Running clean target"
-	@rm -rf $(PackageDir)/bin
+	@rm -rf $(ScriptDir)
+	@rm -f  $(PackageDir)/README.md
 	@rm -f  $(PackageDir)/LICENSE
 	@rm -f  $(PackageDir)/MANIFEST.in
-	@rm -f  $(PackageDir)/requirements.txt
-	@rm -f  $(PackageDir)/README.md
 	@rm -f  $(PackageDir)/CHANGELOG.md
+	@rm -f  $(PackageDir)/requirements.txt
 	@rm -f  $(PackageDir)/__init__.py
 	@rm -f  pkg/$(Namespace)/__init__.py
 	@rm -f  pkg/README.md
+	@rm -f  pkg/LICENSE
+	@rm -f  pkg/MANIFEST.in
 	@rm -f  pkg/CHANGELOG.md
 	@rm -f  pkg/requirements.txt
 

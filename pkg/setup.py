@@ -3,7 +3,7 @@ from setuptools import setup,find_packages
 
 from os import listdir
 from os.path import isfile,join
-scriptdir  = 'gempython/vfatqc/bin'
+scriptdir  = 'gempython/scripts'
 scriptpath = '/opt/cmsgemos/bin'
 scripts    = listdir(scriptdir)
 
@@ -22,7 +22,7 @@ def getpkgdata():
     # actual package data
     data = dict((pkg,['*.txt','*.so']) for pkg in __pythonmodules__)
     # hack just to get the build to work
-    data['gempython/bin'] = ['gempython/vfatqc/bin/*.py']
+    data['gempython/scripts'] = ['gempython/scripts/*.py']
     return data
 
 def getreqs():
