@@ -37,7 +37,8 @@ then
     virtualenv ~/virtualenvs/${PY_VER} -p ${pyexec} --system-site-packages
     . ~/virtualenvs/${PY_VER}/bin/activate
     numver=$(python -c "import distutils.sysconfig;print(distutils.sysconfig.get_python_version())")
-    pip install -U pip importlib
+
+    pip install -U "pip<10" importlib
     pip install -U setuptools
     pip install -U codecov
     pip install -U -r requirements.txt

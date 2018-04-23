@@ -6,16 +6,9 @@
 
 # Version of CentOS/RHEL
 OS_VERSION=$1
-PY_VER=$2
-DOCKER_IMAGE=$3
-COMMAND=$4
-
-PYTHON_VERSION=""
-GCC_VERSION=""
-CLANG_VERSION=""
-COMPILER=""
-COMPILER_OPTIONS=""
-LIBC_VERSION=""
+DOCKER_IMAGE=$2
+COMMAND=$3
+REPO_NAME=${TRAVIS_REPO_SLUG#?*/}
 
 # need a varaible to point to the .ci directory
 # Run tests in Container
@@ -24,8 +17,12 @@ then
     sudo usermod -aG docker $USER
     sudo groupadd daqbuild -g 2055
     sudo useradd daqbuild -g 2055 -u 2055
-    sudo usermod -aG daqbuild travis
+    sudo usermod -aG daqbuild $USER
     groups
+    sudo chmod g+s -R $HOME
+    sudo apt-get install acl
+    sudo setfacl -Rdm u::rwX,g::rwX,o::rX $HOME
+    sudo setfacl -Rm  u::rwX,g::rwX,o::rX $HOME
 
     sudo apt-get update
     echo 'DOCKER_OPTS="-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock -s devicemapper"' | \
@@ -40,16 +37,16 @@ then
     if [ "$OS_VERSION" = "6" ]
     then
         echo "Starting SLC6 GEM DAQ custom docker image"
-        # docker run -d --user daqbuild --rm=true -v `pwd`:/home/daqbuild/vfatqc-python-scripts:rw,z --entrypoint="/bin/bash" \
-        docker run --user daqbuild --privileged -d -ti -e "container=docker" -v \
-               `pwd`:/home/daqbuild/vfatqc-python-scripts:rw,z \
+        # docker run -d --user daqbuild --rm=true -v `pwd`:/home/daqbuild/${REPO_NAME}:rw,z --entrypoint="/bin/bash" \
+        docker run --user daqbuild --privileged=true -d -ti -e "container=docker" \
+               -v `pwd`:/home/daqbuild/${REPO_NAME}:rw,z \
                ${DOCKER_IMAGE} /bin/bash
     elif [ "$OS_VERSION" = "7" ]
     then
         echo "Starting CC7 GEM DAQ custom docker image"
-        docker run --user daqbuild --privileged -d -ti -e "container=docker" \
+        docker run --user daqbuild --privileged=true -d -ti -e "container=docker" \
                -v /sys/fs/cgroup:/sys/fs/cgroup \
-               -v `pwd`:/home/daqbuild/vfatqc-python-scripts:rw,z \
+               -v `pwd`:/home/daqbuild/${REPO_NAME}:rw,z \
                ${DOCKER_IMAGE} /usr/sbin/init
     elif [ "$OS_VERSION" = "8" ]
     then
@@ -58,18 +55,19 @@ then
 
     DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
     echo DOCKER_CONTAINER_ID=${DOCKER_CONTAINER_ID}
-    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec "echo Testing build on docker for `cat /etc/system-release`"
+    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'echo Testing build on docker for `cat /etc/system-release`'
     docker logs $DOCKER_CONTAINER_ID
-    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec "sudo pip install -U pip importlib"
-    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec "sudo pip install -U setuptools"
-    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec "sudo pip install -U codecov"
+    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'pip install -I --user "pip" "importlib" "codecov" "setuptools<38.2"'
+    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''importlib'\''))"'
+    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''pip'\''))"'
+    docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''setuptools'\''))"'
 else
     DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
     docker logs $DOCKER_CONTAINER_ID
 
     if [ "${COMMAND}" = "stop" ]
     then
-        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'echo -ne "------\nEND vfatqc-python-scripts TESTS\n";'
+        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec "echo -ne \"------\nEND ${REPO_NAME} TESTS\n\";"
         docker stop $DOCKER_CONTAINER_ID
         docker rm -v $DOCKER_CONTAINER_ID
     elif [ "${COMMAND}" = "other" ]
