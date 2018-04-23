@@ -94,9 +94,9 @@ after_script: skip
 # How to link the environments/outputs from above with the jobs below?
 .rpmbuild: &rpmbuild_template
   before_install:
-    - ./.ci/docker.sh ${OS_VERSION} ${PY_VER} ${DOCKER_IMAGE} setup
+    - ./.ci/docker.sh ${OS_VERSION} ${DOCKER_IMAGE} setup
     - sleep 2
-    - ./.ci/docker.sh ${OS_VERSION} ${PY_VER} ${DOCKER_IMAGE} start
+    - ./.ci/docker.sh ${OS_VERSION} ${DOCKER_IMAGE} start
     - DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
     - echo DOCKER_CONTAINER_ID=$DOCKER_CONTAINER_ID
     - sudo chown :daqbuild -R .
