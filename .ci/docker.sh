@@ -5,9 +5,9 @@
 # https://github.com/opensciencegrid/htcondor-ce/tree/master/tests
 
 # Version of CentOS/RHEL
-OS_VERSION=$1
+COMMAND=$1
 DOCKER_IMAGE=$2
-COMMAND=$3
+OS_VERSION=$3
 REPO_NAME=${TRAVIS_REPO_SLUG#?*/}
 
 # need a varaible to point to the .ci directory

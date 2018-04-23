@@ -72,9 +72,9 @@ services:
   - docker
 
 before_install:
-  - ./.ci/docker.sh ${OS_VERSION} ${DOCKER_IMAGE} setup
+  - ./.ci/docker.sh setup ${DOCKER_IMAGE}
   - sleep 2
-  - ./.ci/docker.sh ${OS_VERSION} ${DOCKER_IMAGE} start
+  - ./.ci/docker.sh start ${DOCKER_IMAGE}
   - DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
   - echo DOCKER_CONTAINER_ID=$DOCKER_CONTAINER_ID
 
@@ -85,7 +85,7 @@ script:
 
 ## Defaults, applied to the 'test' stage
 after_success:
-  - ./.ci/docker.sh ${OS_VERSION} ${DOCKER_IMAGE} stop
+  - ./.ci/docker.sh stop ${DOCKER_IMAGE}
 
 after_failure: skip
 
@@ -94,9 +94,9 @@ after_script: skip
 # How to link the environments/outputs from above with the jobs below?
 .rpmbuild: &rpmbuild_template
   before_install:
-    - ./.ci/docker.sh ${OS_VERSION} ${DOCKER_IMAGE} setup
+    - ./.ci/docker.sh setup ${DOCKER_IMAGE}
     - sleep 2
-    - ./.ci/docker.sh ${OS_VERSION} ${DOCKER_IMAGE} start
+    - ./.ci/docker.sh start ${DOCKER_IMAGE}
     - DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
     - echo DOCKER_CONTAINER_ID=$DOCKER_CONTAINER_ID
     - sudo chown :daqbuild -R .
@@ -114,7 +114,7 @@ after_script: skip
     - pip install rpm/*.zip
     - echo "Install the dependencies"
     - echo "Run the predefined test"
-    - ./.ci/docker.sh ${OS_VERSION} ${DOCKER_IMAGE} stop
+    - ./.ci/docker.sh stop ${DOCKER_IMAGE}
 
 .release: &release_template
   # publish to Github releases
