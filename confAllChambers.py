@@ -6,7 +6,7 @@ def launch(args):
 def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,debug=False):
     import datetime,os,sys
     from subprocess import CalledProcessError
-    from mapping.chamberInfo import chamber_config
+    from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.utils.wrappers import runCommand
 
     dataPath = os.getenv('DATA_PATH')
@@ -49,10 +49,10 @@ if __name__ == '__main__':
     import subprocess
     import itertools
     from multiprocessing import Pool, freeze_support
-    from mapping.chamberInfo import chamber_config
+    from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.utils.wrappers import envCheck
 
-    from qcoptions import parser
+    from gempython.vfatqc.qcoptions import parser
 
     parser.add_option("--config", action="store_true", dest="config",
                       help="Set Configuration from simple txt files", metavar="config")

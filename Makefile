@@ -33,6 +33,8 @@ include $(BUILD_HOME)/$(Project)/config/mfPythonRPM.mk
 default:
 	@echo "Running default target"
 	$(MakeDir) $(PackageDir)
+	@cp -rfp qcoptions.py $(PackageDir)
+	@cp -rfp qcutilities.py $(PackageDir)
 	@echo "__path__ = __import__('pkgutil').extend_path(__path__, __name__)" > pkg/$(Namespace)/__init__.py
 	@cp -rfp __init__.py $(PackageDir)
 
@@ -54,6 +56,7 @@ preprpm: default
 clean:
 	@echo "Running clean target"
 	@rm -rf $(ScriptDir)
+	@rm -rf $(PackageDir)
 	@rm -f  $(PackageDir)/README.md
 	@rm -f  $(PackageDir)/LICENSE
 	@rm -f  $(PackageDir)/MANIFEST.in

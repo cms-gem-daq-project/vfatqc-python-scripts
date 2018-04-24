@@ -9,7 +9,7 @@ import sys
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 
-from qcoptions import parser
+from gempython.vfatqc.qcoptions import parser
 
 parser.add_option("--filename", type="string", dest="filename", default="LatencyData.root",
                   help="Specify Output Filename", metavar="filename")

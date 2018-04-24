@@ -8,9 +8,9 @@ Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
 
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
-from mapping.chamberInfo import chamber_vfatDACSettings
-from qcoptions import parser
-from qcutilities import readBackCheck 
+from gempython.gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
+from gempython.vfatqc.qcoptions import parser
+from gempython.vfatqc.qcutilities import readBackCheck 
 
 parser.add_option("--chConfig", type="string", dest="chConfig", default=None,
                   help="Specify file containing channel settings from anaUltraSCurve", metavar="chConfig")

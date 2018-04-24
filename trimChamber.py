@@ -9,9 +9,9 @@ from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 from gempython.utils.nesteddict import nesteddict as ndict
 from gempython.utils.wrappers import runCommand, envCheck
-from mapping.chamberInfo import chamber_config
+from gempython.gemplotting.mapping.chamberInfo import chamber_config
 
-from qcoptions import parser
+from gempython.vfatqc.qcoptions import parser
 
 parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
                   help="Specify the file to take trim ranges from", metavar="rangeFile")
@@ -36,7 +36,7 @@ envCheck('BUILD_HOME')
 
 dataPath = os.getenv('DATA_PATH')
 
-from fitting.fitScanData import fitScanData
+from gempython.gemplotting.fitting.fitScanData import fitScanData
 import subprocess,datetime
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
