@@ -160,6 +160,7 @@ try:
     print "OH%s: %s"%(options.gtx,ohnL1A)
     oh.configureScanModule(ohboard, options.gtx, mode, mask,
                         scanmin=LATENCY_MIN, scanmax=LATENCY_MAX,
+                        stepsize=step,
                         numtrigs=int(options.nevts),
                         useUltra=True, debug=True)
     oh.printScanConfiguration(ohboard, options.gtx, useUltra=True, debug=options.debug)

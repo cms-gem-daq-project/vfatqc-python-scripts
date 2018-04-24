@@ -38,7 +38,7 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
       cmd.append( "--mspl=%i"%(mspl) )
     preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
-      preCmd.append("--vt1=%d"%(vt1))
+      preCmd.append("--vt1=%i"%(vt1))
       pass
     pass
   elif tool == "trimChamber.py":
@@ -46,7 +46,7 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     dataType = None
     preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
-      preCmd.append("--vt1=%d"%(vt1))
+      preCmd.append("--vt1=%i"%(vt1))
       pass
     dirPath = "%s/%s/%s/z%f/"%(dataPath,chamber_config[link],scanType,ztrim)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
@@ -55,14 +55,14 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     dirPath = dirPath+startTime
     cmd.append("--ztrim=%f"%(ztrim))
     if vt1 in range(256):
-      cmd.append("--vt1=%d"%(vt1))
+      cmd.append("--vt1=%i"%(vt1))
       pass
     cmd.append( "--dirPath=%s"%dirPath )
     pass
   elif tool == "ultraThreshold.py":
     scanType = "threshold"
     if vt2 in range(256):
-      cmd.append("--vt2=%d"%(vt2))
+      cmd.append("--vt2=%i"%(vt2))
       pass
     if perchannel:
       cmd.append("--perchannel")
@@ -94,7 +94,7 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/FastLatencyScanData.root"%dirPath )
     if mspl:
-      cmd.append( "--mspl=%d"%(mspl) )
+      cmd.append( "--mspl=%i"%(mspl) )
     pass
   elif tool == "ultraLatency.py":
     scanType = "latency/trk"
@@ -104,14 +104,14 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
     cmd.append( "--filename=%s/LatencyScanData.root"%dirPath )
-    cmd.append( "--scanmin=%d"%(scanmin) )
-    cmd.append( "--scanmax=%d"%(scanmax) )
+    cmd.append( "--scanmin=%i"%(scanmin) )
+    cmd.append( "--scanmax=%i"%(scanmax) )
     cmd.append( "--throttle=%i"%(throttle) )
     if stepSize > 0:
-      cmd.append( "--stepSize=%d"%(stepSize) )
+      cmd.append( "--stepSize=%i"%(stepSize) )
       pass
     if mspl:
-      cmd.append( "--mspl=%d"%(mspl) )
+      cmd.append( "--mspl=%i"%(mspl) )
       pass
     if amc13local:
       cmd.append( "--amc13local")

@@ -24,3 +24,7 @@ develop|[![Build Status](https://travis-ci.org/jsturdy/vfatqc-python-scripts.svg
     See extensive documentation written at:
 
     [GEM DOC Twiki Page](https://twiki.cern.ch/twiki/bin/viewauth/CMS/GEMDOCDoc#How_to_Run_Scans)
+
+3. Contributing
+
+    See guidelines included in [CONTRIBUTING.md](https://github.com/cms-gem-daq-project/vfatqc-python-scripts/blob/master/.github/CONTRIBUTING.md)
