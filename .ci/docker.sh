@@ -55,7 +55,7 @@ then
 
     DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
     echo DOCKER_CONTAINER_ID=${DOCKER_CONTAINER_ID}
-    if [ -z {DOCKER_CONTAINER_ID+x} ];
+    if [ ! -z ${DOCKER_CONTAINER_ID+x} ];
     then
         docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'echo Testing build on docker for `cat /etc/system-release`'
         docker logs $DOCKER_CONTAINER_ID
@@ -66,7 +66,7 @@ then
     fi
 else
     DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
-    if [ -z {DOCKER_CONTAINER_ID+x} ];
+    if [ ! -z ${DOCKER_CONTAINER_ID+x} ];
     then
         docker logs $DOCKER_CONTAINER_ID
 
