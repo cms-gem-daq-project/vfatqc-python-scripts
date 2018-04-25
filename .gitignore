@@ -8,6 +8,7 @@
 # Don't ignore special files
 !*.md
 !*.rst
+!*.in
 !LICENSE
 
 # Don't ignore makefiles
