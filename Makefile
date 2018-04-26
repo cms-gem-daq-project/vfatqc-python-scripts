@@ -44,6 +44,7 @@ _rpmprep: preprpm
 	@echo "Running _rpmprep target"
 preprpm: default
 	@echo "Running preprpm target"
+	@cp -rfp config/scriptlets/installrpm.sh pkg/
 	$(MakeDir) $(ScriptDir)
 	@cp -rfp run_scans.py   $(ScriptDir)
 	@cp -rfp trimChamber.py $(ScriptDir)
@@ -55,20 +56,15 @@ preprpm: default
 
 clean:
 	@echo "Running clean target"
-	@rm -rf $(ScriptDir)
-	@rm -rf $(PackageDir)
-	@rm -f  $(PackageDir)/README.md
-	@rm -f  $(PackageDir)/LICENSE
-	@rm -f  $(PackageDir)/MANIFEST.in
-	@rm -f  $(PackageDir)/CHANGELOG.md
-	@rm -f  $(PackageDir)/requirements.txt
-	@rm -f  $(PackageDir)/__init__.py
-	@rm -f  pkg/$(Namespace)/__init__.py
-	@rm -f  pkg/README.md
-	@rm -f  pkg/LICENSE
-	@rm -f  pkg/MANIFEST.in
-	@rm -f  pkg/CHANGELOG.md
-	@rm -f  pkg/requirements.txt
+	-rm -rf $(ScriptDir)
+	-rm -rf $(PackageDir)
+	-rm -f  pkg/$(Namespace)/__init__.py
+	-rm -f  pkg/README.md
+	-rm -f  pkg/LICENSE
+	-rm -f  pkg/MANIFEST.in
+	-rm -f  pkg/CHANGELOG.md
+	-rm -f  pkg/requirements.txt
+	-rm -f  pkg/installrpm.sh
 
 print-env:
 	@echo BUILD_HOME     $(BUILD_HOME)
