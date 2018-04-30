@@ -38,35 +38,19 @@ env: ## this is *only* for the built-in 'test' stage, doesn't currently transfer
   global:
     ## Encrypted variables:
     ##  * CHANGELOG_GITHUB_TOKEN: for running github_changelog_generator without API rate limits
-    secure: "v++lbGb9+j0SpvyVtXo2/zS0GTlnjMsCF8KFrv74wXdbUmdXT8AIonJXmgVjkO5NuiK52v2IqhT162VlmAFqtkZjHa4QHug1SPT6CgF+eBBlfJ86lQqB2NO7dnn8ppBeranQIwIZr8Tms4fByk2M4fIHbfBPat0/rTVtMncmTQGPe0f8PXvNqAl8ArxaJMnDlmjvOyMgzMJhxkYbtVek23sD9a/anf6IhFInGPk36fKavb+oqTKv7kSO/3st8ls2wcT8CDj05TgfDR0kZNvymiM0+L9beSx4vxnVvYddum5KqJkU5MCLisGVtv6p+jYCA3v+Qtm9wV2DEyynt1NXY7V8uJpfAypjy/NESNPbjShlnOn3rv9jcJ8/kNGWTQwqhuFy2v6Ng58h6VwHMr/fBd+np1yM4cKxNM5o9/0/7CuBkunJD1Lvdq01rUeCljtDQaM7T7CK8en3r1gPnVsll/H6YZ5OL5uqlx0ybxd8eWZ9cuIVlGEeINW/mqIFMyY62o1RK76cUbvq5NtTrioyeRtwIa6b6ngjeH76WBuHC+HVDe6J4qyX75C0sKjKIF6HdP9nt2Psrhb+RvqlDT127CPKJ1mO4S3BEuobzO99JQU4LhyDgKvR47D/N4jzl5EojjgqKShORuHJKNzX8MCQZXCRmqw/1mpmc7/lPwxrclQ="
+    - secure: "HFlBqc85yuCng/88x1vwLdJCc9tqlWpYKdKNfyzNthP7tmxVjM1NyNQ3/cDVBi8/MdIR94We9lfgIrgkaN4gjuymO21RKo4WJXRy3PgWeo/y1CZS87+1BQFpVId9Is8GCvFZapjO741hJoxMzGkJy602KOgWY63jUfBAVbMMojRdUF4A1k4JpLD0UQkCLt57yMYfT8U5lf8IBplu6841a1nqt+S74+arqxC4XmJJBt2ZPQyAHE8dnKl7j1gjV5JGLMBEDnl/zhqgaesiy0vs5xYKBIHkwWMPSVgDRIF/xSXc7JYQs92mJbNde3N13rZ9Dsck70Z43T12PFONof+kEemFKsw+rqFnPU1TbaNbCHzmaMm7KFpy21ZuWIXRafTLr1X5CvmVa3OBqji+oA9VoTGcFT7B6HP6OHzDklP/lrirp/pIcYnC3o1cZcQl0AaQFLK8ZhKK6ylEG2Zr2yCeLyEfIV+n9QUZ+vXSjGtluumd+9+EOJwdqiy5GpXy5GHx98Tb6BcTf8yELVtLbsZ2JGuNjdn8mrClgd/92gI6pHfsn5BqUAixjSpdfIPE5lSL4b+4waCu6T3X9zR6c6j0pMmrU5eU+AbxUcnFi611dLTtGM56GarXyBqRekslSnHHgaNcTZJQA1pqgSFZhkGPl3YcBp1LAVv66wYnLmj8byU="
+    - secure: "v++lbGb9+j0SpvyVtXo2/zS0GTlnjMsCF8KFrv74wXdbUmdXT8AIonJXmgVjkO5NuiK52v2IqhT162VlmAFqtkZjHa4QHug1SPT6CgF+eBBlfJ86lQqB2NO7dnn8ppBeranQIwIZr8Tms4fByk2M4fIHbfBPat0/rTVtMncmTQGPe0f8PXvNqAl8ArxaJMnDlmjvOyMgzMJhxkYbtVek23sD9a/anf6IhFInGPk36fKavb+oqTKv7kSO/3st8ls2wcT8CDj05TgfDR0kZNvymiM0+L9beSx4vxnVvYddum5KqJkU5MCLisGVtv6p+jYCA3v+Qtm9wV2DEyynt1NXY7V8uJpfAypjy/NESNPbjShlnOn3rv9jcJ8/kNGWTQwqhuFy2v6Ng58h6VwHMr/fBd+np1yM4cKxNM5o9/0/7CuBkunJD1Lvdq01rUeCljtDQaM7T7CK8en3r1gPnVsll/H6YZ5OL5uqlx0ybxd8eWZ9cuIVlGEeINW/mqIFMyY62o1RK76cUbvq5NtTrioyeRtwIa6b6ngjeH76WBuHC+HVDe6J4qyX75C0sKjKIF6HdP9nt2Psrhb+RvqlDT127CPKJ1mO4S3BEuobzO99JQU4LhyDgKvR47D/N4jzl5EojjgqKShORuHJKNzX8MCQZXCRmqw/1mpmc7/lPwxrclQ="
 
   matrix:
-    - OS_TYPE=centos PY_VER=python OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6 ROOT_VER=v5.34.36-gcc4.4
-    # - OS_TYPE=centos PY_VER=python2.6 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-    # - OS_TYPE=centos PY_VER=python2.7 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-    # - OS_TYPE=centos PY_VER=python3.2 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-    # - OS_TYPE=centos PY_VER=python3.3 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-    # - OS_TYPE=centos PY_VER=python3.4 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-    # - OS_TYPE=centos PY_VER=python3.5 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-    # - OS_TYPE=centos PY_VER=pypy  OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-    # - OS_TYPE=centos PY_VER=pypy3 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
-    # - OS_TYPE=centos PY_VER=pypy OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6 ROOT_VER=v5.34.36-gcc4.4
+    - OS_TYPE=centos PY_VER=python OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6 ROOT_VER=v5.34.36-gcc4.4
+    # - OS_TYPE=centos PY_VER=python2.6 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6
+    # - OS_TYPE=centos PY_VER=pypy OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6 ROOT_VER=v5.34.36-gcc4.4
 
     ### CC7 jobs
-    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7 ROOT_VER=v5.34.36-gcc4.8
-    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7 ROOT_VER=v6.10.08-gcc4.8
-    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7 ROOT_VER=v6.12.06-gcc4.8
-    # - OS_TYPE=centos PY_VER=python2.6 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-    # - OS_TYPE=centos PY_VER=python2.7 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-    # - OS_TYPE=centos PY_VER=python3.2 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-    # - OS_TYPE=centos PY_VER=python3.3 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-    # - OS_TYPE=centos PY_VER=python3.4 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-    # - OS_TYPE=centos PY_VER=python3.5 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-    # - OS_TYPE=centos PY_VER=pypy  OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
-    # - OS_TYPE=centos PY_VER=pypy OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7 ROOT_VER=v5.34.36-gcc4.8
-    # - OS_TYPE=centos PY_VER=pypy OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7 ROOT_VER=v6.10.08-gcc4.8
-    # - OS_TYPE=centos PY_VER=pypy OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7 ROOT_VER=v6.12.06-gcc4.8
-    # - OS_TYPE=centos PY_VER=pypy3 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
+    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7 ROOT_VER=v5.34.36-gcc4.8
+    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7 ROOT_VER=v6.10.08-gcc4.8
+    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7 ROOT_VER=v6.12.06-gcc4.8
+    # - OS_TYPE=centos PY_VER=pypy3 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7
 
 services:
   - docker
@@ -120,7 +104,8 @@ after_script: skip
   # publish to Github releases
   provider: releases
   api_key:
-    # secure: "xUehu6J6YGAztawc+DEJMX4Vv4xHP2Sj/x+SaSaxjUI31J1ROPreVn6BZ2MVwde/gmGXXz6zgeMzAiXRS7MXJDfBoYvle4lj0XKN+xX9IYBXWbabO8j3EKRUApQX6GV1iaG2RSwb3uFsMxnVG+mkz3RdFjznDSLrtk56EwmgaiMMEJgb6k6c6f/TBRZQJcfjIHLfZ0Tw/uJTBmcDacf+xVYLiH5Wj0+rli8ZsUGWHH90pn7+MUMUJnezMBGT1Slea7faJLAqRDEs3G28MAuzvY4lNgqhgIUveCfwIKli0w8bWIM+x5/L+oHzUNIO0tSPeIlGAXi1qELmK8ix+Q7nYRCRnazlHQpjStDI3gQ9BTPXyR87E6SROxPgkaXTpJfL9v0WLfSEPSXYYjWr4bFzlF+HrJBZTcoiroG5jQB0mHlH4g8w6SQMSnaQRvgUrFRUX75vqZDhlG05r0JBtddnuBcxiCc/ymFUeApuV11OHEF01QjbJZ+3ujYWBv7FQsNgMIL2xIuJVtKQhBR+KAG5y+ZULMhmRwDhvY86Ua2BWWKk05Mqja+/AB8YyrspOtA1tKTYcMqK1czrwY6fjyXxZ7xY8l/K0Bz+p4qdenPKbHQ2inUU2nxsv2Om9Sugi6BD1ysDeY+ISxhla7IPiBprpKuKdui2bjG2wNelrgzzLCQ="
+    ## API key to deploy to github release
+    secure: "l1mY5MhCMJoQcEb8MGVoG1iDoIHuWBpEbbHRJ6UwfFy/LH/NIoiCb55gexivK9dIRuB3lD5SBPJy5AU/4DqlLTVw017idShn2G1gIPjjLLuvEONa4fVGAdpuwBLLB9v5azEABF3j+gIFxovSVYHTwDcoWLWQyTu0jBwNoG6fNyle8CKFiVlF6dp8w13E0/kbJNxQGnh4IuTFWkgLPwgkrH3XswTvJyBXpegL/lvkaqscgKjd/oz7UoEtba6q/PJG403o3bI1g0aEpSndO2isNoWHNMLTnIrCHcTDINNT7jQwSOaW1iujd1gI6r0xTZiPKrOtGp+8cABj8VTZN8cIhJlRAo7OiO0eIy8kmv1zT8iLgjyha84yZ+EtxurBKDjluX25M2IzFfZjdnPKtOt6PTLPgrpZ27nYsX4I9ii1Dg/RSffCLnZAjaYBOvEsujrabWX+tYxYmUN3J08PQG3CGyVCfC4bHBkq7dTncsT2o9FRt0Tb5xuysjN5LiEoos1DVyCC6A3ILClBEVSDiiT5dxHQduPSusS63jTtTBrefkaWGrF+jsqmlLK1nJOFUJcGjHuCAzcIBHdrokkim66RoR/zdiJi5z/z4EeiT7+Hl+F7iG8OdArf3H5v8a2OSLNF5O1WBVpw3cvf4XobQhTbsdV1uqMm3jfIbvSxGUhakCo="
     secure: "QG0owhYHTn/nCg37HDf+DLmbqlrj0Mr1co5+pL6qvoFis/y+P/PjKVLZenGyw4H/ncH9B+qSIWlDaWJZRg96ORk1hNBfMB1voBXIy5miFfeO1ersVO62OVvJS3DznFbUaJA9VRF4QG2aGV7bt6Sgtpu25d4s6tptOyqW/GzfmFXynIHLA2J79QZbM/OQGSxvc+gWR91u320pqQKQzXA4CSog9TZQbulA/qqxl/DXtM65LDjI5V3igEwh68EAJ+NCZ4SHxDzz7X9zWjjlW7CgRolFAgHTzEQbwLF5kRlTpsiMosRnCLwkbSniEDkfpC9UuI6YinUCk83DR9EPnXkoN2hkMJJQcGZx8tb2QItpKV767W/JGabZDiOKodqJJe4Fc4UfTJpgnmww7ZqD/LrRiqtmGfjKxHXR3Wp3BFP8B70C4heZ/he9xLfpm9vpYYYJ89jRybjPwbGOJ0+RJbpSt3M7PCo9KkvLBzf3Dif250suV7c7xPDJ0aMp27WRAgk0KKuudaVj3VUiO6brW8fpJJr5aRxVA63mG0v3J7Xo9lndeNanpCePkxilJgZQDZx6F7BIldThp93eZHHUMjam/biqiCX+WSSFuFWdiiNKfaAF0oWRhNoLMeV2h8I1TLnJTLTozlCBuME9gfsRcV6ZqBLEeEQP5z63QtIbcdLXPao="
   file_glob: true
   file:
@@ -162,7 +147,7 @@ jobs:
         - OS_TYPE=centos
         - PY_VER=python
         - OS_VERSION=6
-        - DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:slc6
+        - DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6
       <<: *rpmbuild_template
 
     - stage: buildrpm
@@ -170,7 +155,7 @@ jobs:
         - OS_TYPE=centos
         - PY_VER=python
         - OS_VERSION=7
-        - DOCKER_IMAGE=gitlab-registry.cern.ch/sturdy/gemdaq_ci_worker/extrapy/withroot:cc7
+        - DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7
       <<: *rpmbuild_template
 
     - stage: docs
