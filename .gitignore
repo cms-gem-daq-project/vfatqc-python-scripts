@@ -8,6 +8,11 @@
 # Don't ignore special files
 !*.md
 !*.rst
+!*.in
+!LICENSE
+
+# Don't ignore makefiles
+!Makefile
 
 # Don't ignore subdirectories
 !*/
@@ -18,5 +23,5 @@
 # Don't ignore requirements.txt
 !requirements.txt
 
-#Don't ignore setup
+# Don't ignore setup
 !setup/paths.sh

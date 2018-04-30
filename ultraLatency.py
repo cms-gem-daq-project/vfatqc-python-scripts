@@ -14,7 +14,7 @@ import gempython.tools.optohybrid_user_functions_uhal as oh
 from gempython.tools.vfat_user_functions_uhal import *
 import gempython.tools.amc_user_functions_uhal as amc
 
-from qcoptions import parser
+from gempython.vfatqc.qcoptions import parser
 
 parser.add_option("--amc13local", action="store_true", dest="amc13local",
                   help="Set up for using AMC13 local trigger generator", metavar="amc13local")
@@ -61,7 +61,7 @@ if (step + options.scanmin > options.scanmax):
     step = options.scanmax - options.scanmin
 
 if options.debug:
-    uhal.setLogLevelTo(uhal.LogLevel.INFO)
+    uhal.setLogLevelTo(uhal.LogLevel.DEBUG)
 else:
     uhal.setLogLevelTo(uhal.LogLevel.ERROR)
 

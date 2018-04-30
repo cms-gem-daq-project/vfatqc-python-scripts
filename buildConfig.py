@@ -1,8 +1,8 @@
 #!/bin/env python
 import os
 import threading
-from mapping.chamberInfo import chamber_config,GEBtype
-from qcoptions import parser
+from gempython.gemplotting.mapping.chamberInfo import chamber_config,GEBtype
+from gempython.vfatqc.qcoptions import parser
 from gempython.utils.wrappers import envCheck
 
 (options, args) = parser.parse_args()

@@ -14,7 +14,7 @@ from array import array
 from gempython.tools.optohybrid_user_functions_uhal import *
 from gempython.tools.vfat_user_functions_uhal import *
 
-from qcoptions import parser
+from gempython.vfatqc.qcoptions import parser
 
 parser.add_option("--vt2", type="int", dest="vt2", default=0,
                   help="Specify VT2 to use", metavar="vt2")

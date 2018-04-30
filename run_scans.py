@@ -1,16 +1,16 @@
 #!/bin/env python
 
-def launchTests(args):
-  return launchTestsArgs(*args)
+def launch(args):
+  return launchArgs(*args)
 
-def launchTestsArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nevts, stepSize=1,
-                    vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
-                    config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
-                    internal=False, debug=False):
+def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nevts, stepSize=1,
+               vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
+               config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
+               internal=False, debug=False):
   import datetime,os,sys
   import subprocess
   from subprocess import CalledProcessError
-  from mapping.chamberInfo import chamber_config
+  from gempython.gemplotting.mapping.chamberInfo import chamber_config
   from gempython.utils.wrappers import runCommand
 
   startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
@@ -148,10 +148,10 @@ if __name__ == '__main__':
   import subprocess
   import itertools
   from multiprocessing import Pool, freeze_support
-  from mapping.chamberInfo import chamber_config, chamber_vfatMask
+  from gempython.gemplotting.mapping.chamberInfo import chamber_config, chamber_vfatMask
   from gempython.utils.wrappers import envCheck
 
-  from qcoptions import parser
+  from gempython.vfatqc.qcoptions import parser
 
   parser.add_option("--amc13local", action="store_true", dest="amc13local",
                     help="Set up for using AMC13 local trigger generator", metavar="amc13local")
@@ -222,30 +222,30 @@ if __name__ == '__main__':
     for link in chamber_config.keys():
       chamber = chamber_config[link]
       vfatMask = chamber_vfatMask[link]
-      launchTests([ options.tool,
-                    options.shelf,
-                    options.slot,
-                    link,
-                    chamber,
-                    vfatMask,
-                    options.scanmin,
-                    options.scanmax,
-                    options.nevts, 
-                    options.stepSize,
-                    options.vt1,
-                    options.vt2,
-                    options.MSPL,
-                    options.perchannel,
-                    options.trkdata,
-                    options.ztrim,
-                    options.config,
-                    options.amc13local,
-                    options.t3trig,
-                    options.randoms,
-                    options.throttle,
-                    options.internal,
-                    options.debug
-                  ])
+      launch([ options.tool,
+               options.shelf,
+               options.slot,
+               link,
+               chamber,
+               vfatMask,
+               options.scanmin,
+               options.scanmax,
+               options.nevts, 
+               options.stepSize,
+               options.vt1,
+               options.vt2,
+               options.MSPL,
+               options.perchannel,
+               options.trkdata,
+               options.ztrim,
+               options.config,
+               options.amc13local,
+               options.t3trig,
+               options.randoms,
+               options.throttle,
+               options.internal,
+               options.debug
+      ])
       pass
     pass
   else:
@@ -256,7 +256,7 @@ if __name__ == '__main__':
     pool = Pool(12)
     signal.signal(signal.SIGINT, original_sigint_handler)
     try:
-      res = pool.map_async(launchTests,
+      res = pool.map_async(launch,
                            itertools.izip([options.tool for x in range(len(chamber_config))],
                                           [options.shelf for x in range(len(chamber_config))],
                                           [options.slot for x in range(len(chamber_config))],
@@ -265,6 +265,7 @@ if __name__ == '__main__':
                                           chamber_vfatMask.values(),
                                           [options.scanmin for x in range(len(chamber_config))],
                                           [options.scanmax for x in range(len(chamber_config))],
+                                          [options.stepSize for x in range(len(chamber_config))],
                                           [options.nevts   for x in range(len(chamber_config))],
                                           [options.stepSize for x in range(len(chamber_config))],
                                           [options.vt1     for x in range(len(chamber_config))],
