@@ -10,6 +10,7 @@
 !*.md
 !*.rst
 !*.in
+!*.yml
 !LICENSE
 
 # Don't ignore makefiles
@@ -27,8 +28,11 @@
 # Don't ignore select scripts
 !setup/paths.sh
 
-# Don't build config directory
+# Don't ignore build config directory
 !config
 
-# Don't CI directory
+# Don't ignore CI directory
 !.ci
+
+# Don't ignore github directory
+!.github
