@@ -1,0 +1,6 @@
+include docs
+include README.md
+include MANIFEST.in
+include LICENSE
+include requirements.txt
+recursive-include gempython/scripts *

@@ -1,0 +1,247 @@
+sudo: required
+
+language: generic
+
+stages:
+  - setup
+  - compile
+  - name: buildrpm
+  - test
+  - coverage
+  - name: docs
+    if: ( ( branch = master ) OR ( tag =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc|alpha|dev)([0-9]+$))?|(-git[0-9a-z]{6,8})?$ ) )
+  - name: prerelease
+    if: tag =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc)([0-9]+))$
+  - name: devrelease
+    if: tag =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc)([0-9]+))$
+  - name: release
+    if: tag =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)$
+  - name: deployment
+    if: tag =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc|alpha|dev)([0-9]+$))?|(-git[0-9a-z]{6,8})?$
+
+.docs: &docs_cond
+  if: ( ( branch = master ) OR ( tag =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc|alpha|dev)([0-9]+$))?|(-git[0-9a-z]{6,8})?$ ) )
+.draftrelease: &draftrelease_cond
+  condition: $TRAVIS_TAG =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc|dev|alpha)([0-9]+))?(-git[0-9a-z]{6,8})$
+.prerelease:   &prerelease_cond
+  condition: $TRAVIS_TAG =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc)([0-9]+))$
+.devrelease:   &devrelease_cond
+  condition: $TRAVIS_TAG =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(dev|alpha)([0-9]+))$
+.release:      &release_cond
+  condition: $TRAVIS_TAG =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)$
+# .deploy:       &deploy_cond
+#   condition: $TRAVIS_TAG =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc|alpha|dev)([0-9]+$))?|(-git[0-9a-z]{6,8})?$
+.deploy:       &deploy_cond
+  if: tag =~ ^v?(.)?([0-9]+).([0-9]+).([0-9]+)(-(pre|rc|alpha|dev)([0-9]+$))?|(-git[0-9a-z]{6,8})?$
+
+env: ## this is *only* for the built-in 'test' stage, doesn't currently transfer to other stages, beta feature
+  global:
+    ## Encrypted variables:
+    ##  * CHANGELOG_GITHUB_TOKEN: for running github_changelog_generator without API rate limits
+    - secure: "HFlBqc85yuCng/88x1vwLdJCc9tqlWpYKdKNfyzNthP7tmxVjM1NyNQ3/cDVBi8/MdIR94We9lfgIrgkaN4gjuymO21RKo4WJXRy3PgWeo/y1CZS87+1BQFpVId9Is8GCvFZapjO741hJoxMzGkJy602KOgWY63jUfBAVbMMojRdUF4A1k4JpLD0UQkCLt57yMYfT8U5lf8IBplu6841a1nqt+S74+arqxC4XmJJBt2ZPQyAHE8dnKl7j1gjV5JGLMBEDnl/zhqgaesiy0vs5xYKBIHkwWMPSVgDRIF/xSXc7JYQs92mJbNde3N13rZ9Dsck70Z43T12PFONof+kEemFKsw+rqFnPU1TbaNbCHzmaMm7KFpy21ZuWIXRafTLr1X5CvmVa3OBqji+oA9VoTGcFT7B6HP6OHzDklP/lrirp/pIcYnC3o1cZcQl0AaQFLK8ZhKK6ylEG2Zr2yCeLyEfIV+n9QUZ+vXSjGtluumd+9+EOJwdqiy5GpXy5GHx98Tb6BcTf8yELVtLbsZ2JGuNjdn8mrClgd/92gI6pHfsn5BqUAixjSpdfIPE5lSL4b+4waCu6T3X9zR6c6j0pMmrU5eU+AbxUcnFi611dLTtGM56GarXyBqRekslSnHHgaNcTZJQA1pqgSFZhkGPl3YcBp1LAVv66wYnLmj8byU="
+    - secure: "v++lbGb9+j0SpvyVtXo2/zS0GTlnjMsCF8KFrv74wXdbUmdXT8AIonJXmgVjkO5NuiK52v2IqhT162VlmAFqtkZjHa4QHug1SPT6CgF+eBBlfJ86lQqB2NO7dnn8ppBeranQIwIZr8Tms4fByk2M4fIHbfBPat0/rTVtMncmTQGPe0f8PXvNqAl8ArxaJMnDlmjvOyMgzMJhxkYbtVek23sD9a/anf6IhFInGPk36fKavb+oqTKv7kSO/3st8ls2wcT8CDj05TgfDR0kZNvymiM0+L9beSx4vxnVvYddum5KqJkU5MCLisGVtv6p+jYCA3v+Qtm9wV2DEyynt1NXY7V8uJpfAypjy/NESNPbjShlnOn3rv9jcJ8/kNGWTQwqhuFy2v6Ng58h6VwHMr/fBd+np1yM4cKxNM5o9/0/7CuBkunJD1Lvdq01rUeCljtDQaM7T7CK8en3r1gPnVsll/H6YZ5OL5uqlx0ybxd8eWZ9cuIVlGEeINW/mqIFMyY62o1RK76cUbvq5NtTrioyeRtwIa6b6ngjeH76WBuHC+HVDe6J4qyX75C0sKjKIF6HdP9nt2Psrhb+RvqlDT127CPKJ1mO4S3BEuobzO99JQU4LhyDgKvR47D/N4jzl5EojjgqKShORuHJKNzX8MCQZXCRmqw/1mpmc7/lPwxrclQ="
+
+  matrix:
+    - OS_TYPE=centos PY_VER=python OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6 ROOT_VER=v5.34.36-gcc4.4
+    # - OS_TYPE=centos PY_VER=python2.6 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6
+    # - OS_TYPE=centos PY_VER=pypy OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6 ROOT_VER=v5.34.36-gcc4.4
+
+    ### CC7 jobs
+    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7 ROOT_VER=v5.34.36-gcc4.8
+    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7 ROOT_VER=v6.10.08-gcc4.8
+    - OS_TYPE=centos PY_VER=python OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7 ROOT_VER=v6.12.06-gcc4.8
+    # - OS_TYPE=centos PY_VER=pypy3 OS_VERSION=7 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7
+
+services:
+  - docker
+
+before_install:
+  - ./.ci/docker.sh setup ${DOCKER_IMAGE}
+  - sleep 2
+  - ./.ci/docker.sh start ${DOCKER_IMAGE}
+  - DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
+  - echo DOCKER_CONTAINER_ID=$DOCKER_CONTAINER_ID
+
+# Stages run in their own VMs, nothing gets transferred from stage to stage
+script:
+  - echo 'Running test stage on docker container $DOCKER_CONTAINER_ID'
+  - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec ". /home/daqbuild/vfatqc-python-scripts/.ci/test_on_docker.sh ${OS_VERSION} ${PY_VER} ${ROOT_VER}"
+
+## Defaults, applied to the 'test' stage
+after_success:
+  - ./.ci/docker.sh stop ${DOCKER_IMAGE}
+
+after_failure: skip
+
+after_script: skip
+
+# How to link the environments/outputs from above with the jobs below?
+.rpmbuild: &rpmbuild_template
+  before_install:
+    - ./.ci/docker.sh setup ${DOCKER_IMAGE}
+    - sleep 2
+    - ./.ci/docker.sh start ${DOCKER_IMAGE}
+    - DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
+    - echo DOCKER_CONTAINER_ID=$DOCKER_CONTAINER_ID
+    - sudo chown :daqbuild -R .
+    - gem install github_changelog_generator
+  script:
+    - echo 'Running build stage on docker container $DOCKER_CONTAINER_ID'
+    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/vfatqc-python-scripts; make && make rpm "
+    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/vfatqc-python-scripts; rpm -q --filesbypkg -p rpm/*.rpm"
+    - ls -laZ rpm
+    - find ./rpm -iname '*.rpm' -o -iname '*.tar.gz' -o -iname '*.tbz2'
+  after_success:
+    - echo "Testing the installation of the package"
+    - virtualenv building -p python --system-site-packages
+    - . building/bin/activate
+    - pip install rpm/*.zip
+    - echo "Install the dependencies"
+    - echo "Run the predefined test"
+    - ./.ci/docker.sh stop ${DOCKER_IMAGE}
+
+.release: &release_template
+  # publish to Github releases
+  provider: releases
+  api_key:
+    ## API key to deploy to github release
+    secure: "l1mY5MhCMJoQcEb8MGVoG1iDoIHuWBpEbbHRJ6UwfFy/LH/NIoiCb55gexivK9dIRuB3lD5SBPJy5AU/4DqlLTVw017idShn2G1gIPjjLLuvEONa4fVGAdpuwBLLB9v5azEABF3j+gIFxovSVYHTwDcoWLWQyTu0jBwNoG6fNyle8CKFiVlF6dp8w13E0/kbJNxQGnh4IuTFWkgLPwgkrH3XswTvJyBXpegL/lvkaqscgKjd/oz7UoEtba6q/PJG403o3bI1g0aEpSndO2isNoWHNMLTnIrCHcTDINNT7jQwSOaW1iujd1gI6r0xTZiPKrOtGp+8cABj8VTZN8cIhJlRAo7OiO0eIy8kmv1zT8iLgjyha84yZ+EtxurBKDjluX25M2IzFfZjdnPKtOt6PTLPgrpZ27nYsX4I9ii1Dg/RSffCLnZAjaYBOvEsujrabWX+tYxYmUN3J08PQG3CGyVCfC4bHBkq7dTncsT2o9FRt0Tb5xuysjN5LiEoos1DVyCC6A3ILClBEVSDiiT5dxHQduPSusS63jTtTBrefkaWGrF+jsqmlLK1nJOFUJcGjHuCAzcIBHdrokkim66RoR/zdiJi5z/z4EeiT7+Hl+F7iG8OdArf3H5v8a2OSLNF5O1WBVpw3cvf4XobQhTbsdV1uqMm3jfIbvSxGUhakCo="
+    secure: "QG0owhYHTn/nCg37HDf+DLmbqlrj0Mr1co5+pL6qvoFis/y+P/PjKVLZenGyw4H/ncH9B+qSIWlDaWJZRg96ORk1hNBfMB1voBXIy5miFfeO1ersVO62OVvJS3DznFbUaJA9VRF4QG2aGV7bt6Sgtpu25d4s6tptOyqW/GzfmFXynIHLA2J79QZbM/OQGSxvc+gWR91u320pqQKQzXA4CSog9TZQbulA/qqxl/DXtM65LDjI5V3igEwh68EAJ+NCZ4SHxDzz7X9zWjjlW7CgRolFAgHTzEQbwLF5kRlTpsiMosRnCLwkbSniEDkfpC9UuI6YinUCk83DR9EPnXkoN2hkMJJQcGZx8tb2QItpKV767W/JGabZDiOKodqJJe4Fc4UfTJpgnmww7ZqD/LrRiqtmGfjKxHXR3Wp3BFP8B70C4heZ/he9xLfpm9vpYYYJ89jRybjPwbGOJ0+RJbpSt3M7PCo9KkvLBzf3Dif250suV7c7xPDJ0aMp27WRAgk0KKuudaVj3VUiO6brW8fpJJr5aRxVA63mG0v3J7Xo9lndeNanpCePkxilJgZQDZx6F7BIldThp93eZHHUMjam/biqiCX+WSSFuFWdiiNKfaAF0oWRhNoLMeV2h8I1TLnJTLTozlCBuME9gfsRcV6ZqBLEeEQP5z63QtIbcdLXPao="
+  file_glob: true
+  file:
+    - LICENSE
+    - README.md
+    - CHANGELOG.md
+    - "./rpm/*.tar.gz"
+    - "./rpm/*.tgz"
+    - "./rpm/*.tbz2"
+    - "./rpm/*.rpm"
+  ## pre-releases and draft releases for tags with pre/alpha/dev/gitHASH in the name
+  # draft: true # for tags with dev/alpha in the name, or
+  # prerelease: true # for tags with pre in the name
+  ## only deploy full release when the tag exactly matches vX.Y.Z (with or without the v)
+  prerelease: true
+  draft: false
+  name: $TRAVIS_TAG
+  body: "Please fill me, preferably with release notes for $TRAVIS_TAG"
+  on:
+    tags: true
+  #   before_deploy:
+  #     #Set up git user name and tag this commit
+  #     - git config --local user.name "YOUR GIT USER NAME"
+  #     - git config --local user.email "YOUR GIT USER EMAIL"
+  #     # ?create the changelog
+  #     # ?update release notes
+  #     # ?run our cmsgemostag script instead?
+  #     # Sign the tags
+  #   # - git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
+  after_deploy: skip
+    # - push docs to SaaS docs website, readthedocs style, with versioning
+    # - push API to SaaS docs website, Doxygen style, with versioning
+    # - push RPMs to repo on openstack SaaS, updates and devel-testing depending on tag
+
+jobs:
+  include:
+    - stage: buildrpm
+      env:
+        - OS_TYPE=centos
+        - PY_VER=python
+        - OS_VERSION=6
+        - DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6
+      <<: *rpmbuild_template
+
+    - stage: buildrpm
+      env:
+        - OS_TYPE=centos
+        - PY_VER=python
+        - OS_VERSION=7
+        - DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7
+      <<: *rpmbuild_template
+
+    - stage: docs
+      before_script: skip
+      before_install: skip
+      script:
+        - ls -laZ
+      after_success: skip
+
+    - stage: coverage
+      before_script: skip
+      before_install: skip
+      script: skip
+      after_success:
+        - sudo pip install -U codecov
+        # - coverage run -a scripta.py
+        - codecov
+        - bash <(curl -s https://codecov.io/bash) && echo "Uploaded code coverage"
+    # - stage: prerelease
+    #   script:
+    #     - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "echo running gcg to generate changelog"
+    #   deploy:
+    #     - <<: *release_template
+    #       prerelease: true # for tags with dev/alpha in the name, or
+    #       # on:
+    #       #   repo: jsturdy/vfatqc-python-scripts
+    #       #   tags: true
+
+    #   after_success: skip
+    # - stage: devrelease
+    #   script:
+    #     - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "echo running gcg to generate changelog"
+    #   deploy:
+    #     - <<: *release_template
+    #       draft: true # for tags with dev/alpha in the name, or
+    #   after_success:
+    # - stage: release
+    #   script:
+    #     - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "echo running gcg to generate changelog"
+    #   deploy:
+    #     - <<: *release_template
+    #   after_success: skip
+    # - stage: deploy
+    #   ## push docs to SaaS docs website, readthedocs style, with versioning
+    #   ## push RPMs to repo on openstack SaaS, updates and devel-testing depending on tag
+    #   before_script: skip
+    #   before_install: skip
+    #   - script: skip
+    #   after_success: skip
+    #   # before_deploy: skip
+    #   # after_deploy: skip
+
+    - stage: deployment
+      <<: *rpmbuild_template
+      before_deploy:
+        - echo "Preparing ChangeLog"
+        - if ! test -z ${CHANGELOG_GITHUB_TOKEN+x}; then github_changelog_generator; else echo "Not updating changelog"; fi
+        - sudo chown :daqbuild -R .
+        - ls -laZ CHANGELOG.md
+      deploy:
+        - <<: *release_template
+          prerelease: false
+          draft: false
+          on:
+            tags: true
+            <<: *release_cond
+          after_deploy:
+            - echo "Successfully deployed prerelease"
+        - <<: *release_template
+          on:
+            tags: true
+            <<: *prerelease_cond
+          after_deploy:
+            - echo "Successfully deployed prerelease"
+        - <<: *release_template
+          prerelease: false
+          draft: true
+          on:
+            tags: true
+            <<: *draftrelease_cond
+          after_deploy:
+            - echo "Successfully deployed draft release"
+        - <<: *release_template
+          prerelease: true
+          on:
+            tags: true
+            <<: *devrelease_cond
+          after_deploy:
+            - echo "Successfully deployed devrelease"

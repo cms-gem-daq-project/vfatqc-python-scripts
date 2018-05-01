@@ -3,11 +3,18 @@
 
 # Don't ignore git settings
 !*.gitignore
+!*.gitmodules
 !*.gitattributes
 
 # Don't ignore special files
 !*.md
 !*.rst
+!*.in
+!*.yml
+!LICENSE
+
+# Don't ignore makefiles
+!Makefile
 
 # Don't ignore subdirectories
 !*/
@@ -18,5 +25,14 @@
 # Don't ignore requirements.txt
 !requirements.txt
 
-#Don't ignore setup
+# Don't ignore select scripts
 !setup/paths.sh
+
+# Don't ignore build config directory
+!config
+
+# Don't ignore CI directory
+!.ci
+
+# Don't ignore github directory
+!.github
