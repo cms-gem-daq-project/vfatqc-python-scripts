@@ -3,6 +3,7 @@
 
 # Don't ignore git settings
 !*.gitignore
+!*.gitmodules
 !*.gitattributes
 
 # Don't ignore special files
@@ -23,5 +24,11 @@
 # Don't ignore requirements.txt
 !requirements.txt
 
-# Don't ignore setup
+# Don't ignore select scripts
 !setup/paths.sh
+
+# Don't build config directory
+!config
+
+# Don't CI directory
+!.ci

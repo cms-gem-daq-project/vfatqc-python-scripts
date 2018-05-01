@@ -30,7 +30,7 @@ then
     sudo service docker restart
     docker pull ${DOCKER_IMAGE}
     docker ps -al
-    git clone https://github.com/cms-gem-daq-project/gembuild.git config
+    # git clone https://github.com/cms-gem-daq-project/gembuild.git config
     sudo chown :daqbuild -R .
 elif [ "${COMMAND}" = "start" ]
 then
