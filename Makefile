@@ -19,9 +19,9 @@ ScriptDir    := pkg/$(Namespace)/scripts
 PythonModules = ["$(Namespace).$(ShortPackage)"]
 $(info PythonModules=${PythonModules})
 
-VFATQC_VER_MAJOR=0
-VFATQC_VER_MINOR=3
-VFATQC_VER_PATCH=1
+VFATQC_VER_MAJOR=2
+VFATQC_VER_MINOR=0
+VFATQC_VER_PATCH=0
 
 include $(BUILD_HOME)/$(Project)/config/mfCommonDefs.mk
 include $(BUILD_HOME)/$(Project)/config/mfPythonDefs.mk
