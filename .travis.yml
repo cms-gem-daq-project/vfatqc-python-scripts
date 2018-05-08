@@ -76,6 +76,20 @@ after_failure: skip
 after_script: skip
 
 # How to link the environments/outputs from above with the jobs below?
+.slc6_template: &slc6_template
+  env:
+    - OS_TYPE=centos
+    - PY_VER=python
+    - OS_VERSION=6
+    - DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6
+  
+.cc7_template: &cc7_template
+  env:
+    - OS_TYPE=centos
+    - PY_VER=python
+    - OS_VERSION=7
+    - DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7
+  
 .rpmbuild: &rpmbuild_template
   before_install:
     - ./.ci/docker.sh setup ${DOCKER_IMAGE}
@@ -140,22 +154,51 @@ after_script: skip
     # - push API to SaaS docs website, Doxygen style, with versioning
     # - push RPMs to repo on openstack SaaS, updates and devel-testing depending on tag
 
+.deploy: &deploy_template
+  before_deploy:
+    - echo "Preparing ChangeLog"
+    - if ! test -z ${CHANGELOG_GITHUB_TOKEN+x}; then github_changelog_generator; else echo "Not updating changelog"; fi
+    - sudo chown :daqbuild -R .
+    - ls -laZ CHANGELOG.md
+  deploy:
+    - <<: *release_template
+      prerelease: false
+      draft: false
+      on:
+        tags: true
+        <<: *release_cond
+      after_deploy:
+        - echo "Successfully deployed prerelease"
+    - <<: *release_template
+      on:
+        tags: true
+        <<: *prerelease_cond
+      after_deploy:
+        - echo "Successfully deployed prerelease"
+    - <<: *release_template
+      prerelease: false
+      draft: true
+      on:
+        tags: true
+        <<: *draftrelease_cond
+      after_deploy:
+        - echo "Successfully deployed draft release"
+    - <<: *release_template
+      prerelease: true
+      on:
+        tags: true
+        <<: *devrelease_cond
+      after_deploy:
+        - echo "Successfully deployed devrelease"
+  
 jobs:
   include:
     - stage: buildrpm
-      env:
-        - OS_TYPE=centos
-        - PY_VER=python
-        - OS_VERSION=6
-        - DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6
+      <<: *slc6_template
       <<: *rpmbuild_template
 
     - stage: buildrpm
-      env:
-        - OS_TYPE=centos
-        - PY_VER=python
-        - OS_VERSION=7
-        - DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:cc7
+      <<: *cc7_template
       <<: *rpmbuild_template
 
     - stage: docs
@@ -209,39 +252,11 @@ jobs:
     #   # after_deploy: skip
 
     - stage: deployment
+      <<: *slc6_template
       <<: *rpmbuild_template
-      before_deploy:
-        - echo "Preparing ChangeLog"
-        - if ! test -z ${CHANGELOG_GITHUB_TOKEN+x}; then github_changelog_generator; else echo "Not updating changelog"; fi
-        - sudo chown :daqbuild -R .
-        - ls -laZ CHANGELOG.md
-      deploy:
-        - <<: *release_template
-          prerelease: false
-          draft: false
-          on:
-            tags: true
-            <<: *release_cond
-          after_deploy:
-            - echo "Successfully deployed prerelease"
-        - <<: *release_template
-          on:
-            tags: true
-            <<: *prerelease_cond
-          after_deploy:
-            - echo "Successfully deployed prerelease"
-        - <<: *release_template
-          prerelease: false
-          draft: true
-          on:
-            tags: true
-            <<: *draftrelease_cond
-          after_deploy:
-            - echo "Successfully deployed draft release"
-        - <<: *release_template
-          prerelease: true
-          on:
-            tags: true
-            <<: *devrelease_cond
-          after_deploy:
-            - echo "Successfully deployed devrelease"
+      <<: *deploy_template
+            
+    - stage: deployment
+      <<: *cc7_template
+      <<: *rpmbuild_template
+      <<: *deploy_template
