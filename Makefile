@@ -33,10 +33,10 @@ include $(BUILD_HOME)/$(Project)/config/mfPythonRPM.mk
 default:
 	@echo "Running default target"
 	$(MakeDir) $(PackageDir)
-	@cp -rfp qcoptions.py $(PackageDir)
-	@cp -rfp qcutilities.py $(PackageDir)
+	@cp -rf qcoptions.py $(PackageDir)
+	@cp -rf qcutilities.py $(PackageDir)
 	@echo "__path__ = __import__('pkgutil').extend_path(__path__, __name__)" > pkg/$(Namespace)/__init__.py
-	@cp -rfp __init__.py $(PackageDir)
+	@cp -rf __init__.py $(PackageDir)
 
 # need to ensure that the python only stuff is packaged into RPMs
 .PHONY: clean preprpm
@@ -44,15 +44,15 @@ _rpmprep: preprpm
 	@echo "Running _rpmprep target"
 preprpm: default
 	@echo "Running preprpm target"
-	@cp -rfp config/scriptlets/installrpm.sh pkg/
+	@cp -rf config/scriptlets/installrpm.sh pkg/
 	$(MakeDir) $(ScriptDir)
-	@cp -rfp run_scans.py   $(ScriptDir)
-	@cp -rfp trimChamber.py $(ScriptDir)
-	@cp -rfp fastLatency.py $(ScriptDir)
-	@cp -rfp ultra*.py      $(ScriptDir)
-	@cp -rfp conf*.py       $(ScriptDir)
-	-cp -rfp README.md LICENSE CHANGELOG.md MANIFEST.in requirements.txt $(PackageDir)
-	-cp -rfp README.md LICENSE CHANGELOG.md MANIFEST.in requirements.txt pkg
+	@cp -rf run_scans.py   $(ScriptDir)
+	@cp -rf trimChamber.py $(ScriptDir)
+	@cp -rf fastLatency.py $(ScriptDir)
+	@cp -rf ultra*.py      $(ScriptDir)
+	@cp -rf conf*.py       $(ScriptDir)
+	-cp -rf README.md LICENSE CHANGELOG.md MANIFEST.in requirements.txt $(PackageDir)
+	-cp -rf README.md LICENSE CHANGELOG.md MANIFEST.in requirements.txt pkg
 
 clean:
 	@echo "Running clean target"
