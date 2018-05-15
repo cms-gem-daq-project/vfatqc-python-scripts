@@ -21,7 +21,7 @@ def getscripts():
 
 def getpkgdata():
     # actual package data
-    data = dict((pkg,['*.txt','*.so']) for pkg in __pythonmodules__)
+    data = dict((pkg,['*.cfg','*.txt','*.so']) for pkg in __pythonmodules__)
     # hack just to get the build to work
     data['gempython/scripts'] = ['gempython/scripts/*.py']
     return data
