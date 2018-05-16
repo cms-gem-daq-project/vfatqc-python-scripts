@@ -9,11 +9,9 @@ from gempython.utils.wrappers import envCheck
 
 envCheck('DATA_PATH')
 envCheck('CONFIG_PATH')
-envCheck('BUILD_HOME')
 
 def launchScurveScan(link,ztrim,cName,cType):
   import ROOT as r
-  buildPath = os.getenv('BUILD_HOME')
   dataPath = os.getenv('DATA_PATH')
   configPath = os.getenv('CONFIG_PATH')
   trimFile = r.TFile( '%s/%s/trim/z%f/config/SCurveData_Trimmed.root'%(dataPath,cName,ztrim) )

@@ -184,7 +184,6 @@ if __name__ == '__main__':
   (options, args) = parser.parse_args()
 
   envCheck('DATA_PATH')
-  envCheck('BUILD_HOME')
 
   if options.tool not in ["trimChamber.py","ultraThreshold.py","ultraLatency.py","fastLatency.py","ultraScurve.py"]:
     print "Invalid tool specified"
