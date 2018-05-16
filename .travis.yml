@@ -36,6 +36,7 @@ stages:
 
 env: ## this is *only* for the built-in 'test' stage, doesn't currently transfer to other stages, beta feature
   global:
+    - REPO_NAME=${TRAVIS_REPO_SLUG#?*/}
     ## Encrypted variables:
     ##  * CHANGELOG_GITHUB_TOKEN: for running github_changelog_generator without API rate limits
     - secure: "HFlBqc85yuCng/88x1vwLdJCc9tqlWpYKdKNfyzNthP7tmxVjM1NyNQ3/cDVBi8/MdIR94We9lfgIrgkaN4gjuymO21RKo4WJXRy3PgWeo/y1CZS87+1BQFpVId9Is8GCvFZapjO741hJoxMzGkJy602KOgWY63jUfBAVbMMojRdUF4A1k4JpLD0UQkCLt57yMYfT8U5lf8IBplu6841a1nqt+S74+arqxC4XmJJBt2ZPQyAHE8dnKl7j1gjV5JGLMBEDnl/zhqgaesiy0vs5xYKBIHkwWMPSVgDRIF/xSXc7JYQs92mJbNde3N13rZ9Dsck70Z43T12PFONof+kEemFKsw+rqFnPU1TbaNbCHzmaMm7KFpy21ZuWIXRafTLr1X5CvmVa3OBqji+oA9VoTGcFT7B6HP6OHzDklP/lrirp/pIcYnC3o1cZcQl0AaQFLK8ZhKK6ylEG2Zr2yCeLyEfIV+n9QUZ+vXSjGtluumd+9+EOJwdqiy5GpXy5GHx98Tb6BcTf8yELVtLbsZ2JGuNjdn8mrClgd/92gI6pHfsn5BqUAixjSpdfIPE5lSL4b+4waCu6T3X9zR6c6j0pMmrU5eU+AbxUcnFi611dLTtGM56GarXyBqRekslSnHHgaNcTZJQA1pqgSFZhkGPl3YcBp1LAVv66wYnLmj8byU="
@@ -64,7 +65,7 @@ before_install:
 # Stages run in their own VMs, nothing gets transferred from stage to stage
 script:
   - echo 'Running test stage on docker container $DOCKER_CONTAINER_ID'
-  - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec ". /home/daqbuild/vfatqc-python-scripts/.ci/test_on_docker.sh ${OS_VERSION} ${PY_VER} ${ROOT_VER}"
+  - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec ". /home/daqbuild/${REPO_NAME}/.ci/test_on_docker.sh ${OS_VERSION} ${PY_VER} ${ROOT_VER}"
 
 ## Defaults, applied to the 'test' stage
 after_success:
@@ -100,9 +101,9 @@ after_script: skip
     - gem install github_changelog_generator
   script:
     - echo 'Running build stage on docker container $DOCKER_CONTAINER_ID'
-    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/vfatqc-python-scripts; make " || travis_terminate 1
-    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/vfatqc-python-scripts; make rpm " || travis_terminate 1
-    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/vfatqc-python-scripts; rpm -q --filesbypkg -p rpm/*.rpm"
+    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/${REPO_NAME}; make " || travis_terminate 1
+    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/${REPO_NAME}; make rpm " || travis_terminate 1
+    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/${REPO_NAME}; rpm -q --filesbypkg -p rpm/*.rpm"
     - ls -laZ rpm
     - find ./rpm -iname '*.rpm' -o -iname '*.tar.gz' -o -iname '*.tbz2'
   after_success:
@@ -115,12 +116,12 @@ after_script: skip
     - ./.ci/docker.sh stop ${DOCKER_IMAGE}
 
 .release: &release_template
+  skip_cleanup: true
   # publish to Github releases
   provider: releases
   api_key:
     ## API key to deploy to github release
     secure: "l1mY5MhCMJoQcEb8MGVoG1iDoIHuWBpEbbHRJ6UwfFy/LH/NIoiCb55gexivK9dIRuB3lD5SBPJy5AU/4DqlLTVw017idShn2G1gIPjjLLuvEONa4fVGAdpuwBLLB9v5azEABF3j+gIFxovSVYHTwDcoWLWQyTu0jBwNoG6fNyle8CKFiVlF6dp8w13E0/kbJNxQGnh4IuTFWkgLPwgkrH3XswTvJyBXpegL/lvkaqscgKjd/oz7UoEtba6q/PJG403o3bI1g0aEpSndO2isNoWHNMLTnIrCHcTDINNT7jQwSOaW1iujd1gI6r0xTZiPKrOtGp+8cABj8VTZN8cIhJlRAo7OiO0eIy8kmv1zT8iLgjyha84yZ+EtxurBKDjluX25M2IzFfZjdnPKtOt6PTLPgrpZ27nYsX4I9ii1Dg/RSffCLnZAjaYBOvEsujrabWX+tYxYmUN3J08PQG3CGyVCfC4bHBkq7dTncsT2o9FRt0Tb5xuysjN5LiEoos1DVyCC6A3ILClBEVSDiiT5dxHQduPSusS63jTtTBrefkaWGrF+jsqmlLK1nJOFUJcGjHuCAzcIBHdrokkim66RoR/zdiJi5z/z4EeiT7+Hl+F7iG8OdArf3H5v8a2OSLNF5O1WBVpw3cvf4XobQhTbsdV1uqMm3jfIbvSxGUhakCo="
-    # secure: "QG0owhYHTn/nCg37HDf+DLmbqlrj0Mr1co5+pL6qvoFis/y+P/PjKVLZenGyw4H/ncH9B+qSIWlDaWJZRg96ORk1hNBfMB1voBXIy5miFfeO1ersVO62OVvJS3DznFbUaJA9VRF4QG2aGV7bt6Sgtpu25d4s6tptOyqW/GzfmFXynIHLA2J79QZbM/OQGSxvc+gWR91u320pqQKQzXA4CSog9TZQbulA/qqxl/DXtM65LDjI5V3igEwh68EAJ+NCZ4SHxDzz7X9zWjjlW7CgRolFAgHTzEQbwLF5kRlTpsiMosRnCLwkbSniEDkfpC9UuI6YinUCk83DR9EPnXkoN2hkMJJQcGZx8tb2QItpKV767W/JGabZDiOKodqJJe4Fc4UfTJpgnmww7ZqD/LrRiqtmGfjKxHXR3Wp3BFP8B70C4heZ/he9xLfpm9vpYYYJ89jRybjPwbGOJ0+RJbpSt3M7PCo9KkvLBzf3Dif250suV7c7xPDJ0aMp27WRAgk0KKuudaVj3VUiO6brW8fpJJr5aRxVA63mG0v3J7Xo9lndeNanpCePkxilJgZQDZx6F7BIldThp93eZHHUMjam/biqiCX+WSSFuFWdiiNKfaAF0oWRhNoLMeV2h8I1TLnJTLTozlCBuME9gfsRcV6ZqBLEeEQP5z63QtIbcdLXPao="
   file_glob: true
   file:
     - LICENSE
@@ -217,39 +218,6 @@ jobs:
         # - coverage run -a scripta.py
         - codecov
         - bash <(curl -s https://codecov.io/bash) && echo "Uploaded code coverage"
-    # - stage: prerelease
-    #   script:
-    #     - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "echo running gcg to generate changelog"
-    #   deploy:
-    #     - <<: *release_template
-    #       prerelease: true # for tags with dev/alpha in the name, or
-    #       # on:
-    #       #   repo: jsturdy/vfatqc-python-scripts
-    #       #   tags: true
-
-    #   after_success: skip
-    # - stage: devrelease
-    #   script:
-    #     - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "echo running gcg to generate changelog"
-    #   deploy:
-    #     - <<: *release_template
-    #       draft: true # for tags with dev/alpha in the name, or
-    #   after_success:
-    # - stage: release
-    #   script:
-    #     - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "echo running gcg to generate changelog"
-    #   deploy:
-    #     - <<: *release_template
-    #   after_success: skip
-    # - stage: deploy
-    #   ## push docs to SaaS docs website, readthedocs style, with versioning
-    #   ## push RPMs to repo on openstack SaaS, updates and devel-testing depending on tag
-    #   before_script: skip
-    #   before_install: skip
-    #   - script: skip
-    #   after_success: skip
-    #   # before_deploy: skip
-    #   # after_deploy: skip
 
     - stage: deployment
       <<: *slc6_template

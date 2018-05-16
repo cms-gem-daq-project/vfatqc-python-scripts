@@ -14,30 +14,29 @@ REPO_NAME=${TRAVIS_REPO_SLUG#?*/}
 # Run tests in Container
 if [ "${COMMAND}" = "setup" ]
 then
+    echo "Setting up system for docker image"
+    sudo apt-get update
     sudo usermod -aG docker $USER
     sudo groupadd daqbuild -g 2055
     sudo useradd daqbuild -g 2055 -u 2055
     sudo usermod -aG daqbuild $USER
     groups
     sudo chmod g+s -R $HOME
-    sudo apt-get install acl
+    sudo apt-get install acl acl2
     sudo setfacl -Rdm u::rwX,g::rwX,o::rX $HOME
     sudo setfacl -Rm  u::rwX,g::rwX,o::rX $HOME
 
-    sudo apt-get update
     echo 'DOCKER_OPTS="-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock -s devicemapper"' | \
         sudo tee /etc/default/docker > /dev/null
     sudo service docker restart
     docker pull ${DOCKER_IMAGE}
     docker ps -al
-    # git clone https://github.com/cms-gem-daq-project/gembuild.git config
     sudo chown :daqbuild -R .
 elif [ "${COMMAND}" = "start" ]
 then
     if [[ "${DOCKER_IMAGE}" =~ slc6$ ]]
     then
         echo "Starting SLC6 GEM DAQ custom docker image"
-        # docker run -d --user daqbuild --rm=true -v `pwd`:/home/daqbuild/${REPO_NAME}:rw,z --entrypoint="/bin/bash" \
         docker run --user daqbuild --privileged=true -d -ti -e "container=docker" \
                -v `pwd`:/home/daqbuild/${REPO_NAME}:rw,z \
                ${DOCKER_IMAGE} /bin/bash
@@ -51,6 +50,9 @@ then
     elif [[ "${DOCKER_IMAGE}" =~ cc8$ ]]
     then
         echo "Starting CC8 GEM DAQ custom docker image"
+    else
+        echo "Unknown docker image specified"
+        exit 1
     fi
 
     DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
