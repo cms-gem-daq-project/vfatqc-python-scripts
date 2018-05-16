@@ -264,7 +264,6 @@ if __name__ == '__main__':
                                           chamber_vfatMask.values(),
                                           [options.scanmin for x in range(len(chamber_config))],
                                           [options.scanmax for x in range(len(chamber_config))],
-                                          [options.stepSize for x in range(len(chamber_config))],
                                           [options.nevts   for x in range(len(chamber_config))],
                                           [options.stepSize for x in range(len(chamber_config))],
                                           [options.vt1     for x in range(len(chamber_config))],
