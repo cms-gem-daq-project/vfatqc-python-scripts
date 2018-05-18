@@ -61,7 +61,7 @@ class gemTreeStructure:
         self.gemTree.Branch( 'vfatCH', self.vfatCH, 'vfatCH/I' )
         
         self.vfatID = array( 'i', [-1] )
-        self.gemTree.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
+        self.gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
 
         self.vfatN = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'vfatN', self.vfatN, 'vfatN/I' )
