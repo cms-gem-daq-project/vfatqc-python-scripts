@@ -46,7 +46,7 @@ print startTime
 Date = startTime
 
 # Setup the output TTree
-from treeStructure import gemTreeStructure
+from gempython.vfatqc.treeStructure import gemTreeStructure
 gemData = gemTreeStructure('thrTree','Tree Holding CMS GEM VT1 Data')
 gemData.setDefaults(options, int(time.time()))
 

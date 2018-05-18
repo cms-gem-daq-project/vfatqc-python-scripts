@@ -55,7 +55,7 @@ print startTime
 Date = startTime
 
 # Setup the output TTree
-from treeStructure import gemTreeStructure
+from gempython.vfatqc.treeStructure import gemTreeStructure
 gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data',scanmode.SCURVE)
 gemData.setDefaults(options, int(time.time()))
 

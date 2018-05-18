@@ -75,7 +75,7 @@ print(startTime)
 Date = startTime
 
 # Setup the output TTree
-from treeStructure import gemTreeStructure
+from gempython.vfatqc.treeStructure import gemTreeStructure
 gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
 gemData.setDefaults(options, int(time.time()))
 

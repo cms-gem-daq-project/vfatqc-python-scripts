@@ -38,7 +38,7 @@ filename = options.filename
 myF = TFile(filename,'recreate')
 
 # Setup the output TTree
-from treeStructure import gemTreeStructure
+from gempython.vfatqc.treeStructure import gemTreeStructure
 gemData = gemTreeStructure('latencyTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
 gemData.setDefaults(options)
 gemData.vth2[0] = options.vt2
