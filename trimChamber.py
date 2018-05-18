@@ -32,7 +32,6 @@ ztrim = options.ztrim
 print 'trimming at z = %f'%ztrim
 
 envCheck('DATA_PATH')
-envCheck('BUILD_HOME')
 
 dataPath = os.getenv('DATA_PATH')
 
