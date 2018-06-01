@@ -5,22 +5,24 @@ By: Brian Dorney (brian.l.dorney@cern.ch)
 """
 
 if __name__ == '__main__':
-    from anautilities import getEmptyPerVFATList, rejectOutliersMADOneSided
+    from gempython.gemplotting.utils.anautilities import getEmptyPerVFATList, rejectOutliersMADOneSided
     from array import array
     from ctypes import *
-    #from fitting.fitScanData import ScanDataFitter
-    from fitting.fitScanData import fitScanData
+    from gempython.gemplotting.fitting.fitScanData import fitScanData
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.utils.nesteddict import nesteddict as ndict
     from gempython.utils.wrappers import runCommand, envCheck
-    from mapping.chamberInfo import chamber_config, chamber_vfatDACSettings
-    from qcoptions import parser
+    from gempython.gemplotting.mapping.chamberInfo import chamber_config, chamber_vfatDACSettings
+    from gempython.vfatqc.qcoptions import parser
     
     import datetime, subprocess, sys
     import numpy as np
    
     parser.add_option("--armDAC", type="int", dest = "armDAC", default = 100,
                       help="CFG_THR_ARM_DAC value to write to all VFATs", metavar="armDAC")
+    parser.add_option("--calFile", type="string", dest="calFile", default=None,
+                      help="File specifying CAL_DAC/VCAL to fC equations per VFAT",
+                      metavar="calFile")
     parser.add_option("--calSF", type="int", dest = "calSF", default = 0,
                       help="Value of the CFG_CAL_FS register", metavar="calSF")
     parser.add_option("--chMin", type="int", dest = "chMin", default = 0,
@@ -43,7 +45,13 @@ if __name__ == '__main__':
                       help="Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
                       metavar="voltageStepPulse")
     (options, args) = parser.parse_args()
-    
+   
+    if options.calFile is None:
+        print("You must provide the calibration for the CAL DAC module")
+        print("Please relaunch with the --calFile argument")
+        exit(os.EX_USAGE)
+        pass
+
     ztrim = options.ztrim
     chMin = options.chMin
     chMax = options.chMax + 1
@@ -56,7 +64,7 @@ if __name__ == '__main__':
         print(startTime)
         dirPath = '%s/%s/trim/z%f'%(dataPath,chamber_config[options.gtx],ztrim)
         runCommand( ["unlink","%s/current"%dirPath] )
-        runCommand( ['mkdir','-p','%s/%s'(dirPath,startTime)])
+        runCommand( ['mkdir','-p','%s/%s'%(dirPath,startTime)])
         runCommand( ["ln","-s",'%s/%s'%(dirPath,startTime),'%s/current'%dirPath] )
         dirPath = '%s/%s'%(dirPath,startTime)
     else: 
@@ -93,11 +101,12 @@ if __name__ == '__main__':
                     print('Set link %d VFAT%d CFG_THR_ARM_DAC to %i'%(options.gtx,event.vfatN,event.vt1))
                     vfatBoard.setVFATThreshold(chip=int(event.vfatN), vt1=int(event.vt1))
                     pass
-                except Exception as e:
-                    print '%s does not seem to exist'%options.filename
-                    print e
-                    pass
                 pass
+            except Exception as e:
+                print '%s does not seem to exist'%options.filename
+                print e
+                pass
+            pass
 
         ###############
         # TRIMDAC = 0
@@ -141,7 +150,7 @@ if __name__ == '__main__':
 
     # Get the initial fit results
     print("fitting results, this may take some time")
-    fitResults_Untrimmed = fitScanData(treeFileName=filename_untrimmed, isVFAT3=True)
+    fitResults_Untrimmed = fitScanData(treeFileName=filename_untrimmed, isVFAT3=True, calFileName=options.calFile)
     print("fitting has completed")
 
     # Create the output file which will store the channel configurations
@@ -178,7 +187,7 @@ if __name__ == '__main__':
                 pass
             
             # store the position and mask negative scurve POI's
-            dict_scurvePOIPerChan[vfat][chan] = int(round(fitResults_Untrimmed[0][vfat][chan] - ztrim * fitResults_Untrimmed[1][vfat][chan]))
+            dict_scurvePOIPerChan[vfat][chan] = fitResults_Untrimmed[0][vfat][chan] - ztrim * fitResults_Untrimmed[1][vfat][chan]
             if (dict_scurvePOIPerChan[vfat][chan] < 0):
                 cArray_Masks[idx] = 1 # True
                 pass
@@ -193,8 +202,13 @@ if __name__ == '__main__':
                         rejectHighTail=False
                         )
                     )
-            array_avgScurvePOIPerVFAT[vfat] = int(round(array_avgScurvePOIPerVFAT[vfat]))
-            dict_trimVal[vfat] = dict_scurvePOIPerChan[vfat] - array_avgScurvePOIPerVFAT[vfat] 
+            array_avgScurvePOIPerVFAT[vfat] = array_avgScurvePOIPerVFAT[vfat]
+            # Q = C*V; V = Q / C; trimVals = ( delta_Q / C)
+            # Q will be in fC due to calFile
+            # C = 100 fF; see VFAT3 manual
+            # femto factors cancel
+            dict_trimVal[vfat] = (dict_scurvePOIPerChan[vfat] - array_avgScurvePOIPerVFAT[vfat]) / 100 # in volts
+            dict_trimVal[vfat] = int(round(dict_trimVal[vfat] * 1e3 / 0.5)) # in DAC units; arm trim circuit has LSB=0.5mV; see VFAT3 manual
         else:
             array_avgScurvePOIPerVFAT[vfat] = -1
             dict_trimVal[vfat] = dict_scurvePOIPerChan[vfat] * 0 # Set all trim's to zero
@@ -202,20 +216,21 @@ if __name__ == '__main__':
 
         # Tell the user what we are doing
         if options.debug:
-            print("| vfatN | chan | scurvePOI | avgScurvePOI | trimVal | trimPol | Note |")
-            print("| :---: | :--: | :-------: | :----------: | :-----: | :-----: | :--- |")
+            print("| vfatN | chan | scurvePOI | avgScurvePOI | trimVal | trimPol | normChi2 | Note |")
+            print("| :---: | :--: | :-------: | :----------: | :-----: | :-----: | :------: | :--- |")
             for chan in range(chMin,chMax):
                 chNote = " - "
                 if ( abs(dict_trimVal[vfat][chan]) > 0x7f):
                     chNote = "Needed TrimVal Exceeds Range"
                     pass
-                print("| %i | %i | %i | %i | %i | %i | %s |"%(
+                print("| %i | %i | %i | %i | %i | %i | %f | %s |"%(
                         vfat, 
                         chan,
                         dict_scurvePOIPerChan[vfat][chan],
                         array_avgScurvePOIPerVFAT[vfat],
                         abs(dict_trimVal[vfat][chan]),
                         int(dict_trimVal[vfat][chan] >= 0),
+                        fitResults_Untrimmed[3][vfat][chan] / fitResults_Untrimmed[5][vfat][chan],
                         chNote
                         )
                     )
@@ -302,7 +317,7 @@ if __name__ == '__main__':
     if options.printSummary:
         # Get the initial fit results
         print("fitting results, this may take some time")
-        fitResults_Trimmed = fitScanData(treeFileName=filename_trimmed, isVFAT3=True)
+        fitResults_Trimmed = fitScanData(treeFileName=filename_trimmed, isVFAT3=True, calFileName=options.calFile)
         print("fitting has completed")
 
         # Determine post trim settings
@@ -314,8 +329,8 @@ if __name__ == '__main__':
                 continue
             
             # Print a table
-            print("| vfatN | chan | scurvePOI | avgScurvePOI | scurvePOIPostTrim | trimVal | trimPol | Note |")
-            print("| :---: | :--: | :-------: | :----------: | :---------------: | :-----: | :-----: | :--- |")
+            print("| vfatN | chan | scurvePOI | avgScurvePOI | scurvePOIPostTrim | trimVal | trimPol | normChi2 | normChi2PostTrim | Note |")
+            print("| :---: | :--: | :-------: | :----------: | :---------------: | :-----: | :-----: | :------: | :--------------: | :--- |")
             
             # Determine scurve point of interest by channel after trimming
             for chan in range(chMin,chMax):
@@ -326,14 +341,14 @@ if __name__ == '__main__':
                     continue # do not consider channels w/empty s-curves
                 
                 # store the position and mask negative scurve POI's
-                dict_scurvePOIPerChan_PostTrim[vfat][chan] = int(round(fitResults_Trimmed[0][vfat][chan] - ztrim * fitResults_Trimmed[1][vfat][chan]))
+                dict_scurvePOIPerChan_PostTrim[vfat][chan] = fitResults_Trimmed[0][vfat][chan] - ztrim * fitResults_Trimmed[1][vfat][chan]
         
                 # Tell the user what we are doing
                 chNote = " - "
                 if ( abs(dict_trimVal[vfat][chan]) > 0x7f):
                     chNote = "Needed TrimVal Exceeds Range"
                     pass
-                print("| %i | %i | %i | %i | %i | %i | %i | %s |"%(
+                print("| %i | %i | %i | %i | %i | %i | %i | %f | %f | %s |"%(
                         vfat, 
                         chan,
                         dict_scurvePOIPerChan[vfat][chan],
@@ -341,6 +356,8 @@ if __name__ == '__main__':
                         dict_scurvePOIPerChan_PostTrim[vfat][chan],
                         abs(dict_trimVal[vfat][chan]),
                         int(dict_trimVal[vfat][chan] >= 0),
+                        fitResults_Untrimmed[3][vfat][chan] / fitResults_Untrimmed[5][vfat][chan],
+                        fitResults_Trimmed[3][vfat][chan] / fitResults_Trimmed[5][vfat][chan],
                         chNote
                         )
                     )
