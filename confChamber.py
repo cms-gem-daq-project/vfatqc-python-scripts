@@ -28,6 +28,8 @@ parser.add_option("--vt2", type="int", dest="vt2",
                   help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0)
 parser.add_option("--vt1bump", type="int", dest="vt1bump",
                   help="VThreshold1 DAC bump value for all VFATs", metavar="vt1bump", default=0)
+parser.add_option("--zeroChan", action="store_true", dest="zeroChan",
+                  help="Zero all channel registers", metavar="zeroChan")
 
 (options, args) = parser.parse_args()
 
@@ -61,6 +63,7 @@ else:
     vfatBoard.setRunModeAll(options.vfatmask, False)
 
 import ROOT as r
+from ctypes import *
 if options.filename:
     try:
         inF = r.TFile(options.filename)
@@ -99,29 +102,58 @@ if options.chConfig:
         if vfatBoard.parentOH.parentAMC.fwVersion > 2:
             # Need some pre-string append that is "VFAT_CHANNELS.CHANNEL"
             # but that needs to be done in readBackCheck(...) when looping over channels
-            dict_readBack = { "trimDAC":"ARM_TRIM_AMPLITUDE", "mask":"MASK" }
+            dict_readBack = { "trimDAC":"ARM_TRIM_AMPLITUDE", "trimPolarity":"ARM_TRIM_POLARITY", "mask":"MASK" }
         else:
             dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
 
         if not options.compare:
             print 'Configuring Channel Registers based on %s'%options.chConfig
             
+            # Make the cArrays
+            cArray_Masks = (c_uint32 * 3072)()
+            cArray_trimVal = (c_uint32 * 3072)()
+            cArray_trimPol = (c_uint32 * 3072)()
+
             for event in chTree :
                 # Skip masked vfats
                 if (options.vfatmask >> int(event.vfatN)) & 0x1:
                     continue
-                
-                if event.mask==0 and event.trimDAC==0:
-                    continue
 
-                vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
-        
+                if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
+                    cArray_Masks[128*event.vfatN+event.vfatCH] = event.mask
+                    cArray_trimVal[128*event.vfatN+event.vfatCH] = event.trimDAC
+                    cArray_trimPol[128*event.vfatN+event.vfatCH] = event.trimPolarity
+                else:
+                    if event.mask==0 and event.trimDAC==0:
+                        continue
+                    vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
+                    pass
+                pass
+            
+            if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
+                vfatBoard.setAllChannelRegisters(
+                        chMask=cArray_Masks,
+                        trimARM=cArray_trimVal,
+                        trimARMPol=cArray_trimPol,
+                        vfatMask=options.vfatmask,
+                        debug=options.debug)
+                pass
+            pass
+
         #print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
         #readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
 
     except Exception as e:
         print '%s does not seem to exist'%options.filename
         print e
+
+if options.zeroChan:    
+    print("zero'ing all channel registers")    
+    rpcResp = vfatBoard.setAllChannelRegisters(vfatMask=options.vfatmask)
+                
+    if rpcResp != 0:
+        raise Exception("RPC response was non-zero, zero'ing all channel registers failed")
+    pass
 
 if options.vfatConfig:
     try:
