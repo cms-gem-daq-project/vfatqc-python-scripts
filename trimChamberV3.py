@@ -18,7 +18,9 @@ if __name__ == '__main__':
     
     import datetime, subprocess, sys
     import numpy as np
-    
+   
+    parser.add_option("--armDAC", type="int", dest = "armDAC", default = 100,
+                      help="CFG_THR_ARM_DAC value to write to all VFATs", metavar="armDAC")
     parser.add_option("--calSF", type="int", dest = "calSF", default = 0,
                       help="Value of the CFG_CAL_FS register", metavar="calSF")
     parser.add_option("--chMin", type="int", dest = "chMin", default = 0,
@@ -35,6 +37,8 @@ if __name__ == '__main__':
     parser.add_option("--resume", action="store_true",dest="resume",
                       help="Tries to resume a previous scurve scan by searching the --dirPath directory for the SCurveData_trimdac0.root file, if this scan completed successfully resuming will be attempted", 
                       metavar="resume")
+    parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None,
+                      help="Specify file containing VFAT settings from anaUltraThreshold", metavar="vfatConfig")
     parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
                       help="Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
                       metavar="voltageStepPulse")
@@ -50,7 +54,11 @@ if __name__ == '__main__':
         dataPath = os.getenv('DATA_PATH')
         startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
         print(startTime)
-        dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
+        dirPath = '%s/%s/trim/z%f'%(dataPath,chamber_config[options.gtx],ztrim)
+        runCommand( ["unlink","%s/current"%dirPath] )
+        runCommand( ['mkdir','-p','%s/%s'(dirPath,startTime)])
+        runCommand( ["ln","-s",'%s/%s'%(dirPath,startTime),'%s/current'%dirPath] )
+        dirPath = '%s/%s'%(dirPath,startTime)
     else: 
         dirPath = options.dirPath
         pass
@@ -62,9 +70,35 @@ if __name__ == '__main__':
             print("Configuring VFATs with chamber_vfatDACSettings dictionary values")
             for key in chamber_vfatDACSettings[options.gtx]:
                 vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[options.gtx][key]
+                pass
+            pass
+        vfatBoard.paramsDefVals['CFG_THR_ARM_DAC']=options.armDAC
         vfatBoard.biasAllVFATs(options.vfatmask)
         print('biased VFATs')
         
+        import ROOT as r
+                
+        if options.vfatConfig is not None:
+            try:
+                print 'Configuring VFAT Registers based on %s'%options.vfatConfig
+                vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
+                vfatTree.ReadFile(options.vfatConfig)
+                
+                for event in vfatTree :
+                    # Skip masked vfats
+                    if (options.vfatmask >> int(event.vfatN)) & 0x1:
+                        continue
+                        
+                    # Write CFG_THR_ARM_DAC
+                    print('Set link %d VFAT%d CFG_THR_ARM_DAC to %i'%(options.gtx,event.vfatN,event.vt1))
+                    vfatBoard.setVFATThreshold(chip=int(event.vfatN), vt1=int(event.vt1))
+                    pass
+                except Exception as e:
+                    print '%s does not seem to exist'%options.filename
+                    print e
+                    pass
+                pass
+
         ###############
         # TRIMDAC = 0
         ###############
