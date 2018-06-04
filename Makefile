@@ -44,6 +44,9 @@ default:
 _rpmprep: preprpm
 	@echo "Running _rpmprep target"
 preprpm: default
+	@if ! [ -e pkg/installrpm.sh ]; then \
+		cp -rf config/scriptlets/installrpm.sh pkg/; \
+	fi
 	@echo "Running preprpm target"
 	@cp -rf config/scriptlets/installrpm.sh pkg/
 	$(MakeDir) $(ScriptDir)
@@ -65,7 +68,6 @@ clean:
 	-rm -f  pkg/MANIFEST.in
 	-rm -f  pkg/CHANGELOG.md
 	-rm -f  pkg/requirements.txt
-	-rm -f  pkg/installrpm.sh
 
 print-env:
 	@echo BUILD_HOME     $(BUILD_HOME)
