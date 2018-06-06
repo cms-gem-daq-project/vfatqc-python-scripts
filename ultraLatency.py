@@ -41,18 +41,9 @@ parser.add_option("--vt2", type="int", dest="vt2",
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 (options, args) = parser.parse_args()
 
-#if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
-#    print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
-#    print("Scan parameters must be in range [0,255] and min < max")
-#    exit(1)
-
 if options.vt2 not in range(256):
     print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
     exit(1)
-
-#if options.MSPL not in range(1,9):
-#    print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
-#    exit(1)
 
 if options.stepSize <= 0:
     print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
@@ -117,6 +108,24 @@ amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
 amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
 
 vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+    if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
+        print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
+        print("Scan parameters must be in range [0,255] and min < max")
+        exit(1)
+    
+    if options.MSPL not in range(1,9):
+        print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
+        exit(1)
+else:
+    if options.scanmin not in range(1025) or options.scanmax not in range(1025) or not (options.scanmax > options.scanmin):
+        print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
+        print("Scan parameters must be in range [0,255] and min < max")
+        exit(1)
+    
+    if options.MSPL not in range(0,8):
+        print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
+        exit(1)
 
 mask = options.vfatmask
 
