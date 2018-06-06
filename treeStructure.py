@@ -19,6 +19,9 @@ class gemTreeStructure:
         
         self.Dly = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'Dly', self.Dly, 'Dly/I' )
+
+        self.isCurrentPulse = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'isCurrentPulse', isCurrentPulse, 'isCurrentPulse/I')
         
         self.l1aTime = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'l1aTime', self.l1aTime, 'l1aTime/I' )
@@ -97,6 +100,8 @@ class gemTreeStructure:
             self.calPhase[0] = kwargs["calPhase"]
         if "Dly" in kwargs:
             self.Dly[0] = kwargs["Dly"]
+        if "isCurrentPulse" in kwargs:
+            self.isCurrentPulse[0] = kwargs["isCurrentPulse"]
         if "l1aTime" in kwargs:
             self.l1aTime[0] = kwargs["l1aTime"]
         if "latency" in kwargs:
