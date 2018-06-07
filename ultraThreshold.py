@@ -90,7 +90,7 @@ try:
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", 0x0)
     vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
-    vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
+    vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),
                         range(0,24)))
 
     trgSrc = getTriggerSource(ohboard,options.gtx)
