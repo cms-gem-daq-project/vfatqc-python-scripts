@@ -7,10 +7,11 @@ Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
 """
 
 from array import array
-from gempython.tools.vfat_user_functions_xhal import *
-from gempython.gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
-from gempython.vfatqc.qcoptions import parser
-#from gempython.vfatqc.qcutilities import readBackCheck 
+from ...tools.vfat_user_functions_xhal import *
+from ...gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
+from ...vfatqc.qcoptions import parser
+from ...vfatqc.qcutilities import inputOptionsValid, setChannelRegisters
+#from ...vfatqc.qcutilities import readBackCheck 
 
 parser.add_option("--chConfig", type="string", dest="chConfig", default=None,
                   help="Specify file containing channel settings from anaUltraSCurve", metavar="chConfig")
@@ -41,6 +42,11 @@ Date = startTime
 vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
 print 'opened connection'
 
+# Check options
+if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
+    exit(os.EX_USAGE)
+    pass
+
 if options.gtx in chamber_vfatDACSettings.keys():
     print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
     for key in chamber_vfatDACSettings[options.gtx]:
@@ -63,7 +69,6 @@ else:
     vfatBoard.setRunModeAll(options.vfatmask, False)
 
 import ROOT as r
-from ctypes import *
 if options.filename:
     try:
         inF = r.TFile(options.filename)
@@ -71,21 +76,15 @@ if options.filename:
         dict_readBack = {}
         if vfatBoard.parentOH.parentAMC.fwVersion > 2:
             # Need some pre-string append that is "VFAT_CHANNELS.CHANNEL"
-            dict_readBack = { "trimDAC":"ARM_TRIM_AMPLITUDE", "mask":"MASK" }
+            dict_readBack = { "trimDAC":"ARM_TRIM_AMPLITUDE", "trimPolarity":"ARM_TRIM_POLARITY", "mask":"MASK" }
         else:
             dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
+            pass
 
         if not options.compare:
-            print 'Configuring Channel Registers based on %s'%options.filename
-            
-            for event in inF.scurveFitTree:
-                # Skip masked vfats
-                if (options.vfatmask >> int(event.vfatN)) & 0x1:
-                    continue
-                
-                vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
-                if not (vfatBoard.parentOH.parentAMC.fwVersion > 2):
-                    vfatBoard.writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),options.debug)
+            print 'Configuring Channel Registers based on %s'%options.filename        
+            setChannelRegisters(vfatBoard, chTree, options.vfatmask)
+            pass
  
         #print 'Comparing Currently Stored Channel Registers with %s'%options.filename
         #readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
@@ -108,36 +107,7 @@ if options.chConfig:
 
         if not options.compare:
             print 'Configuring Channel Registers based on %s'%options.chConfig
-            
-            # Make the cArrays
-            cArray_Masks = (c_uint32 * 3072)()
-            cArray_trimVal = (c_uint32 * 3072)()
-            cArray_trimPol = (c_uint32 * 3072)()
-
-            for event in chTree :
-                # Skip masked vfats
-                if (options.vfatmask >> int(event.vfatN)) & 0x1:
-                    continue
-
-                if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
-                    cArray_Masks[128*event.vfatN+event.vfatCH] = event.mask
-                    cArray_trimVal[128*event.vfatN+event.vfatCH] = event.trimDAC
-                    cArray_trimPol[128*event.vfatN+event.vfatCH] = event.trimPolarity
-                else:
-                    if event.mask==0 and event.trimDAC==0:
-                        continue
-                    vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
-                    pass
-                pass
-            
-            if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
-                vfatBoard.setAllChannelRegisters(
-                        chMask=cArray_Masks,
-                        trimARM=cArray_trimVal,
-                        trimARMPol=cArray_trimPol,
-                        vfatMask=options.vfatmask,
-                        debug=options.debug)
-                pass
+            setChannelRegisters(vfatBoard, chTree, options.vfatmask)
             pass
 
         #print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
