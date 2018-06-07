@@ -105,7 +105,7 @@ def inputOptionsValid(options, amc_major_fw_ver):
         pass
 
     # VThreshold2
-    if ( ("vt2" in dict_options.keys()) and (amc_major_fw_ver < 3): # Only v2b behavior
+    if ( ("vt2" in dict_options.keys()) and (amc_major_fw_ver < 3)): # Only v2b behavior
         if options.vt2 not in range(256):
             print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
             return False
