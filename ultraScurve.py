@@ -8,6 +8,7 @@ if __name__ == '__main__':
     
     from array import array
     from ctypes import *
+    from gempython.tools.optohybrid_user_functions_uhal import scanmode
     from gempython.tools.vfat_user_functions_xhal import *
     
     from gempython.vfatqc.qcoptions import parser

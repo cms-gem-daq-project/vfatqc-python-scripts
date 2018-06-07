@@ -14,6 +14,7 @@ if __name__ == '__main__':
     
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.tools.vfat_user_functions_uhal import * #remove this later after making it so amc13 communication doesn't spit bullshit messages
+    from gempython.tools.optohybrid_user_functions_uhal import scanmode
     
     from gempython.vfatqc.qcoptions import parser
     
