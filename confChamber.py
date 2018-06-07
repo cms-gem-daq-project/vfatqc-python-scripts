@@ -7,11 +7,11 @@ Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
 """
 
 from array import array
-from ...tools.vfat_user_functions_xhal import *
-from ...gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
-from ...vfatqc.qcoptions import parser
-from ...vfatqc.qcutilities import inputOptionsValid, setChannelRegisters
-#from ...vfatqc.qcutilities import readBackCheck 
+from gempython.tools.vfat_user_functions_xhal import *
+from gempython.gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
+from gempython.vfatqc.qcoptions import parser
+from gempython.vfatqc.qcutilities import inputOptionsValid, setChannelRegisters
+#from gempython.vfatqc.qcutilities import readBackCheck 
 
 parser.add_option("--chConfig", type="string", dest="chConfig", default=None,
                   help="Specify file containing channel settings from anaUltraSCurve", metavar="chConfig")

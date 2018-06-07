@@ -64,7 +64,7 @@ Date = startTime
 isCurrentPulse = (not options.voltageStepPulse)
 
 # Setup the output TTree
-from treeStructure import gemTreeStructure
+from gempytreeStructure import gemTreeStructure
 gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
 gemData.setDefaults(options, int(time.time()))
 
@@ -77,7 +77,7 @@ amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base)
 vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
 
 # Check options
-from ...vfatqc.qcutilities import inputOptionsValid
+from gempython.vfatqc.qcutilities import inputOptionsValid
 if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
     exit(os.EX_USAGE)
     pass

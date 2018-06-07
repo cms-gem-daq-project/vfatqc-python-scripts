@@ -78,7 +78,7 @@ Date = startTime
 vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
 
 # Check options
-from ...vfatqc.qcutilities import inputOptionsValid
+from gempython.vfatqc.qcutilities import inputOptionsValid
 if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
     exit(os.EX_USAGE)
     pass

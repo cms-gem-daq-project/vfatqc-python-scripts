@@ -8,9 +8,9 @@ if __name__ == '__main__':
     
     from array import array
     from ctypes import *
-    from ...tools.vfat_user_functions_xhal import *
+    from gempython.tools.vfat_user_functions_xhal import *
     
-    from ...vfatqc.qcoptions import parser
+    from gempython.vfatqc.qcoptions import parser
     
     import os, sys
     
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     isCurrentPulse = (not options.voltageStepPulse)
 
     # Setup the output TTree
-    from ...vfatqc.treeStructure import gemTreeStructure
+    from gempython.vfatqc.treeStructure import gemTreeStructure
     gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data',scanmode.SCURVE)
     gemData.setDefaults(options, int(time.time()))
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
 
     # Check options
-    from ...vfatqc.qcutilities import inputOptionsValid
+    from gempython.vfatqc.qcutilities import inputOptionsValid
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
         exit(os.EX_USAGE)
         pass
