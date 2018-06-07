@@ -41,19 +41,6 @@ parser.add_option("--vt2", type="int", dest="vt2",
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 (options, args) = parser.parse_args()
 
-#if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
-#    print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
-#    print("Scan parameters must be in range [0,255] and min < max")
-#    exit(1)
-
-if options.vt2 not in range(256):
-    print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
-    exit(1)
-
-#if options.MSPL not in range(1,9):
-#    print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
-#    exit(1)
-
 if options.stepSize <= 0:
     print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
     exit(1)
@@ -71,40 +58,14 @@ else:
 from ROOT import TFile,TTree
 filename = options.filename
 myF = TFile(filename,'recreate')
-myT = TTree('latTree','Tree Holding CMS GEM Latency Data')
-
-isCurrentPulse = array( 'i', [ 0 ] )
-myT.Branch( 'isCurrentPulse', isCurrentPulse, 'isCurrentPulse/I')
-isCurrentPulse[0] = not options.voltageStepPulse
-Nev = array( 'i', [ 0 ] )
-Nev[0] = -1
-myT.Branch( 'Nev', Nev, 'Nev/I' )
-vth = array( 'i', [ 0 ] )
-myT.Branch( 'vth', vth, 'vth/I' )
-vth1 = array( 'i', [ 0 ] )
-myT.Branch( 'vth1', vth1, 'vth1/I' )
-vth2 = array( 'i', [ 0 ] )
-myT.Branch( 'vth2', vth2, 'vth2/I' )
-lat = array( 'i', [ 0 ] )
-myT.Branch( 'lat', lat, 'lat/I' )
-Nhits = array( 'i', [ 0 ] )
-myT.Branch( 'Nhits', Nhits, 'Nhits/I' )
-vfatN = array( 'i', [ 0 ] )
-myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-mspl = array( 'i', [ -1 ] )
-myT.Branch( 'mspl', mspl, 'mspl/I' )
-vfatCH = array( 'i', [ 0 ] )
-myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
-link = array( 'i', [ 0 ] )
-myT.Branch( 'link', link, 'link/I' )
-link[0] = options.gtx
-utime = array( 'i', [ 0 ] )
-myT.Branch( 'utime', utime, 'utime/I' )
 
 import subprocess,datetime,time
 startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print(startTime)
 Date = startTime
+
+# Track the current pulse
+isCurrentPulse = (not options.voltageStepPulse)
 
 # Setup the output TTree
 from treeStructure import gemTreeStructure
@@ -117,6 +78,28 @@ amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
 amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
 
 vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+    if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
+        print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
+        print("Scan parameters must be in range [0,255] and min < max")
+        exit(1)
+    
+    if options.MSPL not in range(1,9):
+        print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
+        exit(1)
+
+    if options.vt2 not in range(256):
+        print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
+        exit(1)
+else:
+    if options.scanmin not in range(1025) or options.scanmax not in range(1025) or not (options.scanmax > options.scanmin):
+        print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
+        print("Scan parameters must be in range [0,255] and min < max")
+        exit(1)
+    
+    if options.MSPL not in range(0,8):
+        print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
+        exit(1)
 
 mask = options.vfatmask
 
@@ -127,17 +110,24 @@ try:
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
         vfatBoard.writeAllVFATs("VThreshold2", options.vt2, mask)
 
+        vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
+        calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),
+                            range(0,24)))
+        vals = vfatBoard.readAllVFATs("ContReg2",    0x0)
+        msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
+                            range(0,24)))
+        vals = vfatBoard.readAllVFATs("ContReg3",    0x0)
+        trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
+                            range(0,24)))
+        #vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
         vals  = vfatBoard.readAllVFATs("VThreshold1", 0x0)
         vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                             range(0,24)))
         vals  = vfatBoard.readAllVFATs("VThreshold2", 0x0)
         vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                             range(0,24)))
-        vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt2vals[slotID]),
+        vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),
                             range(0,24)))
-        vals = vfatBoard.readAllVFATs("ContReg2",    0x0)
-        msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
-                             range(0,24)))
     else:
         vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", mask)
         vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
@@ -171,14 +161,12 @@ try:
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
         print "OH%s: %s"%(options.gtx,ohnL1A)
     sys.stdout.flush()
-    #amc13board.enableLocalL1A(True)
 
     scanChan=128
     enableCalPulse=False
     if options.internal:
         enableCalPulse=True
         scanChan=0
-        #vfatBoard.parentOH.parentAMC.blockL1A()
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vfatBoard.parentOH.setTriggerSource(0x1)
         
@@ -187,7 +175,7 @@ try:
         
         print "Setting channel %i to calpulse"%(scanChan)
         vfatBoard.setSpecificChannelAllRegisters(chan=scanChan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
-        vfatBoard.setVFATCalHeightAll(mask, options.vcal, currentPulse=isCurrentPulse[0])
+        vfatBoard.setVFATCalHeightAll(mask, options.vcal, currentPulse=isCurrentPulse)
 
         # Configure TTC
         print "attempting to configure TTC"
@@ -227,7 +215,6 @@ try:
             pass
         
         print "attempting to configure TTC"
-        #vfatBoard.parentOH.parentAMC.enableL1A()
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vfatBoard.parentOH.setTriggerSource(0x5) # GBT, 0x0 for GTX
         print "TTC configured successfully"
@@ -255,7 +242,7 @@ try:
     # Not sure I understand why it has to be scanChan+1 below...
     amc13board.enableLocalL1A(True)
     vfatBoard.parentOH.parentAMC.enableL1A()
-    rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan, scanReg, scanData, enableCal=enableCalPulse, currentPulse=isCurrentPulse[0], nevts=options.nevts, 
+    rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan, scanReg, scanData, enableCal=enableCalPulse, currentPulse=isCurrentPulse, nevts=options.nevts, 
                                                         dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
                                                         mask=options.vfatmask, useExtTrig=(not options.internal))
 
@@ -290,36 +277,50 @@ try:
     print("parsing scan data")
     for vfat in range(0,24):
         if (mask >> vfat) & 0x1: continue
-        vfatN[0] = vfat
-        mspl[0]  = msplvals[vfatN[0]]
-        vth1[0]  = vt1vals[vfatN[0]]
-        #vth2[0]  = vt2vals[vfatN[0]]
-        #vth[0]   = vthvals[vfatN[0]]
         if options.debug:
             sys.stdout.flush()
             pass
         for latReg in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
             try:
                 if vfatBoard.parentOH.parentAMC.fwVersion < 3:
-                    lat[0]   = int((scanData[latReg] & 0xff000000) >> 24)
-                    Nev[0] = options.nevts
-                    Nhits[0] = int(scanData[latReg] & 0xffffff)
+                    gemData.fill(
+                            calPhase = calPhasevals[vfat],
+                            latency = int((scanData[latReg] & 0xff000000) >> 24),
+                            mspl = msplvals[vfat],
+                            Nhits = int(scanData[latReg] & 0xffffff),
+                            trimRange = trimRangevals[vfat],
+                            #vfatID = vfatIDvals[vfat],
+                            vfatN = vfat,
+                            vth = vthvals[vfat],
+                            vth1 = vt1vals[vfat],
+                            vth2 = vt2vals[vfat]
+                            )
                 else:
-                    lat[0] = options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize
-                    Nev[0] = scanData[latReg] & 0xffff
-                    Nhits[0] = (scanData[latReg]>>16) & 0xffff
+                    gemData.fill(
+                            isCurrentPulse = isCurrentPulse,
+                            latency = (options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize), 
+                            mspl = msplvals[vfat],
+                            Nev = (scanData[latReg] & 0xffff),
+                            Nhits = ((scanData[latReg]>>16) & 0xffff),
+                            #vfatID = vfatIDvals[vfat],
+                            vfatN = vfat,
+                            vth1 = vt1vals[vfat]
+                            )
+                    pass
+
             except IndexError:
                 print 'Unable to index data for channel %i'%chan
                 print scanData[latReg]
-                lat[0]  = -99
-                Nhits[0] = -99
             finally:
                 if options.debug:
-                    print "vfat%i; lat %i; Nev %i; Nhits %i"%(vfatN[0],lat[0],Nev[0],Nhits[0])
-                myT.Fill()
+                    print "vfat%i; lat %i; Nev %i; Nhits %i"%(
+                            gemData.vfatN[0],
+                            gemData.latency[0],
+                            gemData.Nev[0],
+                            gemData.Nhits[0])
             pass
         pass
-    myT.AutoSave("SaveSelf")
+    gemData.AutoSave("SaveSelf")
 
     vfatBoard.setRunModeAll(mask, False, options.debug)
     if options.internal:
@@ -328,7 +329,6 @@ try:
     elif options.amc13local:
         amc13board.stopContinuousL1A()
         amc13board.fakeDataEnable(False)
-        # amc13board.write(amc13board.Board.T1, 'CONF.DIAG.DISABLE_EVB', 0x0)
         pass
 except Exception as e:
     gemData.autoSave()
