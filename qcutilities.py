@@ -56,7 +56,7 @@ def inputOptionsValid(options, amc_major_fw_ver):
     dict_options = options.__dict__.keys()
 
     # Cal Phase
-    if "CalPhase" in dict_options.keys():
+    if "CalPhase" in dict_options:
         if amc_major_fw_ver < 3:
             if options.CalPhase < 0 or options.CalPhase > 8:
                 print 'CalPhase must be in the range 0-8'
@@ -70,21 +70,21 @@ def inputOptionsValid(options, amc_major_fw_ver):
         pass
     
     # CFG_CAL_SF
-    if "calSF" in dict_options.keys() and amc_major_fw_ver >= 3: # V3 Behavior only
+    if "calSF" in dict_options and amc_major_fw_ver >= 3: # V3 Behavior only
         if options.calSF < 0 or options.calSF > 3:
             print 'calSF must be in the range 0-3'
             return False
         pass
     
     # Channel Range
-    if (("chMin" in dict_options.keys()) and ("chMax" in dict_options.keys())):
+    if (("chMin" in dict_options) and ("chMax" in dict_options)):
         if not (0 <= options.chMin <= options.chMax < 128):
             print "chMin %d not in [0,%d] or chMax %d not in [%d,127] or chMax < chMin"%(options.chMin,options.chMax,options.chMax,options.chMin)
             return False
         pass
 
     # MSPL or Pulse Stretch
-    if "MSPL" in dict_options.keys():
+    if "MSPL" in dict_options:
         if amc_major_fw_ver < 3:
             if options.MSPL not in range(1,9):
                 print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
@@ -98,14 +98,14 @@ def inputOptionsValid(options, amc_major_fw_ver):
         pass
 
     # step size
-    if "stepSize" in dict_options.keys():
+    if "stepSize" in dict_options:
         if options.stepSize <= 0:
             print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
             return False
         pass
 
     # VThreshold2
-    if ( ("vt2" in dict_options.keys()) and (amc_major_fw_ver < 3)): # Only v2b behavior
+    if ( ("vt2" in dict_options) and (amc_major_fw_ver < 3)): # Only v2b behavior
         if options.vt2 not in range(256):
             print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
             return False
