@@ -41,10 +41,6 @@ parser.add_option("--vt2", type="int", dest="vt2",
 parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
 (options, args) = parser.parse_args()
 
-if options.stepSize <= 0:
-    print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
-    exit(1)
-
 remainder = (options.scanmax-options.scanmin+1) % options.stepSize
 if remainder != 0:
     options.scanmax = options.scanmax + remainder
@@ -77,29 +73,26 @@ connection_file = "%s/connections.xml"%(os.getenv("GEM_ADDRESS_TABLE_PATH"))
 amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
 amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
 
+# Open rpc connection to hw
 vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+
+# Check options
+from ...vfatqc.qcutilities import inputOptionsValid
+if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
+    exit(os.EX_USAGE)
+    pass
 if vfatBoard.parentOH.parentAMC.fwVersion < 3:
     if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
         print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
         print("Scan parameters must be in range [0,255] and min < max")
         exit(1)
-    
-    if options.MSPL not in range(1,9):
-        print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
-        exit(1)
-
-    if options.vt2 not in range(256):
-        print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
-        exit(1)
+        pass
 else:
     if options.scanmin not in range(1025) or options.scanmax not in range(1025) or not (options.scanmax > options.scanmin):
         print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
-        print("Scan parameters must be in range [0,255] and min < max")
+        print("Scan parameters must be in range [0,1024] and min < max")
         exit(1)
-    
-    if options.MSPL not in range(0,8):
-        print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
-        exit(1)
+        pass
 
 mask = options.vfatmask
 
@@ -320,7 +313,7 @@ try:
                             gemData.Nhits[0])
             pass
         pass
-    gemData.AutoSave("SaveSelf")
+    gemData.autoSave("SaveSelf")
 
     vfatBoard.setRunModeAll(mask, False, options.debug)
     if options.internal:
