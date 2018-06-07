@@ -116,13 +116,13 @@ if __name__ == '__main__':
                 
             vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),range(0,24)))
         else:
-            vals = vfatBoard.readAllVFATs("CFG_CAL_PHI",   0x0)
+            vals = vfatBoard.readAllVFATs("CFG_CAL_PHI",   mask)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,24)))
         
             vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
             msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),range(0,24)))
             
-            vals = vfatBoard.readAllVFATs("CFG_LATENCY",    0x0)
+            vals = vfatBoard.readAllVFATs("CFG_LATENCY",    mask)
             latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
                 
             #vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
