@@ -31,10 +31,6 @@ parser.add_option("--zcc", action="store_true", dest="scanZCC",
 
 (options, args) = parser.parse_args()
 
-if options.vt2 not in range(256):
-    print "Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2)
-    exit(1)
-
 remainder = (options.scanmax-options.scanmin+1) % options.stepSize
 if remainder != 0:
     options.scanmax = options.scanmax + remainder
@@ -78,7 +74,19 @@ startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 print startTime
 Date = startTime
 
+# Open rpc connection to hw
 vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+
+# Check options
+import ...vfatqc.qcutilities import inputOptionsValid
+if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
+    exit(os.EX_USAGE)
+    pass
+if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
+    print("Invalid scan parameters specified [min,max] = [%d,%d]"%(options.scanmin,options.scanmax))
+    print("Scan parameters must be in range [0,255] and min < max")
+    exit(1)
+    pass
 
 CHAN_MIN = options.chMin
 CHAN_MAX = options.chMax + 1
