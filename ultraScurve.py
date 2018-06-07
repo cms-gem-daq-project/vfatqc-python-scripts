@@ -93,35 +93,35 @@ if __name__ == '__main__':
         vfatBoard.setVFATCalPhaseAll(mask, 0xff >> (8 - options.CalPhase), options.debug)
    
         if vfatBoard.parentOH.parentAMC < 3:
-            vals = readAllVFATs(ohboard, options.gtx, "CalPhase",   0x0)
+            vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,24)))
                 
-            vals = readAllVFATs(ohboard, options.gtx, "ContReg2",    0x0)
+            vals = vfatBoard.readAllVFATs("ContReg2",    0x0)
             msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),range(0,24)))
                 
-            vals = readAllVFATs(ohboard, options.gtx, "ContReg3",    0x0)
+            vals = vfatBoard.readAllVFATs("ContReg3",    0x0)
             trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),range(0,24)))
                 
-            vals = readAllVFATs(ohboard, options.gtx, "Latency",    0x0)
+            vals = vfatBoard.readAllVFATs("Latency",    0x0)
             latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
                 
-            vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
+            #vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
             
-            vals  = readAllVFATs(ohboard, options.gtx, "VThreshold1", 0x0)
+            vals  = vfatBoard.readAllVFATs("VThreshold1", 0x0)
             vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
                 
-            vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", 0x0)
+            vals  = vfatBoard.readAllVFATs("VThreshold2", 0x0)
             vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
                 
             vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),range(0,24)))
         else:
-            vals = readAllVFATs(ohboard, options.gtx, "CFG_CAL_PHI",   0x0)
+            vals = vfatBoard.readAllVFATs("CFG_CAL_PHI",   0x0)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,24)))
         
             vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
             msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),range(0,24)))
             
-            vals = readAllVFATs(ohboard, options.gtx, "CFG_LATENCY",    0x0)
+            vals = vfatBoard.readAllVFATs("CFG_LATENCY",    0x0)
             latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
                 
             #vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
@@ -176,7 +176,7 @@ if __name__ == '__main__':
                                     trimRange = trimRangevals[vfat],
                                     vcal = int((scanData[vcalDAC] & 0xff000000) >> 24),
                                     vfatCH = chan,
-                                    vfatID = vfatIDvals[vfat],
+                                    #vfatID = vfatIDvals[vfat],
                                     vfatN = vfat,
                                     vth = vthvals[vfat],
                                     vth1 = vt1vals[vfat],
@@ -209,8 +209,6 @@ if __name__ == '__main__':
                     except IndexError:
                         print 'Unable to index data for channel %i'%chan
                         print scanData[vcalDAC]
-                        vcal[0]  = -99
-                        Nhits[0] = -99
                     finally:
                         if options.debug:
                             print "vfat%i; vcal %i; Nev %i; Nhits %i"%(
