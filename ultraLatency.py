@@ -81,7 +81,7 @@ if __name__ == '__main__':
     
     # Check options
     from gempython.vfatqc.qcutilities import inputOptionsValid
-    if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
+    if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
         pass
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:

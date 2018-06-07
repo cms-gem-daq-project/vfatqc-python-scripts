@@ -45,7 +45,7 @@ if __name__ == '__main__':
     print 'opened connection'
     
     # Check options
-    if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
+    if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
         pass
     

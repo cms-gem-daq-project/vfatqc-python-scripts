@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     # Check options
     from gempython.vfatqc.qcutilities import inputOptionsValid
-    if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC):
+    if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
         pass
     if options.scanmin not in range(256) or options.scanmax not in range(256) or not (options.scanmax > options.scanmin):
@@ -93,7 +93,7 @@ if __name__ == '__main__':
         vfatBoard.setVFATMSPLAll(mask, options.MSPL, options.debug)
         vfatBoard.setVFATCalPhaseAll(mask, 0xff >> (8 - options.CalPhase), options.debug)
    
-        if vfatBoard.parentOH.parentAMC < 3:
+        if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,24)))
                 
