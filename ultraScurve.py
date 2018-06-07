@@ -164,7 +164,7 @@ if __name__ == '__main__':
                 for vcalDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                     try:
                         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
-                            trimDAC = (0x1f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
+                            #trimDAC = (0x1f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
                             gemData.fill(
                                     calPhase = calPhasevals[vfat],
                                     l1aTime = options.L1Atime,
@@ -173,7 +173,7 @@ if __name__ == '__main__':
                                     Nev = options.nevts,
                                     Nhits = int(scanData[vcalDAC] & 0xffffff), 
                                     pDel = options.pDel,
-                                    trimDAC = trimDAC,
+                                    #trimDAC = trimDAC,
                                     trimRange = trimRangevals[vfat],
                                     vcal = int((scanData[vcalDAC] & 0xff000000) >> 24),
                                     vfatCH = chan,
@@ -185,8 +185,8 @@ if __name__ == '__main__':
                                     vthr = vt1vals[vfat]
                                     )
                         else:
-                            trimDAC = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
-                            trimPolarity = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_POLARITY"%(chan)))
+                            #trimDAC = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
+                            #trimPolarity = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_POLARITY"%(chan)))
                             vcal[0] = options.scanmin + (vcalDAC - vfat*scanDataSizeVFAT) * options.stepSize
                             Nhits[0] = (scanData[vcalDAC]>>16) & 0xffff
                             gemData.fill(
@@ -197,8 +197,8 @@ if __name__ == '__main__':
                                     Nev = (scanData[vcalDAC] & 0xffff),
                                     Nhits = ((scanData[vcalDAC]>>16) & 0xffff),
                                     pDel = options.pDel,
-                                    trimDAC = trimDAC,
-                                    trimPolarity = trimPolarity,
+                                    #trimDAC = trimDAC,
+                                    #trimPolarity = trimPolarity,
                                     vcal = (options.scanmin + (vcalDAC - vfat*scanDataSizeVFAT) * options.stepSize),
                                     vfatCH = chan,
                                     #vfatID = vfatIDvals[vfat],

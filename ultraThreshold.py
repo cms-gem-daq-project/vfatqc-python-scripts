@@ -175,7 +175,6 @@ if __name__ == '__main__':
             scanDataSizeNet = scanDataSizeVFAT * 24
             scanData = (c_uint32 * scanDataSizeNet)()
             for chan in range(CHAN_MIN,CHAN_MAX):
-                vfatCH[0] = chan
                 print "Channel #"+str(chan)
             
                 # Reset scanReg if needed
@@ -197,7 +196,7 @@ if __name__ == '__main__':
                     for threshDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                         try:
                             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
-                                trimDAC = (0x1f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
+                                #trimDAC = (0x1f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
                                 gemData.fill(
                                         calPhase = calPhasevals[vfat],
                                         l1aTime = options.L1Atime,
@@ -205,7 +204,7 @@ if __name__ == '__main__':
                                         mspl = msplvals[vfat],
                                         Nev = options.nevts,
                                         Nhits = (int(scanData[threshDAC] & 0xffffff)), 
-                                        trimDAC = trimDAC,
+                                        #trimDAC = trimDAC,
                                         trimRange = trimRangevals[vfat],
                                         vfatCH = chan,
                                         #vfatID = vfatIDvals[vfat],
@@ -223,8 +222,8 @@ if __name__ == '__main__':
                                     vthr = threshDAC - vfat*scanDataSizeVFAT
                                     pass
                                 
-                                trimDAC = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
-                                trimPolarity = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_POLARITY"%(chan)))
+                                #trimDAC = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
+                                #trimPolarity = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_POLARITY"%(chan)))
                                 gemData.fill(
                                         calPhase = calPhasevals[vfat],
                                         l1aTime = options.L1Atime,
@@ -232,8 +231,8 @@ if __name__ == '__main__':
                                         mspl = msplvals[vfat],
                                         Nev = (scanData[threshDAC] & 0xffff),
                                         Nhits = ((scanData[threshDAC]>>16) & 0xffff),
-                                        trimDAC = trimDAC,
-                                        trimPolarity = trimPolarity,
+                                        #trimDAC = trimDAC,
+                                        #trimPolarity = trimPolarity,
                                         vfatCH = chan,
                                         #vfatID = vfatIDvals[vfat],
                                         vfatN = vfat,
