@@ -102,7 +102,7 @@ class gemTreeStructure:
         if "latency" in kwargs:
             self.latency[0] = kwargs["latency"]
         if "link" in kwargs:
-            self.link[0] = kwargs["kwargs"]
+            self.link[0] = kwargs["link"]
         if "pDel" in kwargs:
             self.pDel[0] = kwargs["pDel"]
         if "mspl" in kwargs:
