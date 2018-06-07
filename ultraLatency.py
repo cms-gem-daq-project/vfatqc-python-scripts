@@ -64,7 +64,7 @@ Date = startTime
 isCurrentPulse = (not options.voltageStepPulse)
 
 # Setup the output TTree
-from gempytreeStructure import gemTreeStructure
+from gempython.vfatqc.treeStructure import gemTreeStructure
 gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
 gemData.setDefaults(options, int(time.time()))
 
