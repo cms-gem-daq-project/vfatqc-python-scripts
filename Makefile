@@ -48,6 +48,7 @@ preprpm: default
 	$(MakeDir) $(ScriptDir)
 	@cp -rf run_scans.py   $(ScriptDir)
 	@cp -rf trimChamber.py $(ScriptDir)
+	@cp -rf trimChamberV3.py $(ScriptDir)
 	@cp -rf fastLatency.py $(ScriptDir)
 	@cp -rf ultra*.py      $(ScriptDir)
 	@cp -rf conf*.py       $(ScriptDir)
