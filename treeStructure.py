@@ -87,8 +87,8 @@ class gemTreeStructure:
         self.vth2 = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vth2', self.vth2, 'vth2/I' )
     
-        self.vthr = array( 'i', [ 0 ] 
-        self.gemData.Branch( 'vthr', self.vthr, 'vthr/I' )
+        self.vthr = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'vthr', self.vthr, 'vthr/I' )
 
         self.ztrim = array( 'f', [ 0 ] )
         self.gemTree.Branch( 'ztrim', self.ztrim, 'ztrim/F' )
