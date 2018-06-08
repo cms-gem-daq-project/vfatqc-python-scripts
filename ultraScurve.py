@@ -151,7 +151,7 @@ if __name__ == '__main__':
             # Perform the scan
             if options.debug: 
                 print("Starting scan; pulseDelay: %i; L1Atime: %i; Latency: %i"%(options.pDel, options.L1Atime, options.latency))
-            rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=True, currentPulse=isCurrentPulse[0], 
+            rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=True, currentPulse=isCurrentPulse, 
                                                                 calSF=options.calSF, nevts=options.nevts, 
                                                                 dacMin=options.scanmin, dacMax=options.scanmax, 
                                                                 stepSize=options.stepSize, mask=options.vfatmask)
@@ -187,10 +187,9 @@ if __name__ == '__main__':
                         else:
                             #trimDAC = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
                             #trimPolarity = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_POLARITY"%(chan)))
-                            vcal[0] = options.scanmin + (vcalDAC - vfat*scanDataSizeVFAT) * options.stepSize
-                            Nhits[0] = (scanData[vcalDAC]>>16) & 0xffff
                             gemData.fill(
                                     calPhase = calPhasevals[vfat],
+                                    isCurrentPulse = isCurrentPulse,
                                     l1aTime = options.L1Atime,
                                     latency = latvals[vfat],
                                     mspl = msplvals[vfat],
@@ -213,7 +212,7 @@ if __name__ == '__main__':
                     finally:
                         if options.debug:
                             print "vfat%i; vcal %i; Nev %i; Nhits %i"%(
-                                    gemData.vfat[0],
+                                    gemData.vfatN[0],
                                     gemData.vcal[0],
                                     gemData.Nev[0],
                                     gemData.Nhits[0])
