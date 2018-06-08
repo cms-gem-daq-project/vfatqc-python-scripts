@@ -208,7 +208,7 @@ if __name__ == '__main__':
             # C = 100 fF; see VFAT3 manual
             # femto factors cancel
             dict_trimVal[vfat] = (dict_scurvePOIPerChan[vfat] - array_avgScurvePOIPerVFAT[vfat]) / 100 # in volts
-            dict_trimVal[vfat] = int(round(dict_trimVal[vfat] * 1e3 / 0.5)) # in DAC units; arm trim circuit has LSB=0.5mV; see VFAT3 manual
+            dict_trimVal[vfat] = np.round(dict_trimVal[vfat] * 1e3 / 0.5) # in DAC units; arm trim circuit has LSB=0.5mV; see VFAT3 manual
         else:
             array_avgScurvePOIPerVFAT[vfat] = -1
             dict_trimVal[vfat] = dict_scurvePOIPerChan[vfat] * 0 # Set all trim's to zero
