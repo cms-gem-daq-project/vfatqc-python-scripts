@@ -146,6 +146,7 @@ try:
         stopLocalT1(ohboard, options.gtx)
         pass
     else:
+        l1AInterval = -1
         if options.trkdata:
             setTriggerSource(ohboard,options.gtx,0x1)
             gemData.mode[0] = scanmode.THRESHTRK
