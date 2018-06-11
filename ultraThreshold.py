@@ -133,7 +133,7 @@ try:
                            vfatCH = scCH,
                            vfatID = vfatIDvals[vfat],
                            vfatN = vfat,
-                           vth = vthvals[vfat],
+                           vth = vt2vals[vfat] - vth1,
                            vth1 = vth1,
                            vth2 = vt2vals[vfat]
                          )
