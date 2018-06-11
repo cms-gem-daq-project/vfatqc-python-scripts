@@ -178,7 +178,7 @@ try:
                        mspl = msplvals[vfat],
                        Nhits = Nhits, 
                        trimRange = trimRangevals[vfat],
-                       vfatCH = scCH,
+                       vfatCH = -1,
                        vfatID = vfatIDvals[vfat],
                        vfatN = vfat,
                        vth = vt2vals[vfat] - vth1,
