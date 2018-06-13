@@ -31,8 +31,25 @@ def getreqs():
         reqs = f.readlines()
         return [x.strip() for x in reqs]
 
+def getVersion():
+    __version__='___version___'
+    __release__='___release___'
+    __gitrev__='___gitrev___'
+    __gitver__='___gitver___'
+    __builddate__='___builddate___'
+    with open("gempython/vfatqc/_version.py","w") as verfile:
+        verfile.write("""
+## This file is generated automatically from vfatqc setup.py
+__version__='{}'
+__release__='{}'
+__gitrev__='{}'
+__gitver__='{}'
+__builddate__='{}'
+""".format(__version__,__release__,__gitrev__,__gitver__,__builddate__))
+    return '{}'.format(__version__)
+
 setup(name             = '__packagename__',
-      version          = '__version__',
+      version          = getVersion(),
       # use_scm_version  = True,
       description      = '__description__',
       long_description = readme(),

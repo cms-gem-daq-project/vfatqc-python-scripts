@@ -3,4 +3,5 @@ include README.md
 include MANIFEST.in
 include LICENSE
 include requirements.txt
+include gempython/vfatqc/_version.py
 recursive-include gempython/scripts *
