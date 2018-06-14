@@ -35,6 +35,7 @@ default:
 	$(MakeDir) $(PackageDir)
 	@cp -rf qcoptions.py $(PackageDir)
 	@cp -rf qcutilities.py $(PackageDir)
+	@cp -rf treeStructure.py $(PackageDir)
 	@echo "__path__ = __import__('pkgutil').extend_path(__path__, __name__)" > pkg/$(Namespace)/__init__.py
 	@cp -rf __init__.py $(PackageDir)
 
