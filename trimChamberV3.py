@@ -5,7 +5,7 @@ By: Brian Dorney (brian.l.dorney@cern.ch)
 """
 
 if __name__ == '__main__':
-    from gempython.gemplotting.utils.anautilities import getEmptyPerVFATList, rejectOutliersMADOneSided
+    from gempython.gemplotting.utils.anautilities import getEmptyPerVFATList, parseCalFile, rejectOutliersMADOneSided
     from array import array
     from ctypes import *
     from gempython.gemplotting.fitting.fitScanData import fitScanData
@@ -20,9 +20,12 @@ if __name__ == '__main__':
    
     parser.add_option("--armDAC", type="int", dest = "armDAC", default = 100,
                       help="CFG_THR_ARM_DAC value to write to all VFATs", metavar="armDAC")
-    parser.add_option("--calFile", type="string", dest="calFile", default=None,
-                      help="File specifying CAL_DAC/VCAL to fC equations per VFAT",
-                      metavar="calFile")
+    parser.add_option("--calFileCAL", type="string", dest="calFileCAL", default=None,
+                      help="File specifying CAL_DAC to fC equations per VFAT",
+                      metavar="calFileCAL")
+    parser.add_option("--calFileARM", type="string", dest="calFileARM", default=None,
+                      help="File specifying THR_ARM_DAC to fC equations per VFAT",
+                      metavar="calFileARM")
     parser.add_option("--calSF", type="int", dest = "calSF", default = 0,
                       help="Value of the CFG_CAL_FS register", metavar="calSF")
     parser.add_option("--chMin", type="int", dest = "chMin", default = 0,
@@ -46,11 +49,22 @@ if __name__ == '__main__':
                       metavar="voltageStepPulse")
     (options, args) = parser.parse_args()
    
-    if options.calFile is None:
-        print("You must provide the calibration for the CAL DAC module")
-        print("Please relaunch with the --calFile argument")
+    if options.calFileCAL is None:
+        print("You must provide the calibration for the CFG_CAL_DAC register")
+        print("Please relaunch with the --calFileCAL argument")
         exit(os.EX_USAGE)
         pass
+
+    if options.calFileARM is None:
+        print("You must provide the calibration for the CFG_THR_ARM_DAC register")
+        print("Please relaunch with the --calFileARM argument")
+        exit(os.EX_USAGE)
+        pass
+
+    # Get the calibration for the CFG_THR_ARM_DAC register
+    tuple_calInfo = parseCalFile(options.calFileARM)
+    thrArmDac2Q_Slope = tuple_calInfo[0]
+    thrArmDac2Q_Intercept = tuple_calInfo[1]
 
     ztrim = options.ztrim
     chMin = options.chMin
@@ -70,7 +84,7 @@ if __name__ == '__main__':
     else: 
         dirPath = options.dirPath
         pass
-   
+  
     if not options.resume:
         # Declare the hardware board and bias all vfats
         vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
@@ -107,6 +121,8 @@ if __name__ == '__main__':
                 print e
                 pass
             pass
+        vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", options.vfatmask)
+        thrArmDacPerVFAT =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
 
         ###############
         # TRIMDAC = 0
@@ -148,9 +164,18 @@ if __name__ == '__main__':
         vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
         filename_untrimmed = "%s/SCurveData_trimdac0.root"%dirPath
 
+        # Need to get the CFG_THR_ARM_DAC value per VFAT
+        import ROOT as r
+        import root_numpy as rp
+        list_bNames = [ 'vfatN', 'vthr' ]
+        fileUntrimmed = r.TFile(filename_untrimmed,"READ")
+        thrArmDacPerVFAT = rp.tree2array(tree=fileUntrimmed.scurveTree, branches=list_bNames)
+        thrArmDacPerVFAT = np.unique(thrArmDacPerVFAT,axis=0)
+        pass
+
     # Get the initial fit results
     print("fitting results, this may take some time")
-    fitResults_Untrimmed = fitScanData(treeFileName=filename_untrimmed, isVFAT3=True, calFileName=options.calFile)
+    fitResults_Untrimmed = fitScanData(treeFileName=filename_untrimmed, isVFAT3=True, calFileName=options.calFileCAL)
     print("fitting has completed")
 
     # Create the output file which will store the channel configurations
@@ -187,7 +212,8 @@ if __name__ == '__main__':
                 pass
             
             # store the position and mask negative scurve POI's
-            dict_scurvePOIPerChan[vfat][chan] = fitResults_Untrimmed[0][vfat][chan] - ztrim * fitResults_Untrimmed[1][vfat][chan]
+            #dict_scurvePOIPerChan[vfat][chan] = fitResults_Untrimmed[0][vfat][chan] - ztrim * fitResults_Untrimmed[1][vfat][chan]
+            dict_scurvePOIPerChan[vfat][chan] = fitResults_Untrimmed[0][vfat][chan] # scurve mean
             if (dict_scurvePOIPerChan[vfat][chan] < 0):
                 cArray_Masks[idx] = 1 # True
                 pass
@@ -204,11 +230,14 @@ if __name__ == '__main__':
                     )
             array_avgScurvePOIPerVFAT[vfat] = array_avgScurvePOIPerVFAT[vfat]
             # Q = C*V; V = Q / C; trimVals = ( delta_Q / C)
-            # Q will be in fC due to calFile
+            # Q will be in fC due to calFileCAL
             # C = 100 fF; see VFAT3 manual
             # femto factors cancel
-            dict_trimVal[vfat] = (dict_scurvePOIPerChan[vfat] - array_avgScurvePOIPerVFAT[vfat]) / 100 # in volts
-            dict_trimVal[vfat] = np.round(dict_trimVal[vfat] * 1e3 / 0.5) # in DAC units; arm trim circuit has LSB=0.5mV; see VFAT3 manual
+            #dict_trimVal[vfat] = (dict_scurvePOIPerChan[vfat] - array_avgScurvePOIPerVFAT[vfat]) / 100 # in volts
+            #dict_trimVal[vfat] = np.round(dict_trimVal[vfat] * 1e3 / 0.5) # in DAC units; arm trim circuit has LSB=0.5mV; see VFAT3 manual
+            thrArmDacCharge = thrArmDac2Q_Slope[vfat]*thrArmDacPerVFAT[vfat] + thrArmDac2Q_Intercept[vfat] 
+            dict_trimCharge[vfat] = dict_scurvePOIPerChan[vfat] - thrArmDacCharge # this is in fC
+            dict_trimVal[vfat] = np.round((dict_trimCharge[vfat] - thrArmDac2Q_Intercept[vfat]) / thrArmDac2Q_Slope[vfat]) # this in DAC units
         else:
             array_avgScurvePOIPerVFAT[vfat] = -1
             dict_trimVal[vfat] = dict_scurvePOIPerChan[vfat] * 0 # Set all trim's to zero
@@ -317,7 +346,7 @@ if __name__ == '__main__':
     if options.printSummary:
         # Get the initial fit results
         print("fitting results, this may take some time")
-        fitResults_Trimmed = fitScanData(treeFileName=filename_trimmed, isVFAT3=True, calFileName=options.calFile)
+        fitResults_Trimmed = fitScanData(treeFileName=filename_trimmed, isVFAT3=True, calFileName=options.calFileCAL)
         print("fitting has completed")
 
         # Determine post trim settings
