@@ -122,7 +122,7 @@ if __name__ == '__main__':
                 pass
             pass
         vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", options.vfatmask)
-        thrArmDacPerVFAT =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+        dict_thrArmDacPerVFAT =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
 
         ###############
         # TRIMDAC = 0
@@ -169,8 +169,9 @@ if __name__ == '__main__':
         import root_numpy as rp
         list_bNames = [ 'vfatN', 'vthr' ]
         fileUntrimmed = r.TFile(filename_untrimmed,"READ")
-        thrArmDacPerVFAT = rp.tree2array(tree=fileUntrimmed.scurveTree, branches=list_bNames)
-        thrArmDacPerVFAT = np.unique(thrArmDacPerVFAT,axis=0)
+        array_thrArmDacPerVFAT = rp.tree2array(tree=fileUntrimmed.scurveTree, branches=list_bNames)
+        array_thrArmDacPerVFAT = np.unique(array_thrArmDacPerVFAT,axis=0)
+        dict_thrArmDACPerVFAT = dict(map(lambda vfatN:(array_thrArmDacPerVFAT['vfatN'][vfatN], array_thrArmDacPerVFAT['vthr'][vfatN]), range(0,len(array_thrArmDacPerVFAT))))
         pass
 
     # Get the initial fit results
@@ -191,6 +192,7 @@ if __name__ == '__main__':
     # This is the position (X = scurve_mean - ztrim * scurve_sigma) on the curve
     array_avgScurvePOIPerVFAT = np.zeros(24)
     dict_scurvePOIPerChan = { vfat:np.zeros(128) for vfat in range(0,24) }
+    dict_trimCharge = { vfat:np.zeros(128) for vfat in range(0,24) }
     dict_trimVal = { vfat:np.zeros(128) for vfat in range(0,24) }
     dict_vfatID = { vfat:0 for vfat in range(0,24) } # placeholder
     print("Analyzing the fit data to determine the trim values")
@@ -235,7 +237,7 @@ if __name__ == '__main__':
             # femto factors cancel
             #dict_trimVal[vfat] = (dict_scurvePOIPerChan[vfat] - array_avgScurvePOIPerVFAT[vfat]) / 100 # in volts
             #dict_trimVal[vfat] = np.round(dict_trimVal[vfat] * 1e3 / 0.5) # in DAC units; arm trim circuit has LSB=0.5mV; see VFAT3 manual
-            thrArmDacCharge = thrArmDac2Q_Slope[vfat]*thrArmDacPerVFAT[vfat] + thrArmDac2Q_Intercept[vfat] 
+            thrArmDacCharge = thrArmDac2Q_Slope[vfat]*dict_thrArmDACPerVFAT[vfat] + thrArmDac2Q_Intercept[vfat] 
             dict_trimCharge[vfat] = dict_scurvePOIPerChan[vfat] - thrArmDacCharge # this is in fC
             dict_trimVal[vfat] = np.round((dict_trimCharge[vfat] - thrArmDac2Q_Intercept[vfat]) / thrArmDac2Q_Slope[vfat]) # this in DAC units
         else:
@@ -252,7 +254,7 @@ if __name__ == '__main__':
                 if ( abs(dict_trimVal[vfat][chan]) > 0x7f):
                     chNote = "Needed TrimVal Exceeds Range"
                     pass
-                print("| %i | %i | %i | %i | %i | %i | %f | %s |"%(
+                print("| %i | %i | %f | %f | %i | %i | %f | %s |"%(
                         vfat, 
                         chan,
                         dict_scurvePOIPerChan[vfat][chan],
