@@ -65,7 +65,7 @@ before_install:
 # Stages run in their own VMs, nothing gets transferred from stage to stage
 script:
   - echo 'Running test stage on docker container $DOCKER_CONTAINER_ID'
-  - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec ". /home/daqbuild/${REPO_NAME}/.ci/test_on_docker.sh ${OS_VERSION} ${PY_VER} ${ROOT_VER}"
+  - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -eic ". /home/daqbuild/${REPO_NAME}/.ci/test_on_docker.sh ${OS_VERSION} ${PY_VER} ${ROOT_VER}"
 
 ## Defaults, applied to the 'test' stage
 after_success:
@@ -101,9 +101,9 @@ after_script: skip
     - gem install github_changelog_generator
   script:
     - echo 'Running build stage on docker container $DOCKER_CONTAINER_ID'
-    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/${REPO_NAME}; make " || travis_terminate 1
-    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/${REPO_NAME}; make rpm " || travis_terminate 1
-    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -ec "cd /home/daqbuild/${REPO_NAME}; rpm -q --filesbypkg -p rpm/*.rpm"
+    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -eic "cd /home/daqbuild/${REPO_NAME}; make " || travis_terminate 1
+    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -eic "cd /home/daqbuild/${REPO_NAME}; make rpm " || travis_terminate 1
+    - docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -eic "cd /home/daqbuild/${REPO_NAME}; rpm -q --filesbypkg -p rpm/*.rpm"
     - ls -laZ rpm
     - find ./rpm -iname '*.rpm' -o -iname '*.tar.gz' -o -iname '*.tbz2'
   after_success:

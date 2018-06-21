@@ -59,12 +59,12 @@ then
     echo DOCKER_CONTAINER_ID=${DOCKER_CONTAINER_ID}
     if [ ! -z ${DOCKER_CONTAINER_ID+x} ];
     then
-        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'echo Testing build on docker for `cat /etc/system-release`'
+        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -eic 'echo Testing build on docker for `cat /etc/system-release`'
         docker logs $DOCKER_CONTAINER_ID
-        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'pip install -I --user "pip" "importlib" "codecov" "setuptools<38.2"'
-        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''importlib'\''))"'
-        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''pip'\''))"'
-        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''setuptools'\''))"'
+        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -eic 'pip install -I --user "pip" "importlib" "codecov" "setuptools<38.2"'
+        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -eic 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''importlib'\''))"'
+        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -eic 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''pip'\''))"'
+        docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -eic 'python -c "import pkg_resources; print(pkg_resources.get_distribution('\''setuptools'\''))"'
     fi
 else
     DOCKER_CONTAINER_ID=$(docker ps | grep ${DOCKER_IMAGE} | awk '{print $1}')
@@ -74,7 +74,7 @@ else
 
         if [ "${COMMAND}" = "stop" ]
         then
-            docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec "echo -ne \"------\nEND ${REPO_NAME} TESTS\n\";"
+            docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -eic "echo -ne \"------\nEND ${REPO_NAME} TESTS\n\";"
             docker stop $DOCKER_CONTAINER_ID
             docker rm -v $DOCKER_CONTAINER_ID
         elif [ "${COMMAND}" = "other" ]
