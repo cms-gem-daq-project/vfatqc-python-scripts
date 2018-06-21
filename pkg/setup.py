@@ -34,19 +34,23 @@ def getreqs():
 def getVersion():
     __version__='___version___'
     __release__='___release___'
+    __buildtag__='___buildtag___'
     __gitrev__='___gitrev___'
     __gitver__='___gitver___'
+    __packager__='___packager___'
     __builddate__='___builddate___'
     with open("gempython/vfatqc/_version.py","w") as verfile:
         verfile.write("""
-## This file is generated automatically from vfatqc setup.py
-__version__='{}'
-__release__='{}'
-__gitrev__='{}'
-__gitver__='{}'
-__builddate__='{}'
-""".format(__version__,__release__,__gitrev__,__gitver__,__builddate__))
-    return '{}'.format(__version__)
+## This file is generated automatically from cmsgemos_gempython setup.py
+__version__='{0:s}'
+__release__='{1:s}'
+__buildtag__='{2:s}'
+__gitrev__='{3:s}'
+__gitver__='{4:s}'
+__packager__='{5:s}'
+__builddate__='{6:s}'
+""".format(__version__,__release__,__buildtag__,__gitrev__,__gitver__,__packager__,__builddate__))
+    return '{0:s}'.format(__version__)
 
 setup(name             = '__packagename__',
       version          = getVersion(),

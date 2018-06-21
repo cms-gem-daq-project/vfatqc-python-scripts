@@ -22,7 +22,6 @@ $(info PythonModules=${PythonModules})
 VFATQC_VER_MAJOR:=$(shell ./config/tag2rel.sh | awk '{split($$0,a," "); print a[1];}' | awk '{split($$0,b,":"); print b[2];}')
 VFATQC_VER_MINOR:=$(shell ./config/tag2rel.sh | awk '{split($$0,a," "); print a[2];}' | awk '{split($$0,b,":"); print b[2];}')
 VFATQC_VER_PATCH:=$(shell ./config/tag2rel.sh | awk '{split($$0,a," "); print a[3];}' | awk '{split($$0,b,":"); print b[2];}')
-BUILD_VERSION = $(shell ./config/tag2rel.sh | awk '{split($$0,a," "); print a[4];}' | awk '{split($$0,b,":"); print b[2];}')
 
 include $(BUILD_HOME)/$(Project)/config/mfCommonDefs.mk
 include $(BUILD_HOME)/$(Project)/config/mfPythonDefs.mk
