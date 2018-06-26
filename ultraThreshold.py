@@ -90,8 +90,6 @@ try:
     vals  = readAllVFATs(ohboard, options.gtx, "VThreshold2", 0x0)
     vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                         range(0,24)))
-    vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),
-                        range(0,24)))
 
     trgSrc = getTriggerSource(ohboard,options.gtx)
     if options.perchannel:
@@ -135,7 +133,7 @@ try:
                            vfatCH = scCH,
                            vfatID = vfatIDvals[vfat],
                            vfatN = vfat,
-                           vth = vthvals[vfat],
+                           vth = vt2vals[vfat] - vth1,
                            vth1 = vth1,
                            vth2 = vt2vals[vfat]
                          )
@@ -148,6 +146,7 @@ try:
         stopLocalT1(ohboard, options.gtx)
         pass
     else:
+        l1AInterval = -1
         if options.trkdata:
             setTriggerSource(ohboard,options.gtx,0x1)
             gemData.mode[0] = scanmode.THRESHTRK
@@ -179,10 +178,10 @@ try:
                        mspl = msplvals[vfat],
                        Nhits = Nhits, 
                        trimRange = trimRangevals[vfat],
-                       vfatCH = scCH,
+                       vfatCH = -1,
                        vfatID = vfatIDvals[vfat],
                        vfatN = vfat,
-                       vth = vthvals[vfat],
+                       vth = vt2vals[vfat] - vth1,
                        vth1 = vth1,
                        vth2 = vt2vals[vfat]
                      )
