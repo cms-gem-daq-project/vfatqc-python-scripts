@@ -11,7 +11,7 @@ from ctypes import *
 
 from gempython.tools.vfat_user_functions_xhal import *
 
-from qcoptions import parser
+from gempython.vfatqc.qcoptions import parser
 
 parser.add_option("--arm", action="store_true", dest="scanARM",
                   help="Use only the arming comparator instead of the CFD", metavar="scanARM")

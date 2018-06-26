@@ -1,3 +1,118 @@
+def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
+    """
+    vfatBoard - an instance of the HwVFAT class
+    chTree - TTree generated from a chConfig.txt file
+    mask - vfat mask to apply
+    debug - print additional information if True
+    """
+
+    from ctypes import *
+    
+    # Make the cArrays
+    cArray_Masks = (c_uint32 * 3072)()
+    cArray_trimVal = (c_uint32 * 3072)()
+    cArray_trimPol = (c_uint32 * 3072)()
+
+    for event in chTree :
+        # Skip masked vfats
+        if (mask >> int(event.vfatN)) & 0x1:
+            continue
+
+        if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
+            cArray_Masks[128*event.vfatN+event.vfatCH] = event.mask
+            cArray_trimVal[128*event.vfatN+event.vfatCH] = event.trimDAC
+            cArray_trimPol[128*event.vfatN+event.vfatCH] = event.trimPolarity
+        else:
+            if int(event.vfatCH) == 0:        
+                vfatBoard.writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),options.debug)
+            if event.mask==0 and event.trimDAC==0:
+                continue
+            vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
+            pass
+        pass
+    
+    if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
+        rpcResp = vfatBoard.setAllChannelRegisters(
+                chMask=cArray_Masks,
+                trimARM=cArray_trimVal,
+                trimARMPol=cArray_trimPol,
+                vfatMask=mask,
+                debug=debug)
+
+        if rpcResp != 0:
+            raise Exception("RPC response was non-zero, setting trim values for all channels failed")
+        pass
+    return
+
+def inputOptionsValid(options, amc_major_fw_ver):
+    """
+    Sanity check on input options
+
+    options - an optparser.Values instance
+    amc_major_fw_ver - major FW version of the AMC
+    """
+
+    # get the options dictionary
+    dict_options = options.__dict__.keys()
+
+    # Cal Phase
+    if "CalPhase" in dict_options:
+        if amc_major_fw_ver < 3:
+            if options.CalPhase < 0 or options.CalPhase > 8:
+                print 'CalPhase must be in the range 0-8'
+                return False
+            pass
+        else:
+            if options.CalPhase < 0 or options.CalPhase > 7:
+                print 'CalPhase must be in the range 0-7'
+                return False
+            pass
+        pass
+    
+    # CFG_CAL_SF
+    if "calSF" in dict_options and amc_major_fw_ver >= 3: # V3 Behavior only
+        if options.calSF < 0 or options.calSF > 3:
+            print 'calSF must be in the range 0-3'
+            return False
+        pass
+    
+    # Channel Range
+    if (("chMin" in dict_options) and ("chMax" in dict_options)):
+        if not (0 <= options.chMin <= options.chMax < 128):
+            print "chMin %d not in [0,%d] or chMax %d not in [%d,127] or chMax < chMin"%(options.chMin,options.chMax,options.chMax,options.chMin)
+            return False
+        pass
+
+    # MSPL or Pulse Stretch
+    if "MSPL" in dict_options:
+        if amc_major_fw_ver < 3:
+            if options.MSPL not in range(1,9):
+                print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
+                return False
+            pass
+        else:
+            if options.MSPL not in range(0,8):
+                print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
+                return False
+            pass
+        pass
+
+    # step size
+    if "stepSize" in dict_options:
+        if options.stepSize <= 0:
+            print("Invalid stepSize specified: %d, must be in range [1, %d]"%(options.stepSize, options.scanmax-options.scanmin))
+            return False
+        pass
+
+    # VThreshold2
+    if ( ("vt2" in dict_options) and (amc_major_fw_ver < 3)): # Only v2b behavior
+        if options.vt2 not in range(256):
+            print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
+            return False
+        pass
+
+    return True
+
 def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     """
     Given an input set of registers, and expected values of those registers, read from all VFATs on device.gtx to see if there are any differences between written and read values.

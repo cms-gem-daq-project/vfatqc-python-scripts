@@ -16,10 +16,19 @@ class gemTreeStructure:
 
         self.calPhase = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'calPhase', self.calPhase, 'calPhase/I' )
-        
+
+        self.calSF = array( 'i', [0] )
+        self.gemTree.Branch( 'calSF', self.calSF, 'calSF/I')
+
         self.Dly = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'Dly', self.Dly, 'Dly/I' )
-        
+
+        self.isCurrentPulse = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'isCurrentPulse', self.isCurrentPulse, 'isCurrentPulse/I')
+       
+        self.isZCC = array( 'i', [0] )
+        self.gemTree.Branch( 'isZCC', self.isZCC, 'isZCC/I' )
+
         self.l1aTime = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'l1aTime', self.l1aTime, 'l1aTime/I' )
         
@@ -47,7 +56,10 @@ class gemTreeStructure:
         
         self.trimDAC = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'trimDAC', self.trimDAC, 'trimDAC/I' )
-        
+
+        self.trimPolarity = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'trimPolarity', self.trimPolarity, 'trimPolarity/I' )
+
         self.trimRange = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'trimRange', self.trimRange, 'trimRange/I' )
         
@@ -61,7 +73,7 @@ class gemTreeStructure:
         self.gemTree.Branch( 'vfatCH', self.vfatCH, 'vfatCH/I' )
         
         self.vfatID = array( 'i', [-1] )
-        self.gemTree.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
+        self.gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
 
         self.vfatN = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'vfatN', self.vfatN, 'vfatN/I' )
@@ -74,6 +86,9 @@ class gemTreeStructure:
         
         self.vth2 = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vth2', self.vth2, 'vth2/I' )
+    
+        self.vthr = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'vthr', self.vthr, 'vthr/I' )
 
         self.ztrim = array( 'f', [ 0 ] )
         self.gemTree.Branch( 'ztrim', self.ztrim, 'ztrim/F' )
@@ -95,14 +110,20 @@ class gemTreeStructure:
         
         if "calPhase" in kwargs:
             self.calPhase[0] = kwargs["calPhase"]
+        if "calSF" in kwargs:
+            self.calSF[0] = kwargs["calSF"]
         if "Dly" in kwargs:
             self.Dly[0] = kwargs["Dly"]
+        if "isCurrentPulse" in kwargs:
+            self.isCurrentPulse[0] = kwargs["isCurrentPulse"]
+        if "isZCC" in kwargs:
+            self.isZCC[0] = kwargs["isZCC"]
         if "l1aTime" in kwargs:
             self.l1aTime[0] = kwargs["l1aTime"]
         if "latency" in kwargs:
             self.latency[0] = kwargs["latency"]
         if "link" in kwargs:
-            self.link[0] = kwargs["kwargs"]
+            self.link[0] = kwargs["link"]
         if "pDel" in kwargs:
             self.pDel[0] = kwargs["pDel"]
         if "mspl" in kwargs:
@@ -113,6 +134,8 @@ class gemTreeStructure:
             self.Nhits[0] = kwargs["Nhits"]
         if "trimDAC" in kwargs:
             self.trimDAC[0] = kwargs["trimDAC"]
+        if "trimPolarity" in kwargs:
+            self.trimPolarity[0] = kwargs["trimPolarity"]
         if "trimRange" in kwargs:
             self.trimRange[0] = kwargs["trimRange"]
         if "utime" in kwargs:
@@ -131,6 +154,8 @@ class gemTreeStructure:
             self.vth1[0] = kwargs["vth1"]
         if "vth2" in kwargs:
             self.vth2[0] = kwargs["vth2"]
+        if "vthr" in kwargs:
+            self.vthr[0] = kwargs["vthr"]
         if "ztrim" in kwargs:
             self.ztrim[0] = kwargs["ztrim"]
 
