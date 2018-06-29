@@ -49,7 +49,6 @@ preprpm: default
 		cp -rf config/scriptlets/installrpm.sh pkg/; \
 	fi
 	@echo "Running preprpm target"
-	@cp -rf config/scriptlets/installrpm.sh pkg/
 	$(MakeDir) $(ScriptDir)
 	@cp -rf run_scans.py   $(ScriptDir)
 	@cp -rf trimChamber.py $(ScriptDir)
