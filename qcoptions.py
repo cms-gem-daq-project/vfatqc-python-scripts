@@ -1,7 +1,7 @@
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.add_option("-c", "--cardName", type="string", dest="cardName", default=None
+parser.add_option("-c", "--cardName", type="string", dest="cardName", default=None,
                   help="hostname of the AMC you are connecting too, e.g. 'eagle64'", metavar="cardName")
 parser.add_option("-d", "--debug", action="store_true", dest="debug",
                   help="print extra debugging information", metavar="debug")
