@@ -1,5 +1,12 @@
-from gempython.utils.standardopts import parser
+from optparse import OptionParser
 
+parser = OptionParser()
+parser.add_option("-c", "--cardName", type="string", dest="cardName", default=None
+                  help="hostname of the AMC you are connecting too, e.g. 'eagle64'", metavar="cardName")
+parser.add_option("-d", "--debug", action="store_true", dest="debug",
+                  help="print extra debugging information", metavar="debug")
+parser.add_option("-g", "--gtx", type="int", dest="gtx",
+                  help="GTX on the AMC", metavar="gtx", default=0)
 parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
                   help="Specify time between L1As in bx", metavar="L1Atime")
 parser.add_option("--mspl", type="int", dest = "MSPL", default = 4,

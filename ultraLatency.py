@@ -77,7 +77,12 @@ if __name__ == '__main__':
     amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
     
     # Open rpc connection to hw
-    vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+    if options.cardName is None:
+        print("you must specify the --cardName argument")
+        exit(os.EX_USAGE)
+
+    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    print 'opened connection'
     
     # Check options
     from gempython.vfatqc.qcutilities import inputOptionsValid

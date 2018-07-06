@@ -71,7 +71,13 @@ Date = startTime
 mask = options.vfatmask
 
 try:
-    vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+    if options.cardName is None:
+        print("you must specify the --cardName argument")
+        exit(os.EX_USAGE)
+
+    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    print 'opened connection'
+
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
         print("Parent AMC Major FW Version: %i"%(self.parentAMC.fwVersion))
         print("Only implemented for v3 electronics, exiting")

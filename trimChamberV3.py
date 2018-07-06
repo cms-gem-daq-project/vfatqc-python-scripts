@@ -87,7 +87,13 @@ if __name__ == '__main__':
   
     if not options.resume:
         # Declare the hardware board and bias all vfats
-        vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+        if options.cardName is None:
+            print("you must specify the --cardName argument")
+            exit(os.EX_USAGE)
+
+        vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+        print 'opened connection'
+        
         if options.gtx in chamber_vfatDACSettings.keys():
             print("Configuring VFATs with chamber_vfatDACSettings dictionary values")
             for key in chamber_vfatDACSettings[options.gtx]:
@@ -161,7 +167,13 @@ if __name__ == '__main__':
         runCommand(cmd)
         print("initial scurve finished")
     else:
-        vfatBoard = HwVFAT(options.slot, options.gtx, options.shelf, options.debug)
+        if options.cardName is None:
+            print("you must specify the --cardName argument")
+            exit(os.EX_USAGE)
+
+        vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+        print 'opened connection'
+
         filename_untrimmed = "%s/SCurveData_trimdac0.root"%dirPath
 
         # Need to get the CFG_THR_ARM_DAC value per VFAT
