@@ -145,8 +145,7 @@ if __name__ == '__main__':
         print("taking an initial s-curve")
         filename_untrimmed = "%s/SCurveData_trimdac0.root"%dirPath
         cmd = [ "ultraScurve.py",
-                "--shelf=%i"%(options.shelf),
-                "-s%d"%(options.slot),
+                "--cardName=%s"%(options.cardName),
                 "-g%d"%(options.gtx),
                 "--chMin=%i"%(options.chMin),
                 "--chMax=%i"%(options.chMax),
@@ -334,8 +333,7 @@ if __name__ == '__main__':
     # Scurve scan with trims set to the determined values
     filename_trimmed = "%s/SCurveData_Trimmed.root"%dirPath
     cmd = [ "ultraScurve.py",
-            "--shelf=%i"%(options.shelf),
-            "-s%d"%(options.slot),
+            "--cardName=%s"%(options.cardName),
             "-g%d"%(options.gtx),
             "--chMin=%i"%(options.chMin),
             "--chMax=%i"%(options.chMax),
