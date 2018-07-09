@@ -3,7 +3,7 @@
 def launch(args):
   return launchArgs(*args)
 
-def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,debug=False):
+def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,latency=None,debug=False):
     import datetime,os,sys
     from subprocess import CalledProcessError
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
@@ -17,6 +17,9 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,debug=False):
     if debug:
         cmd.append("--debug")
         pass
+
+    if latency is not None:
+        cms.append("--latency=%d"%(latency))
 
     if run:
         cmd.append("--run")
@@ -56,6 +59,8 @@ if __name__ == '__main__':
 
     parser.add_option("--config", action="store_true", dest="config",
                       help="Set Configuration from simple txt files", metavar="config")
+    parser.add_option("-l","--latency", type="int", dest = "latency", default = None,
+                      help="Specify Latency", metavar="latency")
     parser.add_option("--run", action="store_true", dest="run",
                       help="Set VFATs to run mode", metavar="run")
     parser.add_option("--series", action="store_true", dest="series",
@@ -80,6 +85,7 @@ if __name__ == '__main__':
                         [options.config    for x in range(len(chamber_config))],
                         [chamber_config[x] for x in chamber_config.keys()],
                         [options.ztrim     for x in range(len(chamber_config))],
+                        [options.latency   for x in range(len(chamber_config))],
                         [options.debug     for x in range(len(chamber_config))]
                   )
             )
@@ -88,7 +94,7 @@ if __name__ == '__main__':
         print "Configuring chambers in serial mode"
         for link in chamber_config.keys():
             chamber = chamber_config[link]
-            launchArgs(options.shelf,link,options.slot,options.run,options.vt1,options.vt1bump,options.config,chamber,options.ztrim,options.debug)
+            launchArgs(options.shelf,link,options.slot,options.run,options.vt1,options.vt1bump,options.config,chamber,options.ztrim,options.latency,options.debug)
             pass
         pass
     else:
@@ -108,6 +114,7 @@ if __name__ == '__main__':
                                                 [options.config    for x in range(len(chamber_config))],
                                                 [chamber_config[x] for x in chamber_config.keys()],
                                                 [options.ztrim     for x in range(len(chamber_config))],
+                                                [options.latency   for x in range(len(chamber_config))],
                                                 [options.debug     for x in range(len(chamber_config))]
                                                 )
                                  )
