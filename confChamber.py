@@ -18,6 +18,8 @@ parser.add_option("--compare", action="store_true", dest="compare",
                   help="When supplied with {chConfig, filename, vfatConfig} compares current reg values with those stored in input files", metavar="compare")
 parser.add_option("--filename", type="string", dest="filename", default=None,
                   help="Specify file containing settings information", metavar="filename")
+parser.add_option("-l","--latency", type="int", dest = "latency", default = None,
+                  help="Specify Latency", metavar="latency")
 parser.add_option("--run", action="store_true", dest="run",
                   help="Set VFATs to run mode", metavar="run")
 parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None,
@@ -43,20 +45,26 @@ Date = startTime
 ohboard = getOHObject(options.slot,options.gtx,options.shelf)
 print 'opened connection'
 
+import os
 if options.gtx in chamber_vfatDACSettings.keys():
     print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
-    parameters.defaultValues["IPreampIn"] = chamber_vfatDACSettings[options.gtx]["IPreampIn"]
-    parameters.defaultValues["IPreampFeed"] = chamber_vfatDACSettings[options.gtx]["IPreampFeed"]
-    parameters.defaultValues["IPreampOut"] = chamber_vfatDACSettings[options.gtx]["IPreampOut"]
-    parameters.defaultValues["IShaper"] = chamber_vfatDACSettings[options.gtx]["IShaper"]
-    parameters.defaultValues["IShaperFeed"] = chamber_vfatDACSettings[options.gtx]["IShaperFeed"]
-    parameters.defaultValues["IComp"] = chamber_vfatDACSettings[options.gtx]["IComp"]
+    for regName in chamber_vfatDACSettings.keys():
+        if regName not in parameters.defaultValues:
+            print("%s for link %d not recognized, please cross-check chamber_vfatDACSettings"%(regName, options.gtx))
+            print("list of possible values:")
+            print("\t",parameters.defaultValues.keys)
+            exit(os.EX_USAGE)
+        else:
+            parameters.defaultValues[regName] = chamber_vfatDACSettings[options.gtx][regName]
 
 biasAllVFATs(ohboard,options.gtx,0x0,enable=False)
 print 'biased VFATs'
 if not options.compare:
     writeAllVFATs(ohboard, options.gtx, "VThreshold1", options.vt1, 0)
     print 'Set VThreshold1 to %i'%options.vt1
+    if options.latency is not None:
+        writeAllVFATs(ohboard, options.gtx, "Latency", options.latency, 0)
+        print('Set Latency to %i'%options.latency)
 
 if options.run:
     writeAllVFATs(ohboard, options.gtx, "ContReg0",    0x37,        0)
