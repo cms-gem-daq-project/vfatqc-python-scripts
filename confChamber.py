@@ -48,11 +48,10 @@ print 'opened connection'
 import os
 if options.gtx in chamber_vfatDACSettings.keys():
     print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
-    for regName in chamber_vfatDACSettings.keys():
+    for regName in chamber_vfatDACSettings[options.gtx].keys():
         if regName not in parameters.defaultValues:
             print("%s for link %d not recognized, please cross-check chamber_vfatDACSettings"%(regName, options.gtx))
-            print("list of possible values:")
-            print("\t",parameters.defaultValues.keys)
+            print("list of possible values:", parameters.defaultValues.keys())
             exit(os.EX_USAGE)
         else:
             parameters.defaultValues[regName] = chamber_vfatDACSettings[options.gtx][regName]
