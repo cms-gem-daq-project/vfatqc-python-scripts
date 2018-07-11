@@ -59,6 +59,10 @@ then
     echo DOCKER_CONTAINER_ID=${DOCKER_CONTAINER_ID}
     if [ ! -z ${DOCKER_CONTAINER_ID+x} ];
     then
+        if [[ "${DOCKER_IMAGE}" =~ slc6$ ]];
+        then
+            docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -eic 'source /opt/rh/python27/enable'
+        fi
         docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'echo Testing build on docker for `cat /etc/system-release`'
         docker logs $DOCKER_CONTAINER_ID
         docker exec -ti ${DOCKER_CONTAINER_ID} /bin/bash -ec 'pip install -I --user "pip" "importlib" "codecov" "setuptools<38.2"'
