@@ -1,49 +1,3 @@
-def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
-    """
-    vfatBoard - an instance of the HwVFAT class
-    chTree - TTree generated from a chConfig.txt file
-    mask - vfat mask to apply
-    debug - print additional information if True
-    """
-
-    from ctypes import *
-    
-    # Make the cArrays
-    cArray_Masks = (c_uint32 * 3072)()
-    cArray_trimVal = (c_uint32 * 3072)()
-    cArray_trimPol = (c_uint32 * 3072)()
-
-    for event in chTree :
-        # Skip masked vfats
-        if (mask >> int(event.vfatN)) & 0x1:
-            continue
-
-        if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
-            cArray_Masks[128*event.vfatN+event.vfatCH] = event.mask
-            cArray_trimVal[128*event.vfatN+event.vfatCH] = event.trimDAC
-            cArray_trimPol[128*event.vfatN+event.vfatCH] = event.trimPolarity
-        else:
-            if int(event.vfatCH) == 0:        
-                vfatBoard.writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),options.debug)
-            if event.mask==0 and event.trimDAC==0:
-                continue
-            vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
-            pass
-        pass
-    
-    if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
-        rpcResp = vfatBoard.setAllChannelRegisters(
-                chMask=cArray_Masks,
-                trimARM=cArray_trimVal,
-                trimARMPol=cArray_trimPol,
-                vfatMask=mask,
-                debug=debug)
-
-        if rpcResp != 0:
-            raise Exception("RPC response was non-zero, setting trim values for all channels failed")
-        pass
-    return
-
 def inputOptionsValid(options, amc_major_fw_ver):
     """
     Sanity check on input options
@@ -112,6 +66,143 @@ def inputOptionsValid(options, amc_major_fw_ver):
         pass
 
     return True
+
+def launchSCurve(**kwargs):
+    """
+    Launches an scurve scan at a given set of trim settings
+
+    Support arguments:
+    calSF - int, value of the CFG_CAL_FS register
+    cardName - string, name or ip address of AMC in uTCA crate
+    chMask - array of ints, size 3072, indicates channels to mask; idx = vfatN * 128 + channel
+    chMax - int, maximum channel
+    chMin - int, minimum channel
+    debug - boolean, print debugging information
+    filename - string, physical filename indicating absolute path of scurve outputfile
+    latency - int, latency to take the scruve at
+    link - int, optohybrid number on cardName
+    mspl - int, value of MSPL or CFG_PULSE_STRETCH to use
+    nevts - int, number of events to take in the scan
+    setChanRegs - boolean, write VFAT channel registers if True
+    vfatmask - int, vfatmask to use apply, 24-bit number, 1 in n^th bit indicates n^th vfat is masked
+    voltageStepPulse - boolean, use voltage step pulse (true) instead of current pulse (false)
+    trimARM - array of ints, size 3072, indicating trim amplitude to set for arming comparator; idx = vfatN * 128 + channel
+    trimARMPol - as trimARM but sets trim polarity
+    trimZCC - as trimARM but for the ZCC comparator
+    trimZCCPol - as trimZCC but sets trim polarity
+    """
+
+
+    # Set defaults
+    calSF = 0
+    cardName = None
+    chMask = None
+    chMax = 127
+    chMin = 0
+    debug = False
+    filename = None
+    latency = 33
+    link = 0
+    mspl = 3
+    nevts = 100
+    setChanRegs = False
+    vfatmask = 0x0
+    voltageStepPulse = False
+    trimARM = None
+    trimARMPol = None
+    trimZCC = None
+    trimZCCPol = None
+
+    # Get defaults from kwargs
+    if "calSF" in kwargs:
+        calSF = kwargs["calSF"]
+    if "cardName" in kwargs:
+        cardName = kwargs["cardName"]
+    if "chMask" in kwargs:
+        chMask = kwargs["chMask"]
+    if "chMax" in kwargs:
+        chMax = kwargs["chMax"]
+    if "chMin" in kwargs:
+        chMin = kwargs["chMin"]
+    if "debug" in kwargs:
+        debug = kwargs["debug"]
+    if "filename" in kwargs:
+        filename = kwargs["filename"]
+    if "latency" in kwargs:
+        latency = kwargs["latency"]
+    if "link" in kwargs:
+        link = kwargs["link"]
+    if "mspl" in kwargs:
+        mspl = kwargs["mspl"]
+    if "nevts" in kwargs:
+        nevts = kwargs["nevts"]
+    if "setChanRegs" in kwargs:
+        setChanRegs = kwargs["setChanRegs"]
+    if "vfatmask" in kwargs:
+        vfatmask = kwargs["vfatmask"]
+    if "voltageStepPulse" in kwargs:
+        voltageStepPulse = kwargs["voltageStepPulse"]
+    if "trimARM" in kwargs:
+        trimARM = kwargs["trimARM"]
+    if "trimARMPol" in kwargs:
+        trimARMPol = kwargs["trimARMPol"]
+    if "trimZCC" in kwargs:
+        trimZCC = kwargs["trimZCC"]
+    if "trimZCCPol" in kwargs:
+        trimZCCPol = kwargs["trimZCCPol"]
+
+    # Check minimum arguments
+    import os
+    if cardName is None:
+        print("launchSCurve(): You must provide either an AMC network alias (e.g. "eagle60") or an AMC ip address. Exiting")
+        exit(os.EX_USAGE)
+    if filename is None:
+        print("launchSCurve(): You must provide a filename for this scurve. Exiting")
+        exit(os.EX_USAGE)
+
+    # Set the channel registers
+    from gempython.tools.vfat_user_functions_xhal import *
+    if setChanRegs:
+        if debug:
+            print("opening an RPC connection to %s"%cardName)
+        vfatBoard = HwVFAT(cardName, link, debug)
+
+        if debug:
+            print("setting channel registers")
+        rpcResp = vfatBoard.setAllChannelRegisters(chMask=chMask, trimARM=trimARM, trimARMPol=trimARMPol, trimZCC=trimZCC, trimZCCPol=trimZCCPol, vfatMask=vfatmask, debug=debug)
+
+        if rpcResp != 0:
+            raise Exception("RPC response was non-zero, setting channel registers failed")
+
+    # Make the command to be launched
+    cmd = [ "ultraScurve.py",
+            "--cardName=%s"%(cardName),
+            "-g%d"%(link),
+            "--chMin=%i"%(chMin),
+            "--chMax=%i"%(chMax),
+            "--latency=%i"%(latency),
+            "--mspl=%i"%(mspl),
+            "--nevts=%i"%(nevts),
+            "--vfatmask=0x%x"%(vfatmask),
+            "--filename=%s"%(filename)
+            ]
+    if voltageStepPulse:
+        cmd.append("--voltageStepPulse")
+    else:
+        cmd.append("--calSF=%i"%(calSF) )
+
+    # launch the command
+    from gempython.utils.wrappers import runCommand
+    if debug:
+        print("launching an scurve with command:")
+        command = ""
+        for word in cmd:
+            command = "%s %s"%(command, word)
+        print(command)
+    print("launching scurve for filename: %s"%filename)
+    runCommand(cmd)
+    
+    return
 
 def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     """
@@ -191,4 +282,50 @@ def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
                 if writeValOfReg != readBackVal:
                     print "VFAT%i: %s mismatch, write val = %i, readback = %i"%(vfat, regName, writeValOfReg, readBackVal)
 
+    return
+
+def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
+    """
+    vfatBoard - an instance of the HwVFAT class
+    chTree - TTree generated from a chConfig.txt file
+    mask - vfat mask to apply
+    debug - print additional information if True
+    """
+
+    from ctypes import *
+    
+    # Make the cArrays
+    cArray_Masks = (c_uint32 * 3072)()
+    cArray_trimVal = (c_uint32 * 3072)()
+    cArray_trimPol = (c_uint32 * 3072)()
+
+    for event in chTree :
+        # Skip masked vfats
+        if (mask >> int(event.vfatN)) & 0x1:
+            continue
+
+        if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
+            cArray_Masks[128*event.vfatN+event.vfatCH] = event.mask
+            cArray_trimVal[128*event.vfatN+event.vfatCH] = event.trimDAC
+            cArray_trimPol[128*event.vfatN+event.vfatCH] = event.trimPolarity
+        else:
+            if int(event.vfatCH) == 0:
+                vfatBoard.writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),options.debug)
+            if event.mask==0 and event.trimDAC==0:
+                continue
+            vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
+            pass
+        pass
+    
+    if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
+        rpcResp = vfatBoard.setAllChannelRegisters(
+                chMask=cArray_Masks,
+                trimARM=cArray_trimVal,
+                trimARMPol=cArray_trimPol,
+                vfatMask=mask,
+                debug=debug)
+
+        if rpcResp != 0:
+            raise Exception("RPC response was non-zero, setting trim values for all channels failed")
+        pass
     return
