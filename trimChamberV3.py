@@ -41,7 +41,7 @@ if __name__ == '__main__':
     parser.add_option("--printSummary", action="store_true", dest="printSummary",
                       help="Prints a summary table describing the results before and after trimming",
                       metavar="printSummary")
-    parser.add_option("--trimPoints" type="string", dest="trimPoints", default="-127,0,127",
+    parser.add_option("--trimPoints", type="string", dest="trimPoints", default="-63,0,63",
                       help="comma separated list of trim values to use in trimming, a set of scurves will be taken at each point", metavar="trimPoints")
     parser.add_option("--vfatConfig", type="string", dest="vfatConfig", default=None,
                       help="Specify file containing VFAT settings from anaUltraThreshold", metavar="vfatConfig")
@@ -62,6 +62,11 @@ if __name__ == '__main__':
         exit(os.EX_USAGE)
         pass
 
+    # Get the calibration for the CFG_CAL_DAC register
+    tuple_calInfo = parseCalFile(options.calFileCAL)
+    calDac2Q_Slope = tuple_calInfo[0]
+    calDac2Q_Intercept = tuple_calInfo[1]
+
     # Get the calibration for the CFG_THR_ARM_DAC register
     tuple_calInfo = parseCalFile(options.calFileARM)
     thrArmDac2Q_Slope = tuple_calInfo[0]
@@ -75,7 +80,6 @@ if __name__ == '__main__':
         dataPath = os.getenv('DATA_PATH')
         startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
         print(startTime)
-        #dirPath = '%s/%s/trim/z%f'%(dataPath,chamber_config[options.gtx],ztrim)
         dirPath = '%s/%s/'%(dataPath,chamber_config[options.gtx])
         runCommand( ["unlink","%s/current"%dirPath] )
         runCommand( ['mkdir','-p','%s/%s'%(dirPath,startTime)])
@@ -122,11 +126,14 @@ if __name__ == '__main__':
             print '%s does not seem to exist or is not readable'%options.filename
             print e
         
-        vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", options.vfatmask)
-        dict_thrArmDacPerVFAT =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+    # Get all chip IDs
+    vfatIDvals = vfatBoard.getAllChipIDs(options.vfatmask)
+
+    # Get global arm dac value
+    vals = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", options.vfatmask)
+    dict_thrArmDacPerVFAT =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
 
     # Make the cArrays
-    #cArray_Masks = (c_uint32 * 3072)()
     cArray_trimVal = (c_uint32 * 3072)()
     cArray_trimPol = (c_uint32 * 3072)()
     
@@ -147,12 +154,42 @@ if __name__ == '__main__':
 
         # Check if an scurve at this (trimVal, trimPol) was already taken
         filename = "%s/SCurveData_trimdac%d_trimPol%d.root"%(dirPath,trimVal,trimPol)
-        scurveRawFile = r.TFile(filename,"READ")
+        isZombie = True
+        if os.path.isfile(filename):
+            scurveRawFile = r.TFile(filename,"READ")
+            isZombie = scurveRawFile.IsZombie()
 
-        try:
-            thisTree = scurveRawFile.scurveTree
-        except AttributeError as error:
-            print("caught exception %s"%error)
+        if not isZombie:
+            try:
+                thisTree = scurveRawFile.scurveTree
+            except AttributeError as error:
+                print("caught exception %s"%error)
+                print("Going to try to take an scurve at this (trimVal,trimPol) = (%d,%d) setting"%(trimVal,trimPol))
+                # Set arrays for trimVal and trimPol
+                for idx in range(0,3072):
+                    cArray_trimVal[idx] = trimVal
+                    cArray_trimPol[idx] = trimPol
+
+                # Scurve scan at this (trimVal, trimPol) setting
+                launchSCurve(
+                        calSF = options.calSF,
+                        cardName = options.cardName,
+                        chMax = options.chMax,
+                        chMin = options.chMin,
+                        debug = options.debug,
+                        filename = filename,
+                        latency = options.latency,
+                        link = options.gtx,
+                        mspl = options.MSPL,
+                        nevts = options.nevts,
+                        setChanRegs = True,
+                        trimARM = cArray_trimVal,
+                        trimARMPol = cArray_trimPol,
+                        vfatmask = options.vfatmask,
+                        voltageStepPulse = options.voltageStepPulse)
+                print("scurve finished")
+        else:
+            print("file %s either does not exist, or is a zombie"%filename)
             print("Going to try to take an scurve at this (trimVal,trimPol) = (%d,%d) setting"%(trimVal,trimPol))
             # Set arrays for trimVal and trimPol
             for idx in range(0,3072):
@@ -183,20 +220,36 @@ if __name__ == '__main__':
         print("fitting has completed")
     print("All trim points have been taken, processing")
 
-    # Need to get the CFG_THR_ARM_DAC value per VFAT
-    #import ROOT as r
-    #import root_numpy as rp
-    #list_bNames = [ 'vfatN', 'vthr' ]
-    #fileUntrimmed = r.TFile(filename_untrimmed,"READ")
-    #array_thrArmDacPerVFAT = rp.tree2array(tree=fileUntrimmed.scurveTree, branches=list_bNames)
-    #array_thrArmDacPerVFAT = np.unique(array_thrArmDacPerVFAT,axis=0)
-    #dict_thrArmDacPerVFAT = dict(map(lambda vfatN:(array_thrArmDacPerVFAT['vfatN'][vfatN], array_thrArmDacPerVFAT['vthr'][vfatN]), range(0,len(array_thrArmDacPerVFAT))))
-
     # Create the output file which will store the channel configurations
     chConfig = open("%s/chConfig.txt"%dirPath,"w")
     chConfig.write('vfatN/I:vfatID/I:vfatCH/I:trimDAC/I:trimPolarity/I:mask/I\n')
 
-    # Create the output file which will 
+    # Create the output file which will store the trim data 
+    outFile = r.TFile("%s/TrimData.root"%(dirPath),"RECREATE")
+    
+    # Setup the output TTree
+    from gempython.vfatqc.treeStructure import gemDacCalTreeStructure
+    trimDacArmTree = gemDacCalTreeStructure(
+            name='trimDacArmTree',
+            regX='scurve mean #left(fC#right)',
+            valY='ARM_TRIM_AMPLITUDE',
+            isGblDac=False,
+            description='Tree holding arming comparator trim data')
+    trimDacArmTree.setDefaults(options, int(time.time()))
+
+    calDacCalTree = gemDacCalTreeStructure(
+            name='calDacCalibration',
+            regX='CFG_CAL_DAC',
+            valY='charge #left(fC#right)',
+            storeRoot=True,
+            description='Tree holding CFG_CAL_DAC Calibration')
+
+    armDacCalTree = gemDacCalTreeStructure(
+            name='thrArmDacCalibration',
+            regX='CFG_THR_ARM_DAC',
+            valY='scurve mean #left(fC#right)',
+            storeRoot=True,
+            description='Tree holding CFG_THR_ARM_DAC Calibration;')
 
     print("Determining trimDAC to fC Calibration")
     dict_cal_trimDAC2fC_graph = ndict() # dict_cal_trimDAC2fC[vfat][chan] = TGraphErrors object
@@ -206,6 +259,30 @@ if __name__ == '__main__':
         if (options.vfatmask >> vfat) & 0x1: 
             continue
         
+        func_charge_vs_calDac = r.TF1(
+                "func_charge_vs_calDac_vfat%d"%(vfat),
+                "[0]*x+[1]",
+                calDac2Q_Slope[vfat]*253+calDac2Q_Intercept[vfat],
+                calDac2Q_Slope[vfat]*1+calDac2Q_Intercept[vfat])
+        func_charge_vs_calDac.SetParameter(0,calDac2Q_Slope[vfat])
+        func_charge_vs_calDac.SetParameter(1,calDac2Q_Intercept[vfat])
+        calDacCalTree.fill(
+                func_dacFit=func_charge_vs_calDac,
+                vfatID = vfatIDvals[vfat],
+                vfatN = vfat)
+        
+        func_scurveMean_vs_thrArmDac = r.TF1(
+                "func_scurveMean_vs_thrArmDac_vfat%d"%(vfat),
+                "[0]*x+[1]",
+                thrArmDac2Q_Slope[vfat]*253+thrArmDac2Q_Intercept[vfat],
+                thrArmDac2Q_Slope[vfat]*1+thrArmDac2Q_Intercept[vfat])
+        func_scurveMean_vs_thrArmDac.SetParameter(0,thrArmDac2Q_Slope[vfat])
+        func_scurveMean_vs_thrArmDac.SetParameter(1,thrArmDac2Q_Intercept[vfat])
+        armDacCalTree.fill(
+                func_dacFit=func_scurveMean_vs_thrArmDac,
+                vfatID = vfatIDvals[vfat],
+                vfatN = vfat)
+
         # Determine scurve point of interest by channel
         print("fitting trimDAC vs. scurve mean for vfat %d"%vfat)
         for chan in range(chMin,chMax):
@@ -230,6 +307,15 @@ if __name__ == '__main__':
                         dict_scurveFitResults[trimPt][1][vfat][chan],
                         0)
 
+                # Store output trim data
+                trimDacArmTree.fill(
+                        dacValX = dict_scurveFitResults[trimPt][0][vfat][chan],
+                        dacValX_Err = dict_scurveFitResults[trimPt][1][vfat][chan],
+                        dacValY = trimVal,
+                        vfatCH = chan,
+                        vfatID = vfatIDvals[vfat],
+                        vfatN = vfat)
+
             # Fit g_TrimDAC_vs_scurveMean using y=mx+b
             func_TrimDAC_vs_scurveMean = r.TF1(
                     "func_TrimDAC_vs_scurveMean_vfat%d_chan%d_gblArmDAC%d"%(vfat,chan,dict_thrArmDacPerVFAT[vfat]),
@@ -240,20 +326,43 @@ if __name__ == '__main__':
 
             # Determine the trim value and polarity to shift this channel to the 
             # global arm dac threshold (CFG_THR_ARM_DAC) for this VFAT
-            armDacCharge = thrArmDac2Q_Slope[vfat] * dict_thrArmDacPerVFAT[vfat] + thrArmDac2Q_Intercept[vfat]
-            trimVal = g_TrimDAC_vs_scurveMean.Eval( armDacCharge )
+            armDacCharge = func_scurveMean_vs_thrArmDac.Eval(dict_thrArmDacPerVFAT[vfat])
+            trimVal = g_TrimDAC_vs_scurveMean.Eval(armDacCharge)
             if trimVal > 0:
                 cArray_trimPol[128*vfat+chan] = 0
             else:
                 trimVal = abs(trimVal)
                 cArray_trimPol[128*vfat+chan] = 1
 
-            if trimVal > 0x7F: # If trimVal is over the max, reset to the max
-                trimVal = 0x7F
-            cArray_trimVal[128*vfat+chan] = trimVal
+            if trimVal > 0x3F: # If trimVal is over the max, reset to the max
+                trimVal = 0x3F
+            cArray_trimVal[128*vfat+chan] = int(trimVal)
 
             dict_cal_trimDAC2fC_graph[vfat][chan] = g_TrimDAC_vs_scurveMean
             dict_cal_trimDAC2fC_func[vfat][chan] = func_TrimDAC_vs_scurveMean
+            
+            # Write Channel Configuration
+            chConfig.write('%d\t%d\t%d\t%d\t%d\t%d'%(
+                    vfat,
+                    vfatIDvals[vfat],
+                    chan,
+                    cArray_trimVal[128*vfat+chan],
+                    cArray_trimPol[128*vfat+chan],
+                    0)
+                )
+
+    # Write output
+    for vfat in range(0,24):
+        dirVFAT = outF.mkdir("VFAT%i"%vfat)
+        for chan in range(chMin,chMax):
+            dirChan = dirVFAT.mkdir("chan%i"%chan)
+            dirChan.cd()
+            dict_cal_trimDAC2fC_graph[vfat][chan].Write()
+            dict_cal_trimDAC2fC_func[vfat][chan].Write()
+    outFile.cd()
+    trimDacArmTree.write()
+    calDacCalTree.write()
+    armDacCalTree.write()
 
     # Now take an scurve using the new trim settings
     filename = "%s/SCurveData_Trimmed.root"%(dirPath)
