@@ -46,7 +46,7 @@ def inputOptionsValid(options, amc_major_fw_ver):
             pass
         else:
             if options.MSPL not in range(0,8):
-                print("Invalid MSPL specified: %d, must be in range [1,8]"%(options.MSPL))
+                print("Invalid MSPL specified: %d, must be in range [0,7]"%(options.MSPL))
                 return False
             pass
         pass
@@ -154,7 +154,7 @@ def launchSCurve(**kwargs):
     # Check minimum arguments
     import os
     if cardName is None:
-        print("launchSCurve(): You must provide either an AMC network alias (e.g. "eagle60") or an AMC ip address. Exiting")
+        print("launchSCurve(): You must provide either an AMC network alias (e.g. 'eagle60') or an AMC ip address. Exiting")
         exit(os.EX_USAGE)
     if filename is None:
         print("launchSCurve(): You must provide a filename for this scurve. Exiting")
