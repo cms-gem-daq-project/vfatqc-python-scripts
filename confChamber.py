@@ -18,7 +18,7 @@ parser.add_option("--compare", action="store_true", dest="compare",
                   help="When supplied with {chConfig, filename, vfatConfig} compares current reg values with those stored in input files", metavar="compare")
 parser.add_option("--filename", type="string", dest="filename", default=None,
                   help="Specify file containing settings information", metavar="filename")
-parser.add_option("-l","--latency", type="int", dest = "latency", default = None,
+parser.add_option("--lat", type="int", dest = "latency", default = None,
                   help="Specify Latency", metavar="latency")
 parser.add_option("--run", action="store_true", dest="run",
                   help="Set VFATs to run mode", metavar="run")

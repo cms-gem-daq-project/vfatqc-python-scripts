@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     parser.add_option("--config", action="store_true", dest="config",
                       help="Set Configuration from simple txt files", metavar="config")
-    parser.add_option("-l","--latency", type="int", dest = "latency", default = None,
+    parser.add_option("--lat", type="int", dest = "latency", default = None,
                       help="Specify Latency", metavar="latency")
     parser.add_option("--run", action="store_true", dest="run",
                       help="Set VFATs to run mode", metavar="run")
