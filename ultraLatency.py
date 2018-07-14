@@ -29,6 +29,8 @@ if __name__ == '__main__':
     parser.add_option("--randoms", type="int", default=0, dest="randoms",
                       help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
                       metavar="randoms")
+    parser.add_option("--shelf", type="int", dest="shelf",default=1,
+	            	  help="uTCA shelf to access", metavar="shelf")
     parser.add_option("--t3trig", action="store_true", dest="t3trig",
                       help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
     parser.add_option("--throttle", type="int", default=0, dest="throttle",
