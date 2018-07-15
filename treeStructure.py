@@ -69,12 +69,13 @@ class gemDacCalTreeStructure(gemGenericTree):
         name        TName of the TTree
         regX        Register that is being calibrated (dependent variable)
         valY        Value calibration is being performed against (e.g. scurveMean, or charge)
-        isGblDac    DAC is common across entire VFAT (True) or is specific for a given channel (False)
+        isGblDac    DAC is common across entire VFAT (True) or is specific for a given channel (False);
+                    if True the vfatCH branch will be written as 128 for all entries
         storeRoot   Store ROOT Objects Associated with this Dac Calibration
         description Phrase describing the TTree
         """
         
-        gemGenericTree.__init__(name=name, description=description)
+        gemGenericTree.__init__(self,name=name,description=description)
 
         self.isGblDac = isGblDac
         self.storeRoot = storeRoot
@@ -94,10 +95,11 @@ class gemDacCalTreeStructure(gemGenericTree):
         self.dacValY_Err = array( 'i', [0] )
         self.gemTree.Branch( 'dacValY_Err', self.dacValY, 'dacValY_Err/I')
         
-        # Do not store channel level information for a global DAC
+        # Set the channel number to 128 Normally 0 to 127
         if self.isGblDac:
-            branch_vfatCH = self.gemTree.GetBranch('vfatCH')
-            self.gemTree.GetListOfBranches().Remove(branch_vfatCH)
+            self.vfatCH[0] = 128 
+            #branch_vfatCH = self.gemTree.GetBranch('vfatCH')
+            #self.gemTree.GetListOfBranches().Remove(branch_vfatCH)
 
         if self.storeRoot:
             self.g_dacCal = r.TGraphErrors()
@@ -142,9 +144,11 @@ class gemDacCalTreeStructure(gemGenericTree):
 
         if self.storeRoot:
             if "g_dacCal" in kwargs:
-                self.g_dacCal = kwargs["g_dacCal"].Clone()
+                #self.g_dacCal = kwargs["g_dacCal"].Clone()
+                kwargs["g_dacCal"].Copy(self.g_dacCal)
             if "func_dacFit" in kwargs:
-                self.func_dacFit = kwargs["func_dacFit"].Clone()
+                #self.func_dacFit = kwargs["func_dacFit"].Clone()
+                kwargs["func_dacFit"].Copy(self.func_dacFit)
 
         self.gemTree.Fill()
         return
@@ -156,7 +160,7 @@ class gemTreeStructure(gemGenericTree):
         name        TName of the TTree
         description Phrase describing the TTree
         """
-        gemGenericTree.__init__(name=name, description=description,scanmode=scanmode)
+        gemGenericTree.__init__(self,name=name,description=description,scanmode=scanmode)
 
         self.calPhase = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'calPhase', self.calPhase, 'calPhase/I' )
