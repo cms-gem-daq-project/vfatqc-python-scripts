@@ -5,8 +5,7 @@ By: Brian Dorney (brian.l.dorney@cern.ch)
 """
 
 if __name__ == '__main__':
-    from gempython.gemplotting.utils.anautilities import getEmptyPerVFATList, parseCalFile, rejectOutliersMADOneSided
-    from array import array
+    from gempython.gemplotting.utils.anautilities import parseCalFile
     from ctypes import *
     from gempython.gemplotting.fitting.fitScanData import fitScanData
     from gempython.tools.vfat_user_functions_xhal import *
@@ -16,7 +15,7 @@ if __name__ == '__main__':
     from gempython.vfatqc.qcoptions import parser
     from gempython.vfatqc.qcutilities import launchSCurve
     
-    import datetime, subprocess, sys
+    import datetime, subprocess, time
     import numpy as np
     import os
    
@@ -256,8 +255,8 @@ if __name__ == '__main__':
     dict_cal_trimDAC2fC_func = ndict() # dict_cal_trimDAC2fC[vfat][chan] = TF1 object
     for vfat in range(0,24):
         # skip masked vfats
-        if (options.vfatmask >> vfat) & 0x1: 
-            continue
+        #if (options.vfatmask >> vfat) & 0x1: 
+        #    continue
         
         func_charge_vs_calDac = r.TF1(
                 "func_charge_vs_calDac_vfat%d"%(vfat),
@@ -286,11 +285,21 @@ if __name__ == '__main__':
         # Determine scurve point of interest by channel
         print("fitting trimDAC vs. scurve mean for vfat %d"%vfat)
         for chan in range(chMin,chMax):
+            #print("fitting trimDAC vs. scurve mean for vfat %d chan"%(vfat,chan))
             idx = 128*vfat + chan
 
+            # Declare the TGraphErrors storing the trimDAC calibration for this ARM DAC
             g_TrimDAC_vs_scurveMean = r.TGraphErrors(len(dict_scurveFitResults))
             g_TrimDAC_vs_scurveMean.SetName("gCal_trimARM_vs_scurveMean_vfat%d_chan%d_gblArmDAC%d"%(vfat,chan,dict_thrArmDacPerVFAT[vfat]))
+
+            # Declare the fit function 
+            func_TrimDAC_vs_scurveMean = r.TF1(
+                    "func_TrimDAC_vs_scurveMean_vfat%d_chan%d_gblArmDAC%d"%(vfat,chan,dict_thrArmDacPerVFAT[vfat]),
+                    "[0]*x+[1]",
+                    min(listOfTrimPoints),
+                    max(listOfTrimPoints))
             
+            numValidChanFits = 0
             for idx,trimPt in enumerate(dict_scurveFitResults.keys()):
                 if trimPt[1] > 0: # negative trimVal
                     trimVal = trimPt[0] * -1
@@ -316,27 +325,37 @@ if __name__ == '__main__':
                         vfatID = vfatIDvals[vfat],
                         vfatN = vfat)
 
-            # Fit g_TrimDAC_vs_scurveMean using y=mx+b
-            func_TrimDAC_vs_scurveMean = r.TF1(
-                    "func_TrimDAC_vs_scurveMean_vfat%d_chan%d_gblArmDAC%d"%(vfat,chan,dict_thrArmDacPerVFAT[vfat]),
-                    "[0]*x+[1]",
-                    min(listOfTrimPoints),
-                    max(listOfTrimPoints))
-            g_TrimDAC_vs_scurveMean.Fit(func_TrimDAC_vs_scurveMean, "RQ")
+                # Store the number of valid scurve fits for this channel
+                numValidChanFits+=dict_scurveFitResults[trimPt][6][vfat][chan]
 
-            # Determine the trim value and polarity to shift this channel to the 
-            # global arm dac threshold (CFG_THR_ARM_DAC) for this VFAT
-            armDacCharge = func_scurveMean_vs_thrArmDac.Eval(dict_thrArmDacPerVFAT[vfat])
-            trimVal = g_TrimDAC_vs_scurveMean.Eval(armDacCharge)
-            if trimVal > 0:
-                cArray_trimPol[128*vfat+chan] = 0
+            if numValidChanFits >=2: # Can Make a line
+                # Fit g_TrimDAC_vs_scurveMean
+                fitResult = g_TrimDAC_vs_scurveMean.Fit(func_TrimDAC_vs_scurveMean, "RQ")
+                fitEmpty = fitResult.IsEmpty()
+                if fitEmpty:
+                    print("trimChamberV3.py main(): found trimDAC fit of vfat %d chan%d to be empty!!"%(vfat,chan))
+                fitValid = fitResult.IsValid()
+                if not fitValid:
+                    print("trimChamberV3.py main(): found trimDAC fit of vfat %d chan %d to be not valid!!"%(vfat,chan))
+                    cArray_trimVal[128*vfat+chan] = 0
+                    cArray_trimPol[128*vfat+chan] = 0
+                else:
+                    # Determine the trim value and polarity to shift this channel to the 
+                    # global arm dac threshold (CFG_THR_ARM_DAC) for this VFAT
+                    armDacCharge = func_scurveMean_vs_thrArmDac.Eval(dict_thrArmDacPerVFAT[vfat])
+                    trimVal = g_TrimDAC_vs_scurveMean.Eval(armDacCharge)
+                    if trimVal > 0:
+                        cArray_trimPol[128*vfat+chan] = 0
+                    else:
+                        trimVal = abs(trimVal)
+                        cArray_trimPol[128*vfat+chan] = 1
+
+                    if trimVal > 0x3F: # If trimVal is over the max, reset to the max
+                        trimVal = 0x3F
+                    cArray_trimVal[128*vfat+chan] = int(trimVal)
             else:
-                trimVal = abs(trimVal)
-                cArray_trimPol[128*vfat+chan] = 1
-
-            if trimVal > 0x3F: # If trimVal is over the max, reset to the max
-                trimVal = 0x3F
-            cArray_trimVal[128*vfat+chan] = int(trimVal)
+                cArray_trimVal[128*vfat+chan] = 0
+                cArray_trimPol[128*vfat+chan] = 0
 
             dict_cal_trimDAC2fC_graph[vfat][chan] = g_TrimDAC_vs_scurveMean
             dict_cal_trimDAC2fC_func[vfat][chan] = func_TrimDAC_vs_scurveMean
@@ -353,7 +372,7 @@ if __name__ == '__main__':
 
     # Write output
     for vfat in range(0,24):
-        dirVFAT = outF.mkdir("VFAT%i"%vfat)
+        dirVFAT = outFile.mkdir("VFAT%i"%vfat)
         for chan in range(chMin,chMax):
             dirChan = dirVFAT.mkdir("chan%i"%chan)
             dirChan.cd()
