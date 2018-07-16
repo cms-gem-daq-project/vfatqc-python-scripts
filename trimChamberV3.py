@@ -254,10 +254,6 @@ if __name__ == '__main__':
     dict_cal_trimDAC2fC_graph = ndict() # dict_cal_trimDAC2fC[vfat][chan] = TGraphErrors object
     dict_cal_trimDAC2fC_func = ndict() # dict_cal_trimDAC2fC[vfat][chan] = TF1 object
     for vfat in range(0,24):
-        # skip masked vfats
-        #if (options.vfatmask >> vfat) & 0x1: 
-        #    continue
-        
         func_charge_vs_calDac = r.TF1(
                 "func_charge_vs_calDac_vfat%d"%(vfat),
                 "[0]*x+[1]",
@@ -291,6 +287,7 @@ if __name__ == '__main__':
             # Declare the TGraphErrors storing the trimDAC calibration for this ARM DAC
             g_TrimDAC_vs_scurveMean = r.TGraphErrors(len(dict_scurveFitResults))
             g_TrimDAC_vs_scurveMean.SetName("gCal_trimARM_vs_scurveMean_vfat%d_chan%d_gblArmDAC%d"%(vfat,chan,dict_thrArmDacPerVFAT[vfat]))
+            g_TrimDAC_vs_scurveMean.SetMarkerStyle(24)
 
             # Declare the fit function 
             func_TrimDAC_vs_scurveMean = r.TF1(
@@ -311,11 +308,6 @@ if __name__ == '__main__':
                         dict_scurveFitResults[trimPt][0][vfat][chan],
                         trimVal)
 
-                g_TrimDAC_vs_scurveMean.SetPointError(
-                        idx,
-                        dict_scurveFitResults[trimPt][1][vfat][chan],
-                        0)
-
                 # Store output trim data
                 trimDacArmTree.fill(
                         dacValX = dict_scurveFitResults[trimPt][0][vfat][chan],
@@ -330,7 +322,7 @@ if __name__ == '__main__':
 
             if numValidChanFits >=2: # Can Make a line
                 # Fit g_TrimDAC_vs_scurveMean
-                fitResult = g_TrimDAC_vs_scurveMean.Fit(func_TrimDAC_vs_scurveMean, "RQ")
+                fitResult = g_TrimDAC_vs_scurveMean.Fit(func_TrimDAC_vs_scurveMean, "QRS")
                 fitEmpty = fitResult.IsEmpty()
                 if fitEmpty:
                     print("trimChamberV3.py main(): found trimDAC fit of vfat %d chan%d to be empty!!"%(vfat,chan))
