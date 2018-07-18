@@ -96,15 +96,15 @@ if __name__ == '__main__':
     vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
     print 'opened connection'
     
-    if options.gtx in chamber_vfatDACSettings.keys():
-        print("Configuring VFATs with chamber_vfatDACSettings dictionary values")
-        for key in chamber_vfatDACSettings[options.gtx]:
-            vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[options.gtx][key]
-            pass
-        pass
-    vfatBoard.paramsDefVals['CFG_THR_ARM_DAC']=options.armDAC
-    vfatBoard.biasAllVFATs(options.vfatmask)
-    print('biased VFATs')
+    #if options.gtx in chamber_vfatDACSettings.keys():
+    #    print("Configuring VFATs with chamber_vfatDACSettings dictionary values")
+    #    for key in chamber_vfatDACSettings[options.gtx]:
+    #        vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[options.gtx][key]
+    #        pass
+    #    pass
+    #vfatBoard.paramsDefVals['CFG_THR_ARM_DAC']=options.armDAC
+    #vfatBoard.biasAllVFATs(options.vfatmask)
+    #print('biased VFATs')
     
     import ROOT as r
     if options.vfatConfig is not None:
@@ -124,6 +124,8 @@ if __name__ == '__main__':
         except IOError as e:
             print '%s does not seem to exist or is not readable'%options.filename
             print e
+    else:
+        vfatBoard.setVFATThresholdAll(mask=options.vfatmask, vt1=options.armDAC)
         
     # Get all chip IDs
     vfatIDvals = vfatBoard.getAllChipIDs(options.vfatmask)
@@ -353,7 +355,7 @@ if __name__ == '__main__':
             dict_cal_trimDAC2fC_func[vfat][chan] = func_TrimDAC_vs_scurveMean
             
             # Write Channel Configuration
-            chConfig.write('%d\t%d\t%d\t%d\t%d\t%d'%(
+            chConfig.write('%d\t%d\t%d\t%d\t%d\t%d\n'%(
                     vfat,
                     vfatIDvals[vfat],
                     chan,
