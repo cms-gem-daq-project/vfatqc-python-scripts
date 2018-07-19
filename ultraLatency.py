@@ -20,6 +20,8 @@ if __name__ == '__main__':
     
     parser.add_option("--amc13local", action="store_true", dest="amc13local",
                       help="Set up for using AMC13 local trigger generator", metavar="amc13local")
+    parser.add_option("--chan", type="int", dest="chan",
+                      help="Channel on the VFATs on which to run the latency scan. This only applies when calling the --internal option; otherwise the default value is used.", metavar="chan", default=0)
     parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
                       help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
     parser.add_option("--filename", type="string", dest="filename", default="LatencyScanData.root",
@@ -42,8 +44,6 @@ if __name__ == '__main__':
                       metavar="voltageStepPulse")
     parser.add_option("--vt2", type="int", dest="vt2",
                       help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0) 
-    parser.add_option("--chan", type="int", dest="chan",
-                      help="Channel on the VFATs on which to run the latency scan", metavar="chan", default=0)
 
     parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
     (options, args) = parser.parse_args()
