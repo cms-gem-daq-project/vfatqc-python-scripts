@@ -41,8 +41,10 @@ if __name__ == '__main__':
                       help="Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
                       metavar="voltageStepPulse")
     parser.add_option("--vt2", type="int", dest="vt2",
-                      help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0)
-    
+                      help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0) 
+    parser.add_option("--chan", type="int", dest="chan",
+                      help="Channel on the VFATs on which to run the latency scan", metavar="chan", default=0)
+
     parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
     (options, args) = parser.parse_args()
     
@@ -169,7 +171,7 @@ if __name__ == '__main__':
         enableCalPulse=False
         if options.internal:
             enableCalPulse=True
-            scanChan=0
+            scanChan=options.chan
             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                 vfatBoard.parentOH.setTriggerSource(0x1)
             
