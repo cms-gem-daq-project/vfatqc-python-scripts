@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_option("--amc13local", action="store_true", dest="amc13local",
                       help="Set up for using AMC13 local trigger generator", metavar="amc13local")
     parser.add_option("--chan", type="int", dest="chan",
-                      help="Channel on the VFATs on which to run the latency scan. This only applies when calling the --internal option; otherwise the default value is used.", metavar="chan", default=0)
+                      help="Channel on the VFATs on which to run the latency scan. This only applies when calling the --internal option; otherwise the OR of all channels is used.", metavar="chan", default=0)
     parser.add_option("--fakeTTC", action="store_true", dest="fakeTTC",
                       help="Set up for using AMC13 local TTC generator", metavar="fakeTTC")
     parser.add_option("--filename", type="string", dest="filename", default="LatencyScanData.root",
