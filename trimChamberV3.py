@@ -79,7 +79,7 @@ if __name__ == '__main__':
         dataPath = os.getenv('DATA_PATH')
         startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
         print(startTime)
-        dirPath = '%s/%s/'%(dataPath,chamber_config[options.gtx])
+        dirPath = '%s/%s/trim'%(dataPath,chamber_config[options.gtx])
         runCommand( ["unlink","%s/current"%dirPath] )
         runCommand( ['mkdir','-p','%s/%s'%(dirPath,startTime)])
         runCommand( ["ln","-s",'%s/%s'%(dirPath,startTime),'%s/current'%dirPath] )
@@ -95,16 +95,6 @@ if __name__ == '__main__':
 
     vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
     print 'opened connection'
-    
-    #if options.gtx in chamber_vfatDACSettings.keys():
-    #    print("Configuring VFATs with chamber_vfatDACSettings dictionary values")
-    #    for key in chamber_vfatDACSettings[options.gtx]:
-    #        vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[options.gtx][key]
-    #        pass
-    #    pass
-    #vfatBoard.paramsDefVals['CFG_THR_ARM_DAC']=options.armDAC
-    #vfatBoard.biasAllVFATs(options.vfatmask)
-    #print('biased VFATs')
     
     import ROOT as r
     if options.vfatConfig is not None:
