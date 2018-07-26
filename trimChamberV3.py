@@ -280,6 +280,7 @@ if __name__ == '__main__':
             g_TrimDAC_vs_scurveMean = r.TGraphErrors(len(dict_scurveFitResults))
             g_TrimDAC_vs_scurveMean.SetName("gCal_trimARM_vs_scurveMean_vfat%d_chan%d_gblArmDAC%d"%(vfat,chan,dict_thrArmDacPerVFAT[vfat]))
             g_TrimDAC_vs_scurveMean.SetMarkerStyle(24)
+            g_TrimDAC_vs_scurveMean.SetTitle("VFAT{0} Channel {1};scurve mean #left(fC#right);trimDAC".format(vfat, chan))
 
             # Declare the fit function 
             func_TrimDAC_vs_scurveMean = r.TF1(
