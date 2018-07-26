@@ -88,7 +88,7 @@ if __name__ == '__main__':
         dirPath = options.dirPath
         pass
   
-    # Declare the hardware board and bias all vfats
+    # Declare the hardware board
     if options.cardName is None:
         print("you must specify the --cardName argument")
         exit(os.EX_USAGE)
