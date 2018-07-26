@@ -1,3 +1,51 @@
+def getChannelRegisters(vfatBoard, mask):
+    """
+    Returns a structured numpy array that stores the channel
+    register information.  The dtypes of the output numpy array
+    are:
+
+        CALPULSE_ENABLE
+        MASK
+        ZCC_TRIM_POLARITY
+        ZCC_TRIM_AMPLITUDE
+        ARM_TRIM_POLARITY
+        ARM_TRIM_AMPLITUDE
+   
+    The numpy array will have an index that goes as:
+
+        idx = 128 * vfatN + channel
+
+    vfatBoard - an instance of the HwVFAT class
+    mask - vfat mask to apply
+    """
+    
+    import os
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        print("getChannelRegisters() does not support for v2b electronics")
+        exit(os.EX_USAGE)
+
+    chanRegData = vfatBoard.getAllChannelRegisters(mask)
+
+    import numpy as np
+    dataType=[
+            ('CALPULSE_ENABLE','bool'),
+            ('MASK','bool'),
+            ('ZCC_TRIM_POLARITY','bool'),
+            ('ZCC_TRIM_AMPLITUDE','uint8'),
+            ('ARM_TRIM_POLARITY','bool'),
+            ('ARM_TRIM_AMPLITUDE','uint8')]
+    chanRegArray = np.zeros(3072, dtype=dataType)
+
+    for idx in range(0,3073):
+        chanRegArray[idx]['CALPULSE_ENABLE'] = (chanRegData[idx] >> 15) & 0x1
+        chanRegArray[idx]['MASK'] = (chanRegData[idx] >> 14) & 0x1
+        chanRegArray[idx]['ZCC_TRIM_POLARITY'] = (chanRegData[idx] >> 13) & 0x1
+        chanRegArray[idx]['ZCC_TRIM_AMPLITUDE'] = (chanRegData[idx] >> 7) & 0x3F
+        chanRegArray[idx]['ARM_TRIM_POLARITY'] = (chanRegData[idx] >> 6) & 0x1
+        chanRegArray[idx]['ARM_TRIM_AMPLITUDE'] = chanRegData[idx] & 0x3F
+
+    return chanRegArray
+
 def inputOptionsValid(options, amc_major_fw_ver):
     """
     Sanity check on input options

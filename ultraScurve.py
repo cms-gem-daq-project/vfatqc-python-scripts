@@ -63,7 +63,7 @@ if __name__ == '__main__':
     print 'opened connection'
 
     # Check options
-    from gempython.vfatqc.qcutilities import inputOptionsValid
+    from gempython.vfatqc.qcutilities import getChannelRegisters, inputOptionsValid
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
         pass
@@ -135,6 +135,8 @@ if __name__ == '__main__':
             vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", mask)
             vthrvals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
             
+            chanRegData = getChannelRegisters(vfatBoard,mask)
+
             pass
 
         # Make sure no channels are receiving a cal pulse
@@ -190,8 +192,6 @@ if __name__ == '__main__':
                                     vthr = vt1vals[vfat]
                                     )
                         else:
-                            #trimDAC = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
-                            #trimPolarity = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_POLARITY"%(chan)))
                             gemData.fill(
                                     calPhase = calPhasevals[vfat],
                                     isCurrentPulse = isCurrentPulse,
@@ -201,8 +201,8 @@ if __name__ == '__main__':
                                     Nev = (scanData[vcalDAC] & 0xffff),
                                     Nhits = ((scanData[vcalDAC]>>16) & 0xffff),
                                     pDel = options.pDel,
-                                    #trimDAC = trimDAC,
-                                    #trimPolarity = trimPolarity,
+                                    trimDAC = chanRegData[chan+vfat*128]['ARM_TRIM_AMPLITUDE'],
+                                    trimPolarity = chanRegData[chan+vfat*128]['ARM_TRIM_POLARITY'],
                                     vcal = (options.scanmin + (vcalDAC - vfat*scanDataSizeVFAT) * options.stepSize),
                                     vfatCH = chan,
                                     #vfatID = vfatIDvals[vfat],
