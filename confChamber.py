@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
             dict_readBack = {}
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL" }
+                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
                 print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
                 readBackCheckV3(chTree, dict_readBack, vfatBoard, options.vfatmask)
     
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
             dict_readBack = {}
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL" }
+                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
                 print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
                 readBackCheckV3(chTree, dict_readBack, vfatBoard, options.vfatmask)
     
@@ -146,7 +146,7 @@ if __name__ == '__main__':
             
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
                 print 'Comparing Curently Stored VFAT Registers with %s'%options.vfatConfig
-                dict_readBack = { "vt1":"CFG_THR_ARM_DAC" }
+                dict_readBack = { "vfatID":HW_CHIP_ID, "vt1":"CFG_THR_ARM_DAC" }
                 readBackCheck(vfatTree, dict_readBack, vfatBoard, options.vfatmask, options.vt1bump)
     
         except Exception as e:
