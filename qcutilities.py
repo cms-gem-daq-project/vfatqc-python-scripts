@@ -36,7 +36,9 @@ def getChannelRegisters(vfatBoard, mask):
             ('ARM_TRIM_AMPLITUDE','uint8')]
     chanRegArray = np.zeros(3072, dtype=dataType)
 
-    for idx in range(0,3073):
+    for idx in range(0,3072):
+        if (mask >> (idx // 128) ) & 0x1:
+            continue
         chanRegArray[idx]['CALPULSE_ENABLE'] = (chanRegData[idx] >> 15) & 0x1
         chanRegArray[idx]['MASK'] = (chanRegData[idx] >> 14) & 0x1
         chanRegArray[idx]['ZCC_TRIM_POLARITY'] = (chanRegData[idx] >> 13) & 0x1
@@ -409,7 +411,6 @@ def readBackCheckV3(rootTree, dict_Names, vfatBoard, mask=0x0, vt1bump=0):
     # Get data from tree
     list_bNames = dict_Names.keys()
     list_bNames.append('vfatN')
-    list_bNames.append('vfatID')
     if "mask" in dict_Names.keys() or "trimDAC" in dict_Names.keys() or "trimPolarity" in dict_Names.keys():
         list_bNames.append('vfatCH')
     array_writeVals = rp.tree2array(tree=rootTree, branches=list_bNames)
@@ -424,6 +425,9 @@ def readBackCheckV3(rootTree, dict_Names, vfatBoard, mask=0x0, vt1bump=0):
         if regName == "VFAT_CHANNELS.CHANNEL": #Channel Register
             regValues = getChannelRegisters(vfatBoard,mask)
             for vfat in range(0,24):
+                if (mask >> vfat) & 0x1:
+                    continue
+
                 for chan in range(0,128):
                     writeValsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
                     writeValsPerVFAT = writeValsPerVFAT[ writeValsPerVFAT['vfatCH'] == chan]
@@ -439,21 +443,24 @@ def readBackCheckV3(rootTree, dict_Names, vfatBoard, mask=0x0, vt1bump=0):
                             print "VFAT%i Chan%i: %s mismatch, write val = %i, readback = %i"%(vfat, chan, bName, writeValOfReg, regValues[128*vfat+chan]['ARM_TRIM_POLARITY'])
         elif regName == "HW_CHIP_ID": #ChipID
             regValues = vfatBoard.getAllChipIDs(mask)
-            for vfat in enumerate(regValues):
+            for vfat,readBackVal in enumerate(regValues):
+                if (mask >> vfat) & 0x1:
+                    continue
                 valsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
                 valOfReg = np.asscalar(np.unique(valsPerVFAT['%s'%bName]))
-                if valOfReg != regValues[vfat]:
-                    print "VFAT%i: %s mismatch, expected = %s, readback = %s"%(vfat, regName, hex(valOfReg), hex(regValues[vfat]))
+                if valOfReg != readBackVal:
+                    print "VFAT%i: %s mismatch, expected = %s, readback = %s"%(vfat, regName, hex(valOfReg), hex(readBackVal))
         else: #VFAT Register
             regValues = vfatBoard.readAllVFATs(regName, mask)
-
-            for vfat in enumerate(regValues):
+            for vfat,readBackVal in enumerate(regValues):
+                if (mask >> vfat) & 0x1:
+                    continue
                 writeValsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
                 writeValOfReg = np.asscalar(writeValsPerVFAT['%s'%bName])
                 if regName == "CFG_THR_ARM_DAC":
                     writeValOfReg+=vt1bump
-                if writeValOfReg != regValues[vfat]:
-                    print "VFAT%i: %s mismatch, write val = %i, readback = %i"%(vfat, regName, writeValOfReg, regValues[vfat])
+                if writeValOfReg != readBackVal:
+                    print "VFAT%i: %s mismatch, write val = %i, readback = %i"%(vfat, regName, writeValOfReg, readBackVal)
 
     return
 
