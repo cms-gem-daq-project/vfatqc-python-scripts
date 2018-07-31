@@ -3,26 +3,25 @@
 def launch(args):
   return launchArgs(*args)
 
-def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nevts, stepSize=1,
+def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax, nevts, startTime, stepSize=1,
                vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
                config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
-               internal=False, debug=False):
-  import datetime,os,sys
+               internal=False, debug=False, voltageStepPulse=False):
+  import os,sys
   import subprocess
   from subprocess import CalledProcessError
   from gempython.gemplotting.mapping.chamberInfo import chamber_config
   from gempython.utils.wrappers import runCommand
 
-  startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
   dataPath = os.getenv('DATA_PATH')
-
+ # print 'dataPath = ', dataPath
   scanType = "vt1"
   dataType = "VT1Threshold"
 
   #Build Commands
   setupCmds = []
   preCmd = None
-  cmd = ["%s"%(tool),"-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf), "--nevts=%i"%(nevts), "--vfatmask=0x%x"%(vfatmask)]
+  cmd = ["%s"%(tool),"--cardName=%s"%(cardName),"-g%s"%(link),"--shelf=%s"%(shelf), "--nevts=%s"%(nevts), "--vfatmask=0x%x"%(vfatmask)]
   if debug:
     cmd.append( "--debug")
   if tool == "ultraScurve.py":
@@ -36,7 +35,7 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     cmd.append( "--filename=%s/SCurveData.root"%dirPath )
     if mspl:
       cmd.append( "--mspl=%i"%(mspl) )
-    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
+    preCmd = ["confChamber.py","-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
       pass
@@ -44,10 +43,11 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
   elif tool == "trimChamber.py":
     scanType = "trim"
     dataType = None
-    preCmd = ["confChamber.py","-s%i"%(slot),"-g%i"%(link),"--shelf=%i"%(shelf)]
+    preCmd = ["confChamber.py","-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
       pass
+#    print "link is ", link
     dirPath = "%s/%s/%s/z%f/"%(dataPath,chamber_config[link],scanType,ztrim)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
@@ -87,7 +87,7 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     pass
   elif tool == "fastLatency.py":
     scanType = "latency/trig"
-    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
+    dirPath = "%s/%s/%s/"%(dataPath,chamber,scanType)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
@@ -98,7 +98,11 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     pass
   elif tool == "ultraLatency.py":
     scanType = "latency/trk"
-    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
+    dirPath = "%s%s/%s/"%(dataPath,chamber,scanType)
+#    print 'dirPath = ', dirPath
+#    print 'startTime = ', startTime, ' while str version = ', str(startTime)
+#    print "type of dirpath is ", type(dirPath)
+#    print "type of startTime is ", type(startTime)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
@@ -125,17 +129,22 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
     if internal:
       cmd.append( "--internal")
       pass
+    if voltageStepPulse:
+      cmd.append( "--voltageStepPulse")
+      pass
     pass
 
   #Execute Commands
   try:
     for setupCmd in setupCmds:
+#      print setupCmd
       runCommand(setupCmd)
       pass
     log = file("%s/scanLog.log"%(dirPath),"w")
     if preCmd and config:
       runCommand(preCmd,log)
       pass
+#    print "cmd list: ", cmd
     runCommand(cmd,log)
   except CalledProcessError as e:
     print "Caught exception",e
@@ -144,6 +153,7 @@ def launchArgs(tool, shelf, slot, link, chamber, vfatmask, scanmin, scanmax, nev
 
 if __name__ == '__main__':
 
+  import datetime
   import sys,os,signal
   import subprocess
   import itertools
@@ -166,8 +176,8 @@ if __name__ == '__main__':
                     metavar="randoms")
   parser.add_option("--series", action="store_true", dest="series",
                     help="Run tests in series (default is false)", metavar="series")
-  parser.add_option("--stepSize", type="int", dest="stepSize", 
-                    help="Supply a step size to the latency scan from scanmin to scanmax", metavar="stepSize", default=1)
+  parser.add_option("--shelf", type="int", dest="shelf",default=1,
+                    help="uTCA shelf to access", metavar="shelf")
   parser.add_option("--t3trig", action="store_true", dest="t3trig",
                     help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
   parser.add_option("--throttle", type="int", default=0, dest="throttle",
@@ -176,6 +186,8 @@ if __name__ == '__main__':
                     help="Tool to run (scan or analyze", metavar="tool")
   parser.add_option("--trkdata", action="store_true", dest="trkdata",
                     help="Run a per-VFAT VT1 scan using tracking data (default is to use trigger data)", metavar="trkdata")
+  parser.add_option("--voltageStepPulse", action="store_true", dest="voltageStepPulse",
+                    help="Calibration Module is set to use voltage step pulsing instead of default current pulse injection", metavar="voltageStepPulse")
   parser.add_option("--vt1", type="int", dest="vt1", default=100,
                     help="Specify VT1 to use", metavar="vt1")
   parser.add_option("--vt2", type="int", dest="vt2", default=0,
@@ -186,6 +198,8 @@ if __name__ == '__main__':
   envCheck('DATA_PATH')
   envCheck('BUILD_HOME')
 
+  startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
+#  print "startTime upon declaration: ", startTime
   if options.tool not in ["trimChamber.py","ultraThreshold.py","ultraLatency.py","fastLatency.py","ultraScurve.py"]:
     print "Invalid tool specified"
     exit(1)
@@ -194,7 +208,6 @@ if __name__ == '__main__':
     print list(
             itertools.izip([options.tool for x in range(len(chamber_config))],
                          [options.shelf for x in range(len(chamber_config))],
-                         [options.slot for x in range(len(chamber_config))],
                          chamber_config.keys(),
                          chamber_config.values(),
                          [hex(vfatmask) for vfatmask in chamber_vfatMask.values()],
@@ -218,19 +231,23 @@ if __name__ == '__main__':
                          )
             )
   if options.series:
-    print "Running jobs in serial mode"
+#    print "Running jobs in serial mode"
+#    print "Chamber config keys: ", chamber_config.keys()
     for link in chamber_config.keys():
       chamber = chamber_config[link]
       vfatMask = chamber_vfatMask[link]
+#      print "chamber is ", chamber
+#      print "vfatMask is ", vfatMask
       launch([ options.tool,
+               options.cardName,
                options.shelf,
-               options.slot,
                link,
                chamber,
                vfatMask,
                options.scanmin,
                options.scanmax,
                options.nevts, 
+               startTime,
                options.stepSize,
                options.vt1,
                options.vt2,
@@ -244,7 +261,8 @@ if __name__ == '__main__':
                options.randoms,
                options.throttle,
                options.internal,
-               options.debug
+               options.debug,
+               options.voltageStepPulse
       ])
       pass
     pass
@@ -259,7 +277,6 @@ if __name__ == '__main__':
       res = pool.map_async(launch,
                            itertools.izip([options.tool for x in range(len(chamber_config))],
                                           [options.shelf for x in range(len(chamber_config))],
-                                          [options.slot for x in range(len(chamber_config))],
                                           chamber_config.keys(),
                                           chamber_config.values(),
                                           chamber_vfatMask.values(),
