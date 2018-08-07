@@ -14,7 +14,6 @@ def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax,
   from gempython.utils.wrappers import runCommand
 
   dataPath = os.getenv('DATA_PATH')
- # print 'dataPath = ', dataPath
   scanType = "vt1"
   dataType = "VT1Threshold"
 
@@ -35,7 +34,7 @@ def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax,
     cmd.append( "--filename=%s/SCurveData.root"%dirPath )
     if mspl:
       cmd.append( "--mspl=%i"%(mspl) )
-    preCmd = ["confChamber.py","-g%i"%(link),"--shelf=%i"%(shelf)]
+    preCmd = ["confChamber.py","-cardName=%s"%(cardName),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
       pass
@@ -43,11 +42,10 @@ def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax,
   elif tool == "trimChamber.py":
     scanType = "trim"
     dataType = None
-    preCmd = ["confChamber.py","-g%i"%(link),"--shelf=%i"%(shelf)]
+    preCmd = ["confChamber.py","-cardName=%s"%(cardName),"-g%i"%(link),"--shelf=%i"%(shelf)]
     if vt1 in range(256):
       preCmd.append("--vt1=%i"%(vt1))
       pass
-#    print "link is ", link
     dirPath = "%s/%s/%s/z%f/"%(dataPath,chamber_config[link],scanType,ztrim)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
@@ -99,10 +97,6 @@ def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax,
   elif tool == "ultraLatency.py":
     scanType = "latency/trk"
     dirPath = "%s%s/%s/"%(dataPath,chamber,scanType)
-#    print 'dirPath = ', dirPath
-#    print 'startTime = ', startTime, ' while str version = ', str(startTime)
-#    print "type of dirpath is ", type(dirPath)
-#    print "type of startTime is ", type(startTime)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
@@ -137,14 +131,12 @@ def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax,
   #Execute Commands
   try:
     for setupCmd in setupCmds:
-#      print setupCmd
       runCommand(setupCmd)
       pass
     log = file("%s/scanLog.log"%(dirPath),"w")
     if preCmd and config:
       runCommand(preCmd,log)
       pass
-#    print "cmd list: ", cmd
     runCommand(cmd,log)
   except CalledProcessError as e:
     print "Caught exception",e
@@ -232,12 +224,9 @@ if __name__ == '__main__':
             )
   if options.series:
 #    print "Running jobs in serial mode"
-#    print "Chamber config keys: ", chamber_config.keys()
     for link in chamber_config.keys():
       chamber = chamber_config[link]
       vfatMask = chamber_vfatMask[link]
-#      print "chamber is ", chamber
-#      print "vfatMask is ", vfatMask
       launch([ options.tool,
                options.cardName,
                options.shelf,
@@ -267,6 +256,8 @@ if __name__ == '__main__':
       pass
     pass
   else:
+    print("Cannot run links in parallel, there is only one VFAT_DAQ_MONITOR")
+    exit(os.EX_USAGE)
     print "Running jobs in parallel mode (using Pool(12))"
     freeze_support()
     # from: https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
