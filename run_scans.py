@@ -3,7 +3,7 @@
 def launch(args):
   return launchArgs(*args)
 
-def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax, nevts, startTime, stepSize=1,
+def launchArgs(tool, cardName, shelf, link, vfatmask, scanmin, scanmax, nevts, startTime, stepSize=1,
                vt1=None,vt2=0,mspl=None,perchannel=False,trkdata=False,ztrim=4.0,
                config=False,amc13local=False,t3trig=False, randoms=0, throttle=0,
                internal=False, debug=False, voltageStepPulse=False):
@@ -85,7 +85,7 @@ def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax,
     pass
   elif tool == "fastLatency.py":
     scanType = "latency/trig"
-    dirPath = "%s/%s/%s/"%(dataPath,chamber,scanType)
+    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
@@ -96,7 +96,7 @@ def launchArgs(tool, cardName, shelf, link, chamber, vfatmask, scanmin, scanmax,
     pass
   elif tool == "ultraLatency.py":
     scanType = "latency/trk"
-    dirPath = "%s%s/%s/"%(dataPath,chamber,scanType)
+    dirPath = "%s/%s/%s/"%(dataPath,chamber_config[link],scanType)
     setupCmds.append( ["mkdir","-p",dirPath+startTime] )
     setupCmds.append( ["unlink",dirPath+"current"] )
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
@@ -225,13 +225,11 @@ if __name__ == '__main__':
   if options.series:
 #    print "Running jobs in serial mode"
     for link in chamber_config.keys():
-      chamber = chamber_config[link]
       vfatMask = chamber_vfatMask[link]
       launch([ options.tool,
                options.cardName,
                options.shelf,
                link,
-               chamber,
                vfatMask,
                options.scanmin,
                options.scanmax,
