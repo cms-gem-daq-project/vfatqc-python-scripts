@@ -247,9 +247,18 @@ if __name__ == '__main__':
         # Not sure I understand why it has to be scanChan+1 below...
         amc13board.enableLocalL1A(True)
         vfatBoard.parentOH.parentAMC.enableL1A()
-        rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan, scanReg, scanData, enableCal=enableCalPulse, currentPulse=isCurrentPulse, nevts=options.nevts, 
-                                                            dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                            mask=options.vfatmask, useExtTrig=(not options.internal))
+        rpcResp = vfatBoard.parentOH.performCalibrationScan(
+                chan=scanChan,
+                currentPulse=isCurrentPulse,
+                dacMax=options.scanmax,
+                dacMin=options.scanmin,
+                enableCal=enableCalPulse,
+                outData=scanData,
+                mask=options.vfatmask,
+                nevts=options.nevts,
+                scanReg=scanReg,
+                stepSize=options.stepSize,
+                useExtTrig=(not options.internal))
     
         if rpcResp != 0:
             raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
