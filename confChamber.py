@@ -12,9 +12,8 @@ if __name__ == '__main__':
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
     from gempython.vfatqc.qcoptions import parser
-    from gempython.vfatqc.qcutilities import inputOptionsValid, setChannelRegisters
-    #from gempython.vfatqc.qcutilities import readBackCheck 
-    
+    from gempython.vfatqc.qcutilities import inputOptionsValid, readBackCheckV3, setChannelRegisters
+
     parser.add_option("--chConfig", type="string", dest="chConfig", default=None,
                       help="Specify file containing channel settings from anaUltraSCurve", metavar="chConfig")
     parser.add_option("--compare", action="store_true", dest="compare",
@@ -79,21 +78,15 @@ if __name__ == '__main__':
         try:
             inF = r.TFile(options.filename)
             chTree = inF.Get("scurveFitTree")
-            dict_readBack = {}
-            if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                # Need some pre-string append that is "VFAT_CHANNELS.CHANNEL"
-                dict_readBack = { "trimDAC":"ARM_TRIM_AMPLITUDE", "trimPolarity":"ARM_TRIM_POLARITY", "mask":"MASK" }
-            else:
-                dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
-                pass
-    
             if not options.compare:
                 print 'Configuring Channel Registers based on %s'%options.filename        
                 setChannelRegisters(vfatBoard, chTree, options.vfatmask)
-                pass
-     
-            #print 'Comparing Currently Stored Channel Registers with %s'%options.filename
-            #readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
+
+            dict_readBack = {}
+            if vfatBoard.parentOH.parentAMC.fwVersion > 2:
+                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
+                print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
+                readBackCheckV3(chTree, dict_readBack, vfatBoard, options.vfatmask)
     
         except Exception as e:
             print '%s does not seem to exist'%options.filename
@@ -103,21 +96,15 @@ if __name__ == '__main__':
         try:
             chTree = r.TTree('chTree','Tree holding Channel Configuration Parameters')
             chTree.ReadFile(options.chConfig)
-            dict_readBack = {}
-            if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                # Need some pre-string append that is "VFAT_CHANNELS.CHANNEL"
-                # but that needs to be done in readBackCheck(...) when looping over channels
-                dict_readBack = { "trimDAC":"ARM_TRIM_AMPLITUDE", "trimPolarity":"ARM_TRIM_POLARITY", "mask":"MASK" }
-            else:
-                dict_readBack = { "trimDAC":"VFATChannels.ChanReg", "mask":"VFATChannels.ChanReg" }
-    
             if not options.compare:
                 print 'Configuring Channel Registers based on %s'%options.chConfig
                 setChannelRegisters(vfatBoard, chTree, options.vfatmask)
-                pass
-    
-            #print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
-            #readBackCheck(chTree, dict_readBack, ohboard, options.gtx)
+
+            dict_readBack = {}
+            if vfatBoard.parentOH.parentAMC.fwVersion > 2:
+                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
+                print 'Comparing Currently Stored Channel Registers with %s'%options.chConfig
+                readBackCheckV3(chTree, dict_readBack, vfatBoard, options.vfatmask)
     
         except Exception as e:
             print '%s does not seem to exist'%options.filename
@@ -135,7 +122,6 @@ if __name__ == '__main__':
         try:
             vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
             vfatTree.ReadFile(options.vfatConfig)
-            #dict_readBack = { "vt1":"VThreshold1", "trimRange":"ContReg3" }
     
             if not options.compare:
                 print 'Configuring VFAT Registers based on %s'%options.vfatConfig
@@ -158,10 +144,10 @@ if __name__ == '__main__':
                     if not (vfatBoard.parentOH.parentAMC.fwVersion > 2):
                         vfatBoard.writeVFAT(int(event.vfatN), "ContReg3", int(event.trimRange),options.debug)
             
-            #print 'Comparing Curently Stored VFAT Registers with %s'%options.vfatConfig
-            #if options.vt1bump != 0:
-            #    print "Mismatches between write & readback valus for VThreshold1 should be exactly %i" %(options.vt1bump)
-            #readBackCheck(vfatTree, dict_readBack, ohboard, options.gtx)
+            if vfatBoard.parentOH.parentAMC.fwVersion > 2:
+                print 'Comparing Curently Stored VFAT Registers with %s'%options.vfatConfig
+                dict_readBack = { "vfatID":HW_CHIP_ID, "vt1":"CFG_THR_ARM_DAC" }
+                readBackCheck(vfatTree, dict_readBack, vfatBoard, options.vfatmask, options.vt1bump)
     
         except Exception as e:
             print '%s does not seem to exist'%options.filename

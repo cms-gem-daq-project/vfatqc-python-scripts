@@ -1,3 +1,53 @@
+def getChannelRegisters(vfatBoard, mask):
+    """
+    Returns a structured numpy array that stores the channel
+    register information.  The dtypes of the output numpy array
+    are:
+
+        CALPULSE_ENABLE
+        MASK
+        ZCC_TRIM_POLARITY
+        ZCC_TRIM_AMPLITUDE
+        ARM_TRIM_POLARITY
+        ARM_TRIM_AMPLITUDE
+   
+    The numpy array will have an index that goes as:
+
+        idx = 128 * vfatN + channel
+
+    vfatBoard - an instance of the HwVFAT class
+    mask - vfat mask to apply
+    """
+    
+    import os
+    if vfatBoard.parentOH.parentAMC.fwVersion < 3:
+        print("getChannelRegisters() does not support for v2b electronics")
+        exit(os.EX_USAGE)
+
+    chanRegData = vfatBoard.getAllChannelRegisters(mask)
+
+    import numpy as np
+    dataType=[
+            ('CALPULSE_ENABLE','bool'),
+            ('MASK','bool'),
+            ('ZCC_TRIM_POLARITY','bool'),
+            ('ZCC_TRIM_AMPLITUDE','uint8'),
+            ('ARM_TRIM_POLARITY','bool'),
+            ('ARM_TRIM_AMPLITUDE','uint8')]
+    chanRegArray = np.zeros(3072, dtype=dataType)
+
+    for idx in range(0,3072):
+        if (mask >> (idx // 128) ) & 0x1:
+            continue
+        chanRegArray[idx]['CALPULSE_ENABLE'] = (chanRegData[idx] >> 15) & 0x1
+        chanRegArray[idx]['MASK'] = (chanRegData[idx] >> 14) & 0x1
+        chanRegArray[idx]['ZCC_TRIM_POLARITY'] = (chanRegData[idx] >> 13) & 0x1
+        chanRegArray[idx]['ZCC_TRIM_AMPLITUDE'] = (chanRegData[idx] >> 7) & 0x3F
+        chanRegArray[idx]['ARM_TRIM_POLARITY'] = (chanRegData[idx] >> 6) & 0x1
+        chanRegArray[idx]['ARM_TRIM_AMPLITUDE'] = chanRegData[idx] & 0x3F
+
+    return chanRegArray
+
 def inputOptionsValid(options, amc_major_fw_ver):
     """
     Sanity check on input options
@@ -218,7 +268,6 @@ def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     
     import numpy as np
     import root_numpy as rp
-    import ROOT as r
     import sys
     
     # Check that the requested register is supported
@@ -235,7 +284,7 @@ def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     # Get data from tree
     list_bNames = dict_Names.keys()
     list_bNames.append('vfatN')
-    #list_bNames.append('vfatID')
+    list_bNames.append('vfatID')
     if "trimDAC" in dict_Names.keys() or "mask" in dict_Names.keys():
         list_bNames.append('vfatCH')
     array_writeVals = rp.tree2array(tree=rootTree, branches=list_bNames)
@@ -278,6 +327,137 @@ def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
                 writeValsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
                 writeValOfReg = np.asscalar(writeValsPerVFAT['%s'%bName])
                 if regName == "VThreshold1":
+                    writeValOfReg+=vt1bump
+                if writeValOfReg != readBackVal:
+                    print "VFAT%i: %s mismatch, write val = %i, readback = %i"%(vfat, regName, writeValOfReg, readBackVal)
+
+    return
+
+def readBackCheckV3(rootTree, dict_Names, vfatBoard, mask=0x0, vt1bump=0):
+    """
+    Given an input set of registers, and expected values of those registers, read from all VFATs on vfatBoard to see if there are any differences between written and read values.  Specifically for v3 electronics
+
+    rootTree - name of a TTree that has values that should have been written
+    dict_Names - dictionary where key names are the branch names in rootTree and the values are the register names they correspond too
+    vfatBoard - instance of the HwVFAT class
+    mask - vfatmask to use, 24 bit number, if the n^th bit is 1 the n^th VFAT is not considered
+    vt1bump - value that has been added to CFG_THR_ARM_DAC
+    """
+
+    import numpy as np
+    import root_numpy as rp
+    import os, sys
+
+    # Check that the requested register is supported
+    list_KnownRegs = [
+            "CFG_PULSE_STRETCH",
+            "CFG_SYNC_LEVEL_MODE",
+            "CFG_SELF_TRIGGER_MODE",
+            "CFG_DDR_TRIGGER_MODE",
+            "CFG_SPZS_SUMMARY_ONLY",
+            "CFG_SPZS_MAX_PARTITIONS",
+            "CFG_SPZS_ENABLE",
+            "CFG_SZP_ENABLE",
+            "CFG_SZD_ENABLE",
+            "CFG_TIME_TAG",
+            "CFG_EC_BYTES",
+            "CFG_BC_BYTES",
+            "CFG_FP_FE",
+            "CFG_RES_PRE",
+            "CFG_CAP_PRE",
+            "CFG_PT",
+            "CFG_EN_HYST",
+            "CFG_SEL_POL",
+            "CFG_FORCE_EN_ZCC",
+            "CFG_FORCE_TH",
+            "CFG_SEL_COMP_MODE",
+            "CFG_VREF_ADC",
+            "CFG_MON_GAIN",
+            "CFG_MONITOR_SELECT",
+            "CFG_IREF",
+            "CFG_THR_ZCC_DAC",
+            "CFG_THR_ARM_DAC",
+            "CFG_HYST",
+            "CFG_LATENCY",
+            "CFG_CAL_SEL_POL",
+            "CFG_CAL_PHI",
+            "CFG_CAL_EXT",
+            "CFG_CAL_DAC",
+            "CFG_CAL_MODE",
+            "CFG_CAL_FS",
+            "CFG_CAL_DUR",
+            "CFG_BIAS_CFD_DAC_2",
+            "CFG_BIAS_CFD_DAC_1",
+            "CFG_BIAS_PRE_I_BSF",
+            "CFG_BIAS_PRE_I_BIT",
+            "CFG_BIAS_PRE_I_BLCC",
+            "CFG_BIAS_PRE_VREF",
+            "CFG_BIAS_SH_I_BFCAS",
+            "CFG_BIAS_SH_I_BDIFF",
+            "CFG_BIAS_SH_I_BFAMP",
+            "CFG_BIAS_SD_I_BDIFF",
+            "CFG_BIAS_SD_I_BSF",
+            "CFG_BIAS_SD_I_BFCAS",
+            "CFG_RUN",
+            "HW_CHIP_ID",
+            "VFAT_CHANNELS.CHANNEL"]
+
+    for regName in dict_Names.values():
+        if regName not in list_KnownRegs:
+            print "readBackCheckV3() does not understand %s"%(regName)
+            print "readBackCheckV3() is only supported for registers:", list_KnownRegs
+            sys.exit(os.EX_USAGE)
+
+    # Get data from tree
+    list_bNames = dict_Names.keys()
+    list_bNames.append('vfatN')
+    if "mask" in dict_Names.keys() or "trimDAC" in dict_Names.keys() or "trimPolarity" in dict_Names.keys():
+        list_bNames.append('vfatCH')
+    array_writeVals = rp.tree2array(tree=rootTree, branches=list_bNames)
+
+    # Get data from VFATs
+    for bName,regName in dict_Names.iteritems():
+        print "Reading back (%s,%s) from all VFATs, any potential mismatches will be reported below"%(bName,regName)
+        print "="*40
+
+        regMap = []
+        regValues = []
+        if regName == "VFAT_CHANNELS.CHANNEL": #Channel Register
+            regValues = getChannelRegisters(vfatBoard,mask)
+            for vfat in range(0,24):
+                if (mask >> vfat) & 0x1:
+                    continue
+
+                for chan in range(0,128):
+                    writeValsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
+                    writeValsPerVFAT = writeValsPerVFAT[ writeValsPerVFAT['vfatCH'] == chan]
+                    writeValOfReg = np.asscalar(writeValsPerVFAT['%s'%bName])
+                    if bName == "mask":
+                        if writeValOfReg != regValues[128*vfat+chan]['MASK']:
+                            print "VFAT%i Chan%i: %s mismatch, write val = %i, readback = %i"%(vfat, chan, bName, writeValOfReg, regValues[128*vfat+chan]['MASK'])
+                    elif bName == "trimDAC":
+                        if writeValOfReg != regValues[128*vfat+chan]['ARM_TRIM_AMPLITUDE']:
+                            print "VFAT%i Chan%i: %s mismatch, write val = %i, readback = %i"%(vfat, chan, bName, writeValOfReg, regValues[128*vfat+chan]['ARM_TRIM_AMPLITUDE'])
+                    elif bName == "trimPolarity":
+                        if writeValOfReg != regValues[128*vfat+chan]['ARM_TRIM_POLARITY']:
+                            print "VFAT%i Chan%i: %s mismatch, write val = %i, readback = %i"%(vfat, chan, bName, writeValOfReg, regValues[128*vfat+chan]['ARM_TRIM_POLARITY'])
+        elif regName == "HW_CHIP_ID": #ChipID
+            regValues = vfatBoard.getAllChipIDs(mask)
+            for vfat,readBackVal in enumerate(regValues):
+                if (mask >> vfat) & 0x1:
+                    continue
+                valsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
+                valOfReg = np.asscalar(np.unique(valsPerVFAT['%s'%bName]))
+                if valOfReg != readBackVal:
+                    print "VFAT%i: %s mismatch, expected = %s, readback = %s"%(vfat, regName, hex(valOfReg), hex(readBackVal))
+        else: #VFAT Register
+            regValues = vfatBoard.readAllVFATs(regName, mask)
+            for vfat,readBackVal in enumerate(regValues):
+                if (mask >> vfat) & 0x1:
+                    continue
+                writeValsPerVFAT = array_writeVals[ array_writeVals['vfatN'] == vfat]
+                writeValOfReg = np.asscalar(writeValsPerVFAT['%s'%bName])
+                if regName == "CFG_THR_ARM_DAC":
                     writeValOfReg+=vt1bump
                 if writeValOfReg != readBackVal:
                     print "VFAT%i: %s mismatch, write val = %i, readback = %i"%(vfat, regName, writeValOfReg, readBackVal)
@@ -328,4 +508,5 @@ def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
         if rpcResp != 0:
             raise Exception("RPC response was non-zero, setting trim values for all channels failed")
         pass
+
     return

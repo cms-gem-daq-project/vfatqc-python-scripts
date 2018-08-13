@@ -62,7 +62,7 @@ if __name__ == '__main__':
     print 'opened connection'
     
     # Check options
-    from gempython.vfatqc.qcutilities import inputOptionsValid
+    from gempython.vfatqc.qcutilities import getChannelRegisters, inputOptionsValid
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
         pass
@@ -140,6 +140,8 @@ if __name__ == '__main__':
                 forceEnZCCVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
                     range(0,24)))
                 pass
+
+            chanRegData = getChannelRegisters(vfatBoard,mask)
         else:
             vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),range(0,24)))
@@ -227,8 +229,6 @@ if __name__ == '__main__':
                                     vthr = threshDAC - vfat*scanDataSizeVFAT
                                     pass
                                 
-                                #trimDAC = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_AMPLITUDE"%(chan)))
-                                #trimPolarity = (0x3f & vfatBoard.readVFAT(vfat,"VFAT_CHANNELS.CHANNEL%d.ARM_TRIM_POLARITY"%(chan)))
                                 gemData.fill(
                                         calPhase = calPhasevals[vfat],
                                         l1aTime = options.L1Atime,
@@ -236,8 +236,8 @@ if __name__ == '__main__':
                                         mspl = msplvals[vfat],
                                         Nev = (scanData[threshDAC] & 0xffff),
                                         Nhits = ((scanData[threshDAC]>>16) & 0xffff),
-                                        #trimDAC = trimDAC,
-                                        #trimPolarity = trimPolarity,
+                                        trimDAC = chanRegData[chan+vfat*128]['ARM_TRIM_AMPLITUDE'],
+                                        trimPolarity = chanRegData[chan+vfat*128]['ARM_TRIM_POLARITY'],
                                         vfatCH = chan,
                                         #vfatID = vfatIDvals[vfat],
                                         vfatN = vfat,
