@@ -1,3 +1,10 @@
+def calcL1Ainterval(rate):
+    """
+    Returns the L1Ainterval in BX associated with a given rate in Hz
+    """
+    from math import floor
+    return floor((1.0 / rate) * (1e9 / 25))
+
 def getChannelRegisters(vfatBoard, mask):
     """
     Returns a structured numpy array that stores the channel
