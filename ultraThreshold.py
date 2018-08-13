@@ -189,9 +189,16 @@ if __name__ == '__main__':
                     scanReg = "VThreshold1PerChan"
     
                 # Perform the scan
-                rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=False, nevts=options.nevts, 
-                                                                    dacMin=options.scanmin, dacMax=options.scanmax, 
-                                                                    stepSize=options.stepSize, mask=options.vfatmask)
+                rpcResp = vfatBoard.parentOH.performCalibrationScan(
+                        chan=chan,
+                        dacMax=options.scanmax,
+                        dacMin=options.scanmin,
+                        enableCal=False,
+                        mask=options.vfatmask,
+                        nevts=options.nevts,
+                        outData=scanData,
+                        scanReg=scanReg,
+                        stepSize=options.stepSize)
     
                 if rpcResp != 0:
                     raise Exception('RPC response was non-zero, threshold scan for channel %i failed'%chan)
@@ -286,9 +293,16 @@ if __name__ == '__main__':
             scanData = (c_uint32 * scanDataSizeNet)()
             
             # Perform the scan
-            rpcResp = vfatBoard.parentOH.performCalibrationScan(0, scanReg, scanData, nevts=options.nevts, 
-                                                                dacMin=options.scanmin, dacMax=options.scanmax, 
-                                                                stepSize=options.stepSize, mask=options.vfatmask)
+            rpcResp = vfatBoard.parentOH.performCalibrationScan(
+                    chan=0,
+                    dacMax=options.scanmax,
+                    dacMin=options.scanmin,
+                    enableCal=False,
+                    mask=options.vfatmask,
+                    nevts=options.nevts,
+                    outData=scanData,
+                    scanReg=scanReg,
+                    stepSize=options.stepSize)
     
             if rpcResp != 0:
                 raise Exception('RPC response was non-zero, threshold scan failed')

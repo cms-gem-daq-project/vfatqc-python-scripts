@@ -158,10 +158,18 @@ if __name__ == '__main__':
             # Perform the scan
             if options.debug: 
                 print("Starting scan; pulseDelay: %i; L1Atime: %i; Latency: %i"%(options.pDel, options.L1Atime, options.latency))
-            rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=True, currentPulse=isCurrentPulse, 
-                                                                calSF=options.calSF, nevts=options.nevts, 
-                                                                dacMin=options.scanmin, dacMax=options.scanmax, 
-                                                                stepSize=options.stepSize, mask=options.vfatmask)
+            rpcResp = vfatBoard.parentOH.performCalibrationScan(
+                    chan=chan,
+                    calSF=options.calSF,
+                    currentPulse=isCurrentPulse,
+                    dacMax=options.scanmax,
+                    dacMin=options.scanmin,
+                    enableCal=True,
+                    mask=options.vfatmask,
+                    nevts=options.nevts,
+                    outData=scanData,
+                    stepSize=options.stepSize,
+                    scanReg=scanReg)
     
             if rpcResp != 0:
                 raise Exception('RPC response was non-zero, scurve for channel %i failed'%chan)
