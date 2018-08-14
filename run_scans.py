@@ -21,7 +21,7 @@ def launchArgs(tool, cardName, shelf, link, vfatmask, scanmin, scanmax, nevts, s
   #Build Commands
   setupCmds = []
   preCmd = None
-  cmd = ["%s"%(tool),"--cardName=%s"%(cardName),"-g%s"%(link),"--L1Atime=%s"%(l1atime), "--mspl=%s"%(mspl),"--nevts=%s"%(nevts), "--vfatmask=0x%x"%(vfatmask), "--pulseDelay=%s"%(pulseDelay), "--scanmin=%s"%(scanmin), "--scanmax=%s"%(scanmax), "--ztrim=%s"%(ztrim),  "--stepSize=%s"%(stepSize)]
+  cmd = ["%s"%(tool),"--cardName=%s"%(cardName),"-g%i"%(link),"--L1Atime=%i"%(l1atime), "--mspl=%i"%(mspl),"--nevts=%i"%(nevts), "--vfatmask=0x%x"%(vfatmask), "--pulseDelay=%i"%(pulseDelay), "--scanmin=%i"%(scanmin), "--scanmax=%i"%(scanmax), "--ztrim=%f"%(ztrim),  "--stepSize=%i"%(stepSize)]
   if debug:
     cmd.append( "--debug")
   if tool == "ultraScurve.py":
@@ -36,19 +36,19 @@ def launchArgs(tool, cardName, shelf, link, vfatmask, scanmin, scanmax, nevts, s
     cmd.append( "--latency=%s"%(latency))
     preCmd = ["confChamber.py","--cardName=%s"%(cardName),"-g%i"%(link),"--zeroChan"]
     if vt1 in range(256):
-      preCmd.append("--vt1=%s"%(vt1))
+      preCmd.append("--vt1=%i"%(vt1))
       pass
     if voltageStepPulse:
       cmd.append("--voltageStepPulse")
     else:
         if calSF:
-          cmd.append("--calSF=%s"%(calSF))
+          cmd.append("--calSF=%i"%(calSF))
     if CalPhase:
-      cmd.append("--CalPhase=%s"%(CalPhase))
+      cmd.append("--CalPhase=%i"%(CalPhase))
     if chMin:
-      cmd.append("--chMin=%s"%(chMin))
+      cmd.append("--chMin=%i"%(chMin))
     if chMax:
-      cmd.append("--chMax=%s"%(chMax))
+      cmd.append("--chMax=%i"%(chMax))
     pass
   elif tool == "trimChamber.py":
     scanType = "trim"
@@ -114,7 +114,7 @@ def launchArgs(tool, cardName, shelf, link, vfatmask, scanmin, scanmax, nevts, s
     dirPath = dirPath+startTime
     preCmd = ["confChamber.py","--cardName=%s"%(cardName),"-g%i"%(link),"--zeroChan"]
     if vt1 in range(256):
-      preCmd.append("--vt1=%s"%(vt1))
+      preCmd.append("--vt1=%i"%(vt1))
       pass
     cmd.append( "--filename=%s/LatencyScanData.root"%dirPath )
     cmd.append( "--scanmin=%i"%(scanmin) )
