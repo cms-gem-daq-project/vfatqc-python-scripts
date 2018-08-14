@@ -40,14 +40,15 @@ def launchArgs(tool, cardName, shelf, link, vfatmask, scanmin, scanmax, nevts, s
       pass
     if voltageStepPulse:
       cmd.append("--voltageStepPulse")
+    else:
+        if calSF:
+          cmd.append("--calSF=%s"%(calSF))
     if CalPhase:
       cmd.append("--CalPhase=%s"%(CalPhase))
     if chMin:
       cmd.append("--chMin=%s"%(chMin))
     if chMax:
       cmd.append("--chMax=%s"%(chMax))
-#    if calSF:
-#      cmd.append("--calSF=%s"%(calSF))
     pass
   elif tool == "trimChamber.py":
     scanType = "trim"
@@ -211,7 +212,7 @@ if __name__ == '__main__':
   envCheck('BUILD_HOME')
 
   startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
-#  print "startTime upon declaration: ", startTime
+
   if options.tool not in ["trimChamber.py","ultraThreshold.py","ultraLatency.py","fastLatency.py","ultraScurve.py"]:
     print "Invalid tool specified"
     exit(1)
@@ -240,10 +241,18 @@ if __name__ == '__main__':
                          [options.throttle for x in range(len(chamber_config))],
                          [options.internal for x in range(len(chamber_config))],
                          [options.debug for x in range(len(chamber_config))]
+                         [options.calSF for x in range(len(chamber_config))]
+                         [options.chMin for x in range(len(chamber_config))]
+                         [options.chMax for x in range(len(chamber_config))]
+                         [options.pDel for x in range(len(chamber_config))]
+                         [options.voltageStepPulse for x in range(len(chamber_config))]
+                         [options.latency for x in range(len(chamber_config))]
+                         [options.CalPhase for x in range(len(chamber_config))]
+
                          )
             )
   if options.series:
-#    print "Running jobs in serial mode"
+    print "Running jobs in serial mode"
     for link in chamber_config.keys():
       vfatMask = chamber_vfatMask[link]
       launch([ options.tool,
