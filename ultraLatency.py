@@ -140,6 +140,7 @@ if __name__ == '__main__':
             vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
             msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),
                                  range(0,24)))
+            vfatIDvals = vfatBoard.getAllChipIDs(0x0)
     
         # Stop triggers
         vfatBoard.parentOH.parentAMC.blockL1A()
@@ -316,7 +317,7 @@ if __name__ == '__main__':
                                 mspl = msplvals[vfat],
                                 Nev = (scanData[latReg] & 0xffff),
                                 Nhits = ((scanData[latReg]>>16) & 0xffff),
-                                #vfatID = vfatIDvals[vfat],
+                                vfatID = vfatIDvals[vfat],
                                 vfatN = vfat,
                                 vth1 = vt1vals[vfat]
                                 )

@@ -142,6 +142,7 @@ if __name__ == '__main__':
                 pass
 
             chanRegData = getChannelRegisters(vfatBoard,mask)
+            vfatIDvals = vfatBoard.getAllChipIDs(0x0)
         else:
             vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),range(0,24)))
@@ -246,7 +247,7 @@ if __name__ == '__main__':
                                         trimDAC = chanRegData[chan+vfat*128]['ARM_TRIM_AMPLITUDE'],
                                         trimPolarity = chanRegData[chan+vfat*128]['ARM_TRIM_POLARITY'],
                                         vfatCH = chan,
-                                        #vfatID = vfatIDvals[vfat],
+                                        vfatID = vfatIDvals[vfat],
                                         vfatN = vfat,
                                         vth1 = vthr,
                                         vthr = vthr
@@ -341,7 +342,7 @@ if __name__ == '__main__':
                                 mspl = msplvals[vfat],
                                 Nev = (scanData[threshDAC] & 0xffff),
                                 Nhits = ((scanData[threshDAC]>>16) & 0xffff),
-                                #vfatID = vfatIDvals[vfat],
+                                vfatID = vfatIDvals[vfat],
                                 vfatN = vfat,
                                 vth1 = vthr,
                                 vthr = vthr

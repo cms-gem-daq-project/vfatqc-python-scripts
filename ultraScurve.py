@@ -130,12 +130,11 @@ if __name__ == '__main__':
             vals = vfatBoard.readAllVFATs("CFG_LATENCY",    mask)
             latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
                 
-            #vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
-            
             vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", mask)
             vthrvals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
             
             chanRegData = getChannelRegisters(vfatBoard,mask)
+            vfatIDvals = vfatBoard.getAllChipIDs(0x0)
 
             pass
 
@@ -213,7 +212,7 @@ if __name__ == '__main__':
                                     trimPolarity = chanRegData[chan+vfat*128]['ARM_TRIM_POLARITY'],
                                     vcal = (options.scanmin + (vcalDAC - vfat*scanDataSizeVFAT) * options.stepSize),
                                     vfatCH = chan,
-                                    #vfatID = vfatIDvals[vfat],
+                                    vfatID = vfatIDvals[vfat],
                                     vfatN = vfat,
                                     vthr = vthrvals[vfat]
                                     )
