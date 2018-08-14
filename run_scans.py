@@ -112,6 +112,10 @@ def launchArgs(tool, cardName, shelf, link, vfatmask, scanmin, scanmax, nevts, s
     setupCmds.append( ["unlink",dirPath+"current"] )
     setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
     dirPath = dirPath+startTime
+    preCmd = ["confChamber.py","--cardName=%s"%(cardName),"-g%i"%(link),"--zeroChan"]
+    if vt1 in range(256):
+      preCmd.append("--vt1=%s"%(vt1))
+      pass
     cmd.append( "--filename=%s/LatencyScanData.root"%dirPath )
     cmd.append( "--scanmin=%i"%(scanmin) )
     cmd.append( "--scanmax=%i"%(scanmax) )
