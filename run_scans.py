@@ -244,13 +244,13 @@ if __name__ == '__main__':
                          [options.randoms for x in range(len(chamber_config))],
                          [options.throttle for x in range(len(chamber_config))],
                          [options.internal for x in range(len(chamber_config))],
-                         [options.debug for x in range(len(chamber_config))]
-                         [options.calSF for x in range(len(chamber_config))]
-                         [options.chMin for x in range(len(chamber_config))]
-                         [options.chMax for x in range(len(chamber_config))]
-                         [options.pDel for x in range(len(chamber_config))]
-                         [options.voltageStepPulse for x in range(len(chamber_config))]
-                         [options.latency for x in range(len(chamber_config))]
+                         [options.debug for x in range(len(chamber_config))],
+                         [options.calSF for x in range(len(chamber_config))],
+                         [options.chMin for x in range(len(chamber_config))],
+                         [options.chMax for x in range(len(chamber_config))],
+                         [options.pDel for x in range(len(chamber_config))],
+                         [options.voltageStepPulse for x in range(len(chamber_config))],
+                         [options.latency for x in range(len(chamber_config))],
                          [options.CalPhase for x in range(len(chamber_config))]
 
                          )
