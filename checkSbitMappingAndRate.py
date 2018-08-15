@@ -17,12 +17,12 @@ if __name__ == '__main__':
                       help="V3 electroncis only. Value of the CFG_CAL_FS register", metavar="calSF")
     parser.add_option("-f", "--filename", type="string", dest="filename", default="SBitData.root",
                       help="Specify Output Filename", metavar="filename")
-    parser.add_option("--latency", type="int", dest = "latency", default = 37,
-                      help="Specify Latency", metavar="latency")
+    #parser.add_option("--latency", type="int", dest = "latency", default = 37,
+    #                  help="Specify Latency", metavar="latency")
     parser.add_option("--rates", type="string", dest = "rates", default = "1e3,1e4,1e5,1e6,1e7",
                       help="Comma separated list of floats that specifies the pulse rates to be considered",
                       metavar="rates")
-    parser.add_option("--time", type="int", dest="time", default = 1000,
+    parser.add_option("--time", type="int", dest="time", default = 1,
                       help="Acquire time per point in milliseconds", metavar="time")
     parser.add_option("--vcal", type="int", dest="vcal",
                       help="Height of CalPulse in DAC units for all VFATs", metavar="vcal", default=250)
@@ -49,6 +49,15 @@ if __name__ == '__main__':
     #gemData.setDefaults(options, int(time.time()))
     sbitDataTree = r.TTree("sbitDataTree","Tree Holding SBIT Mapping and Rate Data")
 
+    evtNum = array( 'i', [ 0 ] )
+    sbitDataTree.Branch('evtNum', evtNum, 'evtNum/I' )
+
+    calEnable = array( 'i', [ 0 ] )
+    sbitDataTree.Branch( 'calEnable', calEnable, 'calEnable/I' )
+
+    sbitValid = array( 'i', [ 0 ] )
+    sbitDataTree.Branch( 'isValid', sbitValid, 'isValid/I' )
+
     ratePulsed = array( 'f', [ 0 ] )
     sbitDataTree.Branch( 'ratePulsed', ratePulsed, 'ratePulsed/F' )
 
@@ -60,9 +69,6 @@ if __name__ == '__main__':
 
     rateObservedVFAT = array( 'f', [ 0 ] )
     sbitDataTree.Branch( 'rateObservedVFAT', rateObservedVFAT, 'rateObservedVFAT/F' )
-
-    sbitValid = array( 'i', [ 0 ] )
-    sbitDataTree.Branch( 'isValid', sbitValid, 'isValid/I' )
 
     sbitSize = array( 'i', [ 0 ] )
     sbitDataTree.Branch( 'sbitClusterSize', sbitSize, 'sbitClusterSize/I' )
@@ -116,117 +122,220 @@ if __name__ == '__main__':
     # placeholder
 
     # setup c-array for checking mapping
-    posPerEvt=8 #8 Sbit clusters will be readout per injected calpulse
-    posPerChan = posPerEvt * options.nevts
-    posPerVFAT = 128 * posPerChan
-    scanDataMappingSizeNet = posPerVFAT * 24
+    nClusters=8 #Number of sbit clusters in SBIT MONITOR
+    scanDataMappingSizeNet = 128 * options.nevts * nClusters
     scanDataMapping = (c_uint32 * scanDataMappingSizeNet)()
 
     # setup c-arrays for checking rate
-    scanDataCTP7Rate = (c_uint32 * 3072)()
-    scanDataFPGARate = (c_uint32 * 3072)()
-    scanDataVFATRate = (c_uint32 * 3072)()
+    scanDataCTP7Rate = (c_uint32 * 128)()
+    scanDataFPGARate = (c_uint32 * 128)()
+    scanDataVFATRate = (c_uint32 * 128)()
 
-    # Determine time for the rate test 
-    #totalTime = (options.time / 1000) * 3072 * (1 / 3600)
-    #print("I expect this sbit rate test will take: %f hours"%totalTime)
-    #
-    #bInputUnderstood=False
-    #performTest=raw_input("Do you want to continue? (yes/no)")
-    #while(not bInputUnderstood):
-    #    performTest=performTest.upper()
-    #    if performTest == "NO":
-    #        print("Okay, exiting!")
-    #        print("Please run again and change the '--time' argument to be a smaller valu")
-    #        sys.exit(os.EX_USAGE)
-    #    elif performTest == "YES":
-    #        bInputUnderstood = True
-    #        break;
-    #    else:
-    #        performTest=raw_input("input not understood, please enter 'yes' or 'no'")
+    # Monitor Sbits without pulsing
+    print("===========================Monitoring SBits Cal Pulse DISABLED===========================")
+    if options.debug:
+        print("| vfatN | idx | chan | ratePulsed | rateObsCTP7 | rateObsFPGA | rateObsVFAT | chanPulsed | sbitObs | vfatPulsed | vfatObs | isValid | size | rawData |")
+        print("| :---: | :-: | :--: | :--------: | :---------: | :---------: | :---------: | :--------: | :-----: | :--------: | :-----: | :-----: | :--: | :-----: |")
 
-    # Check Sbit Mapping and Rate
-    for rate,L1Ainterval in dictRateMap.iteritems():
-        if(L1Ainterval > 0xffff or L1Ainterval < 0x0):
-            print("L1Ainterval {0} calculated from rate {1} Hz is out of bounds, acceptable limits are [0x0000, 0xFFFF]".format(hex(L1Ainterval),rate))
-        
-        #print("Checking sbit mapping")
-        #rpcResp = vfatBoard.parentOH.checkSbitMappingWithCalPulse(calSF=options.calSF,currentPulse=isCurrentPulse,L1Ainterval=L1Ainterval,mask=mask,nevts=options.nevts,outData=scanDataMapping,pulseDelay=options.pDel)
+    evtNum[0]=0
+    for vfat in range(0,24):
+        # Skip masked VFATs
+        if( (mask >> vfat) & 0x1):
+            continue
 
-        #print("len(scanDataMapping) = {0}".format(len(scanDataMapping)))
-
-        #print("Storing sbit mapping information")
-        #print("| idx | vfatN | chan | chanPulsed | sbitObs | vfatPulsed | vfatOBs | isValid | size | rawData |")
-        #print("| --- | ----- | ---- | ---------- | ------- | ---------- | ------- | ------- | ---- | ------- |")
-        #if rpcResp == 0:
-        #    for vfat in range(0,24):
-        #        for chan in range(0,128):
-        #            for evt in range(0,options.nevts):
-        #                for cluster in range(0,8):
-        #                    idx = vfat * posPerVFAT + chan * posPerChan + evt * posPerEvt + cluster
-
-        #                    vfatCH[0] = (scanDataMapping[idx]) & 0xFF
-        #                    sbitObserved[0] = (scanDataMapping[idx] >> 8) & 0xFF
-        #                    vfatN[0] = (scanDataMapping[idx] >> 16) & 0x1F
-        #                    vfatObserved[0] = (scanDataMapping[idx] >> 21) & 0x1F
-        #                    sbitValid[0] = (scanDataMapping[idx] >> 26) & 0x1
-        #                    sbitSize[0] = (scanDataMapping[idx] >> 27) & 0x7
-        #                    #vfatID[0]
-
-        #                    if( scanDataMapping[idx] > 0 ):
-        #                        print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
-        #                            idx,
-        #                            vfat,
-        #                            chan,
-        #                            vfatCH[0],
-        #                            sbitObserved[0],
-        #                            vfatN[0],
-        #                            vfatObserved[0],
-        #                            sbitValid[0],
-        #                            sbitSize[0],
-        #                            hex(scanDataMapping[idx]))
-        #                            )
-
-        #                    sbitDataTree.Fill()
-        
-        rpcResp = vfatBoard.parentOH.checkSbitRateWithCalPulse(
-                calSF=options.calSF, 
+        # Check Sbit mapping
+        rpcRespMapping = vfatBoard.parentOH.checkSbitMappingWithCalPulse(
+                calSF=options.calSF,
                 currentPulse=isCurrentPulse,
+                enableCal=False,
+                L1Ainterval=0,
+                mask=mask,
+                nevts=options.nevts,
+                outData=scanDataMapping,
+                vfat=vfat
+                )
+
+        # Check sbit rate
+        rpcRespRate = vfatBoard.parentOH.checkSbitRateWithCalPulse(
+                calSF=options.calSF,
+                currentPulse=isCurrentPulse,
+                enableCal=False,
                 mask=mask,
                 outDataCTP7Rate=scanDataCTP7Rate,
                 outDataFPGARate=scanDataFPGARate,
                 outDataVFATRate=scanDataVFATRate,
                 pulseDelay=options.pDel,
-                pulseRate=int(rate),
-                waitTime=options.time)
+                pulseRate=0,
+                vfat=vfat,
+                waitTime=options.time
+                )
 
-        if rpcResp == 0:
-            print("Storing sbit mapping information")
-            print("| idx | vfatN | chan | ratePulsed | rateCTP7 | rateFPGA | rateVFAT |")
-            print("| --- | ----- | ---- | ---------- | -------- | -------- | -------- |")
-            for vfat in range(0,24):
+        if rpcRespMapping != 0:
+            raise Exception('RPC response was non-zero, checking sbit mapping for vfat %i failed'%vfat)
+        elif rpcRespRate != 0:
+            raise Exception('RPC response was non-zero, checking sbit rate for vfat %i failed'%vfat)
+        else:
+            for chan in range(0,128):
+                for evt in range(0,options.nevts):
+                    evtNum[0]+=1 #Increment event number
+                    for cluster in range(0,nClusters):
+                        idx = chan * (options.nevts*nClusters) + (evt*nClusters+cluster)
+
+                        calEnable[0]=False
+                        sbitValid[0] = (scanDataMapping[idx] >> 26) & 0x1
+                        ratePulsed[0] = 0
+                        rateObservedCTP7[0] = scanDataCTP7Rate[chan]
+                        rateObservedFPGA[0] = scanDataFPGARate[chan]
+                        rateObservedVFAT[0] = scanDataVFATRate[chan]
+                        sbitSize[0] = (scanDataMapping[idx] >> 27) & 0x7
+                        sbitObserved[0] = (scanDataMapping[idx] >> 8) & 0xFF
+                        vfatCH[0] = (scanDataMapping[idx]) & 0xFF
+                        if (chan != vfatCH[0]):
+                            print("for (evt,cluster,idx) = (%d,%d,%d) chan %d != vfatCH[0] %d"%(
+                                evt,
+                                cluster,
+                                idx,
+                                chan,
+                                vfatCH[0])
+                                )
+                        #vfatID[0]
+                        vfatN[0] = (scanDataMapping[idx] >> 16) & 0x1F
+                        if (vfat != vfatN[0]):
+                            print("for (chan,evt,cluster,idx) = (%d,%d,%d,%d) vfat %d != vfatN[0] %d"%(
+                                chan,
+                                evt,
+                                cluster,
+                                idx,
+                                vfat,
+                                vfatN[0])
+                                )
+                        vfatObserved[0] = (scanDataMapping[idx] >> 21) & 0x1F
+
+                        if options.debug:
+                            print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} | {10} | {11} | {12} | {13} |".format(
+                                vfat,
+                                idx,
+                                chan,
+                                ratePulsed[0],
+                                rateObservedCTP7[0],
+                                rateObservedFPGA[0],
+                                rateObservedVFAT[0],
+                                vfatCH[0],
+                                sbitObserved[0],
+                                vfatN[0],
+                                vfatObserved[0],
+                                sbitValid[0],
+                                sbitSize[0],
+                                scanDataMapping[idx])
+                                )
+
+                        sbitDataTree.Fill()
+
+    # Check Sbit Mapping and Rate
+    print("len(dictRateMap) =", len(dictRateMap))
+    for rate,L1Ainterval in dictRateMap.iteritems():
+        if(L1Ainterval > 0xffff or L1Ainterval < 0x0):
+            print("L1Ainterval {0} calculated from rate {1} Hz is out of bounds, acceptable limits are [0x0000, 0xFFFF]".format(hex(L1Ainterval),rate))
+            continue
+
+        # Monitor Sbits with pulsing
+        print("===========================Monitoring SBits Cal Pulse ENABLED===========================")
+        if options.debug:
+            print("| vfatN | idx | chan | ratePulsed | rateObsCTP7 | rateObsFPGA | rateObsVFAT | chanPulsed | sbitObs | vfatPulsed | vfatObs | isValid | size | rawData |")
+            print("| :---: | :-: | :--: | :--------: | :---------: | :---------: | :---------: | :--------: | :-----: | :--------: | :-----: | :-----: | :--: | :-----: |")
+
+        for vfat in range(0,24):
+            # Skip masked VFATs
+            if( (mask >> vfat) & 0x1):
+                continue
+
+            # Check Sbit mapping
+            rpcRespMapping = vfatBoard.parentOH.checkSbitMappingWithCalPulse(
+                    calSF=options.calSF,
+                    currentPulse=isCurrentPulse,
+                    enableCal=True,
+                    L1Ainterval=L1Ainterval,
+                    mask=mask,
+                    nevts=options.nevts,
+                    outData=scanDataMapping,
+                    vfat=vfat
+                    )
+
+            # Check sbit rate
+            rpcRespRate = vfatBoard.parentOH.checkSbitRateWithCalPulse(
+                    calSF=options.calSF,
+                    currentPulse=isCurrentPulse,
+                    enableCal=True,
+                    mask=mask,
+                    outDataCTP7Rate=scanDataCTP7Rate,
+                    outDataFPGARate=scanDataFPGARate,
+                    outDataVFATRate=scanDataVFATRate,
+                    pulseDelay=options.pDel,
+                    pulseRate=rate,
+                    vfat=vfat,
+                    waitTime=options.time
+                    )
+
+            if rpcRespMapping != 0:
+                raise Exception('RPC response was non-zero, checking sbit mapping for vfat %i failed'%vfat)
+            elif rpcRespRate != 0:
+                raise Exception('RPC response was non-zero, checking sbit rate for vfat %i failed'%vfat)
+            else:
                 for chan in range(0,128):
-                    idx=128*vfat+chan
+                    for evt in range(0,options.nevts):
+                        evtNum[0]+=1 #Increment event number
+                        for cluster in range(0,nClusters):
+                            idx = chan * (options.nevts*nClusters) + (evt*nClusters+cluster)
 
-                    ratePulsed[0]=rate
-                    rateObservedCTP7[0]=scanDataCTP7Rate[idx]
-                    rateObservedFPGA[0]=scanDataFPGARate[idx]
-                    rateObservedVFAT[0]=scanDataVFATRate[idx]
-                    vfatCH[0]=chan
-                    #vfatID[0]=#placeholder
-                    vfatN[0] = vfat
+                            calEnable[0]=True
+                            sbitValid[0] = (scanDataMapping[idx] >> 26) & 0x1
+                            ratePulsed[0] = rate
+                            rateObservedCTP7[0] = scanDataCTP7Rate[chan]
+                            rateObservedFPGA[0] = scanDataFPGARate[chan]
+                            rateObservedVFAT[0] = scanDataVFATRate[chan]
+                            sbitSize[0] = (scanDataMapping[idx] >> 27) & 0x7
+                            sbitObserved[0] = (scanDataMapping[idx] >> 8) & 0xFF
+                            vfatCH[0] = (scanDataMapping[idx]) & 0xFF
+                            if (chan != vfatCH[0]):
+                                print("for (evt,cluster,idx) = (%d,%d,%d) chan %d != vfatCH[0] %d"%(
+                                    evt,
+                                    cluster,
+                                    idx,
+                                    chan,
+                                    vfatCH[0])
+                                    )
+                            #vfatID[0]
+                            vfatN[0] = (scanDataMapping[idx] >> 16) & 0x1F
+                            if (vfat != vfatN[0]):
+                                print("for (chan,evt,cluster,idx) = (%d,%d,%d,%d) vfat %d != vfatN[0] %d"%(
+                                    chan,
+                                    evt,
+                                    cluster,
+                                    idx,
+                                    vfat,
+                                    vfatN[0])
+                                    )
+                            vfatObserved[0] = (scanDataMapping[idx] >> 21) & 0x1F
 
-                    print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} |".format(
-                        idx,
-                        vfat,
-                        chan,
-                        rate,
-                        scanDataCTP7Rate[idx],
-                        scanDataFPGARate[idx],
-                        scanDataVFATRate[idx])
-                        )
-                    
-                    sbitDataTree.Fill()
+                            if options.debug:
+                                print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} | {10} | {11} | {12} | {13} |".format(
+                                    vfat,
+                                    idx,
+                                    chan,
+                                    ratePulsed[0],
+                                    rateObservedCTP7[0],
+                                    rateObservedFPGA[0],
+                                    rateObservedVFAT[0],
+                                    vfatCH[0],
+                                    sbitObserved[0],
+                                    vfatN[0],
+                                    vfatObserved[0],
+                                    sbitValid[0],
+                                    sbitSize[0],
+                                    scanDataMapping[idx])
+                                    )
+
+                            sbitDataTree.Fill()
 
     myF.cd()
     sbitDataTree.Write()
