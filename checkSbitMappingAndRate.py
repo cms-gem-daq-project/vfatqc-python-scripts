@@ -232,7 +232,6 @@ if __name__ == '__main__':
                         sbitDataTree.Fill()
 
     # Check Sbit Mapping and Rate
-    print("len(dictRateMap) =", len(dictRateMap))
     for rate,L1Ainterval in dictRateMap.iteritems():
         if(L1Ainterval > 0xffff or L1Ainterval < 0x0):
             print("L1Ainterval {0} calculated from rate {1} Hz is out of bounds, acceptable limits are [0x0000, 0xFFFF]".format(hex(L1Ainterval),rate))
@@ -271,7 +270,7 @@ if __name__ == '__main__':
                     outDataFPGARate=scanDataFPGARate,
                     outDataVFATRate=scanDataVFATRate,
                     pulseDelay=options.pDel,
-                    pulseRate=rate,
+                    pulseRate=int(rate),
                     vfat=vfat,
                     waitTime=options.time
                     )
