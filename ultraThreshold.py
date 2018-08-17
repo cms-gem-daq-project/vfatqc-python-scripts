@@ -142,7 +142,7 @@ if __name__ == '__main__':
                 pass
 
             chanRegData = getChannelRegisters(vfatBoard,mask)
-            vfatIDvals = vfatBoard.getAllChipIDs(0x0)
+            vfatIDvals = vfatBoard.getAllChipIDs(mask)
         else:
             vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),range(0,24)))

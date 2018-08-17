@@ -134,7 +134,7 @@ if __name__ == '__main__':
             vthrvals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
             
             chanRegData = getChannelRegisters(vfatBoard,mask)
-            vfatIDvals = vfatBoard.getAllChipIDs(0x0)
+            vfatIDvals = vfatBoard.getAllChipIDs(mask)
 
             pass
 

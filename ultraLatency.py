@@ -140,7 +140,7 @@ if __name__ == '__main__':
             vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
             msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),
                                  range(0,24)))
-            vfatIDvals = vfatBoard.getAllChipIDs(0x0)
+            vfatIDvals = vfatBoard.getAllChipIDs(mask)
     
         # Stop triggers
         vfatBoard.parentOH.parentAMC.blockL1A()
