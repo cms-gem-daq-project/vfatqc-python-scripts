@@ -17,8 +17,6 @@ if __name__ == '__main__':
                       help="V3 electroncis only. Value of the CFG_CAL_FS register", metavar="calSF")
     parser.add_option("-f", "--filename", type="string", dest="filename", default="SBitData.root",
                       help="Specify Output Filename", metavar="filename")
-    #parser.add_option("--latency", type="int", dest = "latency", default = 37,
-    #                  help="Specify Latency", metavar="latency")
     parser.add_option("--rates", type="string", dest = "rates", default = "1e3,1e4,1e5,1e6,1e7",
                       help="Comma separated list of floats that specifies the pulse rates to be considered",
                       metavar="rates")
@@ -115,7 +113,6 @@ if __name__ == '__main__':
 
     # Set relevant parameters
     vfatBoard.setVFATCalHeightAll(mask, options.vcal, currentPulse=isCurrentPulse)
-    #vfatBoard.setVFATLatencyAll(mask=options.vfatmask, lat=options.latency, debug=options.debug)
     vfatBoard.setVFATMSPLAll(mask, options.MSPL, options.debug)
 
     # Get chip parameters
