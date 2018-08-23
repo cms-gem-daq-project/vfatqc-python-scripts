@@ -66,13 +66,8 @@ if __name__ == '__main__':
     vfatBoard.parentOH.parentAMC.blockL1A()
     
     # Get original optohybrid trigger mask and then overwrite it with the vfat mask
-    origOhTrigMask = vfatBoard.parentOH.parentAMC.readRegister(
-            "GEM_AMC.OH.OH{0}.FPGA.TRIG.CTRL.VFAT_MASK".format(args.ohN),
-            args.debug)
-    vfatBoard.parentOH.parentAMC.writeRegister(
-            "GEM_AMC.OH.OH{0}.FPGA.TRIG.CTRL.VFAT_MASK".format(args.ohN),
-            mask,
-            args.debug)
+    origOhTrigMask = vfatBoard.parentOH.getSBitMask()
+    vfatBoard.parentOH.setSBitMask(mask)
 
     # Configure local triggers?
     if args.amc13local:
@@ -122,9 +117,6 @@ if __name__ == '__main__':
         amc13board.fakeDataEnable(False)
 
     # Restore original optohybrid trigger mask
-    vfatBoard.parentOH.parentAMC.writeRegister(
-            "GEM_AMC.OH.OH{0}.FPGA.TRIG.CTRL.VFAT_MASK".format(args.ohN),
-            origOhTrigMask,
-            args.debug)
+    vfatBoard.parentOH.setSBitMask(origOhTrigMask)
 
     print("Done")
