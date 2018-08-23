@@ -20,7 +20,7 @@ PythonModules = ["$(Namespace).$(ShortPackage)"]
 $(info PythonModules=${PythonModules})
 
 VFATQC_VER_MAJOR=2
-VFATQC_VER_MINOR=0
+VFATQC_VER_MINOR=1
 VFATQC_VER_PATCH=0
 
 include $(BUILD_HOME)/$(Project)/config/mfCommonDefs.mk
@@ -51,6 +51,7 @@ preprpm: default
 	@cp -rf checkSbitMappingAndRate.py $(ScriptDir)
 	@cp -rf fastLatency.py $(ScriptDir)
 	@cp -rf run_scans.py   $(ScriptDir)
+	@cp -rf sbitReadOut.py $(ScriptDir)
 	@cp -rf sbitThreshScanParallel.py $(ScriptDir)
 	@cp -rf sbitThreshScanSeries.py $(ScriptDir)
 	@cp -rf trimChamber.py $(ScriptDir)
