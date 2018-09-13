@@ -19,7 +19,7 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,latency=None,d
         pass
 
     if latency is not None:
-        cms.append("--latency=%d"%(latency))
+        cmd.append("--latency=%d"%(latency))
 
     if run:
         cmd.append("--run")
