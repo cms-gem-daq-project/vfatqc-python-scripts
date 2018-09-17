@@ -27,6 +27,10 @@ if __name__ == '__main__':
             help = "Use external PT1000 temperature sensors on the VFAT3 hybrid instead of the temperature sensor inside the ASIC. Note only available in HV3b_V3 hybrids or later")
     parser.add_argument("-f","--filename", type=str, dest="filename", default=None,
             help = "Specify output filename",metavar="filename")
+    parser.add_argument("--noOHs", action="store_true", dest="noOHs",
+            help = "Do not print OH temperatures to terminal; they are still read and stored in the output file if provided")
+    parser.add_argument("--noVFATs", action="store_true", dest="noVFATs",
+            help = "Do not print VFAT temperatures to terminal; they are still read and stored in the output file if provided")
     parser.add_argument("-t","--timeInterval", type=int, dest="timeInterval", default=60,
             help ="Time interval, in seconds, to wait in between temperature reads",metavar="timeInterval")
     args = parser.parse_args()
@@ -36,63 +40,9 @@ if __name__ == '__main__':
         filename = args.filename
         outF = r.TFile(filename,'recreate')
 
-        outTreeOH = r.TTree("OHTemperatureData","OH Temperature Data as a function of time")
-        outTreeVFAT = r.TTree("VFATTemperatureData","VFAT Temperature Data as a function of time")
-
-        from array import array
-
-        # Shared Branches
-        timeYear = array('i', [0])
-        outTreeOH.Branch( 'timeYear', timeYear, 'timeYear/I' )
-        outTreeVFAT.Branch( 'timeYear', timeYear, 'timeYear/I' )
-
-        timeMonth = array('i', [0])
-        outTreeVFAT.Branch( 'timeMonth', timeMonth, 'timeMonth/I' )
-        outTreeOH.Branch( 'timeMonth', timeMonth, 'timeMonth/I' )
-
-        timeDay = array('i', [0])
-        outTreeOH.Branch( 'timeDay', timeDay, 'timeDay/I' )
-        outTreeVFAT.Branch( 'timeDay', timeDay, 'timeDay/I' )
-
-        timeHour = array('i', [0])
-        outTreeOH.Branch( 'timeHour', timeHour, 'timeHour/I' )
-        outTreeVFAT.Branch( 'timeHour', timeHour, 'timeHour/I' )
-
-        timeMinute = array('i', [0])
-        outTreeOH.Branch( 'timeMinute', timeMinute, 'timeMinute/I' )
-        outTreeVFAT.Branch( 'timeMinute', timeMinute, 'timeMinute/I' )
-
-        timeSecond = array('i', [0])
-        outTreeOH.Branch( 'timeSecond', timeSecond, 'timeSecond/I' )
-        outTreeVFAT.Branch( 'timeSecond', timeSecond, 'timeSecond/I' )
-
-        link = array('i', [0])
-        outTreeOH.Branch( 'link', link, 'link/I')
-        outTreeVFAT.Branch( 'link', link, 'link/I')
-
-        # OH Specific Branches
-        scaTemp = array('i', [0])
-        outTreeOH.Branch('scaTemp',link, 'scaTemp/I')
-
-        fpgaCoreTemp = array('f', [0])
-        outTreeOH.Branch('fpgaCoreTemp',fpgaCoreTemp,'fpgaCoreTemp/F')
-
-        ohBoardTemp = array('i', [ 0 for x in range(1,10) ])
-        for boardTemp in range(1,10):
-            outTreeOH.Branch(
-                    "ohBoardTemp{0}".format(boardTemp),
-                    ohBoardTemp[boardTemp-1],
-                    "ohBoardTemp{0}/I".format(boardTemp))
-
-        # VFAT Specific Branches
-        vfatN = array('i', [0])
-        outTreeVFAT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-
-        adcTempIntRef = array('i', [0])
-        outTreeVFAT.Branch( 'adcTempIntRef', adcTempIntRef, 'adcTempIntRef/I')
-
-        adcTempExtRef = array('i', [0])
-        outTreeVFAT.Branch( 'adcTempExtRef', adcTempExtRef, 'adcTempExtRef/I')
+        from gempython.vfatqc.treeStructure import gemTemepratureOHTree, gemTemepratureVFATTree
+        gemTempDataOH = gemTemepratureOHTree()
+        gemTempDataVFAT = gemTemepratureVFATTree()
 
     from gempython.tools.amc_user_functions_xhal import *
     amcBoard = HwAMC(args.cardName, args.debug)
@@ -103,8 +53,16 @@ if __name__ == '__main__':
         print("temperature monitoring of v2b electronics is not supported, exiting!!!")
         exit(os.EX_USAGE)
 
-    #print("Getting VFAT Mask for All Links")
-    #ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
+    print("Getting VFAT Mask for All Links")
+    ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
+    print("Getting CHIP IDs of all VFATs")
+    from gempython.utils.nesteddict import nesteddict as ndict
+    vfatIDvals = ndict()
+    for ohN in range(0,12):
+        if( not ((args.ohMask >> ohN) & 0x1)):
+            continue
+        vfatBoard = HwVFAT(args.cardName, ohN, args.debug)
+        vfatIDvals[ohN] = vfatBoard.getAllChipIDs(mask)
 
     # Configure DAC Monitoring
     print("configuring VFAT ADCs for temperature monitoring")
@@ -127,7 +85,6 @@ if __name__ == '__main__':
     print("SCA Monitoring Enabled, set to {0}".format(str(hex(~args.ohMask & 0xFF)).strip('L')))
 
     from time import sleep
-    import datetime
     from ctypes import *
     adcDataIntRefMultiLinks = (c_uint32 * (24 * 12))()
     adcDataExtRefMultiLinks = (c_uint32 * (24 * 12))()
@@ -138,8 +95,6 @@ if __name__ == '__main__':
         from reg_utils.reg_interface.common.sca_utils import getOHlist
         from reg_utils.reg_interface.common.virtex6 import Virtex6Instructions
         while(True):
-            currentTime = datetime.datetime.now()
-
             # Read all ADCs
             print("Reading Internally Referenced ADC data")
             rpcResp = amcBoard.readADCsMultiLink(adcDataIntRefMultiLinks, False, args.ohMask, args.debug)
@@ -162,79 +117,95 @@ if __name__ == '__main__':
             print("Reading FPGA Core Temperature")
             ohList = getOHlist(args.ohMask)
             jtagCommand(True, Virtex6Instructions.SYSMON, 10, 0x04000000, 32, False)
+            sleep(1)
             adc1 = jtagCommand(False, None, 0, 0x04010000, 32, ohList)
+            #adc1 = jtagCommand(True, None, 0, 0x04010000, 32, ohList)
+            sleep(1)
             jtagCommand(True, Virtex6Instructions.BYPASS, 10, None, 0, False)
+            sleep(1)
 
-            print("VFAT Raw Temperature Data in ADC Counts")
-            print("| ohN | vfatN | Int ADC Val | Ext ADC Val |")
-            print("| :-: | :---: | :---------: | :---------: |")
-            for ohN in range(0,12):
-                if( not ((args.ohMask >> ohN) & 0x1)):
-                    continue
-                for vfat in range(0,24):
-                    idx = ohN * 24 + vfat
-                    print("| {0} | {1} | {2} | {3} |".format(
-                        ohN,
-                        vfat,
-                        adcDataIntRefMultiLinks[idx],
-                        adcDataExtRefMultiLinks[idx]))
-                    pass
-                pass
-
-            print("Optohybrid Temperature Data, in ADC Counts unless noted otherwise")
-            headingTxt = "| ohN | FPGA Core (deg C) | SCA Temp |"
-            headingLine= "| :-: | :---------------: | :------: |"
-            for boardTemp in range(1,10):
-                headingTxt += " Board Temp {0} |".format(boardTemp)
-                headingLine+= " :----------: |"
-            print(headingTxt)
-            print(headingLine)
-            for ohN in range(0,12):
-                if( not ((args.ohMask >> ohN) & 0x1)):
-                    continue
-                row = "| {0} | {1} | {2} |".format(
-                        ohN,
-                        #scaMonData[ohN].ohFPGACoreTemp,
-                        ((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15, # Remove once dedicated register exists
-                        scaMonData[ohN].scaTemp)
-                for boardTemp in range(1,10):
-                    row += " {0} |".format(scaMonData[ohN].ohBoardTemp[boardTemp-1])
-                print(row)
-
-            if(args.filename is None):
-                break
-            else:
-                timeYear = currentTime.year
-                timeMonth = currentTime.month
-                timeDay = currentTime.day
-                timeHour = currentTime.hour
-                timeMinute = currentTime.minute
+            if not args.noVFATs:
+                print("VFAT Raw Temperature Data in ADC Counts\n")
+                print("| ohN | vfatN | vfatID | Int ADC Val | Ext ADC Val |")
+                print("| :-: | :---: | :----: | :---------: | :---------: |")
                 for ohN in range(0,12):
                     if( not ((args.ohMask >> ohN) & 0x1)):
                         continue
                     for vfat in range(0,24):
                         idx = ohN * 24 + vfat
-                        link = ohN
-                        vfatN = vfat
-                        adcTempIntRef = adcDataIntRefMultiLinks[idx]
-                        adcTempExtRef = adcDataExtRefMultiLinks[idx]
-                        outTreeVFAT.Fill()
+                        print("| {0} | {1} | {2} | {3} | {4} |".format(
+                            ohN,
+                            vfat,
+                            vfatIDvals[ohN][vfat],
+                            adcDataIntRefMultiLinks[idx],
+                            adcDataExtRefMultiLinks[idx]))
+                        pass
+                    pass
+
+            if not args.noOHs:
+                print("Optohybrid Temperature Data, in ADC Counts unless noted otherwise\n")
+                headingTxt = "| ohN | FPGA Core (deg C) | SCA Temp |"
+                headingLine= "| :-: | :---------------: | :------: |"
+                for boardTemp in range(1,10):
+                    headingTxt += " Board Temp {0} |".format(boardTemp)
+                    headingLine+= " :----------: |"
+                print(headingTxt)
+                print(headingLine)
+                for ohN in range(0,12):
+                    if( not ((args.ohMask >> ohN) & 0x1)):
+                        continue
+                    row = "| {0} | {1} | {2} |".format(
+                            ohN,
+                            #scaMonData[ohN].ohFPGACoreTemp,
+                            ((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15, # Remove once dedicated register exists
+                            scaMonData[ohN].scaTemp)
+                    for boardTemp in range(1,10):
+                        row += " {0} |".format(scaMonData[ohN].ohBoardTemp[boardTemp-1])
+                    print(row)
+
+            if(args.filename is None):
+                break
+            else:
+                currentTime = int(time.time())
+                for ohN in range(0,12):
+                    if( not ((args.ohMask >> ohN) & 0x1)):
+                        continue
+                    for vfat in range(0,24):
+                        idx = ohN * 24 + vfat
+                        gemTempDataVFAT.fill(
+                                adcTempIntRef = adcDataIntRefMultiLinks[idx],
+                                adcTempExtRef = adcDataExtRefMultiLinks[idx]
+                                link = ohN,
+                                vfatID = vfatIDvals[ohN][vfat],
+                                vfatN = vfat,
+                                utime = currentTime
+                                )
                         pass
                     pass
 
                 for ohN in range(0,12):
                     if( not ((args.ohMask >> ohN) & 0x1)):
                         continue
-                    link = ohN
-                    #fpgaCoreTemp = scaMonData[ohN].ohFPGACoreTemp
-                    fpgaCoreTemp = ((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15, # Remove once dedicated register exists
-                    scaTemp = scaMonData[ohN].scaTemp
-                    for boardTemp in range(1,10):
-                        ohBoardTemp = scaMonData[ohN].ohBoardTemp[boardTemp-1]
-                    outTreeOH.Fill()
+                    gemTempDataOH.fill(
+                            boardTemp1 = scaMonData[ohN].ohBoardTemp[0],
+                            boardTemp2 = scaMonData[ohN].ohBoardTemp[1],
+                            boardTemp3 = scaMonData[ohN].ohBoardTemp[2],
+                            boardTemp4 = scaMonData[ohN].ohBoardTemp[3],
+                            boardTemp5 = scaMonData[ohN].ohBoardTemp[4],
+                            boardTemp6 = scaMonData[ohN].ohBoardTemp[5],
+                            boardTemp7 = scaMonData[ohN].ohBoardTemp[6],
+                            boardTemp8 = scaMonData[ohN].ohBoardTemp[7],
+                            boardTemp9 = scaMonData[ohN].ohBoardTemp[8],
+                            #fpgaCoreTemp = scaMonData[ohN].ohFPGACoreTemp
+                            fpgaCoreTemp = ((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15, # Remove once dedicated register exists
+                            link = ohN,
+                            scaTemp = scaMonData[ohN].scaTemp
+                            utime = currentTime
+                            )
+                    pass
 
-                outTreeOH.AutoSave("SaveSelf")
-                outTreeVFAT.AutoSave("SaveSelf")
+                gemTempDataOH.AutoSave("SaveSelf")
+                gemTempDataVFAT.AutoSave("SaveSelf")
 
             # Wait 
             sleep(args.timeInterval)
@@ -244,14 +215,14 @@ if __name__ == '__main__':
         pass
     except Exception as e:
         if args.filename is not None:
-            outTreeOH.AutoSave("SaveSelf")
-            outTreeVFAT.AutoSave("SaveSelf")
+            gemTempDataOH.AutoSave("SaveSelf")
+            gemTempDataVFAT.AutoSave("SaveSelf")
         print "An exception occurred", e
     finally:
         if args.filename is not None:
             outF.cd()
-            outTreeOH.Write()
-            outTreeVFAT.Write()
+            gemTempDataOH.Write()
+            gemTempDataVFAT.Write()
             outF.Close()
 
     print("Reverting SCA Monitoring To Original Value")
