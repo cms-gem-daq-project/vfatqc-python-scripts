@@ -43,7 +43,33 @@ class gemGenericTree(object):
 
     def getMode(self):
         return self.mode[0]
-    
+
+    def __assignBaseValues(self, **kwargs):
+        """
+        Assigns values to the arrays defined in gemTree.__init__().
+        Does not fill the tree.
+
+        The keyword is assumed to the same as the variable name for
+        simplicity.
+        """
+
+        if "link" in kwargs:
+            self.link[0] = kwargs["link"]
+        if "Nev" in kwargs:
+            self.Nev[0] = kwargs["Nev"]
+        if "utime" in kwargs:
+            self.utime[0] = kwargs["utime"]
+        if (("vfatCH" in kwargs) and (not self.isGblDac)):
+            self.vfatCH[0] = kwargs["vfatCH"]
+        if "vfatID" in kwargs:
+            self.vfatID[0] = kwargs["vfatID"]
+        if "vfatN" in kwargs:
+            self.vfatN[0] = kwargs["vfatN"]
+        if "ztrim" in kwargs:
+            self.ztrim[0] = kwargs["ztrim"]
+
+        return
+
     def setDefaults(self, options, time):
         """
         Takes as input the options object returned by OptParser.parse_args()
@@ -149,6 +175,89 @@ class gemDacCalTreeStructure(gemGenericTree):
             if "func_dacFit" in kwargs:
                 #self.func_dacFit = kwargs["func_dacFit"].Clone()
                 kwargs["func_dacFit"].Copy(self.func_dacFit)
+
+        self.gemTree.Fill()
+        return
+
+class  gemTemepratureVFATTree(gemGenericTree):
+    def __init__(self,name="VFATTemperatureData",description="VFAT Temperature Data as a function of time"):
+        """
+        name        TName of the TTree
+        description Phrase describing the TTree
+        """
+
+        gemGenericTree.__init__(self,name=name,description=description)
+
+        self.adcTempIntRef = array('i', [0])
+        self.gemTree.Branch( 'adcTempIntRef', adcTempIntRef, 'adcTempIntRef/I')
+
+        self.adcTempExtRef = array('i', [0])
+        self.gemTree.Branch( 'adcTempExtRef', adcTempExtRef, 'adcTempExtRef/I')
+
+        return
+
+    def fill(self, **kwargs):
+        """
+        Updates the values stored in the arrays gemTree's branchs map to,
+        then it fills the tree.
+
+        The keyword is assumed to the same as the variable name for
+        simplicity.
+        """
+
+        self.__assignBaseValues(kwargs)
+
+        if "adcTempIntRef" in kwargs:
+            self.adcTempIntRef[0] = kwargs["adcTempIntRef"]
+        if "adcTempExtRef" in kwargs:
+            self.adcTempExtRef[0] = kwargs["adcTempExtRef"]
+
+        self.gemTree.Fill()
+        return
+
+class  gemTemepratureOHTree(gemGenericTree):
+    def __init__(self,name="OHTemperatureData",description="OH Temperature Data as a function of time"):
+        """
+        name        TName of the TTree
+        description Phrase describing the TTree
+        """
+
+        gemGenericTree.__init__(self,name=name,description=description)
+
+        self.scaTemp = array('i', [0])
+        self.gemTree.Branch('scaTemp',link, 'scaTemp/I')
+
+        self.fpgaCoreTemp = array('f', [0])
+        self.gemTree.Branch('fpgaCoreTemp',fpgaCoreTemp,'fpgaCoreTemp/F')
+
+        self.ohBoardTemp = array('i', [ 0 for x in range(1,10) ])
+        for boardTemp in range(1,10):
+            self.gemTree.Branch(
+                    "ohBoardTemp{0}".format(boardTemp),
+                    self.ohBoardTemp[boardTemp-1],
+                    "ohBoardTemp{0}/I".format(boardTemp))
+
+        return
+
+    def fill(self, **kwargs):
+        """
+        Updates the values stored in the arrays gemTree's branchs map to,
+        then it fills the tree.
+
+        The keyword is assumed to the same as the variable name for
+        simplicity.
+        """
+
+        self.__assignBaseValues(kwargs)
+
+        if "scaTemp" in kwargs:
+            self.scaTemp[0] = kwargs["scaTemp"]
+        if "fpgaCoreTemp" in kwargs:
+            self.fpgaCoreTemp[0] = kwargs["fpgaCoreTemp"]
+
+        for boardTemp im range(1,10):
+            if "boardTemp{0}".format(boardTemp) in kwargs:
+                self.ohBoardTemp[boardTemp-1] = kwargs["boardTemp{0}".format(boardTemp)]
 
         self.gemTree.Fill()
         return
