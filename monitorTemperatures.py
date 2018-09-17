@@ -57,12 +57,13 @@ if __name__ == '__main__':
     ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
     print("Getting CHIP IDs of all VFATs")
     from gempython.utils.nesteddict import nesteddict as ndict
+    from gempython.tools.vfat_user_functions_xhal import *
     vfatIDvals = ndict()
     for ohN in range(0,12):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
         vfatBoard = HwVFAT(args.cardName, ohN, args.debug)
-        vfatIDvals[ohN] = vfatBoard.getAllChipIDs(mask)
+        vfatIDvals[ohN] = vfatBoard.getAllChipIDs(ohVFATMaskArray[ohN])
 
     # Configure DAC Monitoring
     print("configuring VFAT ADCs for temperature monitoring")
@@ -78,13 +79,16 @@ if __name__ == '__main__':
     from reg_utils.reg_interface.common.jtag import disableJtag, enableJtag, initJtagRegAddrs, jtagCommand
     initJtagRegAddrs()
     enableJtag(args.ohMask,2)
+    #enableJtag(args.ohMask,5)
+    #enableJtag(args.ohMask,10)
+    #enableJtag(args.ohMask,20)
 
     # This must come after enableJtag() otherwise Monitoring will be disabled
     print("Enabling SCA Monitoring")
     amcBoard.scaMonitorToggle(~args.ohMask & 0xFF)
     print("SCA Monitoring Enabled, set to {0}".format(str(hex(~args.ohMask & 0xFF)).strip('L')))
 
-    from time import sleep
+    from time import sleep, time
     from ctypes import *
     adcDataIntRefMultiLinks = (c_uint32 * (24 * 12))()
     adcDataExtRefMultiLinks = (c_uint32 * (24 * 12))()
@@ -117,15 +121,12 @@ if __name__ == '__main__':
             print("Reading FPGA Core Temperature")
             ohList = getOHlist(args.ohMask)
             jtagCommand(True, Virtex6Instructions.SYSMON, 10, 0x04000000, 32, False)
-            sleep(1)
             adc1 = jtagCommand(False, None, 0, 0x04010000, 32, ohList)
             #adc1 = jtagCommand(True, None, 0, 0x04010000, 32, ohList)
-            sleep(1)
             jtagCommand(True, Virtex6Instructions.BYPASS, 10, None, 0, False)
-            sleep(1)
 
             if not args.noVFATs:
-                print("VFAT Raw Temperature Data in ADC Counts\n")
+                print("\nVFAT Raw Temperature Data in ADC Counts\n")
                 print("| ohN | vfatN | vfatID | Int ADC Val | Ext ADC Val |")
                 print("| :-: | :---: | :----: | :---------: | :---------: |")
                 for ohN in range(0,12):
@@ -136,11 +137,12 @@ if __name__ == '__main__':
                         print("| {0} | {1} | {2} | {3} | {4} |".format(
                             ohN,
                             vfat,
-                            vfatIDvals[ohN][vfat],
+                            str(hex(vfatIDvals[ohN][vfat])).strip('L'),
                             adcDataIntRefMultiLinks[idx],
                             adcDataExtRefMultiLinks[idx]))
                         pass
                     pass
+                print("")
 
             if not args.noOHs:
                 print("Optohybrid Temperature Data, in ADC Counts unless noted otherwise\n")
@@ -162,11 +164,12 @@ if __name__ == '__main__':
                     for boardTemp in range(1,10):
                         row += " {0} |".format(scaMonData[ohN].ohBoardTemp[boardTemp-1])
                     print(row)
+                print("")
 
             if(args.filename is None):
                 break
             else:
-                currentTime = int(time.time())
+                currentTime = int(time())
                 for ohN in range(0,12):
                     if( not ((args.ohMask >> ohN) & 0x1)):
                         continue
@@ -174,7 +177,7 @@ if __name__ == '__main__':
                         idx = ohN * 24 + vfat
                         gemTempDataVFAT.fill(
                                 adcTempIntRef = adcDataIntRefMultiLinks[idx],
-                                adcTempExtRef = adcDataExtRefMultiLinks[idx]
+                                adcTempExtRef = adcDataExtRefMultiLinks[idx],
                                 link = ohN,
                                 vfatID = vfatIDvals[ohN][vfat],
                                 vfatN = vfat,
@@ -196,16 +199,16 @@ if __name__ == '__main__':
                             boardTemp7 = scaMonData[ohN].ohBoardTemp[6],
                             boardTemp8 = scaMonData[ohN].ohBoardTemp[7],
                             boardTemp9 = scaMonData[ohN].ohBoardTemp[8],
-                            #fpgaCoreTemp = scaMonData[ohN].ohFPGACoreTemp
-                            fpgaCoreTemp = ((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15, # Remove once dedicated register exists
+                            #fpgaCoreTemp = scaMonData[ohN].ohFPGACoreTemp,
+                            fpgaCoreTemp = (((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15), # Remove once dedicated register exists
                             link = ohN,
-                            scaTemp = scaMonData[ohN].scaTemp
+                            scaTemp = scaMonData[ohN].scaTemp,
                             utime = currentTime
                             )
                     pass
 
-                gemTempDataOH.AutoSave("SaveSelf")
-                gemTempDataVFAT.AutoSave("SaveSelf")
+                gemTempDataOH.autoSave("SaveSelf")
+                gemTempDataVFAT.autoSave("SaveSelf")
 
             # Wait 
             sleep(args.timeInterval)
@@ -215,14 +218,14 @@ if __name__ == '__main__':
         pass
     except Exception as e:
         if args.filename is not None:
-            gemTempDataOH.AutoSave("SaveSelf")
-            gemTempDataVFAT.AutoSave("SaveSelf")
+            gemTempDataOH.autoSave("SaveSelf")
+            gemTempDataVFAT.autoSave("SaveSelf")
         print "An exception occurred", e
     finally:
         if args.filename is not None:
             outF.cd()
-            gemTempDataOH.Write()
-            gemTempDataVFAT.Write()
+            gemTempDataOH.write()
+            gemTempDataVFAT.write()
             outF.Close()
 
     print("Reverting SCA Monitoring To Original Value")
