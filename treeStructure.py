@@ -21,7 +21,7 @@ class gemGenericTree(object):
         self.gemTree.Branch( 'Nev', self.Nev, 'Nev/I' )
         
         self.utime = array( 'i', [ 0 ] )
-        self.gemTree.Branch( 'utime', self.utime, 'utime/I' )
+        self.gemTree.Branch( 'utime', self.utime, 'utime/i' )
         
         self.ztrim = array( 'f', [ 0 ] )
         self.gemTree.Branch( 'ztrim', self.ztrim, 'ztrim/F' )
@@ -29,8 +29,8 @@ class gemGenericTree(object):
         self.vfatCH = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vfatCH', self.vfatCH, 'vfatCH/I' )
         
-        self.vfatID = array( 'i', [-1] )
-        self.gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
+        self.vfatID = array( 'l', [-1] )
+        self.gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/l' ) #Hex Chip ID of VFAT
 
         self.vfatN = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'vfatN', self.vfatN, 'vfatN/I' )
@@ -44,7 +44,7 @@ class gemGenericTree(object):
     def getMode(self):
         return self.mode[0]
 
-    def __assignBaseValues(self, **kwargs):
+    def assignBaseValues(self, **kwargs):
         """
         Assigns values to the arrays defined in gemTree.__init__().
         Does not fill the tree.
@@ -59,8 +59,6 @@ class gemGenericTree(object):
             self.Nev[0] = kwargs["Nev"]
         if "utime" in kwargs:
             self.utime[0] = kwargs["utime"]
-        if (("vfatCH" in kwargs) and (not self.isGblDac)):
-            self.vfatCH[0] = kwargs["vfatCH"]
         if "vfatID" in kwargs:
             self.vfatID[0] = kwargs["vfatID"]
         if "vfatN" in kwargs:
@@ -189,10 +187,10 @@ class  gemTemepratureVFATTree(gemGenericTree):
         gemGenericTree.__init__(self,name=name,description=description)
 
         self.adcTempIntRef = array('i', [0])
-        self.gemTree.Branch( 'adcTempIntRef', adcTempIntRef, 'adcTempIntRef/I')
+        self.gemTree.Branch( 'adcTempIntRef', self.adcTempIntRef, 'adcTempIntRef/I')
 
         self.adcTempExtRef = array('i', [0])
-        self.gemTree.Branch( 'adcTempExtRef', adcTempExtRef, 'adcTempExtRef/I')
+        self.gemTree.Branch( 'adcTempExtRef', self.adcTempExtRef, 'adcTempExtRef/I')
 
         return
 
@@ -205,12 +203,22 @@ class  gemTemepratureVFATTree(gemGenericTree):
         simplicity.
         """
 
-        self.__assignBaseValues(kwargs)
+        #self.assignBaseValues(kwargs)
+        #gemGenericTree.assignBaseValues(self,kwargs)
+        #gemGenericTree.assignBaseValues(kwargs)
 
         if "adcTempIntRef" in kwargs:
             self.adcTempIntRef[0] = kwargs["adcTempIntRef"]
         if "adcTempExtRef" in kwargs:
             self.adcTempExtRef[0] = kwargs["adcTempExtRef"]
+        if "link" in kwargs:
+            self.link[0] = kwargs["link"]
+        if "utime" in kwargs:
+            self.utime[0] = kwargs["utime"]
+        if "vfatID" in kwargs:
+            self.vfatID[0] = kwargs["vfatID"]
+        if "vfatN" in kwargs:
+            self.vfatN[0] = kwargs["vfatN"]
 
         self.gemTree.Fill()
         return
@@ -224,11 +232,11 @@ class  gemTemepratureOHTree(gemGenericTree):
 
         gemGenericTree.__init__(self,name=name,description=description)
 
-        self.scaTemp = array('i', [0])
-        self.gemTree.Branch('scaTemp',link, 'scaTemp/I')
+        self.scaTemp = array('f', [0])
+        self.gemTree.Branch('scaTemp',self.scaTemp, 'scaTemp/F')
 
         self.fpgaCoreTemp = array('f', [0])
-        self.gemTree.Branch('fpgaCoreTemp',fpgaCoreTemp,'fpgaCoreTemp/F')
+        self.gemTree.Branch('fpgaCoreTemp',self.fpgaCoreTemp,'fpgaCoreTemp/F')
 
         self.ohBoardTemp = array('i', [ 0 for x in range(1,10) ])
         for boardTemp in range(1,10):
@@ -248,14 +256,24 @@ class  gemTemepratureOHTree(gemGenericTree):
         simplicity.
         """
 
-        self.__assignBaseValues(kwargs)
+        #self.assignBaseValues(kwargs)
+        #gemGenericTree.assignBaseValues(self,kwargs)
+        #gemGenericTree.assignBaseValues(kwargs)
 
-        if "scaTemp" in kwargs:
-            self.scaTemp[0] = kwargs["scaTemp"]
         if "fpgaCoreTemp" in kwargs:
             self.fpgaCoreTemp[0] = kwargs["fpgaCoreTemp"]
+        if "link" in kwargs:
+            self.link[0] = kwargs["link"]
+        if "scaTemp" in kwargs:
+            self.scaTemp[0] = kwargs["scaTemp"]
+        if "utime" in kwargs:
+            self.utime[0] = kwargs["utime"]
+        if "vfatID" in kwargs:
+            self.vfatID[0] = kwargs["vfatID"]
+        if "vfatN" in kwargs:
+            self.vfatN[0] = kwargs["vfatN"]
 
-        for boardTemp im range(1,10):
+        for boardTemp in range(1,10):
             if "boardTemp{0}".format(boardTemp) in kwargs:
                 self.ohBoardTemp[boardTemp-1] = kwargs["boardTemp{0}".format(boardTemp)]
 
