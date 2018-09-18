@@ -78,10 +78,10 @@ if __name__ == '__main__':
     origSCAMonOffVal = amcBoard.readRegister("GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF")
     from reg_utils.reg_interface.common.jtag import disableJtag, enableJtag, initJtagRegAddrs, jtagCommand
     initJtagRegAddrs()
-    enableJtag(args.ohMask,2)
+    #enableJtag(args.ohMask,2)
     #enableJtag(args.ohMask,5)
     #enableJtag(args.ohMask,10)
-    #enableJtag(args.ohMask,20)
+    enableJtag(args.ohMask,20)
 
     # This must come after enableJtag() otherwise Monitoring will be disabled
     print("Enabling SCA Monitoring")
@@ -102,21 +102,18 @@ if __name__ == '__main__':
             # Read all ADCs
             print("Reading Internally Referenced ADC data")
             rpcResp = amcBoard.readADCsMultiLink(adcDataIntRefMultiLinks, False, args.ohMask, args.debug)
-            print("Internally Referenced ADC Data was read")
 
             if rpcResp != 0:
                 raise Exception("RPC response was non-zero, reading all VFAT ADCs from OH's in ohMask = {0} failed".format(hex(args.ohMask)))
 
             print("Reading Externally Referenced ADC data")
             rpcResp = amcBoard.readADCsMultiLink(adcDataExtRefMultiLinks, True, args.ohMask, args.debug)
-            print("Externally Referenced ADC Data was read")
 
             if rpcResp != 0:
                 raise Exception("RPC response was non-zero, reading all VFAT ADCs from OH's in ohMask = {0} failed".format(hex(args.ohMask)))
 
             print("Reading SCA Temperatures")
             scaMonData = amcBoard.scaMonitorMultiLink(ohMask=args.ohMask)
-            print("SCA Temperatures Have Been Read")
 
             print("Reading FPGA Core Temperature")
             ohList = getOHlist(args.ohMask)
