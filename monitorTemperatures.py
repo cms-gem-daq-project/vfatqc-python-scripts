@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # create the parser
     import argparse
-    parser = argparse.ArgumentParser(description="Reads and records temperature of electronics.  Will read in distinct time intervals until a keyboard interrupt (Ctrl+C) is sent")
+    parser = argparse.ArgumentParser(description="Reads and records temperature of electronics.  If the --filename argument is not specified a single read will be performed then this script will exit.  If the --filename argument is provided this script will read in user specified time intervals until a keyboard interrupt (Ctrl+C) is sent")
 
     # Positional arguments
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
@@ -26,11 +26,11 @@ if __name__ == '__main__':
     parser.add_argument("--extTempVFAT", action="store_true", dest="extTempVFAT",
             help = "Use external PT1000 temperature sensors on the VFAT3 hybrid instead of the temperature sensor inside the ASIC. Note only available in HV3b_V3 hybrids or later")
     parser.add_argument("-f","--filename", type=str, dest="filename", default=None,
-            help = "Specify output filename",metavar="filename")
+            help = "Specify output filename to store data in.  Will cause successive reads to be performed",metavar="filename")
     parser.add_argument("--noOHs", action="store_true", dest="noOHs",
-            help = "Do not print OH temperatures to terminal; they are still read and stored in the output file if provided")
+            help = "Do not print OH temperatures to terminal; if --filename is provided OH temperatures are still read and stored in the output file")
     parser.add_argument("--noVFATs", action="store_true", dest="noVFATs",
-            help = "Do not print VFAT temperatures to terminal; they are still read and stored in the output file if provided")
+            help = "Do not print VFAT temperatures to terminal; if --filename isp provided VFAT temperatures are still read and stored in the output file")
     parser.add_argument("-t","--timeInterval", type=int, dest="timeInterval", default=60,
             help ="Time interval, in seconds, to wait in between temperature reads",metavar="timeInterval")
     args = parser.parse_args()
