@@ -74,14 +74,14 @@ if __name__ == '__main__':
     print("VFAT ADCs have been configured for temperature monitoring")
 
     # Remove this once a register for monitoring FPGA Core Temp Exists
-    print("Configuring SCA JTAG Registers")
+    #print("Configuring SCA JTAG Registers")
     origSCAMonOffVal = amcBoard.readRegister("GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF")
-    from reg_utils.reg_interface.common.jtag import disableJtag, enableJtag, initJtagRegAddrs, jtagCommand
-    initJtagRegAddrs()
-    #enableJtag(args.ohMask,2)
-    #enableJtag(args.ohMask,5)
-    #enableJtag(args.ohMask,10)
-    enableJtag(args.ohMask,20)
+    #from reg_utils.reg_interface.common.jtag import disableJtag, enableJtag, initJtagRegAddrs, jtagCommand
+    #initJtagRegAddrs()
+    ##enableJtag(args.ohMask,2)
+    ##enableJtag(args.ohMask,5)
+    ##enableJtag(args.ohMask,10)
+    #enableJtag(args.ohMask,20)
 
     # This must come after enableJtag() otherwise Monitoring will be disabled
     print("Enabling SCA Monitoring")
@@ -96,8 +96,8 @@ if __name__ == '__main__':
         # place holder
         print("Reading and recording temperature data, press Ctrl+C to stop")
 
-        from reg_utils.reg_interface.common.sca_utils import getOHlist
-        from reg_utils.reg_interface.common.virtex6 import Virtex6Instructions
+        #from reg_utils.reg_interface.common.sca_utils import getOHlist
+        #from reg_utils.reg_interface.common.virtex6 import Virtex6Instructions
         while(True):
             # Read all ADCs
             print("Reading Internally Referenced ADC data")
@@ -116,11 +116,13 @@ if __name__ == '__main__':
             scaMonData = amcBoard.scaMonitorMultiLink(ohMask=args.ohMask)
 
             print("Reading FPGA Core Temperature")
-            ohList = getOHlist(args.ohMask)
-            jtagCommand(True, Virtex6Instructions.SYSMON, 10, 0x04000000, 32, False)
-            adc1 = jtagCommand(False, None, 0, 0x04010000, 32, ohList)
-            #adc1 = jtagCommand(True, None, 0, 0x04010000, 32, ohList)
-            jtagCommand(True, Virtex6Instructions.BYPASS, 10, None, 0, False)
+            #ohList = getOHlist(args.ohMask)
+            #jtagCommand(True, Virtex6Instructions.SYSMON, 10, 0x04000000, 32, False)
+            #adc1 = jtagCommand(False, None, 0, 0x04010000, 32, ohList)
+            ##adc1 = jtagCommand(True, None, 0, 0x04010000, 32, ohList)
+            #jtagCommand(True, Virtex6Instructions.BYPASS, 10, None, 0, False)
+            sysmonData = amcBoard.sysmonMonitorMultiLink(ohMask=args.ohMask)
+            print("Succeeded in reading FPGA Core Temperature")
 
             if not args.noVFATs:
                 print("\nVFAT Raw Temperature Data in ADC Counts\n")
@@ -156,7 +158,9 @@ if __name__ == '__main__':
                     row = "| {0} | {1} | {2} |".format(
                             ohN,
                             #scaMonData[ohN].ohFPGACoreTemp,
-                            ((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15, # Remove once dedicated register exists
+                            #((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15, # Remove once dedicated register exists
+                            ((sysmonData[ohN].fpgaCoreTemp * 503.975) / 1024.0 - 273.15),
+                            #str(hex(sysmonData[ohN].fpgaCoreTemp)).strip('L'),
                             scaMonData[ohN].scaTemp)
                     for boardTemp in range(1,10):
                         row += " {0} |".format(scaMonData[ohN].ohBoardTemp[boardTemp-1])
@@ -172,6 +176,7 @@ if __name__ == '__main__':
                         continue
                     for vfat in range(0,24):
                         idx = ohN * 24 + vfat
+
                         gemTempDataVFAT.fill(
                                 adcTempIntRef = adcDataIntRefMultiLinks[idx],
                                 adcTempExtRef = adcDataExtRefMultiLinks[idx],
@@ -187,17 +192,18 @@ if __name__ == '__main__':
                     if( not ((args.ohMask >> ohN) & 0x1)):
                         continue
                     gemTempDataOH.fill(
-                            boardTemp1 = scaMonData[ohN].ohBoardTemp[0],
-                            boardTemp2 = scaMonData[ohN].ohBoardTemp[1],
-                            boardTemp3 = scaMonData[ohN].ohBoardTemp[2],
-                            boardTemp4 = scaMonData[ohN].ohBoardTemp[3],
-                            boardTemp5 = scaMonData[ohN].ohBoardTemp[4],
-                            boardTemp6 = scaMonData[ohN].ohBoardTemp[5],
-                            boardTemp7 = scaMonData[ohN].ohBoardTemp[6],
-                            boardTemp8 = scaMonData[ohN].ohBoardTemp[7],
-                            boardTemp9 = scaMonData[ohN].ohBoardTemp[8],
+                            ohBoardTemp1 = scaMonData[ohN].ohBoardTemp[0],
+                            ohBoardTemp2 = scaMonData[ohN].ohBoardTemp[1],
+                            ohBoardTemp3 = scaMonData[ohN].ohBoardTemp[2],
+                            ohBoardTemp4 = scaMonData[ohN].ohBoardTemp[3],
+                            ohBoardTemp5 = scaMonData[ohN].ohBoardTemp[4],
+                            ohBoardTemp6 = scaMonData[ohN].ohBoardTemp[5],
+                            ohBoardTemp7 = scaMonData[ohN].ohBoardTemp[6],
+                            ohBoardTemp8 = scaMonData[ohN].ohBoardTemp[7],
+                            ohBoardTemp9 = scaMonData[ohN].ohBoardTemp[8],
                             #fpgaCoreTemp = scaMonData[ohN].ohFPGACoreTemp,
-                            fpgaCoreTemp = (((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15), # Remove once dedicated register exists
+                            #fpgaCoreTemp = (((adc1[ohN] >> 6) & 0x3FF) * 503.975 / 1024.0-273.15), # Remove once dedicated register exists
+                            fpgaCoreTemp = ((sysmonData[ohN].fpgaCoreTemp * 503.975) / 1024.0 - 273.15),
                             link = ohN,
                             scaTemp = scaMonData[ohN].scaTemp,
                             utime = currentTime
@@ -229,7 +235,7 @@ if __name__ == '__main__':
     amcBoard.scaMonitorToggle(origSCAMonOffVal)
     print("SCA Monitoring Reverted to {0}".format(str(hex(origSCAMonOffVal)).strip('L')))
 
-    disableJtag()
+    #disableJtag()
 
     # Done
     print "Done"
