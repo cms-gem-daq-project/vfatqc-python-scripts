@@ -314,30 +314,32 @@ if __name__ == '__main__':
                 numValidChanFits+=dict_scurveFitResults[trimPt][6][vfat][chan]
 
             if numValidChanFits >=2: # Can Make a line
-                # Fit g_TrimDAC_vs_scurveMean
-                fitResult = g_TrimDAC_vs_scurveMean.Fit(func_TrimDAC_vs_scurveMean, "QRS")
-                fitEmpty = fitResult.IsEmpty()
-                if fitEmpty:
-                    print("trimChamberV3.py main(): found trimDAC fit of vfat %d chan%d to be empty!!"%(vfat,chan))
-                fitValid = fitResult.IsValid()
-                if not fitValid:
-                    print("trimChamberV3.py main(): found trimDAC fit of vfat %d chan %d to be not valid!!"%(vfat,chan))
-                    cArray_trimVal[128*vfat+chan] = 0
-                    cArray_trimPol[128*vfat+chan] = 0
-                else:
-                    # Determine the trim value and polarity to shift this channel to the 
-                    # global arm dac threshold (CFG_THR_ARM_DAC) for this VFAT
-                    armDacCharge = func_scurveMean_vs_thrArmDac.Eval(dict_thrArmDacPerVFAT[vfat])
-                    trimVal = g_TrimDAC_vs_scurveMean.Eval(armDacCharge)
-                    if trimVal > 0:
+                try:
+                    # Fit g_TrimDAC_vs_scurveMean
+                    fitResult = g_TrimDAC_vs_scurveMean.Fit(func_TrimDAC_vs_scurveMean, "QRS")
+                    fitValid = fitResult.IsValid()
+                    if not fitValid:
+                        print("trimChamberV3.py main(): found trimDAC fit of vfat %d chan %d to be not valid!!"%(vfat,chan))
+                        cArray_trimVal[128*vfat+chan] = 0
                         cArray_trimPol[128*vfat+chan] = 0
                     else:
-                        trimVal = abs(trimVal)
-                        cArray_trimPol[128*vfat+chan] = 1
+                        # Determine the trim value and polarity to shift this channel to the
+                        # global arm dac threshold (CFG_THR_ARM_DAC) for this VFAT
+                        armDacCharge = func_scurveMean_vs_thrArmDac.Eval(dict_thrArmDacPerVFAT[vfat])
+                        trimVal = g_TrimDAC_vs_scurveMean.Eval(armDacCharge)
+                        if trimVal > 0:
+                            cArray_trimPol[128*vfat+chan] = 0
+                        else:
+                            trimVal = abs(trimVal)
+                            cArray_trimPol[128*vfat+chan] = 1
 
-                    if trimVal > 0x3F: # If trimVal is over the max, reset to the max
-                        trimVal = 0x3F
-                    cArray_trimVal[128*vfat+chan] = int(trimVal)
+                        if trimVal > 0x3F: # If trimVal is over the max, reset to the max
+                            trimVal = 0x3F
+                        cArray_trimVal[128*vfat+chan] = int(trimVal)
+                except ReferenceError:
+                    print("trimChamberV3.py main(): TFitResult is a null pointer, skipping vfat %d chan %d!!"%(vfat,chan))
+                    cArray_trimVal[128*vfat+chan] = 0
+                    cArray_trimPol[128*vfat+chan] = 0
             else:
                 cArray_trimVal[128*vfat+chan] = 0
                 cArray_trimPol[128*vfat+chan] = 0

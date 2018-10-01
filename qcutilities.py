@@ -1,3 +1,10 @@
+def calcL1Ainterval(rate):
+    """
+    Returns the L1Ainterval in BX associated with a given rate in Hz
+    """
+    from math import floor
+    return floor((1.0 / rate) * (1e9 / 25))
+
 def getChannelRegisters(vfatBoard, mask):
     """
     Returns a structured numpy array that stores the channel
@@ -52,12 +59,15 @@ def inputOptionsValid(options, amc_major_fw_ver):
     """
     Sanity check on input options
 
-    options - an optparser.Values instance
+    options - Either an optparser.Values instance or a dictionary
     amc_major_fw_ver - major FW version of the AMC
     """
 
     # get the options dictionary
-    dict_options = options.__dict__.keys()
+    if type(options) == type({}):
+        dict_options = options
+    else:
+        dict_options = options.__dict__.keys()
 
     # Cal Phase
     if "CalPhase" in dict_options:

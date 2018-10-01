@@ -142,6 +142,7 @@ if __name__ == '__main__':
                 pass
 
             chanRegData = getChannelRegisters(vfatBoard,mask)
+            vfatIDvals = vfatBoard.getAllChipIDs(mask)
         else:
             vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),range(0,24)))
@@ -189,9 +190,16 @@ if __name__ == '__main__':
                     scanReg = "VThreshold1PerChan"
     
                 # Perform the scan
-                rpcResp = vfatBoard.parentOH.performCalibrationScan(chan, scanReg, scanData, enableCal=False, nevts=options.nevts, 
-                                                                    dacMin=options.scanmin, dacMax=options.scanmax, 
-                                                                    stepSize=options.stepSize, mask=options.vfatmask)
+                rpcResp = vfatBoard.parentOH.performCalibrationScan(
+                        chan=chan,
+                        dacMax=options.scanmax,
+                        dacMin=options.scanmin,
+                        enableCal=False,
+                        mask=options.vfatmask,
+                        nevts=options.nevts,
+                        outData=scanData,
+                        scanReg=scanReg,
+                        stepSize=options.stepSize)
     
                 if rpcResp != 0:
                     raise Exception('RPC response was non-zero, threshold scan for channel %i failed'%chan)
@@ -239,7 +247,7 @@ if __name__ == '__main__':
                                         trimDAC = chanRegData[chan+vfat*128]['ARM_TRIM_AMPLITUDE'],
                                         trimPolarity = chanRegData[chan+vfat*128]['ARM_TRIM_POLARITY'],
                                         vfatCH = chan,
-                                        #vfatID = vfatIDvals[vfat],
+                                        vfatID = vfatIDvals[vfat],
                                         vfatN = vfat,
                                         vth1 = vthr,
                                         vthr = vthr
@@ -286,9 +294,16 @@ if __name__ == '__main__':
             scanData = (c_uint32 * scanDataSizeNet)()
             
             # Perform the scan
-            rpcResp = vfatBoard.parentOH.performCalibrationScan(0, scanReg, scanData, nevts=options.nevts, 
-                                                                dacMin=options.scanmin, dacMax=options.scanmax, 
-                                                                stepSize=options.stepSize, mask=options.vfatmask)
+            rpcResp = vfatBoard.parentOH.performCalibrationScan(
+                    chan=0,
+                    dacMax=options.scanmax,
+                    dacMin=options.scanmin,
+                    enableCal=False,
+                    mask=options.vfatmask,
+                    nevts=options.nevts,
+                    outData=scanData,
+                    scanReg=scanReg,
+                    stepSize=options.stepSize)
     
             if rpcResp != 0:
                 raise Exception('RPC response was non-zero, threshold scan failed')
@@ -327,7 +342,7 @@ if __name__ == '__main__':
                                 mspl = msplvals[vfat],
                                 Nev = (scanData[threshDAC] & 0xffff),
                                 Nhits = ((scanData[threshDAC]>>16) & 0xffff),
-                                #vfatID = vfatIDvals[vfat],
+                                vfatID = vfatIDvals[vfat],
                                 vfatN = vfat,
                                 vth1 = vthr,
                                 vthr = vthr

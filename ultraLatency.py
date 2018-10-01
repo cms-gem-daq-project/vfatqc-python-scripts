@@ -140,6 +140,7 @@ if __name__ == '__main__':
             vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
             msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),
                                  range(0,24)))
+            vfatIDvals = vfatBoard.getAllChipIDs(mask)
     
         # Stop triggers
         vfatBoard.parentOH.parentAMC.blockL1A()
@@ -247,9 +248,18 @@ if __name__ == '__main__':
         # Not sure I understand why it has to be scanChan+1 below...
         amc13board.enableLocalL1A(True)
         vfatBoard.parentOH.parentAMC.enableL1A()
-        rpcResp = vfatBoard.parentOH.performCalibrationScan(scanChan, scanReg, scanData, enableCal=enableCalPulse, currentPulse=isCurrentPulse, nevts=options.nevts, 
-                                                            dacMin=options.scanmin, dacMax=options.scanmax, stepSize=options.stepSize, 
-                                                            mask=options.vfatmask, useExtTrig=(not options.internal))
+        rpcResp = vfatBoard.parentOH.performCalibrationScan(
+                chan=scanChan,
+                currentPulse=isCurrentPulse,
+                dacMax=options.scanmax,
+                dacMin=options.scanmin,
+                enableCal=enableCalPulse,
+                outData=scanData,
+                mask=options.vfatmask,
+                nevts=options.nevts,
+                scanReg=scanReg,
+                stepSize=options.stepSize,
+                useExtTrig=(not options.internal))
     
         if rpcResp != 0:
             raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
@@ -307,7 +317,7 @@ if __name__ == '__main__':
                                 mspl = msplvals[vfat],
                                 Nev = (scanData[latReg] & 0xffff),
                                 Nhits = ((scanData[latReg]>>16) & 0xffff),
-                                #vfatID = vfatIDvals[vfat],
+                                vfatID = vfatIDvals[vfat],
                                 vfatN = vfat,
                                 vth1 = vt1vals[vfat]
                                 )
