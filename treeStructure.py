@@ -21,7 +21,7 @@ class gemGenericTree(object):
         self.gemTree.Branch( 'Nev', self.Nev, 'Nev/I' )
         
         self.utime = array( 'i', [ 0 ] )
-        self.gemTree.Branch( 'utime', self.utime, 'utime/I' )
+        self.gemTree.Branch( 'utime', self.utime, 'utime/i' )
         
         self.ztrim = array( 'f', [ 0 ] )
         self.gemTree.Branch( 'ztrim', self.ztrim, 'ztrim/F' )
@@ -29,8 +29,8 @@ class gemGenericTree(object):
         self.vfatCH = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vfatCH', self.vfatCH, 'vfatCH/I' )
         
-        self.vfatID = array( 'i', [-1] )
-        self.gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
+        self.vfatID = array( 'l', [-1] )
+        self.gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/l' ) #Hex Chip ID of VFAT
 
         self.vfatN = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'vfatN', self.vfatN, 'vfatN/I' )
@@ -43,7 +43,31 @@ class gemGenericTree(object):
 
     def getMode(self):
         return self.mode[0]
-    
+
+    def assignBaseValues(self, **kwargs):
+        """
+        Assigns values to the arrays defined in gemTree.__init__().
+        Does not fill the tree.
+
+        The keyword is assumed to the same as the variable name for
+        simplicity.
+        """
+
+        if "link" in kwargs:
+            self.link[0] = kwargs["link"]
+        if "Nev" in kwargs:
+            self.Nev[0] = kwargs["Nev"]
+        if "utime" in kwargs:
+            self.utime[0] = kwargs["utime"]
+        if "vfatID" in kwargs:
+            self.vfatID[0] = kwargs["vfatID"]
+        if "vfatN" in kwargs:
+            self.vfatN[0] = kwargs["vfatN"]
+        if "ztrim" in kwargs:
+            self.ztrim[0] = kwargs["ztrim"]
+
+        return
+
     def setDefaults(self, options, time):
         """
         Takes as input the options object returned by OptParser.parse_args()
@@ -149,6 +173,144 @@ class gemDacCalTreeStructure(gemGenericTree):
             if "func_dacFit" in kwargs:
                 #self.func_dacFit = kwargs["func_dacFit"].Clone()
                 kwargs["func_dacFit"].Copy(self.func_dacFit)
+
+        self.gemTree.Fill()
+        return
+
+class  gemTemepratureVFATTree(gemGenericTree):
+    def __init__(self,name="VFATTemperatureData",description="VFAT Temperature Data as a function of time"):
+        """
+        name        TName of the TTree
+        description Phrase describing the TTree
+        """
+
+        gemGenericTree.__init__(self,name=name,description=description)
+
+        self.adcTempIntRef = array('i', [0])
+        self.gemTree.Branch( 'adcTempIntRef', self.adcTempIntRef, 'adcTempIntRef/I')
+
+        self.adcTempExtRef = array('i', [0])
+        self.gemTree.Branch( 'adcTempExtRef', self.adcTempExtRef, 'adcTempExtRef/I')
+
+        return
+
+    def fill(self, **kwargs):
+        """
+        Updates the values stored in the arrays gemTree's branchs map to,
+        then it fills the tree.
+
+        The keyword is assumed to the same as the variable name for
+        simplicity.
+        """
+
+        if "adcTempIntRef" in kwargs:
+            self.adcTempIntRef[0] = kwargs["adcTempIntRef"]
+        if "adcTempExtRef" in kwargs:
+            self.adcTempExtRef[0] = kwargs["adcTempExtRef"]
+        if "link" in kwargs:
+            self.link[0] = kwargs["link"]
+        if "utime" in kwargs:
+            self.utime[0] = kwargs["utime"]
+        if "vfatID" in kwargs:
+            self.vfatID[0] = kwargs["vfatID"]
+        if "vfatN" in kwargs:
+            self.vfatN[0] = kwargs["vfatN"]
+
+        self.gemTree.Fill()
+        return
+
+class  gemTemepratureOHTree(gemGenericTree):
+    def __init__(self,name="OHTemperatureData",description="OH Temperature Data as a function of time"):
+        """
+        name        TName of the TTree
+        description Phrase describing the TTree
+        """
+
+        gemGenericTree.__init__(self,name=name,description=description)
+
+        #self.ohBoardTemp = array('i', [ 0 for x in range(1,10) ])
+        #for boardTemp in range(1,10):
+        #    self.gemTree.Branch(
+        #            "ohBoardTemp{0}".format(boardTemp),
+        #            self.ohBoardTemp[boardTemp-1],
+        #            "ohBoardTemp{0}/I".format(boardTemp))
+        self.ohBoardTemp1 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp1',self.ohBoardTemp1,'ohBoardTemp1/F')
+
+        self.ohBoardTemp2 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp2',self.ohBoardTemp2,'ohBoardTemp2/F')
+
+        self.ohBoardTemp3 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp3',self.ohBoardTemp3,'ohBoardTemp3/F')
+
+        self.ohBoardTemp4 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp4',self.ohBoardTemp4,'ohBoardTemp4/F')
+
+        self.ohBoardTemp5 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp5',self.ohBoardTemp5,'ohBoardTemp5/F')
+
+        self.ohBoardTemp6 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp6',self.ohBoardTemp6,'ohBoardTemp6/F')
+
+        self.ohBoardTemp7 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp7',self.ohBoardTemp7,'ohBoardTemp7/F')
+
+        self.ohBoardTemp8 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp8',self.ohBoardTemp8,'ohBoardTemp8/F')
+
+        self.ohBoardTemp9 = array('f', [0])
+        self.gemTree.Branch('ohBoardTemp9',self.ohBoardTemp9,'ohBoardTemp9/F')
+
+        self.scaTemp = array('f', [0])
+        self.gemTree.Branch('scaTemp',self.scaTemp, 'scaTemp/F')
+
+        self.fpgaCoreTemp = array('f', [0])
+        self.gemTree.Branch('fpgaCoreTemp',self.fpgaCoreTemp,'fpgaCoreTemp/F')
+
+        return
+
+    def fill(self, **kwargs):
+        """
+        Updates the values stored in the arrays gemTree's branchs map to,
+        then it fills the tree.
+
+        The keyword is assumed to the same as the variable name for
+        simplicity.
+        """
+
+        #for boardTemp in range(1,10):
+        #    if "ohBoardTemp{0}".format(boardTemp) in kwargs:
+        #        self.ohBoardTemp[boardTemp-1] = kwargs["ohBoardTemp{0}".format(boardTemp)]
+        if "ohBoardTemp1" in kwargs:
+            self.ohBoardTemp1[0] = kwargs["ohBoardTemp1"]
+        if "ohBoardTemp2" in kwargs:
+            self.ohBoardTemp2[0] = kwargs["ohBoardTemp2"]
+        if "ohBoardTemp3" in kwargs:
+            self.ohBoardTemp3[0] = kwargs["ohBoardTemp3"]
+        if "ohBoardTemp4" in kwargs:
+            self.ohBoardTemp4[0] = kwargs["ohBoardTemp4"]
+        if "ohBoardTemp5" in kwargs:
+            self.ohBoardTemp5[0] = kwargs["ohBoardTemp5"]
+        if "ohBoardTemp6" in kwargs:
+            self.ohBoardTemp6[0] = kwargs["ohBoardTemp6"]
+        if "ohBoardTemp7" in kwargs:
+            self.ohBoardTemp7[0] = kwargs["ohBoardTemp7"]
+        if "ohBoardTemp8" in kwargs:
+            self.ohBoardTemp8[0] = kwargs["ohBoardTemp8"]
+        if "ohBoardTemp9" in kwargs:
+            self.ohBoardTemp9[0] = kwargs["ohBoardTemp9"]
+        if "fpgaCoreTemp" in kwargs:
+            self.fpgaCoreTemp[0] = kwargs["fpgaCoreTemp"]
+        if "link" in kwargs:
+            self.link[0] = kwargs["link"]
+        if "scaTemp" in kwargs:
+            self.scaTemp[0] = kwargs["scaTemp"]
+        if "utime" in kwargs:
+            self.utime[0] = kwargs["utime"]
+        if "vfatID" in kwargs:
+            self.vfatID[0] = kwargs["vfatID"]
+        if "vfatN" in kwargs:
+            self.vfatN[0] = kwargs["vfatN"]
 
         self.gemTree.Fill()
         return

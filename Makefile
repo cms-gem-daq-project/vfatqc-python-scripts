@@ -47,9 +47,10 @@ preprpm: default
 	@echo "Running preprpm target"
 	@cp -rf config/scriptlets/installrpm.sh pkg/
 	$(MakeDir) $(ScriptDir)
-	@cp -rf conf*.py       $(ScriptDir)
 	@cp -rf checkSbitMappingAndRate.py $(ScriptDir)
+	@cp -rf conf*.py       $(ScriptDir)
 	@cp -rf fastLatency.py $(ScriptDir)
+	@cp -rf monitorTemperatures.py $(ScriptDir)
 	@cp -rf run_scans.py   $(ScriptDir)
 	@cp -rf sbitReadOut.py $(ScriptDir)
 	@cp -rf sbitThreshScanParallel.py $(ScriptDir)
