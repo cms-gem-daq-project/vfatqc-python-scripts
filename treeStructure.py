@@ -118,7 +118,10 @@ class gemDacCalTreeStructure(gemGenericTree):
 
         self.dacValY_Err = array( 'i', [0] )
         self.gemTree.Branch( 'dacValY_Err', self.dacValY, 'dacValY_Err/I')
-        
+
+        self.valY = valY
+        self.gemTree.Branch( 'valY', self.valY, 'valY/C')
+
         # Set the channel number to 128 Normally 0 to 127
         if self.isGblDac:
             self.vfatCH[0] = 128 
