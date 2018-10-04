@@ -20,7 +20,7 @@ PythonModules = ["$(Namespace).$(ShortPackage)"]
 $(info PythonModules=${PythonModules})
 
 VFATQC_VER_MAJOR=2
-VFATQC_VER_MINOR=1
+VFATQC_VER_MINOR=2
 VFATQC_VER_PATCH=0
 
 include $(BUILD_HOME)/$(Project)/config/mfCommonDefs.mk
@@ -49,6 +49,7 @@ preprpm: default
 	$(MakeDir) $(ScriptDir)
 	@cp -rf checkSbitMappingAndRate.py $(ScriptDir)
 	@cp -rf conf*.py       $(ScriptDir)
+	@cp -rf dacScanV3.py $(ScriptDir)
 	@cp -rf fastLatency.py $(ScriptDir)
 	@cp -rf monitorTemperatures.py $(ScriptDir)
 	@cp -rf run_scans.py   $(ScriptDir)
