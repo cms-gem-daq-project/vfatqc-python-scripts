@@ -44,8 +44,10 @@ if __name__ == '__main__':
         gemTempDataOH = gemTemepratureOHTree()
         gemTempDataVFAT = gemTemepratureVFATTree()
 
-    from gempython.tools.amc_user_functions_xhal import *
-    amcBoard = HwAMC(args.cardName, args.debug)
+    #from gempython.tools.amc_user_functions_xhal import *
+    from gempython.tools.vfat_user_functions_xhal import *
+    vfatBoard = HwVFAT(args.cardName, 0, args.debug) # Set a dummy link for now
+    amcBoard = vfatBoard.parentOH.parentAMC
     print('opened connection')
 
     import os
@@ -57,12 +59,11 @@ if __name__ == '__main__':
     ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
     print("Getting CHIP IDs of all VFATs")
     from gempython.utils.nesteddict import nesteddict as ndict
-    from gempython.tools.vfat_user_functions_xhal import *
     vfatIDvals = ndict()
     for ohN in range(0,12):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
-        vfatBoard = HwVFAT(args.cardName, ohN, args.debug)
+        vfatBoard.parentOH.link = ohN
         vfatIDvals[ohN] = vfatBoard.getAllChipIDs(ohVFATMaskArray[ohN])
 
     # Configure DAC Monitoring
