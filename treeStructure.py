@@ -88,11 +88,11 @@ class gemGenericTree(object):
         return
 
 class gemDacCalTreeStructure(gemGenericTree):
-    def __init__(self, name, regX, valY, isGblDac=True, storeRoot=False, description="Generic GEM DAC Calibration Tree"):
+    def __init__(self, name, nameX, nameY, isGblDac=True, storeRoot=False, description="Generic GEM DAC Calibration Tree"):
         """
         name        TName of the TTree
-        regX        Register that is being calibrated (dependent variable)
-        valY        Value calibration is being performed against (e.g. scurveMean, or charge)
+        nameX        Register that is being calibrated (dependent variable)
+        nameY        Value calibration is being performed against (e.g. scurveMean, or charge)
         isGblDac    DAC is common across entire VFAT (True) or is specific for a given channel (False);
                     if True the vfatCH branch will be written as 128 for all entries
         storeRoot   Store ROOT Objects Associated with this Dac Calibration
@@ -104,8 +104,9 @@ class gemDacCalTreeStructure(gemGenericTree):
         self.isGblDac = isGblDac
         self.storeRoot = storeRoot
 
-        self.dacName = regX
-        self.gemTree.Branch( 'dacName', self.dacName, 'dacName/C')
+        self.nameX = r.vector('string')()
+        self.nameX.push_back(nameX)
+        self.gemTree.Branch( 'nameX', self.nameX)
 
         self.dacValX = array( 'i', [0] )
         self.gemTree.Branch( 'dacValX', self.dacValX, 'dacValX/I')
@@ -119,8 +120,9 @@ class gemDacCalTreeStructure(gemGenericTree):
         self.dacValY_Err = array( 'i', [0] )
         self.gemTree.Branch( 'dacValY_Err', self.dacValY, 'dacValY_Err/I')
 
-        self.valY = valY
-        self.gemTree.Branch( 'valY', self.valY, 'valY/C')
+        self.nameY = r.vector('string')()
+        self.nameY.push_back(nameY)
+        self.gemTree.Branch( 'nameY', self.nameY)
 
         # Set the channel number to 128 Normally 0 to 127
         if self.isGblDac:
@@ -145,17 +147,21 @@ class gemDacCalTreeStructure(gemGenericTree):
         The keyword is assumed to the same as the variable name for 
         simplicity.
         """
-        
+
         if "dacValX" in kwargs:
-            self.dacValX = kwargs["dacValX"]
+            self.dacValX[0] = kwargs["dacValX"]
         if "dacValX_Err" in kwargs:
-            self.dacValX_Err = kwargs["dacValX_Err"]
+            self.dacValX_Err[0] = kwargs["dacValX_Err"]
         if "dacValY" in kwargs:
-            self.dacValY = kwargs["dacValY"]
+            self.dacValY[0] = kwargs["dacValY"]
         if "dacValY_Err" in kwargs:
-            self.dacValY_Err = kwargs["dacValY_Err"]
+            self.dacValY_Err[0] = kwargs["dacValY_Err"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
+        if "nameX" in kwargs:
+            self.nameX[0] = kwargs["nameX"]
+        if "nameY" in kwargs:
+            self.nameY[0] = kwargs["nameY"]
         if "Nev" in kwargs:
             self.Nev[0] = kwargs["Nev"]
         if "utime" in kwargs:
@@ -171,10 +177,8 @@ class gemDacCalTreeStructure(gemGenericTree):
 
         if self.storeRoot:
             if "g_dacCal" in kwargs:
-                #self.g_dacCal = kwargs["g_dacCal"].Clone()
                 kwargs["g_dacCal"].Copy(self.g_dacCal)
             if "func_dacFit" in kwargs:
-                #self.func_dacFit = kwargs["func_dacFit"].Clone()
                 kwargs["func_dacFit"].Copy(self.func_dacFit)
 
         self.gemTree.Fill()
