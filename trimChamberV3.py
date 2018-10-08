@@ -222,23 +222,23 @@ if __name__ == '__main__':
     from gempython.vfatqc.treeStructure import gemDacCalTreeStructure
     trimDacArmTree = gemDacCalTreeStructure(
             name='trimDacArmTree',
-            regX='scurve mean #left(fC#right)',
-            valY='ARM_TRIM_AMPLITUDE',
+            nameX='scurve mean #left(fC#right)',
+            nameY='ARM_TRIM_AMPLITUDE',
             isGblDac=False,
             description='Tree holding arming comparator trim data')
     trimDacArmTree.setDefaults(options, int(time.time()))
 
     calDacCalTree = gemDacCalTreeStructure(
             name='calDacCalibration',
-            regX='CFG_CAL_DAC',
-            valY='charge #left(fC#right)',
+            nameX='CFG_CAL_DAC',
+            nameY='charge #left(fC#right)',
             storeRoot=True,
             description='Tree holding CFG_CAL_DAC Calibration')
 
     armDacCalTree = gemDacCalTreeStructure(
             name='thrArmDacCalibration',
-            regX='CFG_THR_ARM_DAC',
-            valY='scurve mean #left(fC#right)',
+            nameX='CFG_THR_ARM_DAC',
+            nameY='scurve mean #left(fC#right)',
             storeRoot=True,
             description='Tree holding CFG_THR_ARM_DAC Calibration;')
 
