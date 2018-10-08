@@ -1,5 +1,6 @@
 #!/bin/env python
 from ctypes import *
+from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
 from gempython.vfatqc.treeStructure import gemDacCalTreeStructure
 
 import os
@@ -10,14 +11,8 @@ def getDACInfo():
     Get minimum DAC value, maximum DAC value, and DAC name
     """
 
-    from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
     print("You've requested a VFAT3 DAC Scan")
-    print("dac\tName")
-    print("===\t====")
-    dacOptions = maxVfat3DACSize.keys()
-    dacOptions.sort()
-    for dacVal in dacOptions:
-        print("%02d\t%s"%(dacVal,maxVfat3DACSize[dacVal][1]))
+    printDACOptions()
     dacSelect=-1
     while(dacSelect not in maxVfat3DACSize.keys()):
         dacSelect=int(raw_input("Please select the dac number from the options above: "))
@@ -33,6 +28,15 @@ def getDACInfo():
 
     return retInfo
 
+def printDACOptions():
+    print("dac\tName")
+    print("===\t====")
+    dacOptions = maxVfat3DACSize.keys()
+    dacOptions.sort()
+    for dacVal in dacOptions:
+        print("%02d\t%s"%(dacVal,maxVfat3DACSize[dacVal][1]))
+    return
+
 def scanAllLinks(args, calTree, vfatBoard):
     """
     Performs a DAC scan on all VFATs on all unmasked OH's on amcBoard
@@ -46,11 +50,17 @@ def scanAllLinks(args, calTree, vfatBoard):
     amcBoard = vfatBoard.parentOH.parentAMC
 
     # Get DAC value
-    dictDACInfo = getDACInfo()
-    dacMax = dictDACInfo["dacMax"]
-    dacMin = dictDACInfo["dacMin"]
-    calTree.nameX[0] = dictDACInfo["dacName"]
-    dacSelect = dictDACInfo["dacSelect"]
+    if args.dacSelect is None:
+        dictDACInfo = getDACInfo()
+        dacMax = dictDACInfo["dacMax"]
+        dacMin = dictDACInfo["dacMin"]
+        calTree.nameX[0] = dictDACInfo["dacName"]
+        dacSelect = dictDACInfo["dacSelect"]
+    else:
+        dacMax = maxVfat3DACSize[args.dacSelect][0]
+        dacMin = 0
+        calTree.nameX[0] = maxVfat3DACSize[args.dacSelect][1]
+        dacSelect = args.dacSelect
 
     # Determine all Chip ID's
     from gempython.utils.nesteddict import nesteddict as ndict
@@ -121,11 +131,17 @@ def scanSingleLink(args, calTree, vfatBoard):
     """
 
     # Get DAC value
-    dictDACInfo = getDACInfo()
-    dacMax = dictDACInfo["dacMax"]
-    dacMin = dictDACInfo["dacMin"]
-    calTree.nameX[0] = dictDACInfo["dacName"]
-    dacSelect = dictDACInfo["dacSelect"]
+    if args.dacSelect is None:
+        dictDACInfo = getDACInfo()
+        dacMax = dictDACInfo["dacMax"]
+        dacMin = dictDACInfo["dacMin"]
+        calTree.nameX[0] = dictDACInfo["dacName"]
+        dacSelect = dictDACInfo["dacSelect"]
+    else:
+        dacMax = maxVfat3DACSize[args.dacSelect][0]
+        dacMin = 0
+        calTree.nameX[0] = maxVfat3DACSize[args.dacSelect][1]
+        dacSelect = args.dacSelect
     
     # Determine VFAT mask
     if args.vfatmask is None:
@@ -202,6 +218,8 @@ if __name__ == '__main__':
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     parser.add_argument("-d","--debug", action="store_true", dest="debug",
             help = "Print additional debugging information")
+    parser.add_argument("--dacSelect", type=int, dest="dacSelect",
+            help = "DAC Selection", default=None)
     parser.add_argument("-e","--extRefADC", action="store_true", dest="extRefADC",
             help = "Use the externally referenced ADC on the VFAT3.")
     parser.add_argument("-f","--filename",type=str,dest="filename",default="dacScanV3.root",
@@ -216,6 +234,12 @@ if __name__ == '__main__':
 
     if args.cardName is None:
         print("you must specify the --cardName argument")
+        exit(os.EX_USAGE)
+
+    if ((args.dacSelect not in maxVfat3DACSize.keys()) and (args.dacSelect is not None)):
+        print("Input DAC selection {0} not understood".format(args.dacSelect))
+        print("possible options include:")
+        printDACOptions()
         exit(os.EX_USAGE)
 
     # Open rpc connection to hw
