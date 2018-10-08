@@ -62,11 +62,13 @@ def scanAllLinks(args, calTree, vfatBoard):
         calTree.nameX[0] = maxVfat3DACSize[args.dacSelect][1]
         dacSelect = args.dacSelect
 
-    # Determine all Chip ID's
+    # Get VFAT register values
     from gempython.utils.nesteddict import nesteddict as ndict
     ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
     print("Getting CHIP IDs of all VFATs")
     vfatIDvals = ndict()
+    irefVals = ndict()
+    calSelPolVals = ndict()
     for ohN in range(0,12):
         # Skip masked OH's
         if( not ((args.ohMask >> ohN) & 0x1)):
@@ -74,6 +76,12 @@ def scanAllLinks(args, calTree, vfatBoard):
 
         # update the OH in question
         vfatBoard.parentOH.link = ohN
+
+        # Get the cal sel polarity
+        calSelPolVals[ohN] = vfatBoard.readAllVFATs("CFG_CAL_SEL_POL",ohVFATMaskArray[ohN])
+
+        # Get the IREF values
+        irefVals[ohN] = vfatBoard.readAllVFATs("CFG_IREF",ohVFATMaskArray[ohN])
 
         # Get the chip ID's
         vfatIDvals[ohN] = vfatBoard.getAllChipIDs(ohVFATMaskArray[ohN])
@@ -94,9 +102,12 @@ def scanAllLinks(args, calTree, vfatBoard):
         vfat = (dacWord >>18) & 0x1f
         ohN = ((dacWord >> 23) & 0xf)
         calTree.fill(
+                calSelPol = calSelPolVals[ohN][vfat],
                 dacValX = (dacWord & 0xff),
                 dacValY = ((dacWord >> 8) & 0x3ff),
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
+                iref = irefVals[ohN][vfat],
+                isVFAT3A = (True if args.isVFAT3A else False),
                 link = ohN,
                 vfatID = vfatIDvals[ohN][vfat],
                 vfatN = vfat
@@ -149,6 +160,14 @@ def scanSingleLink(args, calTree, vfatBoard):
         if args.debug:
             print("Automatically determined vfatmask to be: {0}".format(str(hex(args.vfatmask)).strip('L')))
     
+    # Get the cal sel polarity
+    print("Getting Calibration Select Polarity of all VFATs")
+    calSelPolVals = vfatBoard.readAllVFATs("CFG_CAL_SEL_POL",args.vfatmask)
+
+    # Get the IREF values
+    print("Getting IREF of all VFATs")
+    irefVals = vfatBoard.readAllVFATs("CFG_IREF",args.vfatmask)
+
     # Determine Chip ID
     print("Getting CHIP IDs of all VFATs")
     vfatIDvals = vfatBoard.getAllChipIDs(args.vfatmask)
@@ -171,9 +190,12 @@ def scanSingleLink(args, calTree, vfatBoard):
     for dacWord in scanData:
         vfat = (dacWord >>18) & 0x1f
         calTree.fill(
+                calSelPol = calSelPolVals[vfat],
                 dacValX = (dacWord & 0xff),
                 dacValY = ((dacWord >> 8) & 0x3ff),
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
+                iref = irefVals[vfat],
+                isVFAT3A = (True if args.isVFAT3A else False),
                 vfatID = vfatIDvals[vfat],
                 vfatN = vfat
                 )
@@ -224,6 +246,8 @@ if __name__ == '__main__':
             help = "Use the externally referenced ADC on the VFAT3.")
     parser.add_argument("-f","--filename",type=str,dest="filename",default="dacScanV3.root",
             help = "Specify output filename to store data in.")
+    parser.add_argument("--isVFAT3A", action="store_true", dest="isVFAT3A",
+            help = "State that you are scanning VFAT3a instead of VFAT3b")
     parser.add_argument("--series", action="store_true", dest="series",
             help = "Scan nonzero links in ohMask in series (successive RPC calls) instead of in parallel (one RPC call)")
     parser.add_argument("--stepSize", type=int, dest="stepSize",default=1, 

@@ -26,6 +26,12 @@ class gemGenericTree(object):
         self.ztrim = array( 'f', [ 0 ] )
         self.gemTree.Branch( 'ztrim', self.ztrim, 'ztrim/F' )
 
+        self.calSelPol = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'calSelPol', self.calSelPol, 'calSelPol/I' )
+
+        self.iref = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'iref', self.iref, 'iref/I' )
+
         self.vfatCH = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vfatCH', self.vfatCH, 'vfatCH/I' )
         
@@ -101,13 +107,6 @@ class gemDacCalTreeStructure(gemGenericTree):
         
         gemGenericTree.__init__(self,name=name,description=description)
 
-        self.isGblDac = isGblDac
-        self.storeRoot = storeRoot
-
-        self.nameX = r.vector('string')()
-        self.nameX.push_back(nameX)
-        self.gemTree.Branch( 'nameX', self.nameX)
-
         self.dacValX = array( 'i', [0] )
         self.gemTree.Branch( 'dacValX', self.dacValX, 'dacValX/I')
 
@@ -119,6 +118,16 @@ class gemDacCalTreeStructure(gemGenericTree):
 
         self.dacValY_Err = array( 'i', [0] )
         self.gemTree.Branch( 'dacValY_Err', self.dacValY, 'dacValY_Err/I')
+
+        self.isGblDac = isGblDac
+        self.storeRoot = storeRoot
+
+        self.isVFAT3A = False
+        self.gemTree.Branch( 'isVFAT3A', self.isVFAT3A, 'isVFAT3A/I')
+
+        self.nameX = r.vector('string')()
+        self.nameX.push_back(nameX)
+        self.gemTree.Branch( 'nameX', self.nameX)
 
         self.nameY = r.vector('string')()
         self.nameY.push_back(nameY)
@@ -148,6 +157,8 @@ class gemDacCalTreeStructure(gemGenericTree):
         simplicity.
         """
 
+        if "calSelPol" in kwargs:
+            self.calSelPol[0] = kwargs["calSelPol"]
         if "dacValX" in kwargs:
             self.dacValX[0] = kwargs["dacValX"]
         if "dacValX_Err" in kwargs:
@@ -156,6 +167,10 @@ class gemDacCalTreeStructure(gemGenericTree):
             self.dacValY[0] = kwargs["dacValY"]
         if "dacValY_Err" in kwargs:
             self.dacValY_Err[0] = kwargs["dacValY_Err"]
+        if "iref" in kwargs:
+            self.iref[0] = kwargs["iref"]
+        if "isVFAT3A" in kwargs:
+            self.isVFAT3A[0] = kwargs["isVFAT3A"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "nameX" in kwargs:
