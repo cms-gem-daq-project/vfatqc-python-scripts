@@ -24,7 +24,7 @@ if __name__ == '__main__':
     parser.add_argument("-d","--debug", action="store_true", dest="debug",
             help = "Print additional debugging information")
     parser.add_argument("--extTempVFAT", action="store_true", dest="extTempVFAT",
-            help = "Use external PT1000 temperature sensors on the VFAT3 hybrid instead of the temperature sensor inside the ASIC. Note only available in HV3b_V3 hybrids or later")
+            help = "Use external PT100 temperature sensors on the VFAT3 hybrid instead of the temperature sensor inside the ASIC. Note only available in HV3b_V3 hybrids or later")
     parser.add_argument("-f","--filename", type=str, dest="filename", default=None,
             help = "Specify output filename to store data in.  Will cause successive reads to be performed",metavar="filename")
     parser.add_argument("--noOHs", action="store_true", dest="noOHs",
