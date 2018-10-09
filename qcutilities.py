@@ -141,6 +141,8 @@ def launchSCurve(**kwargs):
     filename - string, physical filename indicating absolute path of scurve outputfile
     latency - int, latency to take the scruve at
     link - int, optohybrid number on cardName
+    logFile - str, filepath to write the log file of the scurve call
+    makeLogFile - bool, writes a log file of the scurve call, if logFile not provided defaults to /tmp/scurveLog_<time>.log
     mspl - int, value of MSPL or CFG_PULSE_STRETCH to use
     nevts - int, number of events to take in the scan
     setChanRegs - boolean, write VFAT channel registers if True
@@ -152,6 +154,8 @@ def launchSCurve(**kwargs):
     trimZCCPol - as trimZCC but sets trim polarity
     """
 
+    import datetime
+    startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
     # Set defaults
     calSF = 0
@@ -163,6 +167,8 @@ def launchSCurve(**kwargs):
     filename = None
     latency = 33
     link = 0
+    logFile = "/tmp/scurveLog_{}.log".format(startTime)
+    makeLogFile = False
     mspl = 3
     nevts = 100
     setChanRegs = False
@@ -192,6 +198,10 @@ def launchSCurve(**kwargs):
         latency = kwargs["latency"]
     if "link" in kwargs:
         link = kwargs["link"]
+    if "logFile" in kwargs:
+        logFile = kwargs["logFile"]
+    if "makeLogFile" in kwargs:
+        makeLogFile = kwargs["makeLogFile"]
     if "mspl" in kwargs:
         mspl = kwargs["mspl"]
     if "nevts" in kwargs:
@@ -260,7 +270,11 @@ def launchSCurve(**kwargs):
             command = "%s %s"%(command, word)
         print(command)
     print("launching scurve for filename: %s"%filename)
-    runCommand(cmd)
+    if makeLogFile:
+        log = file(logFile,"w")
+        runCommand(cmd,log)
+    else:
+        runCommand(cmd)
     
     return
 
