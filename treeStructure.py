@@ -122,7 +122,8 @@ class gemDacCalTreeStructure(gemGenericTree):
         self.isGblDac = isGblDac
         self.storeRoot = storeRoot
 
-        self.isVFAT3A = False
+        #self.isVFAT3A = False
+        self.isVFAT3A = array( 'i', [0] )
         self.gemTree.Branch( 'isVFAT3A', self.isVFAT3A, 'isVFAT3A/I')
 
         self.nameX = r.vector('string')()
