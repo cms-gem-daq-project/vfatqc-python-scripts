@@ -29,12 +29,12 @@ def checkSbitMappingAndRate(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(ohN, "sbitMonInt", startTime)
-        dirPath += startTime
+        dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
                 "checkSbitMappingAndRate.py",
-                "-c {}".format(args.cardName),
+                "--cardName={}".format(args.cardName),
                 "-f {}/SBitMappingAndRateData.root".format(dirPath),
                 "-g {}".format(ohN),
                 #"--mspl={}".format(args.mspl),
@@ -68,7 +68,7 @@ def dacScanV3(args):
 
     # Make output directory
     dirPath = makeScanDir(0, "dacScanV3", startTime)
-    dirPath += startTime
+    dirPath += "/{}".format(startTime)
 
     # Build Command
     cmd = [
@@ -76,7 +76,7 @@ def dacScanV3(args):
             "--dacSelect={}".format(args.dacSelect),
             "-f {}/dacScanV3.root".format(dirPath),
             args.cardName,
-            args.ohMask
+            str(hex(args.ohMask)).strip('L')
             ]
 
     # debug flag raised?
@@ -107,7 +107,11 @@ def executeCmd(cmd, dirPath):
         log = file("%s/scanLog.log"%(dirPath),"w")
         runCommand(cmd,log)
     except CalledProcessError as e:
-        print "Caught exception",e
+        print("Caught exception: {0}".format(e))
+    except Exception as e:
+        print("Caught exception: {0}".format(e))
+    finally:
+        runCommand( ["chmod","-R","g+r",dirPath] )
     return
 
 def makeScanDir(ohN, scanType, startTime):
@@ -123,10 +127,10 @@ def makeScanDir(ohN, scanType, startTime):
     dirPath = getDirByAnaType(scanType, chamber_config[ohN])
 
     setupCmds = [] 
-    setupCmds.append( ["mkdir","-p",dirPath+startTime] )
-    setupCmds.append( ["chmod","g+rw",dirPath+startTime] )
-    setupCmds.append( ["unlink",dirPath+"current"] )
-    setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
+    setupCmds.append( ["mkdir","-p",dirPath+"/"+startTime] )
+    setupCmds.append( ["chmod","g+rw",dirPath+"/"+startTime] )
+    setupCmds.append( ["unlink",dirPath+"/current"] )
+    setupCmds.append( ["ln","-s",startTime,dirPath+"/current"] )
     for cmd in setupCmds:
         runCommand(cmd)
 
@@ -151,7 +155,7 @@ def monitorT(args):
     #for cmd in setupCmds:
     #    runCommand(cmd)
     dirPath = makeScanDir(0, "temperature", startTime)
-    dirPath += startTime
+    dirPath += "/{}".format(startTime)
 
     # Build Command
     cmd = [
@@ -161,7 +165,7 @@ def monitorT(args):
             "--noVFATs",
             "-t {}".format(args.time),
             args.cardName,
-            args.ohMask
+            str(hex(args.ohMask)).strip('L')
             ]
 
     # debug flag raised?
@@ -200,7 +204,7 @@ def sbitReadOut(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(ohN, "sbitMonRO", startTime)
-        dirPath += startTime
+        dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
@@ -260,12 +264,12 @@ def sbitThreshScan(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(ohN, "sbitRateor", startTime)
-        dirPath += startTime
+        dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
                 tool,
-                "-c {}".format(args.cardName),
+                "--cardName={}".format(args.cardName),
                 "-f {}/SBitRateData.root".format(dirPath),
                 "-g {}".format(ohN),
                 "--scanmax={}".format(args.scanmax),
@@ -317,7 +321,7 @@ def trimChamberV3(args):
         
         # Get & make the output directory
         dirPath = makeScanDir(ohN, "trimV3", startTime)
-        dirPath += startTime
+        dirPath += "/{}".format(startTime)
 
         # Check to make sure calFiles exist
         armCalFile = "{0}/{1}/calFile_thrArmDAC_{1}.txt".format(dataPath,chamber_config[ohN])
@@ -341,7 +345,7 @@ def trimChamberV3(args):
         # Get base command
         cmd = [
                 "trimChamberV3.py",
-                "-c {}".format(args.cardName),
+                "--cardName={}".format(args.cardName),
                 "--calFileARM={}".format(armCalFile),
                 "--calFileCAL={}".format(calDacCalFile),
                 "--chMax={}".format(args.chMax),
@@ -397,13 +401,13 @@ def ultraLatency(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(ohN, "latency", startTime)
-        dirPath += startTime
+        dirPath += "/{}".format(startTime)
         
         # Get base command
         cmd = [
                 "ultraLatency.py",
-                "-c {}".format(args.cardName),
-                "-f {}/LatencyScanData.root".format(dirPath),
+                "--cardName={}".format(args.cardName),
+                "--filename={}/LatencyScanData.root".format(dirPath),
                 "-g {}".format(ohN),
                 "--mspl={}".format(args.mspl),
                 "--nevts={}".format(args.nevts),
@@ -427,7 +431,7 @@ def ultraLatency(args):
             cmd.append( "--t3trig")
         if args.randoms is not None:
             cmd.append( "--randoms=%i"%(args.randoms))
-        if internal:
+        if args.internal:
             cmd.append( "--internal")
             cmd.append( "--voltageStepPulse")
             if args.chan is not None:
@@ -466,7 +470,7 @@ def ultraScurve(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(ohN, "scurve", startTime)
-        dirPath += startTime
+        dirPath += "/{}".format(startTime)
         logFile = "%s/scanLog.log"%(dirPath)
 
         # Launch the scurve
@@ -536,12 +540,12 @@ def ultraThreshold(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(ohN, "thresholdch", startTime)
-        dirPath += startTime
+        dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
                 ultraThreshold.py,
-                "-c {}".format(args.cardName),
+                "--cardName={}".format(args.cardName),
                 "--chMax={}".format(args.chMax),
                 "--chMin={}".format(args.chMin),
                 "-f {0}/ThresholdScanData.root".format(dirPath),
@@ -728,6 +732,13 @@ if __name__ == '__main__':
     # Check env
     from gempython.utils.wrappers import envCheck
     envCheck('DATA_PATH')
+
+    from gempython.utils.gemlogger import getGEMLogger
+    gemlogger = getGEMLogger(__name__)
+    gemlogger.setLevel(logging.ERROR)
+    
+    import uhal
+    uhal.setLogLevelTo( uhal.LogLevel.FATAL )
 
     # Parser the arguments and call the appropriate function
     args = parser.parse_args()
