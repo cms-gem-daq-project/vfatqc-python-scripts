@@ -107,14 +107,14 @@ class gemDacCalTreeStructure(gemGenericTree):
         
         gemGenericTree.__init__(self,name=name,description=description)
 
-        self.dacValX = array( 'i', [0] )
-        self.gemTree.Branch( 'dacValX', self.dacValX, 'dacValX/I')
+        self.dacValX = array( 'f', [0] )
+        self.gemTree.Branch( 'dacValX', self.dacValX, 'dacValX/F')
 
         self.dacValX_Err = array( 'i', [0] )
         self.gemTree.Branch( 'dacValX_Err', self.dacValX_Err, 'dacValX_Err/I')
 
-        self.dacValY = array( 'i', [0] )
-        self.gemTree.Branch( 'dacValY', self.dacValY, 'dacValY/I')
+        self.dacValY = array( 'f', [0] )
+        self.gemTree.Branch( 'dacValY', self.dacValY, 'dacValY/F')
 
         self.dacValY_Err = array( 'i', [0] )
         self.gemTree.Branch( 'dacValY_Err', self.dacValY_Err, 'dacValY_Err/I')
