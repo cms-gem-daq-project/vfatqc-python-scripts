@@ -41,7 +41,7 @@ def checkSbitMappingAndRate(args):
                 "--nevts={}".format(args.nevts),
                 "--rates={}".format(args.rates),
                 "--time={}".format(args.time),
-                "--vfatmask={}".format(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN]),
+                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L')),
                 "--voltageStepPulse"
                 ]
 
@@ -209,10 +209,10 @@ def sbitReadOut(args):
         # Build Command
         cmd = [
                 "sbitReadOut.py",
-                "--vfatmask={}".format(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN]),
+                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L')),
                 args.cardName,
-                ohN,
-                args.time,
+                str(ohN),
+                str(args.time),
                 dirPath
                 ]
 
@@ -275,7 +275,7 @@ def sbitThreshScan(args):
                 "--scanmax={}".format(args.scanmax),
                 "--scanmin={}".format(args.scanmin),
                 "--stepSize={}".format(args.stepSize),
-                "--vfatmask={}".format(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN]),
+                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L'))
                 ]
 
         # debug flag raised?
@@ -356,7 +356,7 @@ def trimChamberV3(args):
                 "--mspl={}".format(args.mspl),
                 "--nevts={}".format(args.nevts),
                 "--trimPoints={}".format(args.trimPoints),
-                "--vfatmask={}".format(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN]),
+                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L')),
                 "--voltageStepPulse"
                 ]
 
@@ -415,7 +415,7 @@ def ultraLatency(args):
                 "--scanmin={}".format(args.scanmin),
                 "--shelf={}".format(args.shelf),
                 "--stepSize={}".format(args.stepSize),
-                "--vfatmask={}".format(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN]),
+                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L'))
                 ]
 
         # debug flag raised?
@@ -475,7 +475,7 @@ def ultraScurve(args):
 
         # Launch the scurve
         launchSCurve(
-                calSF = args.calSF,
+                #calSF = args.calSF,
                 cardName = args.cardName,
                 chMax = args.chMax,
                 chMin = args.chMin,
@@ -512,6 +512,7 @@ def ultraScurve(args):
 
         # Execute
         #executeCmd(cmd,dirPath)
+        runCommand( ["chmod","-R","g+r",dirPath] )
         print("Finished scurve for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
 
     print("Finished all scurves for ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
@@ -544,7 +545,7 @@ def ultraThreshold(args):
         
         # Build Command
         cmd = [
-                ultraThreshold.py,
+                "ultraThreshold.py",
                 "--cardName={}".format(args.cardName),
                 "--chMax={}".format(args.chMax),
                 "--chMin={}".format(args.chMin),
@@ -552,7 +553,7 @@ def ultraThreshold(args):
                 "-g {}".format(ohN),
                 "--nevts={}".format(args.nevts),
                 "--perchannel",
-                "--vfatmask={}".format(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])
+                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L'))
                 ]
 
         # debug flag raised?
