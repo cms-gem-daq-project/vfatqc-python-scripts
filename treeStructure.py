@@ -111,13 +111,13 @@ class gemDacCalTreeStructure(gemGenericTree):
         self.gemTree.Branch( 'dacValX', self.dacValX, 'dacValX/I')
 
         self.dacValX_Err = array( 'i', [0] )
-        self.gemTree.Branch( 'dacValX_Err', self.dacValX, 'dacValX_Err/I')
+        self.gemTree.Branch( 'dacValX_Err', self.dacValX_Err, 'dacValX_Err/I')
 
         self.dacValY = array( 'i', [0] )
         self.gemTree.Branch( 'dacValY', self.dacValY, 'dacValY/I')
 
         self.dacValY_Err = array( 'i', [0] )
-        self.gemTree.Branch( 'dacValY_Err', self.dacValY, 'dacValY_Err/I')
+        self.gemTree.Branch( 'dacValY_Err', self.dacValY_Err, 'dacValY_Err/I')
 
         self.isGblDac = isGblDac
         self.storeRoot = storeRoot
