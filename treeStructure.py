@@ -35,8 +35,8 @@ class gemGenericTree(object):
         self.vfatCH = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vfatCH', self.vfatCH, 'vfatCH/I' )
         
-        self.vfatID = array( 'l', [-1] )
-        self.gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/l' ) #Hex Chip ID of VFAT
+        self.vfatID = array( 'L', [0] )
+        self.gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/i' ) #Hex Chip ID of VFAT
 
         self.vfatN = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'vfatN', self.vfatN, 'vfatN/I' )

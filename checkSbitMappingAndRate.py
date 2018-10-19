@@ -77,8 +77,8 @@ if __name__ == '__main__':
     vfatCH = array( 'i', [ 0 ] ) # Channel Pulsed
     sbitDataTree.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
     
-    vfatID = array( 'i', [-1] )
-    sbitDataTree.Branch( 'vfatID', vfatID, 'vfatID/I' ) #Hex Chip ID of VFAT
+    vfatID = array( 'L', [0] )
+    sbitDataTree.Branch( 'vfatID', vfatID, 'vfatID/i' ) #Hex Chip ID of VFAT
 
     vfatN = array( 'i', [ -1 ] ) # VFAT Pulsed
     sbitDataTree.Branch( 'vfatN', vfatN, 'vfatN/I' )
