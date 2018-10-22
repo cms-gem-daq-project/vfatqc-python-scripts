@@ -114,7 +114,6 @@ def scanAllLinks(args, calTree, vfatBoard):
                 vfatN = vfat
                 )
         if args.debug:
-
             print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
                 calTree.link[0],
                 calTree.vfatN[0],
