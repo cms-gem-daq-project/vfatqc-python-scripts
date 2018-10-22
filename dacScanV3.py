@@ -99,7 +99,7 @@ def scanAllLinks(args, calTree, vfatBoard):
     #try:
     if args.debug:
         print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
-        print("| :--: | :---: | :----: | :--: |:-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
+        print("| :--: | :---: | :----: | :-------: |:-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
     for dacWord in scanData:
         vfat = (dacWord >>18) & 0x1f
         ohN = ((dacWord >> 23) & 0xf)
@@ -190,7 +190,7 @@ def scanSingleLink(args, calTree, vfatBoard):
     #try:
     if args.debug:
         print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
-        print("| :--: | :---: | :----: | :--: | :-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
+        print("| :--: | :---: | :----: | :-------: | :-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
     for dacWord in scanData:
         vfat = (dacWord >>18) & 0x1f
         calTree.fill(
