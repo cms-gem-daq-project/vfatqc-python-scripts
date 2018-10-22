@@ -287,9 +287,9 @@ if __name__ == '__main__':
     outF = r.TFile(args.filename,"RECREATE")
     calTree = gemDacCalTreeStructure(
                     name="dacScanTree",
-                    dacSelect=-1, #temporary value, will be over-ridden 
                     nameX="dummy", # temporary name, will be over-ridden
                     nameY=("ADC1" if args.extRefADC else "ADC0"),
+                    dacSelect=-1, #temporary value, will be over-ridden 
                     description="GEM DAC Calibration of VFAT3 DAC"
             )
 
