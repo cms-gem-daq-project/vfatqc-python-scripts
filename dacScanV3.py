@@ -96,27 +96,28 @@ def scanAllLinks(args, calTree, vfatBoard):
 
     #try:
     if args.debug:
-        print("| link | vfatN | vfatID | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
-        print("| :--: | :---: | :----: | :-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
+        print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
+        print("| :--: | :---: | :----: | :--: |:-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
     for dacWord in scanData:
         vfat = (dacWord >>18) & 0x1f
         ohN = ((dacWord >> 23) & 0xf)
         calTree.fill(
                 calSelPol = calSelPolVals[ohN][vfat],
+                dacSelect = dacSelect,
                 dacValX = (dacWord & 0xff),
                 dacValY = ((dacWord >> 8) & 0x3ff),
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
                 iref = irefVals[ohN][vfat],
-                isVFAT3A = (True if args.isVFAT3A else False),
                 link = ohN,
                 vfatID = vfatIDvals[ohN][vfat],
                 vfatN = vfat
                 )
         if args.debug:
-            print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} |".format(
+            print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
                 calTree.link[0],
                 calTree.vfatN[0],
                 str(hex(calTree.vfatID[0])).strip('L'),
+                calTree.dacSelect[0],
                 calTree.nameX[0],
                 calTree.dacValX[0],
                 calTree.dacValX_Err[0],
@@ -185,17 +186,17 @@ def scanSingleLink(args, calTree, vfatBoard):
 
     #try:
     if args.debug:
-        print("| link | vfatN | vfatID | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
-        print("| :--: | :---: | :----: | :-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
+        print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
+        print("| :--: | :---: | :----: | :--: | :-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
     for dacWord in scanData:
         vfat = (dacWord >>18) & 0x1f
         calTree.fill(
                 calSelPol = calSelPolVals[vfat],
+                dacSelect = dacSelect,
                 dacValX = (dacWord & 0xff),
                 dacValY = ((dacWord >> 8) & 0x3ff),
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
                 iref = irefVals[vfat],
-                isVFAT3A = (True if args.isVFAT3A else False),
                 vfatID = vfatIDvals[vfat],
                 vfatN = vfat
                 )
@@ -204,6 +205,7 @@ def scanSingleLink(args, calTree, vfatBoard):
                 calTree.link[0],
                 calTree.vfatN[0],
                 str(hex(calTree.vfatID[0])).strip('L'),
+                dacSelect,
                 calTree.nameX[0],
                 calTree.dacValX[0],
                 calTree.dacValX_Err[0],
@@ -246,8 +248,6 @@ if __name__ == '__main__':
             help = "Use the externally referenced ADC on the VFAT3.")
     parser.add_argument("-f","--filename",type=str,dest="filename",default="dacScanV3.root",
             help = "Specify output filename to store data in.")
-    parser.add_argument("--isVFAT3A", action="store_true", dest="isVFAT3A",
-            help = "State that you are scanning VFAT3a instead of VFAT3b")
     parser.add_argument("--series", action="store_true", dest="series",
             help = "Scan nonzero links in ohMask in series (successive RPC calls) instead of in parallel (one RPC call)")
     parser.add_argument("--stepSize", type=int, dest="stepSize",default=1, 
@@ -285,6 +285,7 @@ if __name__ == '__main__':
     outF = r.TFile(args.filename,"RECREATE")
     calTree = gemDacCalTreeStructure(
                     name="dacScanTree",
+                    dacSelect=-1, #temporary value, will be over-ridden 
                     nameX="dummy", # temporary name, will be over-ridden
                     nameY=("ADC1" if args.extRefADC else "ADC0"),
                     description="GEM DAC Calibration of VFAT3 DAC"

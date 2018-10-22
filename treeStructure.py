@@ -94,11 +94,12 @@ class gemGenericTree(object):
         return
 
 class gemDacCalTreeStructure(gemGenericTree):
-    def __init__(self, name, nameX, nameY, isGblDac=True, storeRoot=False, description="Generic GEM DAC Calibration Tree"):
+    def __init__(self, name, dacSelect, nameX, nameY, isGblDac=True, storeRoot=False, description="Generic GEM DAC Calibration Tree"):
         """
         name        TName of the TTree
-        nameX        Register that is being calibrated (dependent variable)
-        nameY        Value calibration is being performed against (e.g. scurveMean, or charge)
+        dacSelect   DAC selection
+        nameX       Register that is being calibrated (dependent variable)
+        nameY       Value calibration is being performed against (e.g. scurveMean, or charge)
         isGblDac    DAC is common across entire VFAT (True) or is specific for a given channel (False);
                     if True the vfatCH branch will be written as 128 for all entries
         storeRoot   Store ROOT Objects Associated with this Dac Calibration
@@ -107,6 +108,9 @@ class gemDacCalTreeStructure(gemGenericTree):
         
         gemGenericTree.__init__(self,name=name,description=description)
 
+        self.dacSelect = array( 'i', [0] )
+        self.gemTree.Branch( 'dacSelect', self.dacSelect, 'dacSelect/I')
+        
         self.dacValX = array( 'f', [0] )
         self.gemTree.Branch( 'dacValX', self.dacValX, 'dacValX/F')
 
@@ -121,10 +125,6 @@ class gemDacCalTreeStructure(gemGenericTree):
 
         self.isGblDac = isGblDac
         self.storeRoot = storeRoot
-
-        #self.isVFAT3A = False
-        self.isVFAT3A = array( 'i', [0] )
-        self.gemTree.Branch( 'isVFAT3A', self.isVFAT3A, 'isVFAT3A/I')
 
         self.nameX = r.vector('string')()
         self.nameX.push_back(nameX)
