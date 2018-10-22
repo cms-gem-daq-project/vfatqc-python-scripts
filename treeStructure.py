@@ -108,9 +108,6 @@ class gemDacCalTreeStructure(gemGenericTree):
         
         gemGenericTree.__init__(self,name=name,description=description)
 
-        self.dacSelect = array( 'i', [0] )
-        self.gemTree.Branch( 'dacSelect', self.dacSelect, 'dacSelect/I')
-        
         self.dacValX = array( 'f', [0] )
         self.gemTree.Branch( 'dacValX', self.dacValX, 'dacValX/F')
 
@@ -126,6 +123,9 @@ class gemDacCalTreeStructure(gemGenericTree):
         self.isGblDac = isGblDac
         self.storeRoot = storeRoot
 
+        self.dacSelect = array( 'i', [0] )
+        self.gemTree.Branch( 'dacSelect', self.dacSelect, 'dacSelect/I')
+        
         self.nameX = r.vector('string')()
         self.nameX.push_back(nameX)
         self.gemTree.Branch( 'nameX', self.nameX)
@@ -174,6 +174,8 @@ class gemDacCalTreeStructure(gemGenericTree):
             self.isVFAT3A[0] = kwargs["isVFAT3A"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
+        if "dacSelect" in kwargs:
+            self.dacSelect[0] = kwargs["dacSelect"]
         if "nameX" in kwargs:
             self.nameX[0] = kwargs["nameX"]
         if "nameY" in kwargs:

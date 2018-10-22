@@ -56,11 +56,13 @@ def scanAllLinks(args, calTree, vfatBoard):
         dacMin = dictDACInfo["dacMin"]
         calTree.nameX[0] = dictDACInfo["dacName"]
         dacSelect = dictDACInfo["dacSelect"]
+        calTree.dacSelect[0] = dacSelect
     else:
         dacMax = maxVfat3DACSize[args.dacSelect][0]
         dacMin = 0
         calTree.nameX[0] = maxVfat3DACSize[args.dacSelect][1]
         dacSelect = args.dacSelect
+        calTree.dacSelect[0] = dacSelect
 
     # Get VFAT register values
     from gempython.utils.nesteddict import nesteddict as ndict
@@ -103,7 +105,6 @@ def scanAllLinks(args, calTree, vfatBoard):
         ohN = ((dacWord >> 23) & 0xf)
         calTree.fill(
                 calSelPol = calSelPolVals[ohN][vfat],
-                dacSelect = dacSelect,
                 dacValX = (dacWord & 0xff),
                 dacValY = ((dacWord >> 8) & 0x3ff),
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
@@ -113,6 +114,7 @@ def scanAllLinks(args, calTree, vfatBoard):
                 vfatN = vfat
                 )
         if args.debug:
+
             print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
                 calTree.link[0],
                 calTree.vfatN[0],
@@ -149,11 +151,13 @@ def scanSingleLink(args, calTree, vfatBoard):
         dacMin = dictDACInfo["dacMin"]
         calTree.nameX[0] = dictDACInfo["dacName"]
         dacSelect = dictDACInfo["dacSelect"]
+        calTree.dacSelect[0] = dacSelect
     else:
         dacMax = maxVfat3DACSize[args.dacSelect][0]
         dacMin = 0
         calTree.nameX[0] = maxVfat3DACSize[args.dacSelect][1]
         dacSelect = args.dacSelect
+        calTree.dacSelect[0] = dacSelect,
     
     # Determine VFAT mask
     if args.vfatmask is None:
@@ -192,7 +196,6 @@ def scanSingleLink(args, calTree, vfatBoard):
         vfat = (dacWord >>18) & 0x1f
         calTree.fill(
                 calSelPol = calSelPolVals[vfat],
-                dacSelect = dacSelect,
                 dacValX = (dacWord & 0xff),
                 dacValY = ((dacWord >> 8) & 0x3ff),
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
@@ -205,7 +208,7 @@ def scanSingleLink(args, calTree, vfatBoard):
                 calTree.link[0],
                 calTree.vfatN[0],
                 str(hex(calTree.vfatID[0])).strip('L'),
-                dacSelect,
+                calTree.dacSelect[0],
                 calTree.nameX[0],
                 calTree.dacValX[0],
                 calTree.dacValX_Err[0],
