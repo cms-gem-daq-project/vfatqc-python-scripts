@@ -170,8 +170,6 @@ class gemDacCalTreeStructure(gemGenericTree):
             self.dacValY_Err[0] = kwargs["dacValY_Err"]
         if "iref" in kwargs:
             self.iref[0] = kwargs["iref"]
-        if "isVFAT3A" in kwargs:
-            self.isVFAT3A[0] = kwargs["isVFAT3A"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "dacSelect" in kwargs:
