@@ -94,7 +94,7 @@ class gemGenericTree(object):
         return
 
 class gemDacCalTreeStructure(gemGenericTree):
-    def __init__(self, name, dacSelect, nameX, nameY, isGblDac=True, storeRoot=False, description="Generic GEM DAC Calibration Tree"):
+    def __init__(self, name, nameX, nameY, dacSelect = -1, isGblDac=True, storeRoot=False, description="Generic GEM DAC Calibration Tree"):
         """
         name        TName of the TTree
         dacSelect   DAC selection
