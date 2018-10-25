@@ -3,16 +3,17 @@
 def launch(args):
   return launchArgs(*args)
 
-def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,debug=False):
-    import datetime,os,sys
+def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,debug=False):
+    import os, logging
     from subprocess import CalledProcessError
-    from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.utils.wrappers import runCommand
+    from gempython.gemplotting.mapping.chamberInfo import chamber_vfatMask
 
     dataPath = os.getenv('DATA_PATH')
-    filename="%s/%s/trim/z%f/config/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,cName,options.ztrim)
+    filename="%s/%s/trim/config/SCurveData_Trimmed/SCurveFitData.root"%(dataPath,cName)
 
-    cmd = ["confChamber.py","-s%d"%(slot),"-g%d"%(link),"--shelf=%i"%(shelf)]
+    cardName = "--cardName=gem-shelf%02d-amc%02d"%(shelf,slot)
+    cmd = ["confChamber.py",cardName,"-g%d"%(link),]
 
     if debug:
         cmd.append("--debug")
@@ -22,18 +23,42 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,debug=False):
         cmd.append("--run")
         pass
 
+    if link in chamber_vfatMask:
+        cmd.append("--vfatmask={0}".format(str(hex(chamber_vfatMask[link])).strip('L')))
+
     if config:
         cmd.append("--vt1bump=%d"%(vt1bump))
-        cmd.append("--vfatConfig=%s/configs/z%.1f/vfatConfig_%s.txt"%(dataPath,ztrim,cName))
-        cmd.append("--chConfig=%s/configs/z%.1f/chConfig_%s.txt"%(dataPath,ztrim,cName))
+        chConfig = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,cName)
+        vfatConfig = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,cName)
+        
+        # Channel config
+        if os.path.isfile(chConfig):
+            cmd.append("--chConfig={}".format(chConfig))
+        else:
+            print("No channel configuration exists for {0}".format(cName))
+        
+        # VFAT Config
+        if os.path.isfile(vfatConfig):
+            cmd.append("--vfatConfig={}".format(vfatConfig))
+        else:
+            print("No vfat configuration exists for {0}".format(cName))
+
         pass
     else:
-        if not os.path.isfile(filename):
-            print "No trim configuration exists for z = %f for %s"%(ztrim,cName)
-            return
-        cmd.append("--filename=%s"%(filename))  
+        if os.path.isfile(filename):
+            cmd.append("--filename=%s"%(filename))
+        else:
+            print "No trim configuration exists for %s"%(cName)
         pass
     cmd.append("--vt1=%d"%(vt1))
+
+    from gempython.utils.gemlogger import getGEMLogger
+    gemlogger = getGEMLogger(__name__)
+    gemlogger.setLevel(logging.ERROR)
+    #setAMCLogLevel(logging.ERROR)
+    #setOHLogLevel(logging.ERROR)
+    
+    #uhal.setLogLevelTo( uhal.LogLevel.FATAL )
 
     try:
         runCommand(cmd)
@@ -42,18 +67,15 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,ztrim,debug=False):
         pass
     return
 
-
 if __name__ == '__main__':
-
-    import sys,os,signal
-    import subprocess
+    import sys,signal
     import itertools
     from multiprocessing import Pool, freeze_support
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.utils.wrappers import envCheck
 
-    from gempython.vfatqc.qcoptions import parser
-
+    #from gempython.vfatqc.qcoptions import parser
+    from gempython.utils.standardopts import parser
     parser.add_option("--config", action="store_true", dest="config",
                       help="Set Configuration from simple txt files", metavar="config")
     parser.add_option("--run", action="store_true", dest="run",
@@ -64,11 +86,12 @@ if __name__ == '__main__':
                       help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
     parser.add_option("--vt1bump", type="int", dest="vt1bump",
                       help="VThreshold1 DAC bump value for all VFATs", metavar="vt1bump", default=0)
-
+    parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
+                      help="Specify the p value of the trim", metavar="ztrim")
     (options, args) = parser.parse_args()
 
     envCheck('DATA_PATH')
-  
+
     if options.debug:
         print list(itertools.izip(
                         [options.shelf     for x in range(len(chamber_config))],
@@ -79,7 +102,6 @@ if __name__ == '__main__':
                         [options.vt1bump   for x in range(len(chamber_config))],
                         [options.config    for x in range(len(chamber_config))],
                         [chamber_config[x] for x in chamber_config.keys()],
-                        [options.ztrim     for x in range(len(chamber_config))],
                         [options.debug     for x in range(len(chamber_config))]
                   )
             )
@@ -88,7 +110,7 @@ if __name__ == '__main__':
         print "Configuring chambers in serial mode"
         for link in chamber_config.keys():
             chamber = chamber_config[link]
-            launchArgs(options.shelf,link,options.slot,options.run,options.vt1,options.vt1bump,options.config,chamber,options.ztrim,options.debug)
+            launchArgs(options.shelf,link,options.slot,options.run,options.vt1,options.vt1bump,options.config,chamber,options.debug)
             pass
         pass
     else:
@@ -107,7 +129,6 @@ if __name__ == '__main__':
                                                 [options.vt1bump   for x in range(len(chamber_config))],
                                                 [options.config    for x in range(len(chamber_config))],
                                                 [chamber_config[x] for x in chamber_config.keys()],
-                                                [options.ztrim     for x in range(len(chamber_config))],
                                                 [options.debug     for x in range(len(chamber_config))]
                                                 )
                                  )
