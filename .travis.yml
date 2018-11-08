@@ -194,9 +194,9 @@ after_script: skip
 
 jobs:
   include:
-    - stage: buildrpm
-      <<: *slc6_template
-      <<: *rpmbuild_template
+    # - stage: buildrpm
+    #   <<: *slc6_template
+    #   <<: *rpmbuild_template
 
     - stage: buildrpm
       <<: *cc7_template
@@ -219,10 +219,10 @@ jobs:
         - codecov
         - bash <(curl -s https://codecov.io/bash) && echo "Uploaded code coverage"
 
-    - stage: deployment
-      <<: *slc6_template
-      <<: *rpmbuild_template
-      <<: *deploy_template
+    # - stage: deployment
+    #   <<: *slc6_template
+    #   <<: *rpmbuild_template
+    #   <<: *deploy_template
 
     - stage: deployment
       <<: *cc7_template
