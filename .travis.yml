@@ -42,7 +42,7 @@ env: ## this is *only* for the built-in 'test' stage, doesn't currently transfer
     - secure: "HFlBqc85yuCng/88x1vwLdJCc9tqlWpYKdKNfyzNthP7tmxVjM1NyNQ3/cDVBi8/MdIR94We9lfgIrgkaN4gjuymO21RKo4WJXRy3PgWeo/y1CZS87+1BQFpVId9Is8GCvFZapjO741hJoxMzGkJy602KOgWY63jUfBAVbMMojRdUF4A1k4JpLD0UQkCLt57yMYfT8U5lf8IBplu6841a1nqt+S74+arqxC4XmJJBt2ZPQyAHE8dnKl7j1gjV5JGLMBEDnl/zhqgaesiy0vs5xYKBIHkwWMPSVgDRIF/xSXc7JYQs92mJbNde3N13rZ9Dsck70Z43T12PFONof+kEemFKsw+rqFnPU1TbaNbCHzmaMm7KFpy21ZuWIXRafTLr1X5CvmVa3OBqji+oA9VoTGcFT7B6HP6OHzDklP/lrirp/pIcYnC3o1cZcQl0AaQFLK8ZhKK6ylEG2Zr2yCeLyEfIV+n9QUZ+vXSjGtluumd+9+EOJwdqiy5GpXy5GHx98Tb6BcTf8yELVtLbsZ2JGuNjdn8mrClgd/92gI6pHfsn5BqUAixjSpdfIPE5lSL4b+4waCu6T3X9zR6c6j0pMmrU5eU+AbxUcnFi611dLTtGM56GarXyBqRekslSnHHgaNcTZJQA1pqgSFZhkGPl3YcBp1LAVv66wYnLmj8byU="
 
   matrix:
-    - OS_TYPE=centos PY_VER=python OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6 ROOT_VER=v5.34.36-gcc4.4
+    # - OS_TYPE=centos PY_VER=python OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6 ROOT_VER=v5.34.36-gcc4.4
     # - OS_TYPE=centos PY_VER=python2.6 OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6
     # - OS_TYPE=centos PY_VER=pypy OS_VERSION=6 DOCKER_IMAGE=gitlab-registry.cern.ch/cms-gem-daq-project/gemdaq_ci_worker/extrapy/devtoolsroot:slc6 ROOT_VER=v5.34.36-gcc4.4
 
