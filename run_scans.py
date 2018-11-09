@@ -388,7 +388,8 @@ def ultraLatency(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     
     # Determine number of OH's
-    amcBoard = HwAMC(args.cardName, args.debug)
+    cardName = "gem-shelf%02d-amc%02d"%(args.shelf,args.slot)
+    amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
     from gempython.vfatqc.qcutilities import launchSCurve
@@ -406,7 +407,6 @@ def ultraLatency(args):
         # Get base command
         cmd = [
                 "ultraLatency.py",
-                "--cardName={}".format(args.cardName),
                 "--filename={}/LatencyScanData.root".format(dirPath),
                 "-g {}".format(ohN),
                 "--mspl={}".format(args.mspl),
@@ -414,6 +414,7 @@ def ultraLatency(args):
                 "--scanmax={}".format(args.scanmax),
                 "--scanmin={}".format(args.scanmin),
                 "--shelf={}".format(args.shelf),
+                "--slot={}".format(args.slot),
                 "--stepSize={}".format(args.stepSize),
                 "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L'))
                 ]
@@ -596,7 +597,8 @@ if __name__ == '__main__':
     # Create subparser for ultraLatency
     parser_latency = subparserCmds.add_parser("lat", help="Launches an latency using the ultraLatency.py tool")
     
-    parser_latency.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
+    parser_latency.add_argument("shelf",type=int, help="uTCA shelf number")
+    parser_latency.add_argument("slot", type=int, help="slot in the uTCA of the AMC you are connecting too")
     parser_latency.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
     
     parser_latency.add_argument("--amc13local",action="store_true",help="Use AMC13 local trigger generator")
@@ -609,7 +611,6 @@ if __name__ == '__main__':
     parser_latency.add_argument("--randoms",type=int,default=None,help="Generate random triggers using AMC13 local trigger generator at rate specified")
     parser_latency.add_argument("--scanmin",type=int,default=0,help="Minimum CFG_LATENCY")
     parser_latency.add_argument("--scanmax",type=int,default=255,help="Maximum CFG_LATENCY")
-    parser_latency.add_argument("-s","--shelf",type=int,default=2,help="uTCA shelf cardName is located in")
     parser_latency.add_argument("--stepSize",type=int,default=1,help="Step size to use when scanning CFG_LATENCY")
     parser_latency.add_argument("--t3trig",action="store_true",help="Take L1A's from AMC13 T3 trigger input")
     parser_latency.add_argument("--throttle",type=int,default=None,help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle")

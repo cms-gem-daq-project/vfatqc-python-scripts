@@ -33,6 +33,8 @@ if __name__ == '__main__':
                       metavar="randoms")
     parser.add_option("--shelf", type="int", dest="shelf",default=1,
 	            	  help="uTCA shelf to access", metavar="shelf")
+    parser.add_option("--slot", type="int", dest="slot",default=1,
+                      help="slot in the uTCA of the AMC you are connceting too")
     parser.add_option("--t3trig", action="store_true", dest="t3trig",
                       help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
     parser.add_option("--throttle", type="int", default=0, dest="throttle",
@@ -80,12 +82,8 @@ if __name__ == '__main__':
     amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
     amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
     
-    # Open rpc connection to hw
-    if options.cardName is None:
-        print("you must specify the --cardName argument")
-        exit(os.EX_USAGE)
-
-    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    cardName = "gem-shelf%02d-amc%02d"%(options.shelf,options.slot)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
     print 'opened connection'
     
     # Check options
