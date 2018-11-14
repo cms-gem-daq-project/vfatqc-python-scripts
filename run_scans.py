@@ -37,7 +37,6 @@ def checkSbitMappingAndRate(args):
                 "--cardName={}".format(args.cardName),
                 "-f {}/SBitMappingAndRateData.root".format(dirPath),
                 "-g {}".format(ohN),
-                #"--mspl={}".format(args.mspl),
                 "--nevts={}".format(args.nevts),
                 "--rates={}".format(args.rates),
                 "--time={}".format(args.time),
@@ -73,7 +72,6 @@ def dacScanV3(args):
     # Build Command
     cmd = [
             "dacScanV3.py",
-            "--dacSelect={}".format(args.dacSelect),
             "-f {}/dacScanV3.root".format(dirPath),
             args.cardName,
             str(hex(args.ohMask)).strip('L')
@@ -82,6 +80,10 @@ def dacScanV3(args):
     # debug flag raised?
     if args.debug:
         cmd.insert(1,"--debug")
+
+    # Additional Options
+    if args.dacScanV3 is not None:
+        cmd.insert(1,"--dacSelect={}".format(args.dacSelect))
     if args.extRefADC:
         cmd.insert(1,"--extRefADC")
     if args.isVFAT3A:
@@ -476,11 +478,9 @@ def ultraScurve(args):
 
         # Launch the scurve
         launchSCurve(
-                #calSF = args.calSF,
                 cardName = args.cardName,
                 chMax = args.chMax,
                 chMin = args.chMin,
-                #debug = args.debug,
                 filename = "{}/SCurveData.root".format(dirPath),
                 latency = args.latency,
                 link = ohN,
@@ -489,30 +489,10 @@ def ultraScurve(args):
                 mspl = args.mspl,
                 nevts = args.nevts,
                 setChanRegs = False,
-                #trimARM = cArray_trimVal,
-                #trimARMPol = cArray_trimPol,
                 vfatmask = (args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN]),
                 voltageStepPulse = True)
 
-        ## Get base command
-        #cmd = getBaseCmd(args, ohN, "ultraScurve.py")
-
-        ## Append relevant parameters to cmd
-        #cmd.append( "-f %s/SCurveData.root"%dirPath )
-        #cmd.append( "--latency=%s"%(latency))
-        #if args.voltageStepPulse:
-        #    cmd.append("--voltageStepPulse")
-        #elif calSF is not None:
-        #    cmd.append("--calSF=%i"%(calSF))
-        #if args.CalPhase is not None:
-        #    cmd.append("--CalPhase=%i"%(CalPhase))
-        #if chMin is not None:
-        #    cmd.append("--chMin=%i"%(chMin))
-        #if chMax is not None:
-        #    cmd.append("--chMax=%i"%(chMax))
-
         # Execute
-        #executeCmd(cmd,dirPath)
         runCommand( ["chmod","-R","g+r",dirPath] )
         print("Finished scurve for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
 
@@ -681,19 +661,11 @@ if __name__ == '__main__':
     parser_scurve.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
     parser_scurve.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
     
-    #parser_scurve.add_argument("--calSF",type=int,default=None,help="Setting of CFG_CAL_FS register")
-    #parser_scurve.add_argument("--CalPhase",type=int,default=None,help="Setting of CFG_CAL_PHI register")
     parser_scurve.add_argument("--chMax",type=int,default=127,help="Specify maximum channel number to scan")
     parser_scurve.add_argument("--chMin",type=int,default=0,help="Specify minimum channel number to scan")
-    #parser_scurve.add_argument("-i","--intervalL1A",type=int,dest="l1AInterval",default=250,help="Number of BX's between L1As")
     parser_scurve.add_argument("-l","--latency",type=int,default=33,help="Setting of CFG_LATENCY register")
     parser_scurve.add_argument("-m","--mspl",type=int,default=3,help="Setting of CFG_PULSE_STRETCH register")
     parser_scurve.add_argument("-n","--nevts",type=int,default=100,help="Number of events for each scan position")
-    #parser_scurve.add_argument("-p","--pulseDelay",type="int",default = 40,help="Number of BX's calpulse is sent before L1A")
-    #parser_scurve.add_argument("--scanmin",type=int,default=0,help="Minimum CFG_CAL_DAC")
-    #parser_scurve.add_argument("--scanmax",type=int,default=255,help="Maximum CFG_CAL_DAC")
-    #parser_scurve.add_argument("--stepSize",type=int,default=1,help="Step size to use when scanning CFG_CAL_DAC")
-    #parser_scurve.add_argument("--voltageStepPulse",action="store_true",help="VFAT3 Calibration module set to use voltage step pulsing instead of current injection")
     parser_scurve.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
 
     parser_scurve.set_defaults(func=ultraScurve)
