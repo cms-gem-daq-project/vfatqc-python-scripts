@@ -6,28 +6,6 @@ from gempython.vfatqc.treeStructure import gemDacCalTreeStructure
 import os
 import ROOT as r
 
-def getDACInfo():
-    """
-    Get minimum DAC value, maximum DAC value, and DAC name
-    """
-
-    print("You've requested a VFAT3 DAC Scan")
-    printDACOptions()
-    dacSelect=-1
-    while(dacSelect not in maxVfat3DACSize.keys()):
-        dacSelect=int(raw_input("Please select the dac number from the options above: "))
-        if dacSelect not in maxVfat3DACSize.keys():
-            print("Sorry input not understood") 
-
-    retInfo = {
-            "dacMax":maxVfat3DACSize[dacSelect][0],
-            "dacMin":0,
-            "dacName":maxVfat3DACSize[dacSelect][1],
-            "dacSelect":dacSelect
-            }
-
-    return retInfo
-
 def printDACOptions():
     print("dac\tName")
     print("===\t====")
@@ -126,9 +104,6 @@ def scanAllLinks(args, calTree, vfatBoard):
                 calTree.dacValY[0],
                 calTree.dacValY_Err[0]))
         pass
-    #except Exception as error:
-    #    print("Exception raised: {}".format(error))
-    #    calTree.autoSave("SaveSelf")
 
     print("DAC scans for optohybrids in {0} completed".format(args.ohMask))
 
@@ -215,11 +190,6 @@ def scanSingleLink(args, calTree, vfatBoard):
                 calTree.dacValY[0],
                 calTree.dacValY_Err[0]))
         pass
-    #except Exception as error:
-    #    print("Exception raised: {}".format(error))
-    #    calTree.autoSave("SaveSelf")
-    #finally:
-    #    calTree.write()
 
     print("DAC scan for optohybrid {0} completed".format(vfatBoard.parentOH.link))
 
