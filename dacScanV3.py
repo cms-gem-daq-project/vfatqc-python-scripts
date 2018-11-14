@@ -28,19 +28,11 @@ def scanAllLinks(args, calTree, vfatBoard):
     amcBoard = vfatBoard.parentOH.parentAMC
 
     # Get DAC value
-    if args.dacSelect is None:
-        dictDACInfo = getDACInfo()
-        dacMax = dictDACInfo["dacMax"]
-        dacMin = dictDACInfo["dacMin"]
-        calTree.nameX[0] = dictDACInfo["dacName"]
-        dacSelect = dictDACInfo["dacSelect"]
-        calTree.dacSelect[0] = dacSelect
-    else:
-        dacMax = maxVfat3DACSize[args.dacSelect][0]
-        dacMin = 0
-        calTree.nameX[0] = maxVfat3DACSize[args.dacSelect][1]
-        dacSelect = args.dacSelect
-        calTree.dacSelect[0] = dacSelect
+    dacSelect = args.dacSelect
+    dacMax = maxVfat3DACSize[dacSelect][0]
+    dacMin = 0
+    calTree.nameX[0] = maxVfat3DACSize[dacSelect][1]
+    calTree.dacSelect[0] = dacSelect
 
     # Get VFAT register values
     from gempython.utils.nesteddict import nesteddict as ndict
@@ -119,19 +111,11 @@ def scanSingleLink(args, calTree, vfatBoard):
     """
 
     # Get DAC value
-    if args.dacSelect is None:
-        dictDACInfo = getDACInfo()
-        dacMax = dictDACInfo["dacMax"]
-        dacMin = dictDACInfo["dacMin"]
-        calTree.nameX[0] = dictDACInfo["dacName"]
-        dacSelect = dictDACInfo["dacSelect"]
-        calTree.dacSelect[0] = dacSelect
-    else:
-        dacMax = maxVfat3DACSize[args.dacSelect][0]
-        dacMin = 0
-        calTree.nameX[0] = maxVfat3DACSize[args.dacSelect][1]
-        dacSelect = args.dacSelect
-        calTree.dacSelect[0] = dacSelect,
+    dacSelect = args.dacSelect
+    dacMax = maxVfat3DACSize[dacSelect][0]
+    dacMin = 0
+    calTree.nameX[0] = maxVfat3DACSize[dacSelect][1]
+    calTree.dacSelect[0] = dacSelect,
     
     # Determine VFAT mask
     if args.vfatmask is None:
