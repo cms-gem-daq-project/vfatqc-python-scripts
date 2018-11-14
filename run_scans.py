@@ -567,8 +567,8 @@ if __name__ == '__main__':
 
     parser_dacScan.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
     parser_dacScan.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-    parser_dacScan.add_argument("dacSelect",type=int,help="DAC Selection, see VFAT3 Manual")
 
+    parser_dacScan.add_argument("--dacSelect",type=int,default=None,help="DAC Selection, see VFAT3 Manual")
     parser_dacScan.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
     parser_dacScan.add_argument("--isVFAT3A",action="store_true",help="State that you are scanning VFAT3a instead of VFAT3b")
 
