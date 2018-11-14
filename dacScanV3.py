@@ -247,20 +247,36 @@ if __name__ == '__main__':
                     description="GEM DAC Calibration of VFAT3 DAC"
             )
 
-    if args.series:
-        for ohN in range(0, amcBoard.nOHs+1):
-            if( not ((args.ohMask >> ohN) & 0x1)):
-                continue
+    if args.dacSelect is None: # No DAC selected; scan them all
+        for dacSelect in maxVfat3DACSize.keys():
+            args.dacSelect = dacSelect
+                if args.series:
+                    for ohN in range(0, amcBoard.nOHs+1):
+                        if( not ((args.ohMask >> ohN) & 0x1)):
+                            continue
 
-            # update the OH in question
-            vfatBoard.parentOH.link = ohN
+                        # update the OH in question
+                        vfatBoard.parentOH.link = ohN
 
-            scanSingleLink(args, calTree, vfatBoard)
+                        scanSingleLink(args, calTree, vfatBoard)
+                        pass
+                    pass
+                else:
+                    scanAllLinks(args, calTree, vfatBoard)
+    else: # Specific DAC Requested; scan only this DAC
+        if args.series:
+            for ohN in range(0, amcBoard.nOHs+1):
+                if( not ((args.ohMask >> ohN) & 0x1)):
+                    continue
+
+                # update the OH in question
+                vfatBoard.parentOH.link = ohN
+
+                scanSingleLink(args, calTree, vfatBoard)
+                pass
             pass
-        pass
-    else:
-        scanAllLinks(args, calTree, vfatBoard)
-        pass
+        else:
+            scanAllLinks(args, calTree, vfatBoard)
 
     outF.cd()
     calTree.autoSave("SaveSelf")
