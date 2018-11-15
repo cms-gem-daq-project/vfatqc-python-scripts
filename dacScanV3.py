@@ -59,7 +59,7 @@ def scanAllLinks(args, calTree, vfatBoard):
         vfatIDvals[ohN] = vfatBoard.getAllChipIDs(ohVFATMaskArray[ohN])
 
     # Perform DAC Scan
-    arraySize = bin(args.ohMask).count("1") * (dacMax-dacMin+1)*24/args.stepSize
+    arraySize = amcBoard.nOHs * (dacMax-dacMin+1)*24/args.stepSize
     scanData = (c_uint32 * arraySize)()
     print("Performing DAC Scan on all links, this may take some time please be patient")
     rpcResp = amcBoard.performDacScanMultiLink(scanData,dacSelect,args.stepSize,args.ohMask,args.extRefADC)
@@ -250,19 +250,19 @@ if __name__ == '__main__':
     if args.dacSelect is None: # No DAC selected; scan them all
         for dacSelect in maxVfat3DACSize.keys():
             args.dacSelect = dacSelect
-                if args.series:
-                    for ohN in range(0, amcBoard.nOHs+1):
-                        if( not ((args.ohMask >> ohN) & 0x1)):
-                            continue
+            if args.series:
+                for ohN in range(0, amcBoard.nOHs+1):
+                    if( not ((args.ohMask >> ohN) & 0x1)):
+                        continue
 
-                        # update the OH in question
-                        vfatBoard.parentOH.link = ohN
+                    # update the OH in question
+                    vfatBoard.parentOH.link = ohN
 
-                        scanSingleLink(args, calTree, vfatBoard)
-                        pass
+                    scanSingleLink(args, calTree, vfatBoard)
                     pass
-                else:
-                    scanAllLinks(args, calTree, vfatBoard)
+                pass
+            else:
+                scanAllLinks(args, calTree, vfatBoard)
     else: # Specific DAC Requested; scan only this DAC
         if args.series:
             for ohN in range(0, amcBoard.nOHs+1):
