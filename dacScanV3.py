@@ -44,24 +44,26 @@ def scanAllLinks(args, calTree, vfatBoard):
     for ohN in range(0,12):
         # Skip masked OH's
         if( not ((args.ohMask >> ohN) & 0x1)):
-            continue
+            calSelPolVals[ohN] = [ 0 for vfat in range(0,24) ]
+            irefVals[ohN] = [ 0 for vfat in range(0,24) ]
+            vfatIDvals[ohN] = [ 0 for vfat in range(0,24) ]
+        else:
+            # update the OH in question
+            vfatBoard.parentOH.link = ohN
 
-        # update the OH in question
-        vfatBoard.parentOH.link = ohN
+            # Get the cal sel polarity
+            calSelPolVals[ohN] = vfatBoard.readAllVFATs("CFG_CAL_SEL_POL",ohVFATMaskArray[ohN])
 
-        # Get the cal sel polarity
-        calSelPolVals[ohN] = vfatBoard.readAllVFATs("CFG_CAL_SEL_POL",ohVFATMaskArray[ohN])
+            # Get the IREF values
+            irefVals[ohN] = vfatBoard.readAllVFATs("CFG_IREF",ohVFATMaskArray[ohN])
 
-        # Get the IREF values
-        irefVals[ohN] = vfatBoard.readAllVFATs("CFG_IREF",ohVFATMaskArray[ohN])
-
-        # Get the chip ID's
-        vfatIDvals[ohN] = vfatBoard.getAllChipIDs(ohVFATMaskArray[ohN])
+            # Get the chip ID's
+            vfatIDvals[ohN] = vfatBoard.getAllChipIDs(ohVFATMaskArray[ohN])
 
     # Perform DAC Scan
     arraySize = amcBoard.nOHs * (dacMax-dacMin+1)*24/args.stepSize
     scanData = (c_uint32 * arraySize)()
-    print("Performing DAC Scan on all links, this may take some time please be patient")
+    print("Scanning DAC: {0} on all links".format(maxVfat3DACSize[dacSelect][1]))
     rpcResp = amcBoard.performDacScanMultiLink(scanData,dacSelect,args.stepSize,args.ohMask,args.extRefADC)
     if rpcResp != 0:
         raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
@@ -138,7 +140,7 @@ def scanSingleLink(args, calTree, vfatBoard):
     # Perform DAC Scan
     arraySize = (dacMax-dacMin+1)*24/args.stepSize
     scanData = (c_uint32 * arraySize)()
-    print("Performing DAC Scan on Optohybrid {0}, this may take some time please be patient".format(vfatBoard.parentOH.link))
+    print("Scanning DAC {0} on Optohybrid {1}".format(maxVfat3DACSize[dacSelect][1], vfatBoard.parentOH.link))
     rpcResp = vfatBoard.parentOH.performDacScan(scanData, dacSelect, args.stepSize, args.vfatmask, args.extRefADC)
     if rpcResp != 0:
         raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
