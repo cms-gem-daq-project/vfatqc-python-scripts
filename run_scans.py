@@ -82,12 +82,10 @@ def dacScanV3(args):
         cmd.insert(1,"--debug")
 
     # Additional Options
-    if args.dacScanV3 is not None:
+    if args.dacSelect is not None:
         cmd.insert(1,"--dacSelect={}".format(args.dacSelect))
     if args.extRefADC:
         cmd.insert(1,"--extRefADC")
-    if args.isVFAT3A:
-        cmd.insert(1,"--isVFAT3A")
 
     # Execute
     executeCmd(cmd,dirPath)
@@ -570,7 +568,6 @@ if __name__ == '__main__':
 
     parser_dacScan.add_argument("--dacSelect",type=int,default=None,help="DAC Selection, see VFAT3 Manual")
     parser_dacScan.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
-    parser_dacScan.add_argument("--isVFAT3A",action="store_true",help="State that you are scanning VFAT3a instead of VFAT3b")
 
     parser_dacScan.set_defaults(func=dacScanV3)
 
