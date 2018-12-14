@@ -111,7 +111,7 @@ def executeCmd(cmd, dirPath):
     except Exception as e:
         print("Caught exception: {0}".format(e))
     finally:
-        runCommand( ["chmod","-R","g+r",dirPath] )
+        runCommand( ["chmod","-R","g+rw",dirPath] )
     return
 
 def makeScanDir(ohN, scanType, startTime):
@@ -124,7 +124,10 @@ def makeScanDir(ohN, scanType, startTime):
     """
 
     from gempython.gemplotting.utils.anautilities import getDirByAnaType
-    dirPath = getDirByAnaType(scanType, chamber_config[ohN])
+    if ohN in chamber_config.keys():
+        dirPath = getDirByAnaType(scanType, chamber_config[ohN])
+    else:
+        dirPath = getDirByAnaType(scanType, "")
 
     setupCmds = [] 
     setupCmds.append( ["mkdir","-p",dirPath+"/"+startTime] )
@@ -145,16 +148,7 @@ def monitorT(args):
     
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
-    # Make output directory
-    #dirPath = "{}/temperature/".format(os.getenv("DATA_PATH"))
-    #setupCmds = [] 
-    #setupCmds.append( ["mkdir","-p",dirPath+startTime] )
-    #setupCmds.append( ["chmod","g+rw",dirPath+startTime] )
-    #setupCmds.append( ["unlink",dirPath+"current"] )
-    #setupCmds.append( ["ln","-s",startTime,dirPath+"current"] )
-    #for cmd in setupCmds:
-    #    runCommand(cmd)
-    dirPath = makeScanDir(0, "temperature", startTime)
+    dirPath = makeScanDir(-1, "temperature", startTime)
     dirPath += "/{}".format(startTime)
 
     # Build Command
