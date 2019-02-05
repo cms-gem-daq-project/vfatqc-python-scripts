@@ -1,11 +1,15 @@
 #!/bin/env python
 
-from gempython.tools.vfat_user_functions_xhal import *
 from gempython.tools.amc_user_functions_uhal import *
 from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
+from gempython.tools.optohybrid_user_functions_xhal import OHRPCException
+from gempython.tools.vfat_user_functions_xhal import *
 from gempython.utils.gemlogger import printGreen, printRed, printYellow
 
 def testConnectivity(args):
+    # Get the scandate
+    startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
+
     # Check if cardName is in args
     if hasattr(args, 'cardName') is False:
         args.cardName = "gem-shelf%02d-amc%02d"%(args.shelf,args.slot)
@@ -18,6 +22,39 @@ def testConnectivity(args):
 
     # Check GBT Communication
     # =================================================================
+    printYellow("="*20)
+    printYellow("Checking GBT Communication")
+    printYellow("="*20)
+
+    print("Checking GBT Communication (Before Programming GBTs)")
+    if not vfatBoard.parentOH.parentAMC.getGBTLinkStatus(doReset=True, printSummary=True, ohMask=args.ohMask):
+        printRed("GBT Communication was not established successfully")
+        printYellow("\tTry checking:")
+        printYellow("\t\t1. Fibers from GE1/1 patch-panel to OH have correct jacket color ordering")
+        printYellow("\t\t2. Fibers from GE1/1 patch-panel to OH are fully inserted")
+        printYellow("\t\t3. OH3 screw is properly screwed into standoff")
+        printYellow("\t\t4. OH3 standoff on the GEB is not broken")
+        printYellow("\t\t5. Voltage on OH3 standoff is within range [1.47,1.59] Volts")
+        printRed("Connectivity Testing Failed")
+        return
+
+    # Program GBTs
+    # placeholder FIXME
+    
+    print("Checking GBT Communication (After Programming GBTs)")
+    if not vfatBoard.parentOH.parentAMC.getGBTLinkStatus(doReset=True, printSummary=True, ohMask=args.ohMask):
+        printRed("GBT Communication was not established successfully")
+        printYellow("\tTry checking:")
+        printYellow("\t\t1. Fibers from GE1/1 patch-panel to OH have correct jacket color ordering")
+        printYellow("\t\t2. Fibers from GE1/1 patch-panel to OH are fully inserted")
+        printYellow("\t\t3. OH3 screw is properly screwed into standoff")
+        printYellow("\t\t4. OH3 standoff on the GEB is not broken")
+        printYellow("\t\t5. Voltage on OH3 standoff is within range [1.47,1.59] Volts")
+        printRed("Connectivity Testing Failed")
+        return
+    else: 
+        printGreen("GBT Communication Established")
+        pass
 
     # Check SCA Communication
     # =================================================================
@@ -57,7 +94,7 @@ def testConnectivity(args):
         printYellow("\tTry checking:")
         printYellow("\t\t1. OH3 screw is properly screwed into standoff")
         printYellow("\t\t2. OH3 standoff on the GEB is not broken")
-        printYellow("\t\t3. Voltage on OH3 standoff is within range [X,Y] Volts")
+        printYellow("\t\t3. Voltage on OH3 standoff is within range [1.47,1.59] Volts")
         printRed("Connectivity Testing Failed")
         return
     else: 
@@ -97,8 +134,9 @@ def testConnectivity(args):
         printYellow("\t\t1. Was the OH FW loaded into the Zynq RAM on the CTP7?")
         printYellow("\t\t2. OH1 and OH2 screws are properly screwed into their respective standoffs")
         printYellow("\t\t3. OH1 and OH2 standoffs on the GEB are not broken")
-        printYellow("\t\t4. Voltage on OH1 standoff is within range [X,Y] Volts")
-        printYellow("\t\t5. Voltage on OH2 standoff is within range [X,Y] Volts")
+        printYellow("\t\t4. Voltage on OH1 standoff is within range [0.97,1.06] Volts")
+        printYellow("\t\t5. Voltage on OH2 standoff is within range [2.45,2.66] Volts")
+        printYellow("\t\t6. Current limit on Power Supply is 4 Amps")
         printRed("Connectivity Testing Failed")
         return
     else:
@@ -107,12 +145,61 @@ def testConnectivity(args):
         
     # Check VFAT Communication
     # =================================================================
+    print("Checking GBT Communication (After Programming FPGA)")
+    if not vfatBoard.parentOH.parentAMC.getGBTLinkStatus(doReset=True, printSummary=True, ohMask=args.ohMask):
+        printRed("GBT Communication was not established successfully")
+        printYellow("\tTry checking:")
+        printYellow("\t\t1. Current limit on Power Supply is 4 Amps")
+        printRed("Connectivity Testing Failed")
+        return
+    else: 
+        printGreen("GBT Communication Established")
+        pass
+
+    # Perform N GBT Phase Scans
+    # Placeholder FIXME
+
+    # Write Good GBT Phase Values
+    # Placeholder FIXME
+
+    print("Checking VFAT Synchronization")
+    if not vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=True, printSummary=True,  ohMask=args.ohMask):
+        printRed("VFATs are not properly synchronized")
+        printYellow("\tTry checking:")
+        printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
+        printYellow("\t\t2. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
+        printYellow("\t\t3. The Phase Settings written to each VFAT where in the middle of a 'good' window")
+        printRed("Conncetivity Testing Failed")
+        return
+    else:
+        printGreen("VFATs are properly synchronized")
+        pass
+
+    print("Checking VFAT Communication")
+    from gempython.utils.nesteddict import nesteddict as ndict
+    dict_chipIDs = ndict()
+    for ohN in range(nOHs):
+        # Skip masked OH's
+        if( not ((args.ohMask >> ohN) & 0x1)):
+            continue
+            
+        try:
+            dict_chipIDs[ohN] = vfatBoard.getAllChipIDs()
+        except OHRPCException as e:
+            printRed("VFAT communication was not established successfully for OH{0}".format(ohN))
+            printYellow("\tTry checking:")
+            printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
+            printYellow("\t\t2. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
+            printYellow("\t\t3. The Phase Settings written to each VFAT where in the middle of a 'good' window")
+            printRed("Conncetivity Testing Failed")
+            return
+        pass
 
     # Scan DACs
     # =================================================================
-    from gempython.vfatqc.dacScanV3 import scanAllLinks
+    from gempython.vfatqc.utils.scanUtils import dacScanAllLinks 
     
-    from gempython.vfatqc.treeStructure import gemDacCalTreeStructure
+    from gempython.vfatqc.utils.treeStructure import gemDacCalTreeStructure
     calTree = gemDacCalTreeStructure(
                     name="dacScanTree",
                     nameX="dummy", # temporary name, will be over-ridden
@@ -120,15 +207,37 @@ def testConnectivity(args):
                     dacSelect=-1, #temporary value, will be over-ridden 
                     description="GEM DAC Calibration of VFAT3 DAC"
             )
-    
+   
+    vfatBoard.setRunModeAll()
+
     args.stepSize = 1
     for dacSelect in maxVfat3DACSize.keys():
         args.dacSelect = dacSelect
-        scanAllLinks(args, calTree, vfatBoard)
+        dacScanAllLinks(args, calTree, vfatBoard)
         pass
 
     # Analyze DACs
     # =================================================================
+    args.assignXErrors = False
+    args.calFileList = None
+    args.outfilename = "" # FIXME
+    args.printSum = False
+
+    # Placeholder, load parameters for ADC calibration from DB
+    # Right now need to rely on someone making the file by hand and placing it in the correct location
+
+    #chamber_config needs to be defined FIXME
+    dacAnalysis(args, calTree, chamber_config, scandate='noscandate')
+
+    # Load DAC Values to Front-End
+    # =================================================================
+    # Going to need to configure...probably need top refactor confChamber FIXME
+    from gempython.vfatqc.confChamber import configure
+
+
+    # Load DAC Values to DB
+    # =================================================================
+    # Place holder
 
     # Take Scurve
     # =================================================================
