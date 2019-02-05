@@ -1,10 +1,7 @@
 #!/bin/env python
-from ctypes import *
 from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
-from gempython.vfatqc.treeStructure import gemDacCalTreeStructure
 
 import os
-import ROOT as r
 
 def printDACOptions():
     print("dac\tName")
@@ -13,172 +10,6 @@ def printDACOptions():
     dacOptions.sort()
     for dacVal in dacOptions:
         print("%02d\t%s"%(dacVal,maxVfat3DACSize[dacVal][1]))
-    return
-
-def scanAllLinks(args, calTree, vfatBoard):
-    """
-    Performs a DAC scan on all VFATs on all unmasked OH's on amcBoard
-
-    args - parsed arguments from an ArgumentParser instance
-    calTree - instance of gemDacCalTreeStructure
-    vfatBoard - instance of HwVFAT
-    """
-
-    # Get the AMC
-    amcBoard = vfatBoard.parentOH.parentAMC
-
-    # Get DAC value
-    dacSelect = args.dacSelect
-    dacMax = maxVfat3DACSize[dacSelect][0]
-    dacMin = 0
-    calTree.nameX[0] = maxVfat3DACSize[dacSelect][1]
-    calTree.dacSelect[0] = dacSelect
-
-    # Get VFAT register values
-    from gempython.utils.nesteddict import nesteddict as ndict
-    ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
-    print("Getting CHIP IDs of all VFATs")
-    vfatIDvals = ndict()
-    irefVals = ndict()
-    calSelPolVals = ndict()
-    for ohN in range(0,12):
-        # Skip masked OH's
-        if( not ((args.ohMask >> ohN) & 0x1)):
-            calSelPolVals[ohN] = [ 0 for vfat in range(0,24) ]
-            irefVals[ohN] = [ 0 for vfat in range(0,24) ]
-            vfatIDvals[ohN] = [ 0 for vfat in range(0,24) ]
-        else:
-            # update the OH in question
-            vfatBoard.parentOH.link = ohN
-
-            # Get the cal sel polarity
-            calSelPolVals[ohN] = vfatBoard.readAllVFATs("CFG_CAL_SEL_POL",ohVFATMaskArray[ohN])
-
-            # Get the IREF values
-            irefVals[ohN] = vfatBoard.readAllVFATs("CFG_IREF",ohVFATMaskArray[ohN])
-
-            # Get the chip ID's
-            vfatIDvals[ohN] = vfatBoard.getAllChipIDs(ohVFATMaskArray[ohN])
-
-    # Perform DAC Scan
-    arraySize = amcBoard.nOHs * (dacMax-dacMin+1)*24/args.stepSize
-    scanData = (c_uint32 * arraySize)()
-    print("Scanning DAC: {0} on all links".format(maxVfat3DACSize[dacSelect][1]))
-    rpcResp = amcBoard.performDacScanMultiLink(scanData,dacSelect,args.stepSize,args.ohMask,args.extRefADC)
-    if rpcResp != 0:
-        raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
-
-    #try:
-    if args.debug:
-        print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
-        print("| :--: | :---: | :----: | :-------: |:-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
-    for dacWord in scanData:
-        vfat = (dacWord >>18) & 0x1f
-        ohN = ((dacWord >> 23) & 0xf)
-        calTree.fill(
-                calSelPol = calSelPolVals[ohN][vfat],
-                dacValX = (dacWord & 0xff),
-                dacValY = ((dacWord >> 8) & 0x3ff),
-                dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
-                iref = irefVals[ohN][vfat],
-                link = ohN,
-                vfatID = vfatIDvals[ohN][vfat],
-                vfatN = vfat
-                )
-        if args.debug:
-            print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
-                calTree.link[0],
-                calTree.vfatN[0],
-                str(hex(calTree.vfatID[0])).strip('L'),
-                calTree.dacSelect[0],
-                calTree.nameX[0],
-                calTree.dacValX[0],
-                calTree.dacValX_Err[0],
-                calTree.nameY[0],
-                calTree.dacValY[0],
-                calTree.dacValY_Err[0]))
-        pass
-
-    print("DAC scans for optohybrids in {0} completed".format(args.ohMask))
-
-    return
-
-def scanSingleLink(args, calTree, vfatBoard):
-    """
-    Performs a DAC scan for the VFATs on the OH that vfatBoard.parentOH corresponds too
-
-    args - parsed arguments from an ArgumentParser instance
-    calTree - instance of gemDacCalTreeStructure
-    vfatBoard - instace of HwVFAT
-    """
-
-    # Get DAC value
-    dacSelect = args.dacSelect
-    dacMax = maxVfat3DACSize[dacSelect][0]
-    dacMin = 0
-    calTree.nameX[0] = maxVfat3DACSize[dacSelect][1]
-    calTree.dacSelect[0] = dacSelect,
-    
-    # Determine VFAT mask
-    if args.vfatmask is None:
-        args.vfatmask = vfatBoard.parentOH.getVFATMask()
-        if args.debug:
-            print("Automatically determined vfatmask to be: {0}".format(str(hex(args.vfatmask)).strip('L')))
-    
-    # Get the cal sel polarity
-    print("Getting Calibration Select Polarity of all VFATs")
-    calSelPolVals = vfatBoard.readAllVFATs("CFG_CAL_SEL_POL",args.vfatmask)
-
-    # Get the IREF values
-    print("Getting IREF of all VFATs")
-    irefVals = vfatBoard.readAllVFATs("CFG_IREF",args.vfatmask)
-
-    # Determine Chip ID
-    print("Getting CHIP IDs of all VFATs")
-    vfatIDvals = vfatBoard.getAllChipIDs(args.vfatmask)
-    
-    # Perform DAC Scan
-    arraySize = (dacMax-dacMin+1)*24/args.stepSize
-    scanData = (c_uint32 * arraySize)()
-    print("Scanning DAC {0} on Optohybrid {1}".format(maxVfat3DACSize[dacSelect][1], vfatBoard.parentOH.link))
-    rpcResp = vfatBoard.parentOH.performDacScan(scanData, dacSelect, args.stepSize, args.vfatmask, args.extRefADC)
-    if rpcResp != 0:
-        raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
-
-    # Store Data
-    calTree.link[0] = vfatBoard.parentOH.link
-
-    #try:
-    if args.debug:
-        print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
-        print("| :--: | :---: | :----: | :-------: | :-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
-    for dacWord in scanData:
-        vfat = (dacWord >>18) & 0x1f
-        calTree.fill(
-                calSelPol = calSelPolVals[vfat],
-                dacValX = (dacWord & 0xff),
-                dacValY = ((dacWord >> 8) & 0x3ff),
-                dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
-                iref = irefVals[vfat],
-                vfatID = vfatIDvals[vfat],
-                vfatN = vfat
-                )
-        if args.debug:
-            print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} |".format(
-                calTree.link[0],
-                calTree.vfatN[0],
-                str(hex(calTree.vfatID[0])).strip('L'),
-                calTree.dacSelect[0],
-                calTree.nameX[0],
-                calTree.dacValX[0],
-                calTree.dacValX_Err[0],
-                calTree.nameY[0],
-                calTree.dacValY[0],
-                calTree.dacValY_Err[0]))
-        pass
-
-    print("DAC scan for optohybrid {0} completed".format(vfatBoard.parentOH.link))
-
     return
 
 if __name__ == '__main__':
@@ -234,13 +65,16 @@ if __name__ == '__main__':
         exit(os.EX_USAGE)
     
     # Check options
-    from gempython.vfatqc.qcutilities import inputOptionsValid
+    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     if not inputOptionsValid(args, amcBoard.fwVersion):
         exit(os.EX_USAGE)
         pass
     
     # Make output files
+    import ROOT as r
     outF = r.TFile(args.filename,"RECREATE")
+    from gempython.vfatqc.utils.scanUtils import dacScanAllLinks, dacScanSingleLink 
+    from gempython.vfatqc.utils.treeStructure import gemDacCalTreeStructure
     calTree = gemDacCalTreeStructure(
                     name="dacScanTree",
                     nameX="dummy", # temporary name, will be over-ridden
@@ -260,7 +94,7 @@ if __name__ == '__main__':
                     # update the OH in question
                     vfatBoard.parentOH.link = ohN
 
-                    scanSingleLink(args, calTree, vfatBoard)
+                    dacScanSingleLink(args, calTree, vfatBoard)
                     pass
                 pass
             else:
@@ -274,7 +108,7 @@ if __name__ == '__main__':
                 # update the OH in question
                 vfatBoard.parentOH.link = ohN
 
-                scanSingleLink(args, calTree, vfatBoard)
+                dacScanSingleLink(args, calTree, vfatBoard)
                 pass
             pass
         else:
