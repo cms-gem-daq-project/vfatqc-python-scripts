@@ -16,7 +16,7 @@ if __name__ == '__main__':
     from gempython.tools.vfat_user_functions_uhal import * #remove this later after making it so amc13 communication doesn't spit bullshit messages
     from gempython.tools.optohybrid_user_functions_uhal import scanmode
     
-    from gempython.vfatqc.qcoptions import parser
+    from gempython.vfatqc.utils.qcoptions import parser
     
     parser.add_option("--amc13local", action="store_true", dest="amc13local",
                       help="Set up for using AMC13 local trigger generator", metavar="amc13local")
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     isCurrentPulse = (not options.voltageStepPulse)
     
     # Setup the output TTree
-    from gempython.vfatqc.treeStructure import gemTreeStructure
+    from gempython.vfatqc.utils.treeStructure import gemTreeStructure
     gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
     gemData.setDefaults(options, int(time.time()))
     
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     print 'opened connection'
     
     # Check options
-    from gempython.vfatqc.qcutilities import inputOptionsValid
+    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
         pass

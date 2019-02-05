@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     from gempython.tools.vfat_user_functions_xhal import *
     
-    from gempython.vfatqc.qcoptions import parser
+    from gempython.vfatqc.utils.qcoptions import parser
 
     parser.add_option("--calSF", type="int", dest = "calSF", default = 0,
                       help="V3 electroncis only. Value of the CFG_CAL_FS register", metavar="calSF")
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     isCurrentPulse = (not options.voltageStepPulse)
 
     # Setup the output TTree
-    #from gempython.vfatqc.treeStructure import gemTreeStructure
+    #from gempython.vfatqc.utils.treeStructure import gemTreeStructure
     #gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data')
     #gemData.setDefaults(options, int(time.time()))
     sbitDataTree = r.TTree("sbitDataTree","Tree Holding SBIT Mapping and Rate Data")
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     mask = options.vfatmask
 
     # Determine rates and L1Aintervals
-    from gempython.vfatqc.qcutilities import calcL1Ainterval
+    from gempython.vfatqc.utils.qcutilities import calcL1Ainterval
     dictRateMap = { float(rate):calcL1Ainterval(float(rate)) for rate in options.rates.split(",")}
 
     # Open rpc connection to hw
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     print 'opened connection'
 
     # Check options
-    from gempython.vfatqc.qcutilities import inputOptionsValid
+    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
 

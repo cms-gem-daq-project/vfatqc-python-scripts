@@ -11,7 +11,7 @@ from gempython.utils.nesteddict import nesteddict as ndict
 from gempython.utils.wrappers import runCommand, envCheck
 from gempython.gemplotting.mapping.chamberInfo import chamber_config
 
-from gempython.vfatqc.qcoptions import parser
+from gempython.vfatqc.utils.qcoptions import parser
 
 parser.add_option("--trimRange", type="string", dest="rangeFile", default=None,
                   help="Specify the file to take trim ranges from", metavar="rangeFile")

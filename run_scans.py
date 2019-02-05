@@ -386,7 +386,7 @@ def ultraLatency(args):
     amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
-    from gempython.vfatqc.qcutilities import launchSCurve
+    from gempython.vfatqc.utils.scanUtils import launchSCurve
     for ohN in range(0,amcBoard.nOHs+1):
         # Skip masked OH's        
         if( not ((args.ohMask >> ohN) & 0x1)):
@@ -455,7 +455,7 @@ def ultraScurve(args):
     amcBoard = HwAMC(args.cardName, args.debug)
     print('opened connection')
 
-    from gempython.vfatqc.qcutilities import launchSCurve
+    from gempython.vfatqc.utils.scanUtils import launchSCurve
     for ohN in range(0,amcBoard.nOHs+1):
         # Skip masked OH's        
         if( not ((args.ohMask >> ohN) & 0x1)):

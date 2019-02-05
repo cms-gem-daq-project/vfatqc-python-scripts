@@ -12,8 +12,8 @@ if __name__ == '__main__':
     from gempython.utils.nesteddict import nesteddict as ndict
     from gempython.utils.wrappers import runCommand, envCheck
     from gempython.gemplotting.mapping.chamberInfo import chamber_config, chamber_vfatDACSettings
-    from gempython.vfatqc.qcoptions import parser
-    from gempython.vfatqc.qcutilities import launchSCurve
+    from gempython.vfatqc.utils.qcoptions import parser
+    from gempython.vfatqc.utils.scanUtils import launchSCurve
     
     import datetime, subprocess, time
     import numpy as np
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     outFile = r.TFile("%s/TrimData.root"%(dirPath),"RECREATE")
     
     # Setup the output TTree
-    from gempython.vfatqc.treeStructure import gemDacCalTreeStructure
+    from gempython.vfatqc.utils.treeStructure import gemDacCalTreeStructure
     trimDacArmTree = gemDacCalTreeStructure(
             name='trimDacArmTree',
             nameX='scurve mean #left(fC#right)',

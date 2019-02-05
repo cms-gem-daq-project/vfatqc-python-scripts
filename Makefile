@@ -16,12 +16,14 @@ ScriptDir    := pkg/$(Namespace)/scripts
 
 
 # Explicitly define the modules that are being exported (for PEP420 compliance)
-PythonModules = ["$(Namespace).$(ShortPackage)"]
+PythonModules = ["$(Namespace).$(ShortPackage)", \
+                 "$(Namespace).$(ShortPackage).utils"
+				]
 $(info PythonModules=${PythonModules})
 
-VFATQC_VER_MAJOR=2
-VFATQC_VER_MINOR=2
-VFATQC_VER_PATCH=0
+VFATQC_VER_MAJOR:=$(shell ./config/tag2rel.sh | awk '{split($$0,a," "); print a[1];}' | awk '{split($$0,b,":"); print b[2];}')
+VFATQC_VER_MINOR:=$(shell ./config/tag2rel.sh | awk '{split($$0,a," "); print a[2];}' | awk '{split($$0,b,":"); print b[2];}')
+VFATQC_VER_PATCH:=$(shell ./config/tag2rel.sh | awk '{split($$0,a," "); print a[3];}' | awk '{split($$0,b,":"); print b[2];}')
 
 include $(BUILD_HOME)/$(Project)/config/mfCommonDefs.mk
 include $(BUILD_HOME)/$(Project)/config/mfPythonDefs.mk
@@ -33,9 +35,7 @@ include $(BUILD_HOME)/$(Project)/config/mfPythonRPM.mk
 default:
 	@echo "Running default target"
 	$(MakeDir) $(PackageDir)
-	@cp -rf qcoptions.py $(PackageDir)
-	@cp -rf qcutilities.py $(PackageDir)
-	@cp -rf treeStructure.py $(PackageDir)
+	@cp -rf utils $(PackageDir)
 	@echo "__path__ = __import__('pkgutil').extend_path(__path__, __name__)" > pkg/$(Namespace)/__init__.py
 	@cp -rf __init__.py $(PackageDir)
 

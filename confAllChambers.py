@@ -74,7 +74,7 @@ if __name__ == '__main__':
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.utils.wrappers import envCheck
 
-    #from gempython.vfatqc.qcoptions import parser
+    #from gempython.vfatqc.utils.qcoptions import parser
     from gempython.utils.standardopts import parser
     parser.add_option("--config", action="store_true", dest="config",
                       help="Set Configuration from simple txt files", metavar="config")

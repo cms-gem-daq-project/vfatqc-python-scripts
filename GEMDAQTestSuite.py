@@ -679,7 +679,7 @@ class GEMDAQTestSuite:
         return
 
 if __name__ == "__main__":
-    from qcoptions import parser
+    from utils.qcoptions import parser
 
     parser.add_option("--namc", type="int", dest="namc",
                       help="Number of register tests to perform on the amc (default is 100)", metavar="namc", default=100)
