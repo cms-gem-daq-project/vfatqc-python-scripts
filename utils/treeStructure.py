@@ -62,6 +62,8 @@ class gemGenericTree(object):
         simplicity.
         """
 
+        if "amc" in kwargs:
+            self.amc[0] = kwargs["amc"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "Nev" in kwargs:
