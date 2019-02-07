@@ -14,6 +14,9 @@ class gemGenericTree(object):
 
         self.gemTree = r.TTree(name,description)
 
+        self.amc = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'amc', self.amc, 'amc/I' )
+
         self.link = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'link', self.link, 'link/I' )
         
