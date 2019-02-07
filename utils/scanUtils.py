@@ -1,5 +1,7 @@
 from ctypes import *
+
 from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
+from gempython.tools.vfat_user_functions_xhal import *
 
 def dacScanAllLinks(args, calTree, vfatBoard):
     """
@@ -269,7 +271,6 @@ def launchSCurve(**kwargs):
         raise Exception("launchSCurve(): You must provide a filename for this scurve. Exiting", os.EX_USAGE)
 
     # Set the channel registers
-    from gempython.tools.vfat_user_functions_xhal import *
     if setChanRegs:
         if debug:
             print("opening an RPC connection to %s"%cardName)
