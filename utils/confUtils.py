@@ -1,3 +1,7 @@
+from ctypes import *
+
+from gempython.tools.vfat_user_functions_uhal import *
+
 def configure(args, vfatBoard):
     """
     Configures the front-end detector
@@ -7,7 +11,6 @@ def configure(args, vfatBoard):
         chConfig    - Text file containing the channel configuration register information
         compare     - If True only compares provided config file(s) with currently loaded parameters in frontend, does not write
         debug       - Prints additional debugging information
-        gtx         - OH number
         filename    - TFile containing the scurveFitTree, used in writing channel registers
         run         - Places front-end ASIC into run mode if true
         vt1         - For V3 (V2) electronics this is CFG_THR_ARM_DAC (VThreshold1) value to write
@@ -20,10 +23,12 @@ def configure(args, vfatBoard):
     vfatBoard - An instance of HwVFAT class
     """
 
-    if args.gtx in chamber_vfatDACSettings.keys():
+    ohN = vfatBoard.parentOH.link
+
+    if ohN in chamber_vfatDACSettings.keys():
         print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
-        for key in chamber_vfatDACSettings[args.gtx]:
-            vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[args.gtx][key]
+        for key in chamber_vfatDACSettings[ohN]:
+            vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[ohN][key]
     vfatBoard.biasAllVFATs(args.vfatmask)
     print 'biased VFATs'
     
@@ -101,9 +106,9 @@ def configure(args, vfatBoard):
                     
                     # Tell user whether CFG_THR_ARM_DAC or VThreshold1 is being written
                     if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                        print 'Set link %d VFAT%d CFG_THR_ARM_DAC to %i'%(args.gtx,event.vfatN,event.vt1+args.vt1bump)
+                        print 'Set link %d VFAT%d CFG_THR_ARM_DAC to %i'%(ohN,event.vfatN,event.vt1+args.vt1bump)
                     else:
-                        print 'Set link %d VFAT%d VThreshold1 to %i'%(args.gtx,event.vfatN,event.vt1+args.vt1bump)
+                        print 'Set link %d VFAT%d VThreshold1 to %i'%(ohN,event.vfatN,event.vt1+args.vt1bump)
                     
                     # Write CFG_THR_ARM_DAC or VThreshold1
                     vfatBoard.setVFATThreshold(chip=int(event.vfatN), vt1=int(event.vt1+args.vt1bump))
@@ -120,6 +125,11 @@ def configure(args, vfatBoard):
         except Exception as e:
             print '%s does not seem to exist'%args.filename
             print e
+            pass
+        pass
+
+    return
+
 def getChannelRegisters(vfatBoard, mask):
     """
     Returns a structured numpy array that stores the channel
@@ -177,8 +187,6 @@ def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     device - optohybrid the vfats belong to that you want to check
     gtx - link of this optohybrid
     """
-
-    from gempython.tools.vfat_user_functions_uhal import *
     
     import numpy as np
     import root_numpy as rp
@@ -381,8 +389,6 @@ def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
     mask - vfat mask to apply
     debug - print additional information if True
     """
-
-    from ctypes import *
     
     # Make the cArrays
     cArray_Masks = (c_uint32 * 3072)()
