@@ -254,8 +254,10 @@ def testConnectivity(args):
         pass
 
     print("Checking VFAT Communication")
+    from gempython.gemplotting.utils.dbutils import getVFAT3CalInfo
     from gempython.utils.nesteddict import nesteddict as ndict
     dict_chipIDs = ndict()
+    dict_vfat3CalInfo = ndict() # key -> OH number; value -> pandas dataframe
     for ohN in range(nOHs):
         # Skip masked OH's
         if( not ((args.ohMask >> ohN) & 0x1)):
@@ -272,6 +274,9 @@ def testConnectivity(args):
             printYellow("\t\t3. The Phase Settings written to each VFAT where in the middle of a 'good' window")
             printRed("Conncetivity Testing Failed")
             return
+
+        # Get the calibration info for this detector
+        dict_vfat3CalInfo[ohN] = getVFAT3CalInfo(dict_chipIDs[ohN])
         pass
 
     # All VFATs should work now
@@ -293,15 +298,29 @@ def testConnectivity(args):
                         description="GEM DAC Calibration of VFAT3 DAC"
                 )
  
-        # FIXME Need to get and write the IREF's into each front end
-
-        # Place All Chips Into Run Mode
+        # Place All Chips Into Run Mode and write correct Iref
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
             vfatBoard.parentOH.link = ohN
+            
+            # Write IREF
+            for idx in dict_vfat3CalInfo[ohN]:
+                try:
+                    vfatBoard.writeVFAT(
+                            dict_vfat3CalInfo['vfatN'][idx],
+                            "CFG_IREF",
+                            dict_vfat3CalInfo['iref'][idx])
+                except Exception as e:
+                    printRed("VFAT communication was not established successfully for OH{0} VFAT{1}".format(ohN,dict_vfat3CalInfo['vfatN'][idx]))
+                    printRed("Conncetivity Testing Failed")
+                    return
+                pass
+
+            # Set to Run Mode
+            # If time is an issue these two statements could be merged into one
             try:
                 vfatBoard.setRunModeAll()
             except Exception as e:
