@@ -28,9 +28,9 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,debug=False):
 
     if config:
         cmd.append("--vt1bump=%d"%(vt1bump))
-        chConfig = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,cName)
+        chConfig = "{0}/configs/chConfig_{1}.txt".format(dataPath,cName)
         vfatConfig = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,cName)
-        
+
         # Channel config
         if os.path.isfile(chConfig):
             cmd.append("--chConfig={}".format(chConfig))

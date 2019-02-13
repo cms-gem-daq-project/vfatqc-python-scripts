@@ -120,7 +120,7 @@ def configure(args, vfatBoard):
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
                 print 'Comparing Curently Stored VFAT Registers with %s'%args.vfatConfig
                 dict_readBack = { "vfatID":"HW_CHIP_ID", "vt1":"CFG_THR_ARM_DAC" }
-                readBackCheck(vfatTree, dict_readBack, vfatBoard, args.vfatmask, args.vt1bump)
+                readBackCheckV3(vfatTree, dict_readBack, vfatBoard, args.vfatmask, args.vt1bump)
     
         except Exception as e:
             print '%s does not seem to exist'%args.filename
