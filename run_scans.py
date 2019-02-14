@@ -66,7 +66,7 @@ def dacScanV3(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
     # Make output directory
-    dirPath = makeScanDir(0, "dacScanV3", startTime)
+    dirPath = makeScanDir(-1, "dacScanV3", startTime)
     dirPath += "/{}".format(startTime)
 
     # Build Command
