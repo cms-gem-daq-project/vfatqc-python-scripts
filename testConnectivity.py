@@ -3,7 +3,7 @@
 from gempython.tools.amc_user_functions_uhal import *
 from gempython.tools.optohybrid_user_functions_xhal import OHRPCException
 from gempython.tools.vfat_user_functions_xhal import *
-from gempython.utils.gemlogger import getGEMLogger, printGreen, printRed, printYellow
+from gempython.utils.gemlogger import colors, getGEMLogger, printGreen, printRed, printYellow
     
 import os
 
@@ -105,8 +105,18 @@ def testConnectivity(args):
         return
 
     # Program GBTs
-    # placeholder FIXME
-    
+    from xhal.reg_interface_gem.core.gbt_utils_extended import configGBT, scanGBTPhases, setPhase
+    from gempython.utils.wrappers import envCheck
+    envCheck("GBT_SETTINGS")
+    gbtConfigPath = "{0}/OHv3c/20180717".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
+    gbtConfigs = [
+            "{0}/GBTX_OHv3c_GBT_0__2018-07-17_FINAL.txt".format(gbtConfigPath),
+            "{0}/GBTX_OHv3c_GBT_1__2018-07-17_FINAL.txt".format(gbtConfigPath),
+            "{0}/GBTX_OHv3c_GBT_2__2018-07-17_FINAL.txt".format(gbtConfigPath)
+            ]
+    print("Programming GBTs")
+    configGBT(cardName=args.cardName, listOfconfigFiles=gbtConfigs, ohMask=args.ohMask, nOHs=nOHs)
+
     print("Checking GBT Communication (After Programming GBTs)")
     if (not vfatBoard.parentOH.parentAMC.getGBTLinkStatus(doReset=True, printSummary=True, ohMask=args.ohMask)):
         printRed("GBT Communication was not established successfully")
@@ -235,7 +245,8 @@ def testConnectivity(args):
         pass
 
     # Perform N GBT Phase Scans
-    # Placeholder FIXME
+    print("Scanning GBT Phases")
+    dict_phaseScanResults = scanGBTPhases(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs, silent=False)
 
     # Write Good GBT Phase Values
     # Placeholder FIXME
@@ -502,7 +513,6 @@ def testConnectivity(args):
         print("| OH | N_DEAD |")
         print("| -- | ------ |")
         tooManyDeadChan = False
-        from gempython.utils.gemlogger import colors
         for ohN,nDeadChan in enumerate(nDeadChanByOH):
             print("| {0} | {1}{2}{3} |".format(ohN,colors.RED if nDeadChan > 3 else colors.GREEN,nDeadChan,colors.ENDC))
             if nDeadChan > 3:
