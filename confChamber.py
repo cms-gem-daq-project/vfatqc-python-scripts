@@ -16,9 +16,9 @@ if __name__ == '__main__':
 
     import argparse
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
-    parser = ArgumentParser(description="Tool for configuring front-end electronics")
+    parser = argparse.ArgumentParser(description="Tool for configuring front-end electronics")
     
-    parser.add_option("-c", "--cardName", type=str, dest="cardName", default=None,
+    parser.add_argument("-c", "--cardName", type=str, dest="cardName", default=None,
                       help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
     parser.add_argument("--chConfig", type=str, dest="chConfig", default=None,
                       help="Specify file containing channel settings from anaUltraSCurve.py")
