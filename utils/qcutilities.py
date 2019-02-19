@@ -74,3 +74,6 @@ def inputOptionsValid(options, amc_major_fw_ver):
             print("Invalid VT2 specified: %d, must be in range [0,255]"%(options.vt2))
             return False
         pass
+
+    # Input options are valid
+    return True
