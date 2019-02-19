@@ -98,7 +98,7 @@ if __name__ == '__main__':
                     pass
                 pass
             else:
-                scanAllLinks(args, calTree, vfatBoard)
+                dacScanAllLinks(args, calTree, vfatBoard)
     else: # Specific DAC Requested; scan only this DAC
         if args.series:
             for ohN in range(0, amcBoard.nOHs+1):
@@ -112,7 +112,7 @@ if __name__ == '__main__':
                 pass
             pass
         else:
-            scanAllLinks(args, calTree, vfatBoard)
+            dacScanAllLinks(args, calTree, vfatBoard)
 
     outF.cd()
     calTree.autoSave("SaveSelf")
