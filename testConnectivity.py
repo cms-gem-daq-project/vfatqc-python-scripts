@@ -67,6 +67,8 @@ def testConnectivity(args):
         args.compare = False
     if hasattr(args, 'filename') is False: # TFile containing channel configuration
         args.filename = None
+    if hasattr(args, 'nPhaseScans') is False: # Number of GBT Phase Scans to Perform
+        args.nPhaseScans = 100
     if hasattr(args, 'run') is False: # Set chips in run mode on configure?
         args.run = True
     if hasattr(args, 'vt1') is False: # CFG_THR_ARM_DAC (VThreshold1) setting to write for V3 (V2) electronics
@@ -105,7 +107,7 @@ def testConnectivity(args):
         return
 
     # Program GBTs
-    from xhal.reg_interface_gem.core.gbt_utils_extended import configGBT, scanGBTPhases, setPhase
+    from xhal.reg_interface_gem.core.gbt_utils_extended import configGBT, gbtPhaseScan, setPhase
     from gempython.utils.wrappers import envCheck
     envCheck("GBT_SETTINGS")
     gbtConfigPath = "{0}/OHv3c/20180717".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
@@ -242,21 +244,60 @@ def testConnectivity(args):
 
     print("Checking GBT Communication (After Programming FPGA)")
     if not vfatBoard.parentOH.parentAMC.getGBTLinkStatus(doReset=True, printSummary=True, ohMask=args.ohMask):
-        printRed("GBT Communication was not established successfully")
+        printRed("GBT Communication is no longer good after programming FPGA")
         printYellow("\tTry checking:")
         printYellow("\t\t1. Current limit on Power Supply is 4 Amps")
         printRed("Connectivity Testing Failed")
         return
     else: 
-        printGreen("GBT Communication Established")
+        printGreen("GBT Communication Is Stil Good")
         pass
 
     # Perform N GBT Phase Scans
-    print("Scanning GBT Phases")
-    dict_phaseScanResults = scanGBTPhases(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs, silent=False)
-
+    print("Scanning GBT Phases, this may take a moment please be patient")
+    dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False)
+    
     # Write Good GBT Phase Values
-    # Placeholder FIXME
+    from gempython.utils.nesteddict import nesteddict as ndict
+    dict_phases2Save = ndict()
+    for ohN in range(nOHs):
+        # Skip masked OH's
+        if( not ((args.ohMask >> ohN) & 0x1)):
+            continue
+
+        for vfat in range(0,24):
+            currPhaseRes   = 0 # Holds Phase Results for phase idx
+            pastPhaseRes   = 0 # Holds Phase Results for phase idx-1
+            ancientPhaseRes= 0 # Holds Phase Results for phase idx-2
+            for phase in range(0,16):
+                currPhaseRes = dict_phaseScanResults[ohN][vfat*16+phase]
+
+                if (ancientPhaseRes == args.nPhaseScans and pastPhaseRes == args.nPhaseScans and currPhaseRes == args.nPhaseScans): # Found a sweet spot
+                    phase2Write = phase-1
+                    print("Found good phase, writing phase {0} to (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
+                    try:
+                        setPhase(args.cardName, ohN, vfat, phase2Write) # in middle of good region
+                    except Exception as e:
+                        printRed("Failed to write phase {0} to (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
+                        printRed("Conncetivity Testing Failed")
+                        return
+                    dict_phases2Save[ohN][vfat] = phase
+
+                    break
+                elif (pastPhaseRes == args.nPhaseScans and currPhaseRes == args.nPhaseScans): # Last phase and this phase are good
+                    ancientPhaseRes = pastPhaseRes
+                    pastPhaseRes = currPhaseRes
+                elif (currPhaseRes == args.nPhaseScans): # Only this phase is good
+                    pastPhaseRes = currPhaseRes
+                else: # Reset
+                    currPhaseRes = 0
+                    pastPhaseRes = 0
+                    ancientPhaseRes = 0
+                    pass
+                pass # End loop over phases
+            pass # End loop over VFATs
+        pass # End loop over OHs
+    vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET", 0x1)
 
     print("Checking VFAT Synchronization")
     if not vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=True, printSummary=True,  ohMask=args.ohMask):
@@ -273,7 +314,6 @@ def testConnectivity(args):
 
     print("Checking VFAT Communication")
     from gempython.gemplotting.utils.dbutils import getVFAT3CalInfo
-    from gempython.utils.nesteddict import nesteddict as ndict
     dict_chipIDs = ndict()
     dict_vfat3CalInfo = ndict() # key -> OH number; value -> pandas dataframe
     for ohN in range(nOHs):
@@ -555,6 +595,7 @@ if __name__ == '__main__':
     parser.add_argument("-d","--debug",action="store_true",dest="debug",help = "Print additional debugging information")
     parser.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
     parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 1-4 will be attempted before failing (and exiting)",default=5)
+    parser.add_argument("--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=100)
     parser.add_argument("-o","--ohMask",type=parseInt,help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered",default=0x1)
     parser.add_argument("--shelf",type=int,help="uTCA shelf number",default=2)
     parser.add_argument("--skipDACScan",action="store_true",help="Do not perform any DAC Scans")
