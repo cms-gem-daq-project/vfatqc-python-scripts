@@ -144,23 +144,30 @@ def testConnectivity(args):
     from reg_utils.reg_interface.common.jtag import initJtagRegAddrs
     initJtagRegAddrs()
     for trial in range(0,args.maxIter):
-        #scaReset(args)
         sca_reset(args.ohMask)
         scaInfo = printSystemSCAInfo(amc)
-
-        if scaInfo["READY"] != args.ohMask:
-            continue
-        if scaInfo["CRITICAL_ERROR"] != 0x0:
-            continue
         
         notRdyCntOkay = True
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
+            
+            # Check READY Bit
+            if( not ((scaInfo["READY"]  >> ohN) & 0x1)):
+                notRdyCntOkay = False
+                break
+
+            # Check critical error bit
+            if( (scaInfo["CRITICAL_ERROR"] >> ohN) & 0x1):
+                notRdyCntOkay = False
+                break
+
+            # Check not ready counter
             if scaInfo["NOT_READY_CNT"][ohN] != 0x2:
                 notRdyCntOkay = False
                 break
+
             pass
         if not notRdyCntOkay:
             continue
