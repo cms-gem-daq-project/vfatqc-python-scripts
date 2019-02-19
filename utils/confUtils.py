@@ -25,6 +25,7 @@ def configure(args, vfatBoard):
 
     ohN = vfatBoard.parentOH.link
 
+    from gempython.gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
     if ohN in chamber_vfatDACSettings.keys():
         print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
         for key in chamber_vfatDACSettings[ohN]:
