@@ -61,8 +61,16 @@ def dacScanAllLinks(args, calTree, vfatBoard):
         print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
         print("| :--: | :---: | :----: | :-------: |:-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
     for dacWord in scanData:
-        vfat = (dacWord >>18) & 0x1f
-        ohN = ((dacWord >> 23) & 0xf)
+        # Get OH and skip if not in args.ohMask
+        ohN  = ((dacWord >> 23) & 0xf)
+        if( not ((args.ohMask >> ohN) & 0x1)):
+            continue
+        
+        # Get VFAT and skip if in ohVFATMaskArray[ohN]
+        vfat = ((dacWord >> 18) & 0x1f)
+        if ((ohVFATMaskArray[ohN] >> vfat) & 0x1):
+            continue
+        
         calTree.fill(
                 calSelPol = calSelPolVals[ohN][vfat],
                 dacValX = (dacWord & 0xff),
