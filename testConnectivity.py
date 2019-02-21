@@ -103,7 +103,6 @@ def testConnectivity(args):
     envCheck("GBT_SETTINGS")
     
     dataPath = os.getenv('DATA_PATH')
-    elogPath = os.getenv('ELOG_PATH')
     gbtConfigPath = "{0}/OHv3c/20180717".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
 
     # Initialize Hardware
@@ -115,7 +114,7 @@ def testConnectivity(args):
     # Step 1
     # Check GBT Communication
     # =================================================================
-    from xhal.reg_interface_gem.core.gbt_utils_extended import configGBT, gbtPhaseScan, setPhase
+    from xhal.reg_interface_gem.core.gbt_utils_extended import configGBT, gbtPhaseScan, setPhaseAllOHs
     if args.firstStep <= 1:
         printYellow("="*20)
         printYellow("Step 1: Checking GBT Communication")
@@ -272,59 +271,81 @@ def testConnectivity(args):
         print("Scanning GBT Phases, this may take a moment please be patient")
         dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=(not args.debug))
 
-        # Write Good GBT Phase Values
-        dict_phases2Save = ndict()
+        # Find Good GBT Phase Values
+        dict_phases2Save = {}
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
+            dict_phases2Save[ohN] = [ 0xdeaddead for x in range(0,24) ]
             for vfat in range(0,24):
-                currPhaseRes   = 0 # Holds Phase Results for phase idx
-                pastPhaseRes   = 0 # Holds Phase Results for phase idx-1
-                ancientPhaseRes= 0 # Holds Phase Results for phase idx-2
+                phaseRes_idxm0 = 0 # Holds Phase Results for phase idx
+                phaseRes_idxm1 = 0 # Holds Phase Results for phase idx-1
+                phaseRes_idxm2 = 0 # Holds Phase Results for phase idx-2
+                phaseRes_idxm3 = 0 # Holds Phase Results for phase idx-3
+                phaseRes_idxm4 = 0 # Holds Phase Results for phase idx-4
                 for phase in range(0,16):
-                    currPhaseRes = dict_phaseScanResults[ohN][vfat*16+phase]
+                    phaseRes_idxm0 = dict_phaseScanResults[ohN][vfat*16+phase]
 
-                    if (ancientPhaseRes == args.nPhaseScans and pastPhaseRes == args.nPhaseScans and currPhaseRes == args.nPhaseScans): # Found a sweet spot
-                        phase2Write = phase-1
-                        print("Found good phase, writing phase {0} to (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
-                        try:
-                            setPhase(args.cardName, ohN, vfat, phase2Write) # in middle of good region
-                        except Exception as e:
-                            printRed("Failed to write phase {0} to (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
-                            printRed("Conncetivity Testing Failed")
-                            return
-                        dict_phases2Save[ohN][vfat] = phase
-
+                    if (    phaseRes_idxm4 == args.nPhaseScans and
+                            phaseRes_idxm3 == args.nPhaseScans and
+                            phaseRes_idxm2 == args.nPhaseScans and 
+                            phaseRes_idxm1 == args.nPhaseScans and 
+                            phaseRes_idxm0 == args.nPhaseScans): # Found a sweet spot
+                        phase2Write = phase-2
+                        printGreen("Phase {0} will be used for (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
+                        dict_phases2Save[ohN][vfat] = phase2Write
                         break
-                    elif (pastPhaseRes == args.nPhaseScans and currPhaseRes == args.nPhaseScans): # Last phase and this phase are good
-                        ancientPhaseRes = pastPhaseRes
-                        pastPhaseRes = currPhaseRes
-                    elif (currPhaseRes == args.nPhaseScans): # Only this phase is good
-                        pastPhaseRes = currPhaseRes
+                    elif (  phaseRes_idxm3 == args.nPhaseScans and
+                            phaseRes_idxm2 == args.nPhaseScans and
+                            phaseRes_idxm1 == args.nPhaseScans and
+                            phaseRes_idxm0 == args.nPhaseScans): 
+                        phaseRes_idxm4 = phaseRes_idxm3
+                        phaseRes_idxm3 = phaseRes_idxm2
+                        phaseRes_idxm2 = phaseRes_idxm1
+                        phaseRes_idxm1 = phaseRes_idxm0
+                    elif (  phaseRes_idxm2 == args.nPhaseScans and
+                            phaseRes_idxm1 == args.nPhaseScans and
+                            phaseRes_idxm0 == args.nPhaseScans): 
+                        phaseRes_idxm3 = phaseRes_idxm2
+                        phaseRes_idxm2 = phaseRes_idxm1
+                        phaseRes_idxm1 = phaseRes_idxm0
+                    elif (phaseRes_idxm1 == args.nPhaseScans and phaseRes_idxm0 == args.nPhaseScans): # Last phase and this phase are good
+                        phaseRes_idxm2 = phaseRes_idxm1
+                        phaseRes_idxm1 = phaseRes_idxm0
+                    elif (phaseRes_idxm0 == args.nPhaseScans): # Only this phase is good
+                        phaseRes_idxm1 = phaseRes_idxm0
                     else: # Reset
-                        currPhaseRes = 0
-                        pastPhaseRes = 0
-                        ancientPhaseRes = 0
+                        phaseRes_idxm0 = 0
+                        phaseRes_idxm1 = 0
+                        phaseRes_idxm2 = 0
+                        phaseRes_idxm3 = 0
+                        phaseRes_idxm4 = 0
                         pass
                     pass # End loop over phases
+                if dict_phases2Save[ohN][vfat] == 0xdeaddead:
+                    printRed("I did not find a good phase for (OH{0},VFAT{1})".format(ohN,vfat))
+                    pass
                 pass # End loop over VFATs
             pass # End loop over OHs
-        #vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET", 0x1)
+
+        # Write Found GBT Phase Values
+        printGreen("Writing Found Phases to frontend")
+        setPhaseAllOHs(args.cardName, dict_phases2Save, args.ohMask, nOHs, args.debug)
         pass
 
     # Step 5
     # Check VFAT Synchronization
     # =================================================================
-    # FIXME Appears some problem exists here
-    # VFAT6 is Out Of Sync and it isn't being caught...
+    from gempython.gemplotting.utils.dbutils import getVFAT3CalInfo
     if args.firstStep <= 5:
         printYellow("="*20)
         printYellow("Step 5: Checking VFAT Synchronization")
         printYellow("="*20)
 
-        if not vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=True, printSummary=True,  ohMask=args.ohMask):
+        alllVFATsSyncd = vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=True, printSummary=True, ohMask=args.ohMask)
+        if (not alllVFATsSyncd and not args.ignoreSyncErrs):
             printRed("VFATs are not properly synchronized")
             printYellow("\tTry checking:")
             printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
@@ -332,6 +353,9 @@ def testConnectivity(args):
             printYellow("\t\t3. The Phase Settings written to each VFAT where in the middle of a 'good' window")
             printRed("Conncetivity Testing Failed")
             return
+        if (not alllVFATsSyncd and args.ignoreSyncErrs):
+            printRed("VFATs are not properly synchronized")
+            printYellow("But I have been told to ignore sync errors")
         else:
             printGreen("VFATs are properly synchronized")
             pass
@@ -339,7 +363,6 @@ def testConnectivity(args):
         dict_vfatMask = vfatBoard.parentOH.parentAMC.getMultiLinkVFATMask(args.ohMask)
 
         print("Checking VFAT Communication")
-        from gempython.gemplotting.utils.dbutils import getVFAT3CalInfo
         dict_chipIDs = ndict()
         for ohN in range(nOHs):
             # Skip masked OH's
@@ -350,6 +373,7 @@ def testConnectivity(args):
             try:
                 dict_chipIDs[ohN] = vfatBoard.getAllChipIDs(dict_vfatMask[ohN])
             except Exception as e:
+                printRed("An exception has occured: {0}".format(e))
                 printRed("VFAT communication was not established successfully for OH{0}".format(ohN))
                 printYellow("\tTry checking:")
                 printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
@@ -377,6 +401,7 @@ def testConnectivity(args):
                 )
  
         # Place All Chips Into Run Mode and write correct Iref
+        from math import isnan
         dict_vfat3CalInfo = ndict() # key -> OH number; value -> pandas dataframe
         for ohN in range(nOHs):
             # Skip masked OH's
@@ -391,39 +416,51 @@ def testConnectivity(args):
                 print("dict_vfat3CalInfo[{0}]:\n{1}".format(ohN,dict_vfat3CalInfo[ohN]))
             
             # Write IREF
-            for idx in dict_vfat3CalInfo[ohN]:
-                if( not ((dict_vfatMask[ohN] >> idx) & 0x1)):
+            print("Setting CFG_IREF for all VFATs on OH{0}".format(ohN))
+            for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
+                if((dict_vfatMask[ohN] >> vfat3CalInfo['vfatN']) & 0x1):
                     continue
 
-                try:
-                    vfatBoard.writeVFAT(
-                            dict_vfat3CalInfo['vfatN'][idx],
-                            "CFG_IREF",
-                            dict_vfat3CalInfo['iref'][idx])
-                except Exception as e:
-                    printRed("VFAT communication was not established successfully for OH{0} VFAT{1}".format(ohN,dict_vfat3CalInfo['vfatN'][idx]))
-                    printRed("Conncetivity Testing Failed")
-                    return
+                if( not isnan(vfat3CalInfo['iref']) ):
+                    try:
+                        vfatBoard.writeVFAT(
+                                vfat3CalInfo['vfatN'],
+                                "CFG_IREF",
+                                int(vfat3CalInfo['iref'])) # because apparently the DB stores this as a float >_<
+                    except Exception as e:
+                        printRed("An exception has occured: {0}".format(e))
+                        printRed("VFAT communication was not established successfully for OH{0} VFAT{1}".format(ohN,vfat3CalInfo['vfatN']))
+                        printRed("Conncetivity Testing Failed")
+                        return
+                    pass
+                else:
+                    printYellow("CFG_IREF for OH{0} VFAT{1} is {2}".format(ohN,vfat3CalInfo['vfatN'],vfat3CalInfo['iref']))
                 pass
 
-            # Set to Run Mode
-            # If time is an issue these two statements could be merged into one
-            try:
-                vfatBoard.setRunModeAll(dict_vfatMask[ohN])
-            except Exception as e:
-                printRed("VFAT communication was not established successfully for OH{0}".format(ohN))
-                printRed("Conncetivity Testing Failed")
-                return
+            # rpc module sets them into run mode
+            #try:
+            #    print("Setting all VFATs on OH{0} to run mode".format(ohN))
+            #    vfatBoard.setRunModeAll(dict_vfatMask[ohN])
+            #except Exception as e:
+            #    printRed("An exception has occured: {0}".format(e))
+            #    printRed("VFAT communication was not established successfully for OH{0}".format(ohN))
+            #    printRed("Conncetivity Testing Failed")
+            #    return
             pass
 
         # DAC Scan
         from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
         from gempython.vfatqc.utils.scanUtils import dacScanAllLinks 
         for dacSelect in maxVfat3DACSize.keys():
+            # Skip unnecessary DAC's
+            if(dacSelect == 1 or dacSelect == 14 or dacSelect == 15 or dacSelect > 34):
+                continue
+
             args.dacSelect = dacSelect
             try:
                 dacScanAllLinks(args, calTree, vfatBoard)
             except Exception as e:
+                printRed("An exception has occured: {0}".format(e))
                 printRed("DAC Scan for DAC {0} Failed".format(maxVfat3DACSize[dacSelect]))
                 printRed("Conncetivity Testing Failed")
                 return
@@ -433,7 +470,7 @@ def testConnectivity(args):
     # Analyze DACs
     # =================================================================
     #temporary fix
-    #chamber_config needs to be defined FIXME
+    #chamber_config needs to be redefined FIXME
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
 
     if not args.skipDACScan:
@@ -456,15 +493,15 @@ def testConnectivity(args):
                 continue
             
             # If the cal file exists do nothing; otherwise write it from the DB query
-            calFileADCName = "{0}/{1}/calFile_{2}_{1}.txt".format(dataPath,chamber_config[oh],adcName)
+            calFileADCName = "{0}/{1}/calFile_{2}_{1}.txt".format(dataPath,chamber_config[ohN],adcName)
             if not os.path.isfile(calFileADCName):
                 calFileADC = open(calFileADCName,"w")
                 calFileADC.write("vfatN/I:slope/F:intercept/F\n")
-                for row in dict_vfat3CalInfo[ohN]:
+                for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
                     calFileADC.write("{0}\t{1}\t{2}\n".format(
-                        row['vfatN'],
-                        row['{0}m'.format(adcName.lower())],
-                        row['{0}b'.format(adcName.lower())])
+                        vfat3CalInfo['vfatN'],
+                        vfat3CalInfo['{0}m'.format(adcName.lower())],
+                        vfat3CalInfo['{0}b'.format(adcName.lower())])
                         )
                     pass
                 calFileADC.close()
@@ -472,9 +509,10 @@ def testConnectivity(args):
         # Analyze DAC Scan
         from gempython.gemplotting.utils.anautilities import dacAnalysis
         try:
-            #dict_dacVals = dacAnalysis(args, calTree, chamber_config, scandate=startTime)
-            dacAnalysis(args, calTree, chamber_config, scandate=startTime)
+            #dict_dacVals = dacAnalysis(args, calTree.gemTree, chamber_config, scandate=startTime)
+            dacAnalysis(args, calTree.gemTree, chamber_config, scandate=startTime)
         except Exception as e:
+            printRed("An exception has occured: {0}".format(e))
             printRed("DAC Scan Analysis Failed")
             printRed("Conncetivity Testing Failed")
             return
@@ -487,16 +525,8 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
-            # Copy Files
-            gemuserHome = "/mnt/persistent/gemuser/"
-            copyFilesCmd = [
-                    'scp',
-                    '{0}/{1}/NominalValues-CFG_*.txt'.format(elogPath,chamber_config[ohN]),
-                    'gemuser@{0}:{1}'.format(args.cardName,gemuserHome)
-                    ]
-            runCommand(copyFilesCmd)
-
             # Write to VFAT3 Config Files
+            gemuserHome = "/mnt/persistent/gemuser/"
             for dacName in nominalDacValues.keys():
                 if dacName == "CFG_CAL_DAC":
                     continue
@@ -507,16 +537,24 @@ def testConnectivity(args):
                 elif dacName == "CFG_VREF_ADC":
                     continue
                 else:
-                    replaceStr = "sh -lic '(/mnt/persistent/gemdaq/scripts/replace_parameter.sh -f {0}/NominalValues-{1}.txt {2} {3})'".format(
+                    # Copy Files
+                    copyFilesCmd = [
+                            'scp',
+                            '{0}/{1}/dacScans/current/NominalValues-{2}.txt'.format(dataPath,chamber_config[ohN],dacName),
+                            'gemuser@{0}:{1}'.format(args.cardName,gemuserHome)
+                            ]
+                    runCommand(copyFilesCmd)
+
+                    # Update stored vfat config
+                    replaceStr = "/mnt/persistent/gemdaq/scripts/replace_parameter.sh -f {0}/NominalValues-{1}.txt {2} {3}".format(
                             gemuserHome,
                             dacName,
-                            dacName.strip("CFG_"),
+                            dacName.replace("CFG_",""),
                             ohN)
-
                     transferCmd = [
                             'ssh',
                             'gemuser@{0}'.format(args.cardName),
-                            '"{0}"'.format(replaceStr)
+                            'sh -c "{0}"'.format(replaceStr)
                             ]
                     runCommand(transferCmd)
                     pass
@@ -540,8 +578,8 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
-            #chamber_config needs to be defined FIXME
-            #chamber_vfatDACSettings needs to be defined? FIXME
+            #chamber_config needs to be redefined FIXME
+            #chamber_vfatDACSettings needs to be redefined? FIXME
             
             vfatBoard.parentOH.link = ohN
             args.vfatmask = dict_vfatMask[ohN]
@@ -558,6 +596,7 @@ def testConnectivity(args):
                 vfatBoard.parentOH.broadcastWrite("CFG_SEL_COMP_MODE",0x0,vfatmask)
                 vfatBoard.parentOH.broadcastWrite("CFG_FORCE_EN_ZCC",0x0,vfatmask)
             except Exception as e:
+                printRed("An exception has occured: {0}".format(e))
                 printRed("Failed to configure OH{0}".format(ohN))
                 printRed("Conncetivity Testing Failed")
                 return
@@ -571,7 +610,7 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
         
-            #chamber_config needs to be defined FIXME
+            #chamber_config needs to be redefined FIXME
             # Placeholder until we have an idea about chamber_config
             scurveFiles[ohN] = "{0}/{1}/scurve/current/SCurveData.root".format(dataPath,chamber_config[ohN])
 
@@ -589,6 +628,7 @@ def testConnectivity(args):
                         vfatmask = dict_vfatMask[ohN],
                         voltageStepPulse = args.voltageStepPulse)
             except Exception as e:
+                printRed("An exception has occured: {0}".format(e))
                 printRed("SCurve for OH{0} Failed".format(ohN))
                 printRed("Conncetivity Testing Failed")
                 return
@@ -694,10 +734,10 @@ if __name__ == '__main__':
     parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead")
     parser.add_argument("-d","--debug",action="store_true",dest="debug",help = "Print additional debugging information")
     parser.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
-    parser.add_argument("-f","--firstStep",type=int,help="Starting Step of connectivity testing, to skip all initial steps enter '6'",default=1)
+    parser.add_argument("-f","--firstStep",type=int,help="Starting Step of connectivity testing, to skip all initial steps enter '5'",default=1)
     parser.add_argument("-i","--ignoreSyncErrs",action="store_true",help="Ignore VFAT Sync Errors When Checking Communication")
     parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 2 & 3 will be attempted before failing (and exiting)",default=5)
-    parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=50)
+    parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=25)
     parser.add_argument("-o","--ohMask",type=parseInt,help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered",default=0x1)
     parser.add_argument("--shelf",type=int,help="uTCA shelf number",default=2)
     parser.add_argument("--skipDACScan",action="store_true",help="Do not perform any DAC Scans")
@@ -716,15 +756,21 @@ if __name__ == '__main__':
         exit(os.EX_USAGE)
         pass
 
-    if args.firstStep > 6:
+    if args.firstStep > 5:
         printRed("The starting step number {0} you entered is outside the range of possible values: [1,6]".format(args.firstStep))
         exit(os.EX_USAGE)
         pass
 
-    if ((args.firstStep > 5) and (args.skipDACScan and args.skipScurve)):
+    if ((args.firstStep > 4) and (args.skipDACScan and args.skipScurve)):
         printRed("Sorry but you're asking me to skip all initial steps and all follow-up steps")
         printRed("This doesn't make sense; please reconsider")
         exit(os.EX_USAGE)
+        pass
+
+    # Enforce a minimum number of phase scans
+    if args.nPhaseScans < 20:
+        printYellow("You've requested the number of phase scans to be {0} which is less than 20.\nThis is probably not reliable, reseting to 20".format(args.nPhaseScans))
+        args.nPhaseScans = 20
         pass
 
     gemlogger = getGEMLogger(__name__)
