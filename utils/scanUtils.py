@@ -2,6 +2,7 @@ from ctypes import *
 
 from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
 from gempython.tools.vfat_user_functions_xhal import *
+from gempython.utils.wrappers import runCommand
 
 def dacScanAllLinks(args, calTree, vfatBoard):
     """
@@ -309,7 +310,6 @@ def launchSCurve(**kwargs):
         cmd.append("--calSF=%i"%(calSF) )
 
     # launch the command
-    from gempython.utils.wrappers import runCommand
     if debug:
         print("launching an scurve with command:")
         command = ""
@@ -324,4 +324,30 @@ def launchSCurve(**kwargs):
         runCommand(cmd)
     
     return
+
+def makeScanDir(ohN, scanType, startTime):
+    """
+    Makes a directory to store the output scan data and returns the directory path
+
+    ohN - optohybrid number
+    scanType - scanType, see ana_config.keys() from gempython.gemplotting.utils.anaInfo
+    startTime - an instance of a datetime
+    """
+
+    from gempython.gemplotting.mapping.chamberInfo import chamber_config
+    from gempython.gemplotting.utils.anautilities import getDirByAnaType
+    if ohN in chamber_config.keys():
+        dirPath = getDirByAnaType(scanType, chamber_config[ohN])
+    else:
+        dirPath = getDirByAnaType(scanType, "")
+
+    setupCmds = [] 
+    setupCmds.append( ["mkdir","-p",dirPath+"/"+startTime] )
+    setupCmds.append( ["chmod","g+rw",dirPath+"/"+startTime] )
+    setupCmds.append( ["unlink",dirPath+"/current"] )
+    setupCmds.append( ["ln","-s",startTime,dirPath+"/current"] )
+    for cmd in setupCmds:
+        runCommand(cmd)
+
+    return dirPath
 
