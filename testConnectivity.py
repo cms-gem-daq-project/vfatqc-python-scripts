@@ -213,6 +213,7 @@ def testConnectivity(args):
         for trial in range(0,args.maxIter):
             vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TTC.GENERATOR.SINGLE_HARD_RESET",0x1)
             isDead = True
+            listOfDeadFPGAs = []
             for ohN in range(nOHs):
                 # Skip masked OH's
                 if( not ((args.ohMask >> ohN) & 0x1)):
@@ -222,6 +223,7 @@ def testConnectivity(args):
                     isDead = False
                 else:
                     isDead = True
+                    listOfDeadFPGAs.append(ohN)
                     pass
                 pass
 
@@ -234,6 +236,7 @@ def testConnectivity(args):
         
         if not fpgaCommPassed:
             printRed("FPGA Communication was not established successfully")
+            printRed("Following OH's have unprogrammed FPGAs: {0}".format(listOfDeadFPGAs))
             printYellow("\tTry checking:")
             printYellow("\t\t1. Was the OH FW loaded into the Zynq RAM on the CTP7?")
             printYellow("\t\t2. OH1 and OH2 screws are properly screwed into their respective standoffs")
@@ -272,7 +275,9 @@ def testConnectivity(args):
         dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=(not args.debug))
 
         # Find Good GBT Phase Values
+        failed2FindGoodPhase = False
         dict_phases2Save = {}
+        listOfBadVFATs = [ ]
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
@@ -325,7 +330,9 @@ def testConnectivity(args):
                         pass
                     pass # End loop over phases
                 if dict_phases2Save[ohN][vfat] == 0xdeaddead:
+                    listOfBadVFATs.append((ohN,vfat))
                     printRed("I did not find a good phase for (OH{0},VFAT{1})".format(ohN,vfat))
+                    failed2FindGoodPhase = True
                     pass
                 pass # End loop over VFATs
             pass # End loop over OHs
@@ -333,6 +340,19 @@ def testConnectivity(args):
         # Write Found GBT Phase Values
         printGreen("Writing Found Phases to frontend")
         setPhaseAllOHs(args.cardName, dict_phases2Save, args.ohMask, nOHs, args.debug)
+
+        if (failed2FindGoodPhase):
+            printRed("GBT Phase Scans Failed to Find Proper Phases")
+            printRed("List of Bad (OH,VFAT) pairs: {0}".format(listOfBadVFATs))
+            printYellow("\tTry checking:")
+            printYellow("\t\t1. OH is firmly inserted into the Samtec Conncetor (press with fingers along connector vias)")
+            printYellow("\t\t2. VFATs mentioned above are inserted into the 100-pin connector on the GEB")
+            printYellow("\t\t3. VDD on VFATs mentioned above is at least 1.20V")
+            printRed("Connectivity Testing Failed")
+            return
+        else:
+            printGreen("GBT Phases Successfully Writtent to Frontend")
+            pass
         pass
 
     # Step 5
@@ -383,6 +403,7 @@ def testConnectivity(args):
                 return
             pass
         pass
+        printGreen("VFAT Communication Successfully Established")
 
     # Scan DACs
     # =================================================================
