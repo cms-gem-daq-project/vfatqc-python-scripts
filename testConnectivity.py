@@ -62,18 +62,12 @@ def testConnectivity(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
     # Check if all required fields are in args; if they are not assign a default value
-    if hasattr(args, 'cardName') is False:
-        args.cardName = "gem-shelf%02d-amc%02d"%(args.shelf,args.slot)
-    if hasattr(args, 'stepSize') is False:
-        args.stepSize = 1
     if hasattr(args, 'assignXErrors') is False: # For DAC Scan Analysis
         args.assignXErrors = False
     if hasattr(args, 'calFileList') is False: # For DAC Scan Analysis
-        args.calFileList = None
-    if hasattr(args, 'outfilename') is False: # Name of DAC Scan Analysis File(s)
-        args.outfilename = "DACFitData.root" # dacAnalysis(...) will take care of formating in the subfolder
-    if hasattr(args, 'printSum') is False: # For DAC Scan Analysis, do not print summary table
-        args.printSum = False
+       args.calFileList = None
+    if hasattr(args, 'cardName') is False:
+        args.cardName = "gem-shelf%02d-amc%02d"%(args.shelf,args.slot)
     if hasattr(args, 'chConfig') is False: # Text file containing channel configuration
         args.chConfig = None
     if hasattr(args, 'compare') is False: # Just Compare frontend settings?
@@ -82,8 +76,14 @@ def testConnectivity(args):
         args.filename = None
     if hasattr(args, 'nPhaseScans') is False: # Number of GBT Phase Scans to Perform
         args.nPhaseScans = 100
+    if hasattr(args, 'outfilename') is False: # Name of DAC Scan Analysis File(s)
+        args.outfilename = "DACFitData.root" # dacAnalysis(...) will take care of formating in the subfolder
+    if hasattr(args, 'printSum') is False: # For DAC Scan Analysis, do not print summary table
+        args.printSum = False
     if hasattr(args, 'run') is False: # Set chips in run mode on configure?
         args.run = True
+    if hasattr(args, 'stepSize') is False:
+        args.stepSize = 1
     if hasattr(args, 'vt1') is False: # CFG_THR_ARM_DAC (VThreshold1) setting to write for V3 (V2) electronics
         args.vt1 = 100
     if hasattr(args, 'vt1bump') is False: # Value to add to comparator setting
@@ -92,6 +92,8 @@ def testConnectivity(args):
         args.vt2 = 0
     if hasattr(args, 'vfatConfig') is False: # Text file containing comparator settings
         args.vfatConfig = False
+    if hasattr(args, 'voltageStepPulse') is False: # Default to voltageStepPulse in Scurves
+        args.voltageStepPulse = True
     if hasattr(args, 'zeroChan') is False: # Zero all bits in all channel registers
         args.zeroChan = False
 
@@ -526,6 +528,7 @@ def testConnectivity(args):
                         )
                     pass
                 calFileADC.close()
+                pass
 
         # Analyze DAC Scan
         from gempython.gemplotting.utils.anautilities import dacAnalysis
@@ -581,8 +584,7 @@ def testConnectivity(args):
                     pass
                 pass
             pass
-        # Load DAC Values to DB
-        # Place holder??
+        pass
     pass
 
     # Take Scurve
@@ -609,13 +611,13 @@ def testConnectivity(args):
 
                 # Placeholder until we have an idea about chamber_vfatDACSettings
                 # Ensure Gain is Medium
-                vfatBoard.parentOH.broadcastWrite("CFG_RES_PRE",0x2,vfatmask)
-                vfatBoard.parentOH.broadcastWrite("CFG_CAP_PRE",0x1,vfatmask)
+                vfatBoard.parentOH.broadcastWrite("CFG_RES_PRE",0x2,dict_vfatMask[ohN])
+                vfatBoard.parentOH.broadcastWrite("CFG_CAP_PRE",0x1,dict_vfatMask[ohN])
                 # Ensure Comp Mode is CFD
-                vfatBoard.parentOH.broadcastWrite("CFG_PT",0xf,vfatmask)
-                vfatBoard.parentOH.broadcastWrite("CFG_FP_FE",0x7,vfatmask)
-                vfatBoard.parentOH.broadcastWrite("CFG_SEL_COMP_MODE",0x0,vfatmask)
-                vfatBoard.parentOH.broadcastWrite("CFG_FORCE_EN_ZCC",0x0,vfatmask)
+                vfatBoard.parentOH.broadcastWrite("CFG_PT",0xf,dict_vfatMask[ohN])
+                vfatBoard.parentOH.broadcastWrite("CFG_FP_FE",0x7,dict_vfatMask[ohN])
+                vfatBoard.parentOH.broadcastWrite("CFG_SEL_COMP_MODE",0x0,dict_vfatMask[ohN])
+                vfatBoard.parentOH.broadcastWrite("CFG_FORCE_EN_ZCC",0x0,dict_vfatMask[ohN])
             except Exception as e:
                 printRed("An exception has occured: {0}".format(e))
                 printRed("Failed to configure OH{0}".format(ohN))
@@ -625,7 +627,7 @@ def testConnectivity(args):
         printGreen("All Chambers Configured")
 
         scurveFiles = {}
-        from gempython.vfatqc.utils.scanUtils import launchSCurve
+        from gempython.vfatqc.utils.scanUtils import launchSCurve, makeScanDir
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
@@ -633,10 +635,11 @@ def testConnectivity(args):
         
             #chamber_config needs to be redefined FIXME
             # Placeholder until we have an idea about chamber_config
-            scurveFiles[ohN] = "{0}/{1}/scurve/current/SCurveData.root".format(dataPath,chamber_config[ohN])
-
-            #Log File
-            logFile = "/tmp/scurveLog_ConnectivityTesting_OH{0}.log".format(ohN)
+            dirPath = makeScanDir(ohN, "scurve", startTime)
+            dirPath += "/{}".format(startTime)
+            logFile = "%s/scanLog.log"%(dirPath)
+            #scurveFiles[ohN] = "{0}/{1}/scurve/{2}/SCurveData.root".format(dataPath,chamber_config[ohN],startTime)
+            scurveFiles[ohN] = "{}/SCurveData.root".format(dirPath)
 
             vfatBoard.parentOH.link = ohN
             try:
@@ -659,14 +662,38 @@ def testConnectivity(args):
 
     # Analyze Scurve
     # =================================================================
+    from gempython.gemplotting.utils.anautilities import parseCalFile
     if not args.skipScurve:
         printYellow("="*20)
         printYellow("Analyzing VFAT3 Scurve Scan Data")
         printYellow("="*20)
 
         # Load CFG_CAL_DAC calibration from DB
-        # calDacInfo = ndict()
-        # Placeholder FIXME
+        # Right now need to rely on someone making the file by hand and placing it in the correct location
+        # Once Reed-Muller ChipID issue is resolved use the DB query
+        calDacInfo = ndict()
+        for ohN in range(nOHs):
+            # Skip masked OH's
+            if( not ((args.ohMask >> ohN) & 0x1)):
+                continue
+        
+            # If the cal file exists parse it; otherwise write it from the DB query
+            calFileCALDacName = "{0}/{1}/calFile_calDac_{1}.txt".format(dataPath,chamber_config[ohN])
+            if os.path.isfile(calFileCALDacName):
+                calDacInfo[ohN] = parseCalFile(calFileCALDacName)
+            else:
+                calFileCALDac = open(calFileCALDacName,"w")
+                calFileADC.write("vfatN/I:slope/F:intercept/F\n")
+                for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
+                    calFileADC.write("{0}\t{1}\t{2}\n".format(
+                        vfat3CalInfo['vfatN'],
+                        vfat3CalInfo['cal_dacm'],
+                        vfat3CalInfo['cal_dacb'])
+                        )
+                    pass
+                calFileADC.close()
+                calDacInfo[ohN] = (vfat3CalInfo['cal_dacm'],vfat3CalInfo['cal_dacb'])
+                pass
         
         # Dead chan
         deadChan = tuple([float(x) for x in args.deadChanCuts.split(",")])
