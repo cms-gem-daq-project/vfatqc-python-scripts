@@ -40,7 +40,7 @@ def scurveAna(scurveDataFile, tuple_calInfo, tuple_deadChan, isVFAT3=True):
 
     # Analyze the scurve
     from gempython.gemplotting.fitting.fitScanData import fitScanData
-    scanFitResults = fitScanData(treeFileName=filename, isVFAT3=True, calTuple=tuple_calInfo)
+    scanFitResults = fitScanData(treeFileName=scurveDataFile, isVFAT3=True, calTuple=tuple_calInfo)
     
     deadChanCutLow = min(tuple_deadChan)
     deadChanCutHigh= max(tuple_deadChan)
@@ -49,7 +49,7 @@ def scurveAna(scurveDataFile, tuple_calInfo, tuple_deadChan, isVFAT3=True):
 
     for vfat in range(0,24):
         for chan in range(0, 128):
-            if (deadChanCutLow < scanFitResults[1][vfat][chan] and canFitResults[1][vfat][chan] < deadChanCutHigh):
+            if (deadChanCutLow < scanFitResults[1][vfat][chan] and scanFitResults[1][vfat][chan] < deadChanCutHigh):
                 nDeadChan+=1
                 pass
             pass
@@ -645,6 +645,8 @@ def testConnectivity(args):
             try:
                 launchSCurve(
                         cardName = args.cardName,
+                        chMax = 20, #FIXME DEBUGGING REMOVE
+                        chMin = 10, #FIXME DEBUGGING REMOVE
                         debug = args.debug,
                         filename = scurveFiles[ohN],
                         link = ohN,
@@ -779,7 +781,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Tool for connectivity testing")
 
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
-    parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead")
+    parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead",default="0.1,0.5")
     parser.add_argument("-d","--debug",action="store_true",dest="debug",help = "Print additional debugging information")
     parser.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
     parser.add_argument("-f","--firstStep",type=int,help="Starting Step of connectivity testing, to skip all initial steps enter '5'",default=1)
