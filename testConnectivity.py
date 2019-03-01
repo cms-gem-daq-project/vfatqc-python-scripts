@@ -292,6 +292,11 @@ def testConnectivity(args):
                 phaseRes_idxm2 = 0 # Holds Phase Results for phase idx-2
                 phaseRes_idxm3 = 0 # Holds Phase Results for phase idx-3
                 phaseRes_idxm4 = 0 # Holds Phase Results for phase idx-4
+                phase2Write = -1
+                # Initial phase2Write will be phase-1 if 3 consecutive phases are good nScan times
+                # This will be overwritten to phase-2 if a 4th consecutive phase is found to be good
+                # This will again be overwritten to phase-2 if a 5th consecutive phase is found to be good
+                # After 5 consecutive phases are good the procedure will exit
                 for phase in range(0,16):
                     phaseRes_idxm0 = dict_phaseScanResults[ohN][vfat*16+phase]
 
@@ -301,8 +306,6 @@ def testConnectivity(args):
                             phaseRes_idxm1 == args.nPhaseScans and 
                             phaseRes_idxm0 == args.nPhaseScans): # Found a sweet spot
                         phase2Write = phase-2
-                        printGreen("Phase {0} will be used for (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
-                        dict_phases2Save[ohN][vfat] = phase2Write
                         break
                     elif (  phaseRes_idxm3 == args.nPhaseScans and
                             phaseRes_idxm2 == args.nPhaseScans and
@@ -312,12 +315,14 @@ def testConnectivity(args):
                         phaseRes_idxm3 = phaseRes_idxm2
                         phaseRes_idxm2 = phaseRes_idxm1
                         phaseRes_idxm1 = phaseRes_idxm0
+                        phase2Write = phase-2
                     elif (  phaseRes_idxm2 == args.nPhaseScans and
                             phaseRes_idxm1 == args.nPhaseScans and
                             phaseRes_idxm0 == args.nPhaseScans): 
                         phaseRes_idxm3 = phaseRes_idxm2
                         phaseRes_idxm2 = phaseRes_idxm1
                         phaseRes_idxm1 = phaseRes_idxm0
+                        phase2Write = phase-1
                     elif (phaseRes_idxm1 == args.nPhaseScans and phaseRes_idxm0 == args.nPhaseScans): # Last phase and this phase are good
                         phaseRes_idxm2 = phaseRes_idxm1
                         phaseRes_idxm1 = phaseRes_idxm0
@@ -331,6 +336,9 @@ def testConnectivity(args):
                         phaseRes_idxm4 = 0
                         pass
                     pass # End loop over phases
+                if phase2Write > -1:
+                    printGreen("Phase {0} will be used for (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
+                    dict_phases2Save[ohN][vfat] = phase2Write
                 if dict_phases2Save[ohN][vfat] == 0xdeaddead:
                     listOfBadVFATs.append((ohN,vfat))
                     printRed("I did not find a good phase for (OH{0},VFAT{1})".format(ohN,vfat))
