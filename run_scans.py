@@ -3,6 +3,7 @@
 from gempython.gemplotting.mapping.chamberInfo import chamber_config, chamber_vfatMask
 from gempython.utils.wrappers import runCommand
 from gempython.tools.amc_user_functions_xhal import *
+from gempython.vfatqc.utils.scanUtils import makeScanDir
 
 import datetime
 import os
@@ -113,31 +114,6 @@ def executeCmd(cmd, dirPath):
     finally:
         runCommand( ["chmod","-R","g+rw",dirPath] )
     return
-
-def makeScanDir(ohN, scanType, startTime):
-    """
-    Makes a directory to store the output scan data and returns the directory path
-
-    ohN - optohybrid number
-    scanType - scanType, see ana_config.keys() from gempython.gemplotting.utils.anaInfo
-    startTime - an instance of a datetime
-    """
-
-    from gempython.gemplotting.utils.anautilities import getDirByAnaType
-    if ohN in chamber_config.keys():
-        dirPath = getDirByAnaType(scanType, chamber_config[ohN])
-    else:
-        dirPath = getDirByAnaType(scanType, "")
-
-    setupCmds = [] 
-    setupCmds.append( ["mkdir","-p",dirPath+"/"+startTime] )
-    setupCmds.append( ["chmod","g+rw",dirPath+"/"+startTime] )
-    setupCmds.append( ["unlink",dirPath+"/current"] )
-    setupCmds.append( ["ln","-s",startTime,dirPath+"/current"] )
-    for cmd in setupCmds:
-        runCommand(cmd)
-
-    return dirPath
 
 def monitorT(args):
     """
@@ -386,7 +362,6 @@ def ultraLatency(args):
     amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
-    from gempython.vfatqc.qcutilities import launchSCurve
     for ohN in range(0,amcBoard.nOHs+1):
         # Skip masked OH's        
         if( not ((args.ohMask >> ohN) & 0x1)):
@@ -455,7 +430,7 @@ def ultraScurve(args):
     amcBoard = HwAMC(args.cardName, args.debug)
     print('opened connection')
 
-    from gempython.vfatqc.qcutilities import launchSCurve
+    from gempython.vfatqc.utils.scanUtils import launchSCurve
     for ohN in range(0,amcBoard.nOHs+1):
         # Skip masked OH's        
         if( not ((args.ohMask >> ohN) & 0x1)):

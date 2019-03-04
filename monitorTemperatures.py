@@ -40,7 +40,7 @@ if __name__ == '__main__':
         filename = args.filename
         outF = r.TFile(filename,'recreate')
 
-        from gempython.vfatqc.treeStructure import gemTemepratureOHTree, gemTemepratureVFATTree
+        from gempython.vfatqc.utils.treeStructure import gemTemepratureOHTree, gemTemepratureVFATTree
         gemTempDataOH = gemTemepratureOHTree()
         gemTempDataVFAT = gemTemepratureVFATTree()
 

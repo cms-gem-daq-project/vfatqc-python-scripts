@@ -11,7 +11,7 @@ if __name__ == '__main__':
     from gempython.tools.optohybrid_user_functions_uhal import scanmode
     from gempython.tools.vfat_user_functions_xhal import *
     
-    from gempython.vfatqc.qcoptions import parser
+    from gempython.vfatqc.utils.qcoptions import parser
     
     import os, sys
     
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     isCurrentPulse = (not options.voltageStepPulse)
 
     # Setup the output TTree
-    from gempython.vfatqc.treeStructure import gemTreeStructure
+    from gempython.vfatqc.utils.treeStructure import gemTreeStructure
     gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data',scanmode.SCURVE)
     gemData.setDefaults(options, int(time.time()))
 
@@ -63,7 +63,8 @@ if __name__ == '__main__':
     print 'opened connection'
 
     # Check options
-    from gempython.vfatqc.qcutilities import getChannelRegisters, inputOptionsValid
+    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
+    from gempython.vfatqc.utils.confUtils import getChannelRegisters
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
         pass

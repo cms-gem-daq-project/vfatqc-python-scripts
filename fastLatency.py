@@ -9,7 +9,7 @@ import sys
 from array import array
 from gempython.tools.vfat_user_functions_uhal import *
 
-from gempython.vfatqc.qcoptions import parser
+from gempython.vfatqc.utils.qcoptions import parser
 
 parser.add_option("--filename", type="string", dest="filename", default="LatencyData.root",
                   help="Specify Output Filename", metavar="filename")
@@ -38,7 +38,7 @@ filename = options.filename
 myF = TFile(filename,'recreate')
 
 # Setup the output TTree
-from treeStructure import gemTreeStructure
+from utils.treeStructure import gemTreeStructure
 gemData = gemTreeStructure('latencyTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
 gemData.setDefaults(options)
 gemData.vth2[0] = options.vt2

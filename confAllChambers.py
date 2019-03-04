@@ -28,9 +28,9 @@ def launchArgs(shelf,link,slot,run,vt1,vt1bump,config,cName,debug=False):
 
     if config:
         cmd.append("--vt1bump=%d"%(vt1bump))
-        chConfig = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,cName)
+        chConfig = "{0}/configs/chConfig_{1}.txt".format(dataPath,cName)
         vfatConfig = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,cName)
-        
+
         # Channel config
         if os.path.isfile(chConfig):
             cmd.append("--chConfig={}".format(chConfig))
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.utils.wrappers import envCheck
 
-    #from gempython.vfatqc.qcoptions import parser
+    #from gempython.vfatqc.utils.qcoptions import parser
     from gempython.utils.standardopts import parser
     parser.add_option("--config", action="store_true", dest="config",
                       help="Set Configuration from simple txt files", metavar="config")

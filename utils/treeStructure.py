@@ -14,6 +14,9 @@ class gemGenericTree(object):
 
         self.gemTree = r.TTree(name,description)
 
+        self.amc = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'amc', self.amc, 'amc/I' )
+
         self.link = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'link', self.link, 'link/I' )
         
@@ -59,6 +62,8 @@ class gemGenericTree(object):
         simplicity.
         """
 
+        if "amc" in kwargs:
+            self.amc[0] = kwargs["amc"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "Nev" in kwargs:

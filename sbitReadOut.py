@@ -41,7 +41,7 @@ if __name__ == '__main__':
     print 'opened connection'
 
     # Check options
-    from gempython.vfatqc.qcutilities import inputOptionsValid
+    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     import os
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
