@@ -815,11 +815,11 @@ if __name__ == '__main__':
         pass
 
     if args.firstStep > 5:
-        printRed("The starting step number {0} you entered is outside the range of possible values: [1,6]".format(args.firstStep))
+        printRed("The starting step number {0} you entered is outside the range of possible values: [1,5]".format(args.firstStep))
         exit(os.EX_USAGE)
         pass
 
-    if ((args.firstStep > 4) and (args.skipDACScan and args.skipScurve)):
+    if ((args.firstStep >= 5) and (args.skipDACScan and args.skipScurve)):
         printRed("Sorry but you're asking me to skip all initial steps and all follow-up steps")
         printRed("This doesn't make sense; please reconsider")
         exit(os.EX_USAGE)
