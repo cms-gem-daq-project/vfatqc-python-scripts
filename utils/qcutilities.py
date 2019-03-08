@@ -8,6 +8,21 @@ def calcL1Ainterval(rate):
 def getCardName(shelf,slot):
     return "gem-shelf%02d-amc%02d"%(shelf,slot)
 
+def getGeoInfoFromCardName(cardName):
+    shelf = getShelfFromCardName(cardName)
+    slot = getSlotFromCardName(cardName)
+    return {"shelf":shelf,"slot":slot}
+
+def getShelfFromCardName(cardName):
+    shelf = (split(cardName,"-")[1])
+    shelf = int(shelf.strip("shelf"))
+    return shelf
+
+def getSlotFromCardName(cardName):
+    shelf = (split(cardName,"-")[2])
+    shelf = int(shelf.strip("amc"))
+    return shelf
+
 def inputOptionsValid(options, amc_major_fw_ver):
     """
     Sanity check on input options
