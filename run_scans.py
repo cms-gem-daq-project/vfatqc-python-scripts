@@ -226,7 +226,7 @@ def sbitThreshScan(args):
     
     # Determine number of OH's
     cardName = getCardName(args.shelf,args.slot)
-    amcBoard = HwAMC(args.cardName, args.debug)
+    amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
     tool="sbitThreshScanParallel.py"
@@ -476,7 +476,7 @@ def ultraScurve(args):
                 mspl = args.mspl,
                 nevts = args.nevts,
                 setChanRegs = False,
-                vfatmask = (args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMas(ohN)),
+                vfatmask = (args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN)),
                 voltageStepPulse = True)
 
         # Execute

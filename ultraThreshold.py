@@ -56,7 +56,7 @@ if __name__ == '__main__':
     # Open rpc connection to hw
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     cardName = getCardName(options.shelf,options.slot)
-    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
     print 'opened connection'
     
     # Check options
