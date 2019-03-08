@@ -9,16 +9,25 @@ def getCardName(shelf,slot):
     return "gem-shelf%02d-amc%02d"%(shelf,slot)
 
 def getGeoInfoFromCardName(cardName):
+    """
+    cardName is expected to be of the form 'gem-shelfXX-amcYY' where XX & YY are integers
+    """
     shelf = getShelfFromCardName(cardName)
     slot = getSlotFromCardName(cardName)
     return {"shelf":shelf,"slot":slot}
 
 def getShelfFromCardName(cardName):
+    """
+    cardName is expected to be of the form 'gem-shelfXX-amcYY' where XX & YY are integers
+    """
     shelf = (split(cardName,"-")[1])
     shelf = int(shelf.strip("shelf"))
     return shelf
 
 def getSlotFromCardName(cardName):
+    """
+    cardName is expected to be of the form 'gem-shelfXX-amcYY' where XX & YY are integers
+    """
     shelf = (split(cardName,"-")[2])
     shelf = int(shelf.strip("amc"))
     return shelf
