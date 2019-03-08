@@ -10,15 +10,13 @@ if __name__ == '__main__':
     
     from array import array
     from gempython.tools.vfat_user_functions_xhal import *
-    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
+    from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     from gempython.vfatqc.utils.confUtils import configure, readBackCheckV3, setChannelRegisters
 
     import argparse
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     parser = argparse.ArgumentParser(description="Tool for configuring front-end electronics")
     
-    parser.add_argument("-c", "--cardName", type=str, dest="cardName", default=None,
-                      help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
     parser.add_argument("--chConfig", type=str, dest="chConfig", default=None,
                       help="Specify file containing channel settings from anaUltraSCurve.py")
     parser.add_argument("--compare", action="store_true", dest="compare",
@@ -33,6 +31,10 @@ if __name__ == '__main__':
                       help="Specify CFG_PULSE_STRETCH. Must be in the range 0-7 (default is 3)")
     parser.add_argument("--run", action="store_true", dest="run",
                       help="Set VFATs to run mode")
+    parser.add_option("--shelf", type=int, dest="shelf",default=1,
+                	  help="uTCA shelf to access")
+    parser.add_option("-s","--slot", type=int, dest="slot",default=4,
+                      help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("--vfatConfig", type=str, dest="vfatConfig", default=None,
                       help="Specify file containing VFAT settings from anaUltraThreshold.py or anaSBitThresh.py")
     parser.add_argument("--vfatmask", type=parseInt, dest="vfatmask",
@@ -52,11 +54,8 @@ if __name__ == '__main__':
     print startTime
     Date = startTime
     
-    if args.cardName is None:
-        print("you must specify the --cardName argument")
-        exit(os.EX_USAGE)
-
-    vfatBoard = HwVFAT(args.cardName, args.gtx, args.debug)
+    cardName = getCardName(args.shelf,args.slot)
+    vfatBoard = HwVFAT(cardName, args.gtx, args.debug)
     print('opened connection')
     
     # Check args

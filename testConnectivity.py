@@ -62,12 +62,13 @@ def testConnectivity(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
     # Check if all required fields are in args; if they are not assign a default value
+    from gempython.vfatqc.utils.qcutilities import getCardName
     if hasattr(args, 'assignXErrors') is False: # For DAC Scan Analysis
         args.assignXErrors = False
     if hasattr(args, 'calFileList') is False: # For DAC Scan Analysis
        args.calFileList = None
     if hasattr(args, 'cardName') is False:
-        args.cardName = "gem-shelf%02d-amc%02d"%(args.shelf,args.slot)
+        args.cardName = getCardName(args.shelf,args.slot)
     if hasattr(args, 'chConfig') is False: # Text file containing channel configuration
         args.chConfig = None
     if hasattr(args, 'compare') is False: # Just Compare frontend settings?
@@ -646,7 +647,6 @@ def testConnectivity(args):
             dirPath += "/{}".format(startTime)
             logFile = "%s/scanLog.log"%(dirPath)
             scurveFiles[ohN] = "{0}/{1}/scurve/{2}/SCurveData.root".format(dataPath,chamber_config[ohKey],startTime)
-            #scurveFiles[ohN] = "{}/SCurveData.root".format(dirPath)
 
             vfatBoard.parentOH.link = ohN
             try:

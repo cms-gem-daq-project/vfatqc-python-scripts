@@ -12,7 +12,8 @@ if __name__ == '__main__':
 
     # Positional arguments
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
-    parser.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'", metavar="cardName")
+    parser.add_option("shelf", type=int, help="uTCA shelf to access")
+    parser.add_option("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("ohN", type=int, help="optohybrid to readout sbits from", metavar="ohN")
     parser.add_argument("acquireTime", type=int, help="time in seconds to acquire sbits for", metavar="acquireTime")
     parser.add_argument("filePath", type=str, help="Filepath where data is stored", metavar="filePath")
@@ -24,8 +25,6 @@ if __name__ == '__main__':
             help="print additional debugging information")
     parser.add_argument("--fakeTTC", action="store_true", dest="fakeTTC",
             help="Set up for using AMC13 local TTC generator")
-    parser.add_argument("--shelf", type=int, dest="shelf",default=1,
-            help="uTCA shelf to access", metavar="shelf")
     parser.add_argument("--t3trig", action="store_true", dest="t3trig",
             help="Set up for using AMC13 T3 trigger inpiut")
     parser.add_argument("--vfatmask", type=parseInt, dest="vfatmask",default=0x0,
@@ -37,6 +36,8 @@ if __name__ == '__main__':
 
     # Open rpc connection to hw
     from gempython.tools.vfat_user_functions_xhal import *
+    from gempython.vfatqc.utils.qcutilities import getCardName
+    cardName = getCardName(args.shelf,args.slot)
     vfatBoard = HwVFAT(args.cardName, args.ohN, args.debug)
     print 'opened connection'
 
