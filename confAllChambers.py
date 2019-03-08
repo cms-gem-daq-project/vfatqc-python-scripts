@@ -1,10 +1,11 @@
 #!/bin/env python
 
+import os
+
 def launch(args):
   return launchArgs(*args)
 
 def launchArgs(shelf,slot,link,run,armDAC,armDACBump,config,cName,debug=False):
-    import os
     dataPath = os.getenv('DATA_PATH')
 
     from gempython.vfatqc.utils.qcutilities import getCardName
@@ -57,41 +58,51 @@ if __name__ == '__main__':
 
     import argparse
     parser = argparse.ArgumentParser(description="Tool for configuring all front-end electronics")
-    parser.add_argument("--armDAC", type=int, dest = "armDAC", default = 100,
-                      help="CFG_THR_ARM_DAC value to write to all VFATs", metavar="armDAC")
-    parser.add_argument("--armDACBump", type=int, dest="armDACBump",
-                      help="CFG_THR_ARM_DAC value for all VFATs", metavar="armDACBump", default=0)
-    parser.add_argument("--config", action="store_true", dest="config",
-                      help="Set Configuration from simple txt files", metavar="config")
-    parser.add_argument("--run", action="store_true", dest="run",
-                      help="Set VFATs to run mode", metavar="run")
-    parser.add_argument("--series", action="store_true", dest="series",
-                      help="Run tests in series (default is false)", metavar="series")
+    parser.add_argument("--armDAC", type=int,default = 100,help="CFG_THR_ARM_DAC value to write to all VFATs")
+    parser.add_argument("--armDACBump", type=int,help="CFG_THR_ARM_DAC value for all VFATs", default=0)
+    parser.add_argument("--config", action="store_true",help="Set Configuration from simple txt files")
+    parser.add_argument("--run", action="store_true",help="Set VFATs to run mode")
+    parser.add_argument("--series", action="store_true",help="Run tests in series (default is false)")
+    parser.add_argument("--shelf", type=int,help="uTCA shelf number",default=1)
     (options, args) = parser.parse_args()
 
     from gempython.utils.wrappers import envCheck
     envCheck('DATA_PATH')
 
+    # consider only the shelf of interest
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
+    chambers2Configure = {}
+    for ohKey,cName in chamber_config.iteritems():
+        if args.shelf == ohKey[0]:
+            chambers2Configure[ohKey] = cName
+            pass
+        pass
+    
+    from gempython.utils.gemlogger import printRed
+    if (len(chambers2Configure) == 0):
+        printRed("No chambers for shelf{0} exist".format(args.shelf))
+        printRed("Nothing to do, exiting")
+        exit(os.EX_USAGE)
+
     import itertools
     if options.debug:
         print list(itertools.izip(
-                        [ohKey[0]              for ohKey in chamber_config],
-                        [ohKey[1]              for ohKey in chamber_config],
-                        [ohKey[2]              for ohKey in chamber_config],
-                        [options.run           for ohKey in chamber_config],
-                        [options.armDAC        for ohKey in chamber_config],
-                        [options.armDACBump    for ohKey in chamber_config],
-                        [options.config        for ohKey in chamber_config],
-                        [chamber_config[ohKey] for ohKey in chamber_config.keys()],
-                        [options.debug         for ohKey in chamber_config.keys()]
+                        [ohKey[0]                  for ohKey in chambers2Configure],
+                        [ohKey[1]                  for ohKey in chambers2Configure],
+                        [ohKey[2]                  for ohKey in chambers2Configure],
+                        [options.run               for ohKey in chambers2Configure],
+                        [options.armDAC            for ohKey in chambers2Configure],
+                        [options.armDACBump        for ohKey in chambers2Configure],
+                        [options.config            for ohKey in chambers2Configure],
+                        [chambers2Configure[ohKey] for ohKey in chambers2Configure.keys()],
+                        [options.debug             for ohKey in chambers2Configure.keys()]
                   )
             )
         pass
     if options.series:
         print "Configuring chambers in serial mode"
-        for ohKey in chamber_config.keys():
-            chamber = chamber_config[ohKey]
+        for ohKey in chambers2Configure.keys():
+            chamber = chambers2Configure[ohKey]
             launchArgs(
                     ohKey[0],
                     ohKey[1],
@@ -117,15 +128,15 @@ if __name__ == '__main__':
         try:
             res = pool.map_async(launch,
                                  itertools.izip(
-                                    [ohKey[0]              for ohKey in chamber_config],
-                                    [ohKey[1]              for ohKey in chamber_config],
-                                    [ohKey[2]              for ohKey in chamber_config],
-                                    [options.run           for ohKey in chamber_config],
-                                    [options.armDAC        for ohKey in chamber_config],
-                                    [options.armDACBump    for ohKey in chamber_config],
-                                    [options.config        for ohKey in chamber_config],
-                                    [chamber_config[ohKey] for ohKey in chamber_config.keys()],
-                                    [options.debug         for ohKey in chamber_config.keys()]
+                                    [ohKey[0]                  for ohKey in chambers2Configure],
+                                    [ohKey[1]                  for ohKey in chambers2Configure],
+                                    [ohKey[2]                  for ohKey in chambers2Configure],
+                                    [options.run               for ohKey in chambers2Configure],
+                                    [options.armDAC            for ohKey in chambers2Configure],
+                                    [options.armDACBump        for ohKey in chambers2Configure],
+                                    [options.config            for ohKey in chambers2Configure],
+                                    [chambers2Configure[ohKey] for ohKey in chambers2Configure.keys()],
+                                    [options.debug             for ohKey in chambers2Configure.keys()]
                                     )
                                  )
 
