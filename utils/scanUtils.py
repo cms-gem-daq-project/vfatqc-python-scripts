@@ -230,6 +230,8 @@ def launchSCurve(**kwargs):
     mspl = 3
     nevts = 100
     setChanRegs = False
+    shelf = None
+    slot = None
     vfatmask = 0x0
     voltageStepPulse = False
     trimARM = None
@@ -238,10 +240,14 @@ def launchSCurve(**kwargs):
     trimZCCPol = None
 
     # Get defaults from kwargs
+    from gempython.vfatqc.utils.qcutilities import getGeoInfoFromCardName 
     if "calSF" in kwargs:
         calSF = kwargs["calSF"]
     if "cardName" in kwargs:
         cardName = kwargs["cardName"]
+        geoInfo = getGeoInfoFromCardName(cardName)
+        shelf = geoInfo["shelf"]
+        slot = geoInfo["slot"]
     if "chMask" in kwargs:
         chMask = kwargs["chMask"]
     if "chMax" in kwargs:
@@ -266,6 +272,10 @@ def launchSCurve(**kwargs):
         nevts = kwargs["nevts"]
     if "setChanRegs" in kwargs:
         setChanRegs = kwargs["setChanRegs"]
+    if "shelf" in kwargs:
+        shelf = kwargs["shelf"]
+    if "slot" in kwargs:
+        slot = kwargs["slot"]
     if "vfatmask" in kwargs:
         vfatmask = kwargs["vfatmask"]
     if "voltageStepPulse" in kwargs:
@@ -281,8 +291,8 @@ def launchSCurve(**kwargs):
 
     # Check minimum arguments
     import os
-    if cardName is None:
-        raise Exception("launchSCurve(): You must provide either an AMC network alias (e.g. 'eagle60') or an AMC ip address.",os.EX_USAGE)
+    if (not ((shelf is not None) and (slot is not None))):
+        raise Exception("launchSCurve(): You must provide either an AMC network alias (e.g. 'eagle60'), an AMC ip address, or a geographic address (e.g. 'gem-shelf01-amc04')",os.EX_USAGE)
     if filename is None:
         raise Exception("launchSCurve(): You must provide a filename for this scurve. Exiting", os.EX_USAGE)
 
@@ -301,7 +311,8 @@ def launchSCurve(**kwargs):
 
     # Make the command to be launched
     cmd = [ "ultraScurve.py",
-            "--cardName=%s"%(cardName),
+            "--shelf=%i"%(shelf),
+            "--slot=%i"%(slot),
             "-g%d"%(link),
             "--chMin=%i"%(chMin),
             "--chMax=%i"%(chMax),
