@@ -30,6 +30,8 @@ if __name__ == '__main__':
                       help="Run a latency scan using the internal calibration pulse", metavar="internal")
     parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
                       help="Specify time between L1As in bx", metavar="L1Atime")
+    parser.add_option("--mspl", type="int", dest = "MSPL", default = 3,
+                      help="Specify MSPL. Must be in the range 0-7 (default is 3)", metavar="MSPL")
     parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
                       help="Specify time of pulse before L1A in bx", metavar="pDel")
     parser.add_option("--randoms", type="int", default=0, dest="randoms",

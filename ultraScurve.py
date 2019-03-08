@@ -29,6 +29,8 @@ if __name__ == '__main__':
                       help="Specify time between L1As in bx", metavar="L1Atime")
     parser.add_option("--latency", type="int", dest = "latency", default = 37,
                       help="Specify Latency", metavar="latency")
+    parser.add_option("--mspl", type="int", dest = "MSPL", default = 3,
+                      help="Specify MSPL. Must be in the range 0-7 (default is 3)", metavar="MSPL")
     parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
                       help="Specify time of pulse before L1A in bx", metavar="pDel")
     parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
@@ -61,7 +63,7 @@ if __name__ == '__main__':
     # Open rpc connection to hw
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     cardName = getCardName(options.shelf,options.slot)
-    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
     print 'opened connection'
 
     # Check options
