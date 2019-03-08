@@ -15,11 +15,17 @@ def launchArgs(shelf,slot,link,run,armDAC,armDACBump,config,cName,debug=False):
 
     from gempython.vfatqc.utils.namespace import Namespace
     args = Namespace(
+            chConfig = None,
+            compare = False,
             debug = debug,
+            filename = None,
             run = run,
             vt1 = armDAC,
             vt1bump = armDACBump,
-            vfatmask = vfatBoard.parentOH.getVFATMask()
+            vt2 = 0,
+            vfatConfig = None,
+            vfatmask = vfatBoard.parentOH.getVFATMask(),
+            zeroChan = False
             )
 
     if config:
@@ -61,6 +67,7 @@ if __name__ == '__main__':
     parser.add_argument("--armDAC", type=int,default = 100,help="CFG_THR_ARM_DAC value to write to all VFATs")
     parser.add_argument("--armDACBump", type=int,help="CFG_THR_ARM_DAC value for all VFATs", default=0)
     parser.add_argument("--config", action="store_true",help="Set Configuration from simple txt files")
+    parser.add_argument("-d","--debug", action="store_true",help="prints additional debugging information")
     parser.add_argument("--run", action="store_true",help="Set VFATs to run mode")
     parser.add_argument("--series", action="store_true",help="Run tests in series (default is false)")
     parser.add_argument("--shelf", type=int,help="uTCA shelf number",default=1)
@@ -118,12 +125,12 @@ if __name__ == '__main__':
         pass
     else:
         from multiprocessing import Pool, freeze_support
+        import sys,signal
         freeze_support()
         # from: https://stackoverflow.com/questions/11312525/catch-ctrlc-sigint-and-exit-multiprocesses-gracefully-in-python
         original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
         pool = Pool(12)
         
-        import sys,signal
         signal.signal(signal.SIGINT, original_sigint_handler)
         try:
             res = pool.map_async(launch,
