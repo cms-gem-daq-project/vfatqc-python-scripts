@@ -20,7 +20,7 @@ def getShelfFromCardName(cardName):
     """
     cardName is expected to be of the form 'gem-shelfXX-amcYY' where XX & YY are integers
     """
-    shelf = (split(cardName,"-")[1])
+    shelf = (cardName.split("-")[1])
     shelf = int(shelf.strip("shelf"))
     return shelf
 
@@ -28,9 +28,9 @@ def getSlotFromCardName(cardName):
     """
     cardName is expected to be of the form 'gem-shelfXX-amcYY' where XX & YY are integers
     """
-    shelf = (split(cardName,"-")[2])
-    shelf = int(shelf.strip("amc"))
-    return shelf
+    slot = (cardName.split("-")[2])
+    slot = int(slot.strip("amc"))
+    return slot
 
 def inputOptionsValid(options, amc_major_fw_ver):
     """
