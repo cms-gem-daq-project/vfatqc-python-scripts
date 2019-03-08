@@ -77,7 +77,7 @@ if __name__ == '__main__':
     chMax = options.chMax + 1
 
     # Make the ohKey
-    ohKey = tuple(options.shelf,options.slot,options.gtx)
+    ohKey = (options.shelf,options.slot,options.gtx)
 
     if options.dirPath == None: 
         envCheck('DATA_PATH')

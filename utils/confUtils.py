@@ -29,7 +29,7 @@ def configure(args, vfatBoard):
     slot    = vfatBoard.parentOH.parentAMC.getShelf()
     ohN     = vfatBoard.parentOH.link
 
-    ohKey = tuple(shelf,slot,ohN)
+    ohKey = (shelf,slot,ohN)
 
     from gempython.gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
     if ohKey in chamber_vfatDACSettings.keys():

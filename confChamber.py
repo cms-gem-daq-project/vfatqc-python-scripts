@@ -31,9 +31,9 @@ if __name__ == '__main__':
                       help="Specify CFG_PULSE_STRETCH. Must be in the range 0-7 (default is 3)")
     parser.add_argument("--run", action="store_true", dest="run",
                       help="Set VFATs to run mode")
-    parser.add_option("--shelf", type=int, dest="shelf",default=1,
+    parser.add_argument("--shelf", type=int, dest="shelf",default=1,
                 	  help="uTCA shelf to access")
-    parser.add_option("-s","--slot", type=int, dest="slot",default=4,
+    parser.add_argument("-s","--slot", type=int, dest="slot",default=4,
                       help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("--vfatConfig", type=str, dest="vfatConfig", default=None,
                       help="Specify file containing VFAT settings from anaUltraThreshold.py or anaSBitThresh.py")

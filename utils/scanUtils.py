@@ -341,7 +341,7 @@ def makeScanDir(slot, ohN, scanType, startTime, shelf=1):
     startTime - an instance of a datetime
     """
 
-    ohKey = tuple(shelf,slot,ohN)
+    ohKey = (shelf,slot,ohN)
 
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.gemplotting.utils.anautilities import getDirByAnaType

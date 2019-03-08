@@ -28,7 +28,7 @@ def checkSbitMappingAndRate(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        ohKey = tuple(args.shelf,args.slot,ohN)
+        ohKey = (args.shelf,args.slot,ohN)
         print("Checking SBIT Mapping for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
@@ -177,7 +177,7 @@ def sbitReadOut(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        ohKey = tuple(args.shelf,args.slot,ohN)
+        ohKey = (args.shelf,args.slot,ohN)
         print("Reading out SBITs from shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
@@ -238,7 +238,7 @@ def sbitThreshScan(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        ohKey = tuple(args.shelf,args.slot,ohN)
+        ohKey = (args.shelf,args.slot,ohN)
         print("Launching an SBIT Rate scan vs. CFG_THR_ARM_DAC for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
@@ -298,7 +298,7 @@ def trimChamberV3(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        ohKey = tuple(args.shelf,args.slot,ohN)
+        ohKey = (args.shelf,args.slot,ohN)
         print("Trimming shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
         
         # Get & make the output directory
@@ -384,7 +384,7 @@ def ultraLatency(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        ohKey = tuple(args.shelf,args.slot,ohN)
+        ohKey = (args.shelf,args.slot,ohN)
         print("Launching CFG_LATENCY scan for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
@@ -455,7 +455,7 @@ def ultraScurve(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        ohKey = tuple(args.shelf,args.slot,ohN)
+        ohKey = (args.shelf,args.slot,ohN)
         print("Launching scurve for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
@@ -506,7 +506,7 @@ def ultraThreshold(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        ohKey = tuple(args.shelf,args.slot,ohN)
+        ohKey = (args.shelf,args.slot,ohN)
         print("Launching CFG_THR_ARM_DAC scan for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory

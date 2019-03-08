@@ -522,7 +522,7 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
-            ohKey = tuple(args.shelf,args.slot,ohN)
+            ohKey = (args.shelf,args.slot,ohN)
 
             # If the cal file exists do nothing; otherwise write it from the DB query
             calFileADCName = "{0}/{1}/calFile_{2}_{1}.txt".format(dataPath,chamber_config[ohKey],adcName)
@@ -559,7 +559,7 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
-            ohKey = tuple(args.shelf,args.slot,ohN)
+            ohKey = (args.shelf,args.slot,ohN)
 
             # Write to VFAT3 Config Files
             gemuserHome = "/mnt/persistent/gemuser/"
@@ -641,7 +641,7 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
             
-            ohKey = tuple(args.shelf,args.slot,ohN)
+            ohKey = (args.shelf,args.slot,ohN)
         
             dirPath = makeScanDir(args.slot, ohN, "scurve", startTime, args.shelf)
             dirPath += "/{}".format(startTime)
@@ -684,7 +684,7 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
         
-            ohKey = tuple(args.shelf,args.slot,ohN)
+            ohKey = (args.shelf,args.slot,ohN)
 
             # If the cal file exists parse it; otherwise write it from the DB query
             calFileCALDacName = "{0}/{1}/calFile_calDac_{1}.txt".format(dataPath,chamber_config[ohKey])

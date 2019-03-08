@@ -45,7 +45,7 @@ print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-ohKey = tuple(options.shelf,options.slot,options.gtx)
+ohKey = (options.shelf,options.slot,options.gtx)
 if options.dirPath == None: dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[ohKey],ztrim,startTime)
 else: dirPath = options.dirPath
 
