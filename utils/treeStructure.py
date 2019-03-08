@@ -44,9 +44,6 @@ class gemGenericTree(object):
         self.vfatN = array( 'i', [ -1 ] )
         self.gemTree.Branch( 'vfatN', self.vfatN, 'vfatN/I' )
 
-        self.ztrim = array( 'f', [ 0 ] )
-        self.gemTree.Branch( 'ztrim', self.ztrim, 'ztrim/F' )
-
         return
 
     def autoSave(self, option="SaveSelf"):
@@ -83,8 +80,6 @@ class gemGenericTree(object):
             self.vfatID[0] = kwargs["vfatID"]
         if "vfatN" in kwargs:
             self.vfatN[0] = kwargs["vfatN"]
-        if "ztrim" in kwargs:
-            self.ztrim[0] = kwargs["ztrim"]
 
         return
 
@@ -101,7 +96,6 @@ class gemGenericTree(object):
         self.shelf[0] = options.shelf
         self.slot[0] = options.slot
         self.utime[0] = time
-        self.ztrim[0] = options.ztrim
 
         return
 
@@ -208,8 +202,6 @@ class gemDacCalTreeStructure(gemGenericTree):
             self.vfatID[0] = kwargs["vfatID"]
         if "vfatN" in kwargs:
             self.vfatN[0] = kwargs["vfatN"]
-        if "ztrim" in kwargs:
-            self.ztrim[0] = kwargs["ztrim"]
 
         if self.storeRoot:
             if "g_dacCal" in kwargs:
@@ -494,8 +486,6 @@ class gemTreeStructure(gemGenericTree):
             self.vth2[0] = kwargs["vth2"]
         if "vthr" in kwargs:
             self.vthr[0] = kwargs["vthr"]
-        if "ztrim" in kwargs:
-            self.ztrim[0] = kwargs["ztrim"]
 
         self.gemTree.Fill()
         return
