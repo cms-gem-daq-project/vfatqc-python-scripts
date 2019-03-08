@@ -529,6 +529,7 @@ def testConnectivity(args):
             if not os.path.isfile(calFileADCName):
                 if not os.path.exists("{0}/{1}".format(dataPath,chamber_config[ohKey])):
                     runCommand(["mkdir", "-p", "{0}/{1}".format(dataPath,chamber_config[ohKey])])
+                    runCommand(["chmod", "g+rw", "{0}/{1}".format(dataPath,chamber_config[ohKey])])
                 calFileADC = open(calFileADCName,"w")
                 calFileADC.write("vfatN/I:slope/F:intercept/F\n")
                 for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
@@ -693,6 +694,7 @@ def testConnectivity(args):
             else:
                 if not os.path.exists("{0}/{1}".format(dataPath,chamber_config[ohN])):
                     runCommand(["mkdir", "-p", "{0}/{1}".format(dataPath,chamber_config[ohN])])
+                    runCommand(["chmod", "g+rw", "{0}/{1}".format(dataPath,chamber_config[ohN])])
                 calFileCALDac = open(calFileCALDacName,"w")
                 calFileADC.write("vfatN/I:slope/F:intercept/F\n")
                 for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
