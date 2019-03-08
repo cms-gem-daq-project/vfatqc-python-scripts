@@ -32,7 +32,7 @@ def checkSbitMappingAndRate(args):
         print("Checking SBIT Mapping for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "sbitMonInt", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "sbitMonInt", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Build Command
@@ -71,15 +71,15 @@ def dacScanV3(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
     # Make output directory
-    dirPath = makeScanDir(-1, "dacScanV3", startTime)
+    dirPath = makeScanDir(args.slot, -1, "dacScanV3", startTime, args.shelf)
     dirPath += "/{}".format(startTime)
 
     # Build Command
     cmd = [
             "dacScanV3.py",
             "-f {}/dacScanV3.root".format(dirPath),
-            args.shelf,
-            args.slot,
+            str(args.shelf),
+            str(args.slot),
             "0x{:x}".format(args.ohMask)
             ]
 
@@ -129,7 +129,7 @@ def monitorT(args):
     
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
-    dirPath = makeScanDir(-1, "temperature", startTime)
+    dirPath = makeScanDir(args.slot, -1, "temperature", startTime, args.shelf)
     dirPath += "/{}".format(startTime)
 
     # Build Command
@@ -139,8 +139,8 @@ def monitorT(args):
             "--noOHs",
             "--noVFATs",
             "-t {}".format(args.time),
-            args.shelf,
-            args.slot,
+            str(args.shelf),
+            str(args.slot),
             "0x{:x}".format(args.ohMask)
             ]
 
@@ -181,15 +181,15 @@ def sbitReadOut(args):
         print("Reading out SBITs from shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "sbitMonRO", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "sbitMonRO", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
                 "sbitReadOut.py",
                 "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
-                args.shelf,
-                args.slot,
+                str(args.shelf),
+                str(args.slot),
                 str(ohN),
                 str(args.time),
                 dirPath
@@ -242,7 +242,7 @@ def sbitThreshScan(args):
         print("Launching an SBIT Rate scan vs. CFG_THR_ARM_DAC for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "sbitRateor", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "sbitRateor", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Build Command
@@ -302,7 +302,7 @@ def trimChamberV3(args):
         print("Trimming shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
         
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "trimV3", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "trimV3", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
 
         # Check to make sure calFiles exist
@@ -388,7 +388,7 @@ def ultraLatency(args):
         print("Launching CFG_LATENCY scan for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "latency", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "latency", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Get base command
@@ -459,7 +459,7 @@ def ultraScurve(args):
         print("Launching scurve for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "scurve", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "scurve", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         logFile = "%s/scanLog.log"%(dirPath)
 
@@ -510,7 +510,7 @@ def ultraThreshold(args):
         print("Launching CFG_THR_ARM_DAC scan for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "thresholdch", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "thresholdch", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Build Command
