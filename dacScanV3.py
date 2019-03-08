@@ -24,8 +24,8 @@ if __name__ == '__main__':
 
     # Positional arguments
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
-    parser.add_option("shelf", type=int, help="uTCA shelf to access")
-    parser.add_option("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
+    parser.add_argument("shelf", type=int, help="uTCA shelf to access")
+    parser.add_argument("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
     
     # Optional arguments
