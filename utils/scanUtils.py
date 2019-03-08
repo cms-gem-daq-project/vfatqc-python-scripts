@@ -79,6 +79,8 @@ def dacScanAllLinks(args, calTree, vfatBoard):
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
                 iref = irefVals[ohN][vfat],
                 link = ohN,
+                shelf = amcBoard.getShelf(),
+                slot = amcBoard.getSlot(),
                 vfatID = vfatIDvals[ohN][vfat],
                 vfatN = vfat
                 )
@@ -108,6 +110,9 @@ def dacScanSingleLink(args, calTree, vfatBoard):
     calTree - instance of gemDacCalTreeStructure
     vfatBoard - instace of HwVFAT
     """
+
+    # Get the AMC
+    amcBoard = vfatBoard.parentOH.parentAMC
 
     # Get DAC value
     dacSelect = args.dacSelect
@@ -143,6 +148,8 @@ def dacScanSingleLink(args, calTree, vfatBoard):
         raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
 
     # Store Data
+    calTree.shelf[0]= amcBoard.getShelf()
+    calTree.slot[0] = amcBoard.getSlot()
     calTree.link[0] = vfatBoard.parentOH.link
 
     #try:

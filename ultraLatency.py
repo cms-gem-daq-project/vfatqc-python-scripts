@@ -28,13 +28,13 @@ if __name__ == '__main__':
                       help="Specify Output Filename", metavar="filename")
     parser.add_option("--internal", action="store_true", dest="internal",
                       help="Run a latency scan using the internal calibration pulse", metavar="internal")
+    parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
+                      help="Specify time between L1As in bx", metavar="L1Atime")
+    parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
+                      help="Specify time of pulse before L1A in bx", metavar="pDel")
     parser.add_option("--randoms", type="int", default=0, dest="randoms",
                       help="Set up for using AMC13 local trigger generator to generate random triggers with rate specified",
                       metavar="randoms")
-    parser.add_option("--shelf", type="int", dest="shelf",default=1,
-	            	  help="uTCA shelf to access", metavar="shelf")
-    parser.add_option("--slot", type="int", dest="slot",default=1,
-                      help="slot in the uTCA of the AMC you are connceting too")
     parser.add_option("--t3trig", action="store_true", dest="t3trig",
                       help="Set up for using AMC13 T3 trigger input", metavar="t3trig")
     parser.add_option("--throttle", type="int", default=0, dest="throttle",
@@ -82,12 +82,12 @@ if __name__ == '__main__':
     amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
     amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
     
-    cardName = "gem-shelf%02d-amc%02d"%(options.shelf,options.slot)
+    from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
+    cardName = getCardName(options.shelf,options.slot)
     vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
     print 'opened connection'
     
     # Check options
-    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
         pass

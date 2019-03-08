@@ -25,8 +25,12 @@ if __name__ == '__main__':
                       help="Specify maximum channel number to scan", metavar="chMax")
     parser.add_option("-f", "--filename", type="string", dest="filename", default="SCurveData.root",
                       help="Specify Output Filename", metavar="filename")
+    parser.add_option("--L1Atime", type="int", dest = "L1Atime", default = 250,
+                      help="Specify time between L1As in bx", metavar="L1Atime")
     parser.add_option("--latency", type="int", dest = "latency", default = 37,
                       help="Specify Latency", metavar="latency")
+    parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
+                      help="Specify time of pulse before L1A in bx", metavar="pDel")
     parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
                       help="V3 electronics only. Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
                       metavar="voltageStepPulse")
@@ -55,15 +59,12 @@ if __name__ == '__main__':
     gemData.setDefaults(options, int(time.time()))
 
     # Open rpc connection to hw
-    if options.cardName is None:
-        print("you must specify the --cardName argument")
-        exit(os.EX_USAGE)
-
+    from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
+    cardName = getCardName(options.shelf,options.slot)
     vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
     print 'opened connection'
 
     # Check options
-    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     from gempython.vfatqc.utils.confUtils import getChannelRegisters
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)

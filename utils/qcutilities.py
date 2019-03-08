@@ -5,6 +5,9 @@ def calcL1Ainterval(rate):
     from math import floor
     return floor((1.0 / rate) * (1e9 / 25))
 
+def getCardName(shelf,slot):
+    return "gem-shelf%02d-amc%02d"%(shelf,slot)
+
 def inputOptionsValid(options, amc_major_fw_ver):
     """
     Sanity check on input options

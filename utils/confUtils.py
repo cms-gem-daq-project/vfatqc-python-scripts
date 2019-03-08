@@ -1,7 +1,8 @@
 from ctypes import *
+import os
 
 from gempython.tools.vfat_user_functions_uhal import *
-from gempython.utils.gemlogger import printRed, printBlue
+from gempython.utils.gemlogger import colors, printBlue, printRed
 
 def configure(args, vfatBoard):
     """
@@ -24,15 +25,19 @@ def configure(args, vfatBoard):
     vfatBoard - An instance of HwVFAT class
     """
 
-    ohN = vfatBoard.parentOH.link
+    shelf   = vfatBoard.parentOH.parentAMC.getShelf()
+    slot    = vfatBoard.parentOH.parentAMC.getShelf()
+    ohN     = vfatBoard.parentOH.link
+
+    ohKey = tuple(shelf,slot,ohN)
 
     from gempython.gemplotting.mapping.chamberInfo import chamber_vfatDACSettings
-    if ohN in chamber_vfatDACSettings.keys():
-        print "Configuring VFATs with chamber_vfatDACSettings dictionary values"
-        for key in chamber_vfatDACSettings[ohN]:
-            vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[ohN][key]
+    if ohKey in chamber_vfatDACSettings.keys():
+        print "Configuring VFATs on (shelf{0}, slot{1}, OH{2}) with chamber_vfatDACSettings dictionary values".format(shelf,slot,ohN)
+        for key in chamber_vfatDACSettings[ohKey]:
+            vfatBoard.paramsDefVals[key] = chamber_vfatDACSettings[ohKey][key]
     vfatBoard.biasAllVFATs(args.vfatmask)
-    print 'biased VFATs'
+    print 'biased VFATs on (shelf{0}, slot{1}, OH{2})'.format(shelf,slot,ohN)
     
     if not args.compare:
         vfatBoard.setVFATThresholdAll(args.vfatmask, args.vt1, args.vt2)
@@ -44,7 +49,7 @@ def configure(args, vfatBoard):
     
     if args.run:
         vfatBoard.setRunModeAll(args.vfatmask, True)
-        print 'VFATs set to run mode'
+        print 'VFATs on (shelf{0}, slot{1}, OH{2}) set to run mode'.format(shelf,slot,ohN)
     else:
         vfatBoard.setRunModeAll(args.vfatmask, False)
     
@@ -54,7 +59,7 @@ def configure(args, vfatBoard):
             inF = r.TFile(args.filename)
             chTree = inF.Get("scurveFitTree")
             if not args.compare:
-                print 'Configuring Channel Registers based on %s'%args.filename        
+                print 'Configuring Channel Registers on (shelf{0}, slot{1}, OH{2}) based on {3}'.format(shelf,slot,ohN, args.filename)
                 setChannelRegisters(vfatBoard, chTree, args.vfatmask)
 
             dict_readBack = {}
@@ -63,34 +68,36 @@ def configure(args, vfatBoard):
                 print 'Comparing Currently Stored Channel Registers with %s'%args.chConfig
                 readBackCheckV3(chTree, dict_readBack, vfatBoard, args.vfatmask)
     
-        except Exception as e:
-            print '%s does not seem to exist'%args.filename
-            print e
+        except IOError as e:
+            printRed( '%s does not seem to exist'%args.filename )
+            printRed( e )
+            exit(os.EX_IOERR)
     
     if args.chConfig:
         try:
             chTree = r.TTree('chTree','Tree holding Channel Configuration Parameters')
             chTree.ReadFile(args.chConfig)
             if not args.compare:
-                print 'Configuring Channel Registers based on %s'%args.chConfig
+                print 'Configuring Channel Registers on (shelf{0}, slot{1}, OH{2}) based on {3}'.format(shelf,slot,ohN,args.chConfig)
                 setChannelRegisters(vfatBoard, chTree, args.vfatmask)
 
             dict_readBack = {}
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
                 dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
-                print 'Comparing Currently Stored Channel Registers with %s'%args.chConfig
+                print 'Comparing Currently Stored Channel Registers on (shelf{0}, slot{1}, OH{2}) with {3}'.format(shelf,slot,ohN,args.chConfig)
                 readBackCheckV3(chTree, dict_readBack, vfatBoard, args.vfatmask)
     
-        except Exception as e:
-            print '%s does not seem to exist'%args.filename
-            print e
+        except IOError as e:
+            printRed( '%s does not seem to exist'%args.filename )
+            printRed( e )
+            exit(os.EX_IOERR)
     
     if args.zeroChan:    
-        print("zero'ing all channel registers")    
+        print("zero'ing all channel registers on (shelf{0}, slot{1}, OH{2})".format(shelf,slot,ohN))
         rpcResp = vfatBoard.setAllChannelRegisters(vfatMask=args.vfatmask)
                     
         if rpcResp != 0:
-            raise Exception("RPC response was non-zero, zero'ing all channel registers failed")
+            raise Exception("{0}RPC response was non-zero, zero'ing all channel registers failed{1}".format(colors.RED,colors.ENDC))
         pass
     
     if args.vfatConfig:
@@ -99,7 +106,7 @@ def configure(args, vfatBoard):
             vfatTree.ReadFile(args.vfatConfig)
     
             if not args.compare:
-                print 'Configuring VFAT Registers based on %s'%args.vfatConfig
+                print 'Configuring VFAT Registers on (shelf{0}, slot{1}, OH{2}) based on {3}'.format(shelf,slot,ohN,args.vfatConfig)
     
                 for event in vfatTree :
                     # Skip masked vfats
@@ -120,14 +127,15 @@ def configure(args, vfatBoard):
                         vfatBoard.writeVFAT(int(event.vfatN), "ContReg3", int(event.trimRange),args.debug)
             
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                print 'Comparing Curently Stored VFAT Registers with %s'%args.vfatConfig
+                print 'Comparing Curently Stored VFAT Registers on (shelf{0}, slot{1}, OH{2}) with {3}'.format(shelf,slot,ohN,args.vfatConfig)
                 #dict_readBack = { "vfatID":"HW_CHIP_ID", "vt1":"CFG_THR_ARM_DAC" } # Future refactoring of gemplotting will include this
                 dict_readBack = { "vt1":"CFG_THR_ARM_DAC" }
                 readBackCheckV3(vfatTree, dict_readBack, vfatBoard, args.vfatmask, args.vt1bump)
     
-        except Exception as e:
-            print '%s does not seem to exist'%args.filename
-            print e
+        except IOError as e:
+            printRed( '%s does not seem to exist'%args.filename )
+            printRed( e )
+            exit(os.EX_IOERR)
             pass
         pass
 
@@ -154,9 +162,8 @@ def getChannelRegisters(vfatBoard, mask):
     mask - vfat mask to apply
     """
     
-    import os
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
-        raise Exception("getChannelRegisters() does not support for v2b electronics", os.EX_USAGE)
+        raise Exception("{0}getChannelRegisters() does not support for v2b electronics{1}".format(colors.RED,colors.ENDC), os.EX_USAGE)
 
     chanRegData = vfatBoard.getAllChannelRegisters(mask)
 
@@ -202,7 +209,7 @@ def readBackCheck(rootTree, dict_Names, device, gtx, vt1bump=0):
     list_KnownRegs.append("ChipID")
     for regName in dict_Names.values():
         if regName not in list_KnownRegs:
-            raise Exception("readBackCheck() does not understand {0}; only supported for registers: {1}".format(regName, list_KnownRegs),os.EX_USAGE)
+            raise Exception("{2}readBackCheck() does not understand {0}; only supported for registers: {1}{3}".format(regName, list_KnownRegs,colors.RED,colors.ENDC),os.EX_USAGE)
 
     # Get data from tree
     list_bNames = dict_Names.keys()
@@ -327,7 +334,7 @@ def readBackCheckV3(rootTree, dict_Names, vfatBoard, mask=0x0, vt1bump=0):
 
     for regName in dict_Names.values():
         if regName not in list_KnownRegs:
-            raise Exception("readBackCheckV3() does not understand {0}; only supported for registers: {1}".format(regName, list_KnownRegs),os.EX_USAGE)
+            raise Exception("{2}readBackCheckV3() does not understand {0}; only supported for registers: {1}{3}".format(regName, list_KnownRegs,colors.RED,colors.ENDC),os.EX_USAGE)
 
     # Get data from tree
     list_bNames = dict_Names.keys()
@@ -425,7 +432,7 @@ def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
                 debug=debug)
 
         if rpcResp != 0:
-            raise Exception("RPC response was non-zero, setting trim values for all channels failed")
+            raise Exception("{0}RPC response was non-zero, setting trim values for all channels failed{1}".format(colors.RED,colors.ENDC))
         pass
 
     return
