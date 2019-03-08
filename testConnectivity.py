@@ -500,8 +500,6 @@ def testConnectivity(args):
 
     # Analyze DACs
     # =================================================================
-    #temporary fix
-    #chamber_config needs to be redefined FIXME
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
 
     if not args.skipDACScan:
@@ -522,12 +520,14 @@ def testConnectivity(args):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
-            
+
+            ohKey = tuple(args.shelf,args.slot,ohN)
+
             # If the cal file exists do nothing; otherwise write it from the DB query
-            calFileADCName = "{0}/{1}/calFile_{2}_{1}.txt".format(dataPath,chamber_config[ohN],adcName)
+            calFileADCName = "{0}/{1}/calFile_{2}_{1}.txt".format(dataPath,chamber_config[ohKey],adcName)
             if not os.path.isfile(calFileADCName):
-                if not os.path.exists("{0}/{1}".format(dataPath,chamber_config[ohN])):
-                    runCommand(["mkdir", "-p", "{0}/{1}".format(dataPath,chamber_config[ohN])])
+                if not os.path.exists("{0}/{1}".format(dataPath,chamber_config[ohKey])):
+                    runCommand(["mkdir", "-p", "{0}/{1}".format(dataPath,chamber_config[ohKey])])
                 calFileADC = open(calFileADCName,"w")
                 calFileADC.write("vfatN/I:slope/F:intercept/F\n")
                 for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
@@ -543,7 +543,6 @@ def testConnectivity(args):
         # Analyze DAC Scan
         from gempython.gemplotting.utils.anautilities import dacAnalysis
         try:
-            #dict_dacVals = dacAnalysis(args, calTree.gemTree, chamber_config, scandate=startTime)
             dacAnalysis(args, calTree.gemTree, chamber_config, scandate=startTime)
         except Exception as e:
             printRed("An exception has occured: {0}".format(e))
@@ -558,6 +557,8 @@ def testConnectivity(args):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
+
+            ohKey = tuple(args.shelf,args.slot,ohN)
 
             # Write to VFAT3 Config Files
             gemuserHome = "/mnt/persistent/gemuser/"
@@ -574,7 +575,7 @@ def testConnectivity(args):
                     # Copy Files
                     copyFilesCmd = [
                             'scp',
-                            '{0}/{1}/dacScans/current/NominalValues-{2}.txt'.format(dataPath,chamber_config[ohN],dacName),
+                            '{0}/{1}/dacScans/current/NominalValues-{2}.txt'.format(dataPath,chamber_config[ohKey],dacName),
                             'gemuser@{0}:{1}'.format(args.cardName,gemuserHome)
                             ]
                     runCommand(copyFilesCmd)
@@ -611,15 +612,11 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
-            #chamber_config needs to be redefined FIXME
-            #chamber_vfatDACSettings needs to be redefined? FIXME
-            
             vfatBoard.parentOH.link = ohN
             args.vfatmask = dict_vfatMask[ohN]
             try:
                 configure(args, vfatBoard)
 
-                # Placeholder until we have an idea about chamber_vfatDACSettings
                 # Ensure Gain is Medium
                 vfatBoard.parentOH.broadcastWrite("CFG_RES_PRE",0x2,dict_vfatMask[ohN])
                 vfatBoard.parentOH.broadcastWrite("CFG_CAP_PRE",0x1,dict_vfatMask[ohN])
@@ -642,14 +639,14 @@ def testConnectivity(args):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
+            
+            ohKey = tuple(args.shelf,args.slot,ohN)
         
-            #chamber_config needs to be redefined FIXME
-            # Placeholder until we have an idea about chamber_config
-            dirPath = makeScanDir(ohN, "scurve", startTime)
+            dirPath = makeScanDir(args.slot, ohN, "scurve", startTime, args.shelf)
             dirPath += "/{}".format(startTime)
             logFile = "%s/scanLog.log"%(dirPath)
-            #scurveFiles[ohN] = "{0}/{1}/scurve/{2}/SCurveData.root".format(dataPath,chamber_config[ohN],startTime)
-            scurveFiles[ohN] = "{}/SCurveData.root".format(dirPath)
+            scurveFiles[ohN] = "{0}/{1}/scurve/{2}/SCurveData.root".format(dataPath,chamber_config[ohKey],startTime)
+            #scurveFiles[ohN] = "{}/SCurveData.root".format(dirPath)
 
             vfatBoard.parentOH.link = ohN
             try:
@@ -687,8 +684,10 @@ def testConnectivity(args):
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
         
+            ohKey = tuple(args.shelf,args.slot,ohN)
+
             # If the cal file exists parse it; otherwise write it from the DB query
-            calFileCALDacName = "{0}/{1}/calFile_calDac_{1}.txt".format(dataPath,chamber_config[ohN])
+            calFileCALDacName = "{0}/{1}/calFile_calDac_{1}.txt".format(dataPath,chamber_config[ohKey])
             if os.path.isfile(calFileCALDacName):
                 calDacInfo[ohN] = parseCalFile(calFileCALDacName)
             else:
