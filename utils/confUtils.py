@@ -26,7 +26,7 @@ def configure(args, vfatBoard):
     """
 
     shelf   = vfatBoard.parentOH.parentAMC.getShelf()
-    slot    = vfatBoard.parentOH.parentAMC.getShelf()
+    slot    = vfatBoard.parentOH.parentAMC.getSlot()
     ohN     = vfatBoard.parentOH.link
 
     ohKey = (shelf,slot,ohN)
