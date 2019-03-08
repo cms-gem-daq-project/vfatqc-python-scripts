@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument("--run", action="store_true",help="Set VFATs to run mode")
     parser.add_argument("--series", action="store_true",help="Run tests in series (default is false)")
     parser.add_argument("--shelf", type=int,help="uTCA shelf number",default=1)
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
     from gempython.utils.wrappers import envCheck
     envCheck('DATA_PATH')
@@ -85,21 +85,21 @@ if __name__ == '__main__':
         exit(os.EX_USAGE)
 
     import itertools
-    if options.debug:
+    if args.debug:
         print list(itertools.izip(
                         [ohKey[0]                  for ohKey in chambers2Configure],
                         [ohKey[1]                  for ohKey in chambers2Configure],
                         [ohKey[2]                  for ohKey in chambers2Configure],
-                        [options.run               for ohKey in chambers2Configure],
-                        [options.armDAC            for ohKey in chambers2Configure],
-                        [options.armDACBump        for ohKey in chambers2Configure],
-                        [options.config            for ohKey in chambers2Configure],
+                        [args.run                  for ohKey in chambers2Configure],
+                        [args.armDAC               for ohKey in chambers2Configure],
+                        [args.armDACBump           for ohKey in chambers2Configure],
+                        [args.config               for ohKey in chambers2Configure],
                         [chambers2Configure[ohKey] for ohKey in chambers2Configure.keys()],
-                        [options.debug             for ohKey in chambers2Configure.keys()]
+                        [args.debug                for ohKey in chambers2Configure.keys()]
                   )
             )
         pass
-    if options.series:
+    if args.series:
         print "Configuring chambers in serial mode"
         for ohKey in chambers2Configure.keys():
             chamber = chambers2Configure[ohKey]
@@ -107,12 +107,12 @@ if __name__ == '__main__':
                     ohKey[0],
                     ohKey[1],
                     ohKey[2],
-                    options.run,
-                    options.armDAC,
-                    options.armDACBump,
-                    options.config,
+                    args.run,
+                    args.armDAC,
+                    args.armDACBump,
+                    args.config,
                     chamber,
-                    options.debug
+                    args.debug
                     )
             pass
         pass
@@ -131,12 +131,12 @@ if __name__ == '__main__':
                                     [ohKey[0]                  for ohKey in chambers2Configure],
                                     [ohKey[1]                  for ohKey in chambers2Configure],
                                     [ohKey[2]                  for ohKey in chambers2Configure],
-                                    [options.run               for ohKey in chambers2Configure],
-                                    [options.armDAC            for ohKey in chambers2Configure],
-                                    [options.armDACBump        for ohKey in chambers2Configure],
-                                    [options.config            for ohKey in chambers2Configure],
+                                    [args.run                  for ohKey in chambers2Configure],
+                                    [args.armDAC               for ohKey in chambers2Configure],
+                                    [args.armDACBump           for ohKey in chambers2Configure],
+                                    [args.config               for ohKey in chambers2Configure],
                                     [chambers2Configure[ohKey] for ohKey in chambers2Configure.keys()],
-                                    [options.debug             for ohKey in chambers2Configure.keys()]
+                                    [args.debug                for ohKey in chambers2Configure.keys()]
                                     )
                                  )
 
