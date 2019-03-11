@@ -526,6 +526,8 @@ def testConnectivity(args):
             # If the cal file exists do nothing; otherwise write it from the DB query
             calFileADCName = "{0}/{1}/calFile_{2}_{1}.txt".format(dataPath,chamber_config[ohN],adcName)
             if not os.path.isfile(calFileADCName):
+                if not os.path.exists("{0}/{1}".format(dataPath,chamber_config[ohN])):
+                    runCommand(["mkdir", "-p", "{0}/{1}".format(dataPath,chamber_config[ohN])])
                 calFileADC = open(calFileADCName,"w")
                 calFileADC.write("vfatN/I:slope/F:intercept/F\n")
                 for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
@@ -653,8 +655,6 @@ def testConnectivity(args):
             try:
                 launchSCurve(
                         cardName = args.cardName,
-                        chMax = 20, #FIXME DEBUGGING REMOVE
-                        chMin = 10, #FIXME DEBUGGING REMOVE
                         debug = args.debug,
                         filename = scurveFiles[ohN],
                         link = ohN,
@@ -692,6 +692,8 @@ def testConnectivity(args):
             if os.path.isfile(calFileCALDacName):
                 calDacInfo[ohN] = parseCalFile(calFileCALDacName)
             else:
+                if not os.path.exists("{0}/{1}".format(dataPath,chamber_config[ohN])):
+                    runCommand(["mkdir", "-p", "{0}/{1}".format(dataPath,chamber_config[ohN])])
                 calFileCALDac = open(calFileCALDacName,"w")
                 calFileADC.write("vfatN/I:slope/F:intercept/F\n")
                 for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
