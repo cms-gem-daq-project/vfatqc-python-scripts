@@ -2,6 +2,7 @@ from ctypes import *
 
 from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
 from gempython.tools.vfat_user_functions_xhal import *
+from gempython.utils.gemlogger import printGreen
 from gempython.utils.wrappers import runCommand
 
 def dacScanAllLinks(args, calTree, vfatBoard):
@@ -30,7 +31,7 @@ def dacScanAllLinks(args, calTree, vfatBoard):
     vfatIDvals = ndict()
     irefVals = ndict()
     calSelPolVals = ndict()
-    for ohN in range(0,12):
+    for ohN in range(0,amcBoard.nOHs):
         # Skip masked OH's
         if( not ((args.ohMask >> ohN) & 0x1)):
             calSelPolVals[ohN] = [ 0 for vfat in range(0,24) ]
@@ -55,7 +56,7 @@ def dacScanAllLinks(args, calTree, vfatBoard):
     print("Scanning DAC: {0} on all links".format(maxVfat3DACSize[dacSelect][1]))
     rpcResp = amcBoard.performDacScanMultiLink(scanData,dacSelect,args.stepSize,args.ohMask,args.extRefADC)
     if rpcResp != 0:
-        raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
+        raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred. DAC Scan of all links failed')
 
     #try:
     if args.debug:
@@ -85,7 +86,7 @@ def dacScanAllLinks(args, calTree, vfatBoard):
                 vfatN = vfat
                 )
         if args.debug:
-            print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
+            print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
                 calTree.link[0],
                 calTree.vfatN[0],
                 str(hex(calTree.vfatID[0])).strip('L'),
@@ -98,7 +99,7 @@ def dacScanAllLinks(args, calTree, vfatBoard):
                 calTree.dacValY_Err[0]))
         pass
 
-    print("DAC scans for optohybrids in {0} completed".format(args.ohMask))
+    printGreen("DAC scans for optohybrids in {0} completed".format(args.ohMask))
 
     return
 
@@ -145,7 +146,7 @@ def dacScanSingleLink(args, calTree, vfatBoard):
     print("Scanning DAC {0} on Optohybrid {1}".format(maxVfat3DACSize[dacSelect][1], vfatBoard.parentOH.link))
     rpcResp = vfatBoard.parentOH.performDacScan(scanData, dacSelect, args.stepSize, args.vfatmask, args.extRefADC)
     if rpcResp != 0:
-        raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
+        raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred.  DAC Scan of OH{0} Failed'.format(vfatBoard.parentOH.link))
 
     # Store Data
     calTree.shelf[0]= amcBoard.getShelf()
@@ -168,10 +169,10 @@ def dacScanSingleLink(args, calTree, vfatBoard):
                 vfatN = vfat
                 )
         if args.debug:
-            print("| {0} | {1} | {2} | {3} | {4} | {5} | {6} | {7} | {8} |".format(
+            print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} | {7} | {8} |".format(
                 calTree.link[0],
                 calTree.vfatN[0],
-                str(hex(calTree.vfatID[0])).strip('L'),
+                calTree.vfatID[0],
                 calTree.dacSelect[0],
                 calTree.nameX[0],
                 calTree.dacValX[0],
@@ -181,7 +182,7 @@ def dacScanSingleLink(args, calTree, vfatBoard):
                 calTree.dacValY_Err[0]))
         pass
 
-    print("DAC scan for optohybrid {0} completed".format(vfatBoard.parentOH.link))
+    printGreen("DAC scan for optohybrid {0} completed".format(vfatBoard.parentOH.link))
 
     return
 
@@ -371,3 +372,175 @@ def makeScanDir(slot, ohN, scanType, startTime, shelf=1):
 
     return dirPath
 
+def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_ARM_DAC"):
+    """
+    Measures the rate of sbits from all VFATs on all unmasked optohybrids against an arbitrary register
+
+    args - parsed arguments from an ArgumentParser instance
+    rateTree - instance of gemSbitRateTreeStructure
+    vfatBoard - instance of HwVFAT
+    chan - VFAT channel to be scanned, if 128 is supplied the OR of all channels will be taken
+    scanReg - Name of the VFAT register to scan against
+    """
+    
+    # Check to make sure required parameters exist, if not provide a default
+    if hasattr(args, 'debug') is False: # debug
+        args.debug = False
+    if hasattr(args, 'ohMask') is False: # ohMask
+        args.ohMask = 0xfff
+    if hasattr(args, 'perchannel') is False: # Channel scan?
+        args.perchannel = False
+    if hasattr(args, 'scanmax') is False: # scanmax
+        args.scanmax = 255
+    if hasattr(args, 'scanmin') is False: # scanmin
+        args.scanmin = 0
+    if hasattr(args, 'stepSize') is False: # stepSize
+        args.stepSize = 0
+
+    # Remove the leading "CFG_" since this is not expected by the RPC module
+    if "CFG_" in scanReg:
+        scanReg = scanReg.replace("CFG_","")
+        pass
+
+    # Get the AMC
+    amcBoard = vfatBoard.parentOH.parentAMC
+
+    # Determine the per OH vfatmask
+    ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
+
+    #print("Getting CHIP IDs of all VFATs")
+    vfatIDvals = {}
+    selCompVals_orig = {}
+    forceEnZCCVals_orig = {}
+    for ohN in range(0,amcBoard.nOHs):
+        # Skip masked OH's
+        if( not ((args.ohMask >> ohN) & 0x1)):
+            continue
+        
+        # update the OH in question
+        vfatBoard.parentOH.link = ohN
+
+        # Get the chip ID's
+        vfatIDvals[ohN] = vfatBoard.getAllChipIDs(ohVFATMaskArray[ohN])
+
+        #Place chips into run mode
+        vfatBoard.setRunModeAll(ohVFATMaskArray[ohN], True, args.debug)
+    
+        #Store original CFG_SEL_COMP_MODE
+        vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", ohVFATMaskArray[ohN])
+        selCompVals_orig[ohN] =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+        
+        #Store original CFG_FORCE_EN_ZCC
+        vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", ohVFATMaskArray[ohN])
+        forceEnZCCVals_orig[ohN] =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+        pass
+
+    # Make the containers
+    arraySize = amcBoard.nOHs * (args.scanmax-args.scanmin+1)/args.stepSize
+    scanDataDAC = (c_uint32 * arraySize)()
+    scanDataRate = (c_uint32 * arraySize)()
+    scanDataRatePerVFAT = (c_uint32 * 24 * arraySize)() # per VFAT
+
+    # Perform SBIT Rate Scan vs. scanReg
+    if chan==128:
+        strChannels="(OR of all channels per VFAT)"
+    else:
+        strChannels="(only from channel {0} for each VFAT)".format(chan)
+        pass
+    print("scanning {0} for all VFATs in ohMask 0x{1:x} {2}".format(scanReg,args.ohMask,strChannels))
+    rpcResp = amcBoard.performSBITRateScanMultiLink(
+            scanDataDAC, 
+            scanDataRate, 
+            scanDataRatePerVFAT, 
+            chan=chan,
+            dacMin=args.scanmin, 
+            dacMax=args.scanmax, 
+            dacStep=args.stepSize, 
+            ohMask=args.ohMask, 
+            scanReg=scanReg)
+    
+    if rpcResp != 0:
+        raise Exception('RPC response was non-zero, sbit rate scan failed')
+
+    # place holder
+    if args.debug:
+        print("| link | vfatN | vfatID | vfatCH | nameX | dacValX | rate |")
+        print("| :--: | :---: | :----: | :----: | :---: | :-----: | :--: |")
+    for ohN in range(0,amcBoard.nOHs):
+        # Skip masked OH's
+        if( not ((args.ohMask >> ohN) & 0x1)):
+            continue
+
+        # Fill per VFAT rate
+        for vfat in range(0,24):
+            for idx in range(ohN*vfat*scanDataSizeVFAT,ohN*(vfat+1)*scanDataSizeVFAT):
+
+            rateTree.fill(
+                    dacValX = scanDataDAC[idx],
+                    link = ohN,
+                    nameX = scanReg,
+                    rate = scanDataRatePerVFAT[idx],
+                    shelf = amcBoard.getShelf(),
+                    slot = amcBoard.getSlot(),
+                    vfatCH = chan,
+                    vfatID = vfatIDvals[ohN][vfat],
+                    vfatN = vfat
+                    )
+            if args.debug:
+                print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} |".format(
+                        rateTree.link[0],
+                        rateTree.vfatN[0],
+                        rateTree.vfatID[0],
+                        rateTree.vfatCH[0],
+                        rateTree.nameX[0],
+                        rateTree.dacValX[0],
+                        rateTree.rate[0]
+                        )
+                    )
+                pass
+            pass
+
+        # Fill overall rate
+        for idx in range(0,arraySize):
+            rateTree.fill(
+                    dacValX = scanDataDAC[idx],
+                    link = ohN,
+                    nameX = scanReg,
+                    rate = scanDataRatePerVFAT[idx],
+                    shelf = amcBoard.getShelf(),
+                    slot = amcBoard.getSlot(),
+                    vfatCH = chan,
+                    vfatID = 0xdead,
+                    vfatN = 24
+                    )
+            if args.debug:
+                print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} |".format(
+                        rateTree.link[0],
+                        rateTree.vfatN[0],
+                        rateTree.vfatID[0],
+                        rateTree.vfatCH[0],
+                        rateTree.nameX[0],
+                        rateTree.dacValX[0],
+                        rateTree.rate[0]
+                        )
+                    )
+                pass
+            pass
+        pass
+
+    # Take VFATs out of run mode 
+    for ohN in range(0,amcBoard.nOHs):
+        # Skip masked OH's
+        if( not ((args.ohMask >> ohN) & 0x1)):
+            continue
+        
+        # update the OH in question
+        vfatBoard.parentOH.link = ohN
+
+        #Place chips into run mode
+        vfatBoard.setRunModeAll(ohVFATMaskArray[ohN], False, args.debug)
+        pass
+
+    printGreen("SBIT Rate scan vs. {0} for optohybrids in 0x{1:x} {2} completed".format(scanReg, args.ohMask, strChannels))
+
+    return
