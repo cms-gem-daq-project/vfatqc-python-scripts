@@ -217,7 +217,7 @@ def sbitReadOut(args):
 
 def sbitThreshScan(args):
     """
-    Launches a call of either sbitThreshScanSeries.py or sbitThreshScanParallel.py
+    Launches a call of sbitThreshScanParallel.py
 
     args - object returned by argparse.ArgumentParser.parse_args() 
     """
@@ -228,10 +228,6 @@ def sbitThreshScan(args):
     cardName = getCardName(args.shelf,args.slot)
     amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
-
-    tool="sbitThreshScanParallel.py"
-    if args.series:
-        tool="sbitThreshScanSeries.py"
 
     for ohN in range(0,amcBoard.nOHs+1):
         # Skip masked OH's        
@@ -247,7 +243,7 @@ def sbitThreshScan(args):
         
         # Build Command
         cmd = [
-                tool,
+                "sbitThreshScanParallel.py",
                 "--shelf={}".format(args.shelf),
                 "--slot={}".format(args.slot),
                 "-f {}/SBitRateData.root".format(dirPath),
@@ -265,8 +261,6 @@ def sbitThreshScan(args):
         # Additional options
         if args.arm:
             cmd.append("--arm")
-        if args.series:
-            cmd.append("--time={}".format(args.time))
 
         # Execute
         executeCmd(cmd,dirPath)
@@ -608,14 +602,12 @@ if __name__ == '__main__':
     parser_sbitReadOut.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
     parser_sbitReadOut.set_defaults(func=sbitReadOut)
     
-    # Create subparser for sbitThreshScanSeries
+    # Create subparser for sbitThreshScanParallel
     parser_sbitThresh = subparserCmds.add_parser("sbitThresh", help="Launches an sbit rate vs. CFG_THR_ARM_DAC scan using the sbitThreshScanParallel.py tool", parents = [parent_parser])
     parser_sbitThresh.add_argument("-a","--arm",action="store_true",help="Use only the arming comparator instead of the CFD")
-    parser_sbitThresh.add_argument("--series",action="store_true",help="Use the sbitThreshScanSeries.py tool instead; note the scan will take much longer")
     parser_sbitThresh.add_argument("--scanmin",type=int,default=0,help="Minimum CFG_THR_ARM_DAC")
     parser_sbitThresh.add_argument("--scanmax",type=int,default=255,help="Maximum CFG_THR_ARM_DAC")
     parser_sbitThresh.add_argument("--stepSize",type=int,default=1,help="Step size to use when scanning CFG_THR_ARM_DAC")
-    parser_sbitThresh.add_argument("-t","--time",type=int,default=1000,help="Acquire time per point in milliseconds")
     parser_sbitThresh.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
     parser_sbitThresh.set_defaults(func=sbitThreshScan)
 
