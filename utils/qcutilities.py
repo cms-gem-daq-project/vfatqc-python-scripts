@@ -5,6 +5,33 @@ def calcL1Ainterval(rate):
     from math import floor
     return floor((1.0 / rate) * (1e9 / 25))
 
+def getCardName(shelf,slot):
+    return "gem-shelf%02d-amc%02d"%(shelf,slot)
+
+def getGeoInfoFromCardName(cardName):
+    """
+    cardName is expected to be of the form 'gem-shelfXX-amcYY' where XX & YY are integers
+    """
+    shelf = getShelfFromCardName(cardName)
+    slot = getSlotFromCardName(cardName)
+    return {"shelf":shelf,"slot":slot}
+
+def getShelfFromCardName(cardName):
+    """
+    cardName is expected to be of the form 'gem-shelfXX-amcYY' where XX & YY are integers
+    """
+    shelf = (cardName.split("-")[1])
+    shelf = int(shelf.strip("shelf"))
+    return shelf
+
+def getSlotFromCardName(cardName):
+    """
+    cardName is expected to be of the form 'gem-shelfXX-amcYY' where XX & YY are integers
+    """
+    slot = (cardName.split("-")[2])
+    slot = int(slot.strip("amc"))
+    return slot
+
 def inputOptionsValid(options, amc_major_fw_ver):
     """
     Sanity check on input options

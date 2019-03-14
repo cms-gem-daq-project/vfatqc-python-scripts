@@ -54,15 +54,12 @@ if __name__ == '__main__':
     gemData.setDefaults(options, int(time.time()))
 
     # Open rpc connection to hw
-    if options.cardName is None:
-        print("you must specify the --cardName argument")
-        exit(os.EX_USAGE)
-
-    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
+    cardName = getCardName(options.shelf,options.slot)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
     print 'opened connection'
     
     # Check options
-    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     from gempython.vfatqc.utils.confUtils import getChannelRegisters
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
@@ -215,7 +212,6 @@ if __name__ == '__main__':
                                 #trimDAC = (0x1f & vfatBoard.readVFAT(vfat,"VFATChannels.ChanReg%d"%(chan)))
                                 gemData.fill(
                                         calPhase = calPhasevals[vfat],
-                                        l1aTime = options.L1Atime,
                                         latency = latvals[vfat],
                                         mspl = msplvals[vfat],
                                         Nev = options.nevts,
@@ -240,7 +236,6 @@ if __name__ == '__main__':
                                 
                                 gemData.fill(
                                         calPhase = calPhasevals[vfat],
-                                        l1aTime = options.L1Atime,
                                         latency = latvals[vfat],
                                         mspl = msplvals[vfat],
                                         Nev = (scanData[threshDAC] & 0xffff),
@@ -316,7 +311,6 @@ if __name__ == '__main__':
                     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                         gemData.fill(
                                 calPhase = calPhasevals[vfat],
-                                l1aTime = options.L1Atime,
                                 latency = latvals[vfat],
                                 mspl = msplvals[vfat],
                                 Nev = options.nevts,
@@ -338,7 +332,6 @@ if __name__ == '__main__':
                             pass
                         gemData.fill(
                                 calPhase = calPhasevals[vfat],
-                                l1aTime = options.L1Atime,
                                 latency = latvals[vfat],
                                 mspl = msplvals[vfat],
                                 Nev = (scanData[threshDAC] & 0xffff),

@@ -19,6 +19,8 @@ parser.add_option("--dirPath", type="string", dest="dirPath", default=None,
                   help="Specify the path where the scan data should be stored", metavar="dirPath")
 parser.add_option("--vt1", type="int", dest="vt1",
                   help="VThreshold1 DAC value for all VFATs", metavar="vt1", default=100)
+parser.add_option("--ztrim", type="float", dest="ztrim", default=4.0,
+                  help="Specify the p value of the trim", metavar="ztrim")
 
 (options, args) = parser.parse_args()
 
@@ -43,7 +45,8 @@ print startTime
 
 ohboard = getOHObject(options.slot,options.gtx,options.shelf,options.debug)
 
-if options.dirPath == None: dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[options.gtx],ztrim,startTime)
+ohKey = (options.shelf,options.slot,options.gtx)
+if options.dirPath == None: dirPath = '%s/%s/trimming/z%f/%s'%(dataPath,chamber_config[ohKey],ztrim,startTime)
 else: dirPath = options.dirPath
 
 # bias vfats

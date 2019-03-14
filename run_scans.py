@@ -1,8 +1,9 @@
 #!/bin/env python
 
-from gempython.gemplotting.mapping.chamberInfo import chamber_config, chamber_vfatMask
+from gempython.gemplotting.mapping.chamberInfo import chamber_config
 from gempython.utils.wrappers import runCommand
 from gempython.tools.amc_user_functions_xhal import *
+from gempython.vfatqc.utils.qcutilities import getCardName
 from gempython.vfatqc.utils.scanUtils import makeScanDir
 
 import datetime
@@ -18,7 +19,8 @@ def checkSbitMappingAndRate(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     
     # Determine number of OH's
-    amcBoard = HwAMC(args.cardName, args.debug)
+    cardName = getCardName(args.shelf,args.slot)
+    amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
     for ohN in range(0,amcBoard.nOHs+1):
@@ -26,22 +28,24 @@ def checkSbitMappingAndRate(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        print("Checking SBIT Mapping for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        ohKey = (args.shelf,args.slot,ohN)
+        print("Checking SBIT Mapping for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "sbitMonInt", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "sbitMonInt", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
                 "checkSbitMappingAndRate.py",
-                "--cardName={}".format(args.cardName),
+                "--shelf={}".format(args.shelf),
+                "--slot={}".format(args.slot),
                 "-f {}/SBitMappingAndRateData.root".format(dirPath),
                 "-g {}".format(ohN),
                 "--nevts={}".format(args.nevts),
                 "--rates={}".format(args.rates),
                 "--time={}".format(args.time),
-                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L')),
+                "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
                 "--voltageStepPulse"
                 ]
 
@@ -51,9 +55,9 @@ def checkSbitMappingAndRate(args):
         
         # Execute
         executeCmd(cmd,dirPath)
-        print("Finished Checking SBIT Mapping for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        print("Finished Checking SBIT Mapping for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
     
-    print("Finished Checking SBIT Mapping for all optohybrids in ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+    print("Finished Checking SBIT Mapping for all optohybrids on shelf{0} slot{1} in ohMask: 0x{2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
@@ -67,15 +71,16 @@ def dacScanV3(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
     # Make output directory
-    dirPath = makeScanDir(-1, "dacScanV3", startTime)
+    dirPath = makeScanDir(args.slot, -1, "dacScanV3", startTime, args.shelf)
     dirPath += "/{}".format(startTime)
 
     # Build Command
     cmd = [
             "dacScanV3.py",
             "-f {}/dacScanV3.root".format(dirPath),
-            args.cardName,
-            str(hex(args.ohMask)).strip('L')
+            str(args.shelf),
+            str(args.slot),
+            "0x{:x}".format(args.ohMask)
             ]
 
     # debug flag raised?
@@ -90,7 +95,7 @@ def dacScanV3(args):
 
     # Execute
     executeCmd(cmd,dirPath)
-    print("Finished DAC scans for optohybrids in ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+    print("Finished DAC scans for optohybrids on shelf{0} slot{1} in ohMask: {2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
@@ -124,7 +129,7 @@ def monitorT(args):
     
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
-    dirPath = makeScanDir(-1, "temperature", startTime)
+    dirPath = makeScanDir(args.slot, -1, "temperature", startTime, args.shelf)
     dirPath += "/{}".format(startTime)
 
     # Build Command
@@ -134,8 +139,9 @@ def monitorT(args):
             "--noOHs",
             "--noVFATs",
             "-t {}".format(args.time),
-            args.cardName,
-            str(hex(args.ohMask)).strip('L')
+            str(args.shelf),
+            str(args.slot),
+            "0x{:x}".format(args.ohMask)
             ]
 
     # debug flag raised?
@@ -148,7 +154,7 @@ def monitorT(args):
     try:
         executeCmd(cmd,dirPath)
     except KeyboardInterrupt:
-        print("Finished monitoring temperatures for optohybrids in ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+        print("Finished monitoring temperatures for optohybrids on shelf{0} slot{1} in ohMask: {2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
@@ -162,7 +168,8 @@ def sbitReadOut(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     
     # Determine number of OH's
-    amcBoard = HwAMC(args.cardName, args.debug)
+    cardName = getCardName(args.shelf,args.slot)
+    amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
     for ohN in range(0,amcBoard.nOHs+1):
@@ -170,17 +177,19 @@ def sbitReadOut(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        print("Reading out SBITs from OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        ohKey = (args.shelf,args.slot,ohN)
+        print("Reading out SBITs from shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "sbitMonRO", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "sbitMonRO", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
                 "sbitReadOut.py",
-                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L')),
-                args.cardName,
+                "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
+                str(args.shelf),
+                str(args.slot),
                 str(ohN),
                 str(args.time),
                 dirPath
@@ -195,16 +204,14 @@ def sbitReadOut(args):
             cmd.insert(1,"--amc13local")
         if args.fakeTTC:
             cmd.insert(1,"--fakeTTC")
-        if args.shelf is not None:
-            cmd.insert(1,"--shelf={}".format(args.shelf))
         if args.t3trig:
             cmd.insert(1,"--t3trig")
 
         # Execute
         executeCmd(cmd,dirPath)
-        print("Finished reading out SBITs from OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        print("Finished reading out SBITs from shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
     
-    print("Finished reading out SBITs from all optohybrids in ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+    print("Finished reading out SBITs from all optohybrids on shelf{0} slot{1} in ohMask: 0x{2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
@@ -218,7 +225,8 @@ def sbitThreshScan(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     
     # Determine number of OH's
-    amcBoard = HwAMC(args.cardName, args.debug)
+    cardName = getCardName(args.shelf,args.slot)
+    amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
     tool="sbitThreshScanParallel.py"
@@ -230,22 +238,24 @@ def sbitThreshScan(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        print("Launching an SBIT Rate scan vs. CFG_THR_ARM_DAC for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        ohKey = (args.shelf,args.slot,ohN)
+        print("Launching an SBIT Rate scan vs. CFG_THR_ARM_DAC for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "sbitRateor", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "sbitRateor", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
                 tool,
-                "--cardName={}".format(args.cardName),
+                "--shelf={}".format(args.shelf),
+                "--slot={}".format(args.slot),
                 "-f {}/SBitRateData.root".format(dirPath),
                 "-g {}".format(ohN),
                 "--scanmax={}".format(args.scanmax),
                 "--scanmin={}".format(args.scanmin),
                 "--stepSize={}".format(args.stepSize),
-                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L'))
+                "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
                 ]
 
         # debug flag raised?
@@ -260,9 +270,9 @@ def sbitThreshScan(args):
 
         # Execute
         executeCmd(cmd,dirPath)
-        print("Finished SBIT Rate scan vs. CFG_THR_ARM_DAC for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        print("Finished SBIT Rate scan vs. CFG_THR_ARM_DAC for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
     
-    print("Finished all SBIT Rate vs. CFG_THR_ARM_DAC scans for ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+    print("Finished all SBIT Rate vs. CFG_THR_ARM_DAC scans for all optohybrids on shelf{0} slot{1} in ohMask: {2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
@@ -276,7 +286,8 @@ def trimChamberV3(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     
     # Determine number of OH's
-    amcBoard = HwAMC(args.cardName, args.debug)
+    cardName = getCardName(args.shelf,args.slot)
+    amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
     # Get DATA_PATH
@@ -287,35 +298,39 @@ def trimChamberV3(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        print("Trimming OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        ohKey = (args.shelf,args.slot,ohN)
+        print("Trimming shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
         
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "trimV3", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "trimV3", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
 
         # Check to make sure calFiles exist
-        armCalFile = "{0}/{1}/calFile_thrArmDAC_{1}.txt".format(dataPath,chamber_config[ohN])
+        armCalFile = "{0}/{1}/calFile_thrArmDAC_{1}.txt".format(dataPath,chamber_config[ohKey])
         armCalFileExists = os.path.isfile(armCalFile)
         if not armCalFileExists:
-            print("Skipping OH{0}, detector {1}, missing CFG_THR_ARM_DAC Calibration file:\n\t{2}".format(
+            print("Skipping shelf{0} slot{1} OH{2}, detector {3}, missing CFG_THR_ARM_DAC Calibration file:\n\t{2}".format(
+                args.shelf,
+                args.slot,
                 ohN,
-                chamber_config[ohN],
+                chamber_config[ohKey],
                 armCalFile))
             continue
 
-        calDacCalFile = "{0}/{1}/calFile_calDac_{1}.txt".format(dataPath,chamber_config[ohN])
+        calDacCalFile = "{0}/{1}/calFile_calDac_{1}.txt".format(dataPath,chamber_config[ohKey])
         calDacCalFileExists = os.path.isfile(calDacCalFile)
         if not calDacCalFileExists:
-            print("Skipping OH{0}, detector {1}, missing CFG_CAL_DAC Calibration file:\n\t{2}".format(
+            print("Skipping shelf{0} slot{1} OH{2}, detector {3}, missing CFG_CAL_DAC Calibration file:\n\t{2}".format(
+                args.shelf,
+                args.slot,
                 ohN,
-                chamber_config[ohN],
+                chamber_config[ohKey],
                 calDacCalFile))
             continue
 
         # Get base command
         cmd = [
                 "trimChamberV3.py",
-                "--cardName={}".format(args.cardName),
                 "--calFileARM={}".format(armCalFile),
                 "--calFileCAL={}".format(calDacCalFile),
                 "--chMax={}".format(args.chMax),
@@ -325,8 +340,10 @@ def trimChamberV3(args):
                 "--latency={}".format(args.latency),
                 "--mspl={}".format(args.mspl),
                 "--nevts={}".format(args.nevts),
+                "--shelf={}".format(args.shelf),
+                "--slot={}".format(args.slot),
                 "--trimPoints={}".format(args.trimPoints),
-                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L')),
+                "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
                 "--voltageStepPulse"
                 ]
 
@@ -342,9 +359,9 @@ def trimChamberV3(args):
 
         # Execute
         executeCmd(cmd,dirPath)
-        print("Finished trimming OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        print("Finished trimming shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
-    print("Finished trimming all optohybrids in ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+    print("Finished trimming all optohybrids on shelf{0} slot{1} in ohMask: {2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
@@ -358,7 +375,7 @@ def ultraLatency(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     
     # Determine number of OH's
-    cardName = "gem-shelf%02d-amc%02d"%(args.shelf,args.slot)
+    cardName = getCardName(args.shelf,args.slot)
     amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
@@ -367,10 +384,11 @@ def ultraLatency(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        print("Launching latency scan for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        ohKey = (args.shelf,args.slot,ohN)
+        print("Launching CFG_LATENCY scan for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "latency", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "latency", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Get base command
@@ -385,7 +403,7 @@ def ultraLatency(args):
                 "--shelf={}".format(args.shelf),
                 "--slot={}".format(args.slot),
                 "--stepSize={}".format(args.stepSize),
-                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L'))
+                "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
                 ]
 
         # debug flag raised?
@@ -411,9 +429,9 @@ def ultraLatency(args):
 
         # Execute
         executeCmd(cmd,dirPath)
-        print("Finished CFG_LATENCY scan for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        print("Finished CFG_LATENCY scan for shelf{0} slot{1} OH{2} detector {3}".format(args.slot,args.shelf,ohN,chamber_config[ohKey]))
     
-    print("Finished all CFG_LATENCY scans for ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+    print("Finished all CFG_LATENCY scans for all optohybrids on shelf{0} slot{1} in ohMask: {2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
@@ -427,7 +445,8 @@ def ultraScurve(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     
     # Determine number of OH's
-    amcBoard = HwAMC(args.cardName, args.debug)
+    cardName = getCardName(args.shelf,args.slot)
+    amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
     from gempython.vfatqc.utils.scanUtils import launchSCurve
@@ -436,16 +455,17 @@ def ultraScurve(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        print("Launching scurve for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        ohKey = (args.shelf,args.slot,ohN)
+        print("Launching scurve for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "scurve", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "scurve", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         logFile = "%s/scanLog.log"%(dirPath)
 
         # Launch the scurve
         launchSCurve(
-                cardName = args.cardName,
+                cardName = cardName,
                 chMax = args.chMax,
                 chMin = args.chMin,
                 filename = "{}/SCurveData.root".format(dirPath),
@@ -456,14 +476,14 @@ def ultraScurve(args):
                 mspl = args.mspl,
                 nevts = args.nevts,
                 setChanRegs = False,
-                vfatmask = (args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN]),
+                vfatmask = (args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN)),
                 voltageStepPulse = True)
 
         # Execute
         runCommand( ["chmod","-R","g+r",dirPath] )
-        print("Finished scurve for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        print("Finished scurve for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
-    print("Finished all scurves for ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+    print("Finished all scurves for all optohybrids on shelf{0} slot{1} in ohMask: {2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
@@ -477,7 +497,8 @@ def ultraThreshold(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     
     # Determine number of OH's
-    amcBoard = HwAMC(args.cardName, args.debug)
+    cardName = getCardName(args.shelf,args.slot)
+    amcBoard = HwAMC(cardName, args.debug)
     print('opened connection')
 
     for ohN in range(0,amcBoard.nOHs+1):
@@ -485,23 +506,25 @@ def ultraThreshold(args):
         if( not ((args.ohMask >> ohN) & 0x1)):
             continue
    
-        print("Launching CFG_THR_ARM_DAC scan for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        ohKey = (args.shelf,args.slot,ohN)
+        print("Launching CFG_THR_ARM_DAC scan for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
 
         # Get & make the output directory
-        dirPath = makeScanDir(ohN, "thresholdch", startTime)
+        dirPath = makeScanDir(args.slot, ohN, "thresholdch", startTime, args.shelf)
         dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
                 "ultraThreshold.py",
-                "--cardName={}".format(args.cardName),
                 "--chMax={}".format(args.chMax),
                 "--chMin={}".format(args.chMin),
                 "-f {0}/ThresholdScanData.root".format(dirPath),
                 "-g {}".format(ohN),
                 "--nevts={}".format(args.nevts),
                 "--perchannel",
-                "--vfatmask={}".format(str(hex(args.vfatmask if (args.vfatmask is not None) else chamber_vfatMask[ohN])).strip('L'))
+                "--shelf={}".format(args.shelf),
+                "--slot={}".format(args.slot),
+                "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
                 ]
 
         # debug flag raised?
@@ -510,17 +533,23 @@ def ultraThreshold(args):
 
         # Execute
         executeCmd(cmd,dirPath)
-        print("Finished CFG_THR_ARM_DAC scan for OH{0} detector {1}".format(ohN,chamber_config[ohN]))
+        print("Finished CFG_THR_ARM_DAC scan for shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
     
-    print("Finished all CFG_THR_ARM_DAC scans for ohMask: {}".format(str(hex(args.ohMask)).strip('L')))
+    print("Finished all CFG_THR_ARM_DAC scans for all optohybrids on shelf{0} slot{1} in ohMask: {2:x}".format(args.shelf,args.slot,args.ohMask))
 
     return
 
 if __name__ == '__main__':
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     
-    # create the parser
+    # create the parent parser for common options
     import argparse
+    parent_parser = argparse.ArgumentParser(add_help = False)
+    parent_parser.add_argument("shelf", type=int, help="uTCA crate shelf number")
+    parent_parser.add_argument("slot", type=int, help="AMC slot number in the uTCA crate")
+    parent_parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
+
+    # create the parser that sub parsers will come from
     parser = argparse.ArgumentParser(description='Arguments to supply to run_scans.py')
 
     # Option arguments shared by all commands
@@ -530,23 +559,13 @@ if __name__ == '__main__':
     subparserCmds = parser.add_subparsers(help="Available subcommands and their descriptions.  To view the sub menu call \033[92mrun_scans.py COMMAND -h\033[0m e.g. '\033[92mrun_scans.py dacScanV3 -h\033[0m'")
 
     # Create subparser for dacScanV3
-    parser_dacScan = subparserCmds.add_parser("dacScanV3", help="Uses the dacScanV3.py tool to perform a VFAT3 DAC scan on all unmasked optohybrids")
-
-    parser_dacScan.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
-    parser_dacScan.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-
+    parser_dacScan = subparserCmds.add_parser("dacScanV3", help="Uses the dacScanV3.py tool to perform a VFAT3 DAC scan on all unmasked optohybrids", parents = [parent_parser])
     parser_dacScan.add_argument("--dacSelect",type=int,default=None,help="DAC Selection, see VFAT3 Manual")
     parser_dacScan.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
-
     parser_dacScan.set_defaults(func=dacScanV3)
 
     # Create subparser for ultraLatency
-    parser_latency = subparserCmds.add_parser("lat", help="Launches an latency using the ultraLatency.py tool")
-    
-    parser_latency.add_argument("shelf",type=int, help="uTCA shelf number")
-    parser_latency.add_argument("slot", type=int, help="slot in the uTCA of the AMC you are connecting too")
-    parser_latency.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-    
+    parser_latency = subparserCmds.add_parser("lat", help="Launches an latency using the ultraLatency.py tool", parents = [parent_parser])
     parser_latency.add_argument("--amc13local",action="store_true",help="Use AMC13 local trigger generator")
     parser_latency.add_argument("-c","--chan",type=int,default=None,help="Channel on VFATs to run the latency scan. Only applies when calling with --internal; otherwise OR of all channels is used.")
     parser_latency.add_argument("--chMax",type=int,default=127,help="Specify maximum channel number to scan")
@@ -562,38 +581,24 @@ if __name__ == '__main__':
     parser_latency.add_argument("--throttle",type=int,default=None,help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle")
     parser_latency.add_argument("-v","--vcal",type=int,default=250,help="Height of CalPulse in DAC units for all VFATs")
     parser_latency.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
-
     parser_latency.set_defaults(func=ultraLatency)
     
     # Create subparser for monitorT
-    parser_monT = subparserCmds.add_parser("monitorT", help="Uses the monitorTemperatures.py tool to record temperature data to a file until a KeyboardInterrupt is issued")
-
-    parser_monT.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
-    parser_monT.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-
+    parser_monT = subparserCmds.add_parser("monitorT", help="Uses the monitorTemperatures.py tool to record temperature data to a file until a KeyboardInterrupt is issued",parents = [parent_parser])
     parser_monT.add_argument("--extTempVFAT",action="store_true",help = "Use external PT100 sensors on VFAT3 hybrid; note only available in HV3b_V3 hybrids or later")
     parser_monT.add_argument("-t","--time",type=int,default=60,help="Time, in seconds, to wait in between readings")
-
     parser_monT.set_defaults(func=monitorT)
 
     # Create subparser for checkSbitMappingAndRate
-    parser_sbitMapNRate = subparserCmds.add_parser("sbitMapNRate", help="Uses the checkSbitMappingAndRate.py tool to investigate the sbit mapping and rate measurement in OH & CTP7 FPGA")
-
-    parser_sbitMapNRate.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
-    parser_sbitMapNRate.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-    
+    parser_sbitMapNRate = subparserCmds.add_parser("sbitMapNRate", help="Uses the checkSbitMappingAndRate.py tool to investigate the sbit mapping and rate measurement in OH & CTP7 FPGA", parents = [parent_parser])
     parser_sbitMapNRate.add_argument("-n","--nevts",type=int,default=100,help="Number of pulses for each channel")
     parser_sbitMapNRate.add_argument("-r","--rates",type=str,default="1e3,1e4,1e5,1e6,1e7",help="Comma separated list of floats that specifies the pulse rates to be considered")
     parser_sbitMapNRate.add_argument("-t","--time",type=int,default=1000,help="Acquire time per point in milliseconds")
     parser_sbitMapNRate.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
-
     parser_sbitMapNRate.set_defaults(func=checkSbitMappingAndRate)
 
     # Create subparser for sbitReadOut
-    parser_sbitReadOut = subparserCmds.add_parser("sbitReadOut", help="Uses the sbitReadOut.py tool to readout sbits")
-    
-    parser_sbitReadOut.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
-    parser_sbitReadOut.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
+    parser_sbitReadOut = subparserCmds.add_parser("sbitReadOut", help="Uses the sbitReadOut.py tool to readout sbits", parents = [parent_parser])
     parser_sbitReadOut.add_argument("time",type=int,help="time in seconds to acquire sbits for")
     
     parser_sbitReadOut.add_argument("--amc13local",action="store_true",help="Use AMC13 local trigger generator")
@@ -601,15 +606,10 @@ if __name__ == '__main__':
     parser_sbitReadOut.add_argument("-s","--shelf",type=int,default=None,help="uTCA shelf cardName is located in")
     parser_sbitReadOut.add_argument("--t3trig",action="store_true",help="Take L1A's from AMC13 T3 trigger input")
     parser_sbitReadOut.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
-    
     parser_sbitReadOut.set_defaults(func=sbitReadOut)
     
     # Create subparser for sbitThreshScanSeries
-    parser_sbitThresh = subparserCmds.add_parser("sbitThresh", help="Launches an sbit rate vs. CFG_THR_ARM_DAC scan using the sbitThreshScanParallel.py tool")
-    
-    parser_sbitThresh.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
-    parser_sbitThresh.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-    
+    parser_sbitThresh = subparserCmds.add_parser("sbitThresh", help="Launches an sbit rate vs. CFG_THR_ARM_DAC scan using the sbitThreshScanParallel.py tool", parents = [parent_parser])
     parser_sbitThresh.add_argument("-a","--arm",action="store_true",help="Use only the arming comparator instead of the CFD")
     parser_sbitThresh.add_argument("--series",action="store_true",help="Use the sbitThreshScanSeries.py tool instead; note the scan will take much longer")
     parser_sbitThresh.add_argument("--scanmin",type=int,default=0,help="Minimum CFG_THR_ARM_DAC")
@@ -617,44 +617,29 @@ if __name__ == '__main__':
     parser_sbitThresh.add_argument("--stepSize",type=int,default=1,help="Step size to use when scanning CFG_THR_ARM_DAC")
     parser_sbitThresh.add_argument("-t","--time",type=int,default=1000,help="Acquire time per point in milliseconds")
     parser_sbitThresh.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
-
     parser_sbitThresh.set_defaults(func=sbitThreshScan)
 
 
     # Create subparser for ultraScurve
-    parser_scurve = subparserCmds.add_parser("scurve", help="Launches an scurve using the ultraScurve.py tool")
-    
-    parser_scurve.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
-    parser_scurve.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-    
+    parser_scurve = subparserCmds.add_parser("scurve", help="Launches an scurve using the ultraScurve.py tool",parents = [parent_parser])
     parser_scurve.add_argument("--chMax",type=int,default=127,help="Specify maximum channel number to scan")
     parser_scurve.add_argument("--chMin",type=int,default=0,help="Specify minimum channel number to scan")
     parser_scurve.add_argument("-l","--latency",type=int,default=33,help="Setting of CFG_LATENCY register")
     parser_scurve.add_argument("-m","--mspl",type=int,default=3,help="Setting of CFG_PULSE_STRETCH register")
     parser_scurve.add_argument("-n","--nevts",type=int,default=100,help="Number of events for each scan position")
     parser_scurve.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
-
     parser_scurve.set_defaults(func=ultraScurve)
 
     # Create subparser for ultraThreshold
-    parser_threshold = subparserCmds.add_parser("thrDac", help="Launches an threshold using the ultraThreshold.py tool")
-    
-    parser_threshold.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
-    parser_threshold.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-    
+    parser_threshold = subparserCmds.add_parser("thrDac", help="Launches an threshold using the ultraThreshold.py tool", parents = [parent_parser])
     parser_threshold.add_argument("--chMax",type=int,default=127,help="Specify maximum channel number to scan")
     parser_threshold.add_argument("--chMin",type=int,default=0,help="Specify minimum channel number to scan")
     parser_threshold.add_argument("-n","--nevts",type=int,default=100,help="Number of events for each scan position")
     parser_threshold.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are taken from chamber_vfatMask of chamberInfo.py")
-
     parser_threshold.set_defaults(func=ultraThreshold)
     
     # Create subparser for trimChamberV3
-    parser_trim = subparserCmds.add_parser("trim", help="Launches a trim run using the trimChamberV3.py tool")
-    
-    parser_trim.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'")
-    parser_trim.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-    
+    parser_trim = subparserCmds.add_parser("trim", help="Launches a trim run using the trimChamberV3.py tool", parents = [parent_parser])
     parser_trim.add_argument("--chMax",type=int,default=127,help="Specify maximum channel number to scan")
     parser_trim.add_argument("--chMin",type=int,default=0,help="Specify minimum channel number to scan")
     parser_trim.add_argument("-l","--latency",type=int,default=33,help="Setting of CFG_LATENCY register")

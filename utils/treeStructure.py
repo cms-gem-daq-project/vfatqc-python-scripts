@@ -14,27 +14,27 @@ class gemGenericTree(object):
 
         self.gemTree = r.TTree(name,description)
 
-        self.amc = array( 'i', [ 0 ] )
-        self.gemTree.Branch( 'amc', self.amc, 'amc/I' )
-
-        self.link = array( 'i', [ 0 ] )
-        self.gemTree.Branch( 'link', self.link, 'link/I' )
-        
-        self.Nev = array( 'i', [ 0 ] )
-        self.gemTree.Branch( 'Nev', self.Nev, 'Nev/I' )
-        
-        self.utime = array( 'i', [ 0 ] )
-        self.gemTree.Branch( 'utime', self.utime, 'utime/i' )
-        
-        self.ztrim = array( 'f', [ 0 ] )
-        self.gemTree.Branch( 'ztrim', self.ztrim, 'ztrim/F' )
-
         self.calSelPol = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'calSelPol', self.calSelPol, 'calSelPol/I' )
 
         self.iref = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'iref', self.iref, 'iref/I' )
 
+        self.link = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'link', self.link, 'link/I' )
+        
+        self.Nev = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'Nev', self.Nev, 'Nev/I' )
+       
+        self.shelf = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'shelf', self.shelf, 'shelf/I' )
+
+        self.slot = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'slot', self.slot, 'slot/I' )
+        
+        self.utime = array( 'i', [ 0 ] )
+        self.gemTree.Branch( 'utime', self.utime, 'utime/i' )
+        
         self.vfatCH = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'vfatCH', self.vfatCH, 'vfatCH/I' )
         
@@ -62,20 +62,24 @@ class gemGenericTree(object):
         simplicity.
         """
 
-        if "amc" in kwargs:
-            self.amc[0] = kwargs["amc"]
+        if "iref" in kwargs:
+            self.iref[0] = kwargs["iref"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "Nev" in kwargs:
             self.Nev[0] = kwargs["Nev"]
+        if "shelf" in kwargs:
+            self.shelf[0] = kwargs["shelf"]
+        if "slot" in kwargs:
+            self.slot[0] = kwargs["slot"]
         if "utime" in kwargs:
             self.utime[0] = kwargs["utime"]
+        if "vfatCH" in kwargs:
+            self.vfatCH[0] = kwargs["vfatCH"]
         if "vfatID" in kwargs:
             self.vfatID[0] = kwargs["vfatID"]
         if "vfatN" in kwargs:
             self.vfatN[0] = kwargs["vfatN"]
-        if "ztrim" in kwargs:
-            self.ztrim[0] = kwargs["ztrim"]
 
         return
 
@@ -89,8 +93,9 @@ class gemGenericTree(object):
 
         self.link[0] = options.gtx
         self.Nev[0] = options.nevts
+        self.shelf[0] = options.shelf
+        self.slot[0] = options.slot
         self.utime[0] = time
-        self.ztrim[0] = options.ztrim
 
         return
 
@@ -185,6 +190,10 @@ class gemDacCalTreeStructure(gemGenericTree):
             self.nameY[0] = kwargs["nameY"]
         if "Nev" in kwargs:
             self.Nev[0] = kwargs["Nev"]
+        if "shelf" in kwargs:
+            self.shelf[0] = kwargs["shelf"]
+        if "slot" in kwargs:
+            self.slot[0] = kwargs["slot"]
         if "utime" in kwargs:
             self.utime[0] = kwargs["utime"]
         if (("vfatCH" in kwargs) and (not self.isGblDac)):
@@ -193,8 +202,6 @@ class gemDacCalTreeStructure(gemGenericTree):
             self.vfatID[0] = kwargs["vfatID"]
         if "vfatN" in kwargs:
             self.vfatN[0] = kwargs["vfatN"]
-        if "ztrim" in kwargs:
-            self.ztrim[0] = kwargs["ztrim"]
 
         if self.storeRoot:
             if "g_dacCal" in kwargs:
@@ -235,8 +242,14 @@ class  gemTemepratureVFATTree(gemGenericTree):
             self.adcTempIntRef[0] = kwargs["adcTempIntRef"]
         if "adcTempExtRef" in kwargs:
             self.adcTempExtRef[0] = kwargs["adcTempExtRef"]
+        if "iref" in kwargs:
+            self.iref[0] = kwargs["iref"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
+        if "shelf" in kwargs:
+            self.shelf[0] = kwargs["shelf"]
+        if "slot" in kwargs:
+            self.slot[0] = kwargs["slot"]
         if "utime" in kwargs:
             self.utime[0] = kwargs["utime"]
         if "vfatID" in kwargs:
@@ -256,12 +269,6 @@ class  gemTemepratureOHTree(gemGenericTree):
 
         gemGenericTree.__init__(self,name=name,description=description)
 
-        #self.ohBoardTemp = array('i', [ 0 for x in range(1,10) ])
-        #for boardTemp in range(1,10):
-        #    self.gemTree.Branch(
-        #            "ohBoardTemp{0}".format(boardTemp),
-        #            self.ohBoardTemp[boardTemp-1],
-        #            "ohBoardTemp{0}/I".format(boardTemp))
         self.ohBoardTemp1 = array('f', [0])
         self.gemTree.Branch('ohBoardTemp1',self.ohBoardTemp1,'ohBoardTemp1/F')
 
@@ -333,6 +340,10 @@ class  gemTemepratureOHTree(gemGenericTree):
             self.link[0] = kwargs["link"]
         if "scaTemp" in kwargs:
             self.scaTemp[0] = kwargs["scaTemp"]
+        if "shelf" in kwargs:
+            self.shelf[0] = kwargs["shelf"]
+        if "slot" in kwargs:
+            self.slot[0] = kwargs["slot"]
         if "utime" in kwargs:
             self.utime[0] = kwargs["utime"]
         if "vfatID" in kwargs:
@@ -427,6 +438,8 @@ class gemTreeStructure(gemGenericTree):
             self.calSF[0] = kwargs["calSF"]
         if "Dly" in kwargs:
             self.Dly[0] = kwargs["Dly"]
+        if "iref" in kwargs:
+            self.iref[0] = kwargs["iref"]
         if "isCurrentPulse" in kwargs:
             self.isCurrentPulse[0] = kwargs["isCurrentPulse"]
         if "isZCC" in kwargs:
@@ -445,6 +458,10 @@ class gemTreeStructure(gemGenericTree):
             self.Nev[0] = kwargs["Nev"]
         if "Nhits" in kwargs:
             self.Nhits[0] = kwargs["Nhits"]
+        if "shelf" in kwargs:
+            self.shelf[0] = kwargs["shelf"]
+        if "slot" in kwargs:
+            self.slot[0] = kwargs["slot"]
         if "trimDAC" in kwargs:
             self.trimDAC[0] = kwargs["trimDAC"]
         if "trimPolarity" in kwargs:
@@ -469,8 +486,6 @@ class gemTreeStructure(gemGenericTree):
             self.vth2[0] = kwargs["vth2"]
         if "vthr" in kwargs:
             self.vthr[0] = kwargs["vthr"]
-        if "ztrim" in kwargs:
-            self.ztrim[0] = kwargs["ztrim"]
 
         self.gemTree.Fill()
         return

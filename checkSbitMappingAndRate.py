@@ -17,6 +17,10 @@ if __name__ == '__main__':
                       help="V3 electroncis only. Value of the CFG_CAL_FS register", metavar="calSF")
     parser.add_option("-f", "--filename", type="string", dest="filename", default="SBitData.root",
                       help="Specify Output Filename", metavar="filename")
+    parser.add_option("--mspl", type="int", dest = "MSPL", default = 3,
+                      help="Specify MSPL. Must be in the range 0-7 (default is 3)", metavar="MSPL")
+    parser.add_option("--pulseDelay", type="int", dest = "pDel", default = 40,
+                      help="Specify time of pulse before L1A in bx", metavar="pDel")
     parser.add_option("--rates", type="string", dest = "rates", default = "1e3,1e4,1e5,1e6,1e7",
                       help="Comma separated list of floats that specifies the pulse rates to be considered",
                       metavar="rates")
@@ -42,9 +46,6 @@ if __name__ == '__main__':
     isCurrentPulse = (not options.voltageStepPulse)
 
     # Setup the output TTree
-    #from gempython.vfatqc.utils.treeStructure import gemTreeStructure
-    #gemData = gemTreeStructure('scurveTree','Tree Holding CMS GEM SCurve Data')
-    #gemData.setDefaults(options, int(time.time()))
     sbitDataTree = r.TTree("sbitDataTree","Tree Holding SBIT Mapping and Rate Data")
 
     evtNum = array( 'i', [ 0 ] )
@@ -94,15 +95,12 @@ if __name__ == '__main__':
     dictRateMap = { float(rate):calcL1Ainterval(float(rate)) for rate in options.rates.split(",")}
 
     # Open rpc connection to hw
-    if options.cardName is None:
-        print("you must specify the --cardName argument")
-        exit(os.EX_USAGE)
-
-    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
+    cardName = getCardName(options.shelf,options.slot)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
     print 'opened connection'
 
     # Check options
-    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
 

@@ -17,7 +17,8 @@ if __name__ == '__main__':
 
     # Positional arguments
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
-    parser.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'; if running on an AMC use 'local' instead", metavar="cardName")
+    parser.add_argument("shelf", type=int, help="uTCA shelf to access")
+    parser.add_argument("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
 
     # Optional arguments
@@ -45,7 +46,9 @@ if __name__ == '__main__':
         gemTempDataVFAT = gemTemepratureVFATTree()
 
     from gempython.tools.vfat_user_functions_xhal import *
-    vfatBoard = HwVFAT(args.cardName, 0, args.debug) # Set a dummy link for now
+    from gempython.vfatqc.utils.qcutilities import getCardName
+    cardName = getCardName(args.shelf,args.slot)
+    vfatBoard = HwVFAT(cardName, 0, args.debug) # Set a dummy link for now
     amcBoard = vfatBoard.parentOH.parentAMC
     print('opened connection')
 

@@ -11,7 +11,7 @@ if __name__ == '__main__':
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.utils.nesteddict import nesteddict as ndict
     from gempython.utils.wrappers import runCommand, envCheck
-    from gempython.gemplotting.mapping.chamberInfo import chamber_config, chamber_vfatDACSettings
+    from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.vfatqc.utils.qcoptions import parser
     from gempython.vfatqc.utils.scanUtils import launchSCurve
     
@@ -37,6 +37,8 @@ if __name__ == '__main__':
                       help="Specify the path where the scan data should be stored", metavar="dirPath")
     parser.add_option("--latency", type="int", dest = "latency", default = 37,
                       help="Specify Latency", metavar="latency")
+    parser.add_option("--mspl", type="int", dest = "MSPL", default = 3,
+                      help="Specify MSPL. Must be in the range 0-7 (default is 3)", metavar="MSPL")
     parser.add_option("--printSummary", action="store_true", dest="printSummary",
                       help="Prints a summary table describing the results before and after trimming",
                       metavar="printSummary")
@@ -74,12 +76,15 @@ if __name__ == '__main__':
     chMin = options.chMin
     chMax = options.chMax + 1
 
+    # Make the ohKey
+    ohKey = (options.shelf,options.slot,options.gtx)
+
     if options.dirPath == None: 
         envCheck('DATA_PATH')
         dataPath = os.getenv('DATA_PATH')
         startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
         print(startTime)
-        dirPath = '%s/%s/trim'%(dataPath,chamber_config[options.gtx])
+        dirPath = '%s/%s/trim'%(dataPath,chamber_config[ohKey])
         runCommand( ["unlink","%s/current"%dirPath] )
         runCommand( ['mkdir','-p','%s/%s'%(dirPath,startTime)])
         runCommand( ["ln","-s",'%s/%s'%(dirPath,startTime),'%s/current'%dirPath] )
@@ -89,11 +94,9 @@ if __name__ == '__main__':
         pass
   
     # Declare the hardware board
-    if options.cardName is None:
-        print("you must specify the --cardName argument")
-        exit(os.EX_USAGE)
-
-    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    from gempython.vfatqc.utils.qcutilities import getCardName
+    cardName = getCardName(options.shelf,options.slot)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
     print 'opened connection'
     
     import ROOT as r
@@ -164,7 +167,7 @@ if __name__ == '__main__':
                 # Scurve scan at this (trimVal, trimPol) setting
                 launchSCurve(
                         calSF = options.calSF,
-                        cardName = options.cardName,
+                        cardName = cardName,
                         chMax = options.chMax,
                         chMin = options.chMin,
                         debug = options.debug,
@@ -190,7 +193,7 @@ if __name__ == '__main__':
             # Scurve scan at this (trimVal, trimPol) setting
             launchSCurve(
                     calSF = options.calSF,
-                    cardName = options.cardName,
+                    cardName = cardName,
                     chMax = options.chMax,
                     chMin = options.chMin,
                     debug = options.debug,
@@ -219,6 +222,7 @@ if __name__ == '__main__':
     outFile = r.TFile("%s/TrimData.root"%(dirPath),"RECREATE")
     
     # Setup the output TTree
+    thisTime = int(time.time())
     from gempython.vfatqc.utils.treeStructure import gemDacCalTreeStructure
     trimDacArmTree = gemDacCalTreeStructure(
             name='trimDacArmTree',
@@ -226,7 +230,7 @@ if __name__ == '__main__':
             nameY='ARM_TRIM_AMPLITUDE',
             isGblDac=False,
             description='Tree holding arming comparator trim data')
-    trimDacArmTree.setDefaults(options, int(time.time()))
+    trimDacArmTree.setDefaults(options, thisTime)
 
     calDacCalTree = gemDacCalTreeStructure(
             name='calDacCalibration',
@@ -234,6 +238,7 @@ if __name__ == '__main__':
             nameY='charge #left(fC#right)',
             storeRoot=True,
             description='Tree holding CFG_CAL_DAC Calibration')
+    calDacCalTree.setDefaults(options, thisTime)
 
     armDacCalTree = gemDacCalTreeStructure(
             name='thrArmDacCalibration',
@@ -241,6 +246,7 @@ if __name__ == '__main__':
             nameY='scurve mean #left(fC#right)',
             storeRoot=True,
             description='Tree holding CFG_THR_ARM_DAC Calibration;')
+    armDacCalTree.setDefaults(options, thisTime)
 
     print("Determining trimDAC to fC Calibration")
     dict_cal_trimDAC2fC_graph = ndict() # dict_cal_trimDAC2fC[vfat][chan] = TGraphErrors object
@@ -377,7 +383,7 @@ if __name__ == '__main__':
     # Scurve scan at this (trimVal, trimPol) setting
     launchSCurve(
             calSF = options.calSF,
-            cardName = options.cardName,
+            cardName = cardName,
             chMax = options.chMax,
             chMin = options.chMin,
             debug = options.debug,

@@ -21,10 +21,10 @@ parser.add_option("--chMax", type="int", dest = "chMax", default = 127,
                   help="Specify maximum channel number to scan", metavar="chMax")
 parser.add_option("-f", "--filename", type="string", dest="filename", default="SBitRateData.root",
                   help="Specify Output Filename", metavar="filename")
+parser.add_option("--mspl", type="int", dest = "MSPL", default = 3,
+                  help="Specify MSPL. Must be in the range 0-7 (default is 3)", metavar="MSPL")
 parser.add_option("--perchannel", action="store_true", dest="perchannel",
                   help="Run a per-channel sbit rate scan", metavar="perchannel")
-#parser.add_option("--zcc", action="store_true", dest="scanZCC",
-#                  help="V3 Electronics only, scan the threshold on the ZCC instead of the ARM comparator", metavar="scanZCC")
 
 parser.set_defaults(stepSize=2)
 (options, args) = parser.parse_args()
@@ -71,11 +71,9 @@ Date = startTime
 mask = options.vfatmask
 
 try:
-    if options.cardName is None:
-        print("you must specify the --cardName argument")
-        exit(os.EX_USAGE)
-
-    vfatBoard = HwVFAT(options.cardName, options.gtx, options.debug)
+    from gempython.vfatqc.utils.qcutilities import getCardName
+    cardName = getCardName(options.shelf,options.slot)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
     print 'opened connection'
 
     if vfatBoard.parentOH.parentAMC.fwVersion < 3:

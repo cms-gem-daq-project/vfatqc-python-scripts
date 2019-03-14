@@ -79,6 +79,8 @@ def dacScanAllLinks(args, calTree, vfatBoard):
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
                 iref = irefVals[ohN][vfat],
                 link = ohN,
+                shelf = amcBoard.getShelf(),
+                slot = amcBoard.getSlot(),
                 vfatID = vfatIDvals[ohN][vfat],
                 vfatN = vfat
                 )
@@ -108,6 +110,9 @@ def dacScanSingleLink(args, calTree, vfatBoard):
     calTree - instance of gemDacCalTreeStructure
     vfatBoard - instace of HwVFAT
     """
+
+    # Get the AMC
+    amcBoard = vfatBoard.parentOH.parentAMC
 
     # Get DAC value
     dacSelect = args.dacSelect
@@ -143,6 +148,8 @@ def dacScanSingleLink(args, calTree, vfatBoard):
         raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
 
     # Store Data
+    calTree.shelf[0]= amcBoard.getShelf()
+    calTree.slot[0] = amcBoard.getSlot()
     calTree.link[0] = vfatBoard.parentOH.link
 
     #try:
@@ -223,6 +230,8 @@ def launchSCurve(**kwargs):
     mspl = 3
     nevts = 100
     setChanRegs = False
+    shelf = None
+    slot = None
     vfatmask = 0x0
     voltageStepPulse = False
     trimARM = None
@@ -231,10 +240,14 @@ def launchSCurve(**kwargs):
     trimZCCPol = None
 
     # Get defaults from kwargs
+    from gempython.vfatqc.utils.qcutilities import getGeoInfoFromCardName 
     if "calSF" in kwargs:
         calSF = kwargs["calSF"]
     if "cardName" in kwargs:
         cardName = kwargs["cardName"]
+        geoInfo = getGeoInfoFromCardName(cardName)
+        shelf = geoInfo["shelf"]
+        slot = geoInfo["slot"]
     if "chMask" in kwargs:
         chMask = kwargs["chMask"]
     if "chMax" in kwargs:
@@ -259,6 +272,10 @@ def launchSCurve(**kwargs):
         nevts = kwargs["nevts"]
     if "setChanRegs" in kwargs:
         setChanRegs = kwargs["setChanRegs"]
+    if "shelf" in kwargs:
+        shelf = kwargs["shelf"]
+    if "slot" in kwargs:
+        slot = kwargs["slot"]
     if "vfatmask" in kwargs:
         vfatmask = kwargs["vfatmask"]
     if "voltageStepPulse" in kwargs:
@@ -274,8 +291,8 @@ def launchSCurve(**kwargs):
 
     # Check minimum arguments
     import os
-    if cardName is None:
-        raise Exception("launchSCurve(): You must provide either an AMC network alias (e.g. 'eagle60') or an AMC ip address.",os.EX_USAGE)
+    if (not ((shelf is not None) and (slot is not None))):
+        raise Exception("launchSCurve(): You must provide either an AMC network alias (e.g. 'eagle60'), an AMC ip address, or a geographic address (e.g. 'gem-shelf01-amc04')",os.EX_USAGE)
     if filename is None:
         raise Exception("launchSCurve(): You must provide a filename for this scurve. Exiting", os.EX_USAGE)
 
@@ -294,7 +311,8 @@ def launchSCurve(**kwargs):
 
     # Make the command to be launched
     cmd = [ "ultraScurve.py",
-            "--cardName=%s"%(cardName),
+            "--shelf=%i"%(shelf),
+            "--slot=%i"%(slot),
             "-g%d"%(link),
             "--chMin=%i"%(chMin),
             "--chMax=%i"%(chMax),
@@ -325,7 +343,7 @@ def launchSCurve(**kwargs):
     
     return
 
-def makeScanDir(ohN, scanType, startTime):
+def makeScanDir(slot, ohN, scanType, startTime, shelf=1):
     """
     Makes a directory to store the output scan data and returns the directory path
 
@@ -334,10 +352,12 @@ def makeScanDir(ohN, scanType, startTime):
     startTime - an instance of a datetime
     """
 
+    ohKey = (shelf,slot,ohN)
+
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.gemplotting.utils.anautilities import getDirByAnaType
-    if ohN in chamber_config.keys():
-        dirPath = getDirByAnaType(scanType, chamber_config[ohN])
+    if ohKey in chamber_config.keys():
+        dirPath = getDirByAnaType(scanType, chamber_config[ohKey])
     else:
         dirPath = getDirByAnaType(scanType, "")
 

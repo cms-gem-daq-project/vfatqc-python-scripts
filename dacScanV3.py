@@ -24,7 +24,8 @@ if __name__ == '__main__':
 
     # Positional arguments
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
-    parser.add_argument("cardName", type=str, help="hostname of the AMC you are connecting too, e.g. 'eagle64'; if running on an AMC use 'local' instead", metavar="cardName")
+    parser.add_argument("shelf", type=int, help="uTCA shelf to access")
+    parser.add_argument("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
     
     # Optional arguments
@@ -45,10 +46,6 @@ if __name__ == '__main__':
             help="VFATs to be masked in scan & analysis applications (e.g. 0xFFFFF masks all VFATs)")
     args = parser.parse_args()
 
-    if args.cardName is None:
-        print("you must specify the --cardName argument")
-        exit(os.EX_USAGE)
-
     if ((args.dacSelect not in maxVfat3DACSize.keys()) and (args.dacSelect is not None)):
         print("Input DAC selection {0} not understood".format(args.dacSelect))
         print("possible options include:")
@@ -56,8 +53,10 @@ if __name__ == '__main__':
         exit(os.EX_USAGE)
 
     # Open rpc connection to hw
+    from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
+    cardName = getCardName(args.shelf,args.slot)
     from gempython.tools.vfat_user_functions_xhal import *
-    vfatBoard = HwVFAT(args.cardName, 0, args.debug) # Assign link 0; we will update later
+    vfatBoard = HwVFAT(cardName, 0, args.debug) # Assign link 0; we will update later
     print 'opened connection'
     amcBoard = vfatBoard.parentOH.parentAMC
     if amcBoard.fwVersion < 3:
@@ -65,7 +64,6 @@ if __name__ == '__main__':
         exit(os.EX_USAGE)
     
     # Check options
-    from gempython.vfatqc.utils.qcutilities import inputOptionsValid
     if not inputOptionsValid(args, amcBoard.fwVersion):
         exit(os.EX_USAGE)
         pass
