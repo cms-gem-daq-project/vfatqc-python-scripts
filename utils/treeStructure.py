@@ -147,8 +147,6 @@ class gemDacCalTreeStructure(gemGenericTree):
         # Set the channel number to 128 Normally 0 to 127
         if self.isGblDac:
             self.vfatCH[0] = 128 
-            #branch_vfatCH = self.gemTree.GetBranch('vfatCH')
-            #self.gemTree.GetListOfBranches().Remove(branch_vfatCH)
 
         if self.storeRoot:
             self.g_dacCal = r.TGraphErrors()
@@ -212,7 +210,62 @@ class gemDacCalTreeStructure(gemGenericTree):
         self.gemTree.Fill()
         return
 
-class  gemTemepratureVFATTree(gemGenericTree):
+class gemSbitRateTreeStructure(gemGenericTree):
+    def __init__(self, nameX, treeName="rateTree", description="Generic GEM Tree for measuring SBIT Rate vs. Arbitrary Registers"):
+        """
+        nameX       Name of the register being scanned against, e.g. 'CFG_THR_ARM_DAC'
+        treeName    TName of the TTree
+        description Phrase describing the TTree
+        """
+        
+        gemGenericTree.__init__(self,name=treeName,description=description)
+
+        self.dacValX = array( 'f', [0] )
+        self.gemTree.Branch( 'dacValX', self.dacValX, 'dacValX/F')
+        
+        self.nameX = r.vector('string')()
+        self.nameX.push_back(nameX)
+        self.gemTree.Branch( 'nameX', self.nameX)
+
+        self.rate = array( 'd', [ 0. ] )
+        self.gemTree.Branch( 'rate', rate, 'rate/D' )
+
+        return
+
+    def fill(self, **kwargs):
+        """
+        Updates the values stored in the arrays gemTree's branchs map to,
+        then it fills the tree.
+
+        The keyword is assumed to the same as the variable name for 
+        simplicity.
+        """
+        
+        if "dacValX" in kwargs:
+            self.dacValX[0] = kwargs["dacValX"]
+        if "link" in kwargs:
+            self.link[0] = kwargs["link"]
+        if "nameX" in kwargs:
+            self.nameX[0] = kwargs["nameX"]
+        if "rate" in kwargs:
+            self.rate[0] = kwargs["rate"]
+        if "shelf" in kwargs:
+            self.shelf[0] = kwargs["shelf"]
+        if "slot" in kwargs:
+            self.slot[0] = kwargs["slot"]
+        if "utime" in kwargs:
+            self.utime[0] = kwargs["utime"]
+        if "vfatCH" in kwargs:
+            self.vfatCH[0] = kwargs["vfatCH"]
+        if "vfatID" in kwargs:
+            self.vfatID[0] = kwargs["vfatID"]
+        if "vfatN" in kwargs:
+            self.vfatN[0] = kwargs["vfatN"]
+
+        self.gemTree.Fill()
+        return
+
+class gemTemepratureVFATTree(gemGenericTree):
     def __init__(self,name="VFATTemperatureData",description="VFAT Temperature Data as a function of time"):
         """
         name        TName of the TTree
@@ -313,9 +366,6 @@ class  gemTemepratureOHTree(gemGenericTree):
         simplicity.
         """
 
-        #for boardTemp in range(1,10):
-        #    if "ohBoardTemp{0}".format(boardTemp) in kwargs:
-        #        self.ohBoardTemp[boardTemp-1] = kwargs["ohBoardTemp{0}".format(boardTemp)]
         if "ohBoardTemp1" in kwargs:
             self.ohBoardTemp1[0] = kwargs["ohBoardTemp1"]
         if "ohBoardTemp2" in kwargs:
