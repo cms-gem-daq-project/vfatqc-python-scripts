@@ -21,29 +21,17 @@ if __name__ == '__main__':
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     parser.add_argument("shelf", type=int, help="uTCA shelf to access")
     parser.add_argument("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
-    parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
+    parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered")
     
     # Optional arguments
-    parser.add_argument("--arm", action="store_true", dest="scanARM",
-                      help="Use only the arming comparator instead of the CFD", metavar="scanARM")
-    parser.add_argument("--chMin", type="int", dest = "chMin", default = 0,
-                      help="Specify minimum channel number to scan", metavar="chMin")
-    parser.add_argument("--chMax", type="int", dest = "chMax", default = 127,
-                      help="Specify maximum channel number to scan", metavar="chMax")
-    parser.add_argument("-d", "--debug", action="store_true", dest="debug",
-                      help="print extra debugging information", metavar="debug")
-    parser.add_argument("-f", "--filename", type="string", dest="filename", default="SBitRateData.root",
-                      help="Specify Output Filename", metavar="filename")
-    parser.add_argument("--perchannel", action="store_true", dest="perchannel",
-                      help="Run a per-channel sbit rate scan", metavar="perchannel")
-    parser.add_argument("--scanmin", type="int", dest="scanmin",
-                      help="Minimum value of scan parameter", metavar="scanmin", default=0)
-    parser.add_argument("--scanmax", type="int", dest="scanmax",
-                      help="Maximum value of scan parameter", metavar="scanmax", default=254)
-    parser.add_argument("--stepSize", type="int", dest="stepSize", 
-                      help="Supply a step size to the scan from scanmin to scanmax", metavar="stepSize", default=1)
-    
-    parser.set_defaults(stepSize=2)
+    parser.add_argument("--chMin", type=int, help="Specify minimum channel number to scan", default=0)
+    parser.add_argument("--chMax", type=int, help="Specify maximum channel number to scan", default=127)
+    parser.add_argument("-d", "--debug", action="store_true", help="print extra debugging information")
+    parser.add_argument("-f", "--filename", type=str, help="Specify Output Filename", default="SBitRateData.root")
+    parser.add_argument("--perchannel", action="store_true", help="Run a per-channel sbit rate scan")
+    parser.add_argument("--scanmin", type=int, help="Minimum value of scan parameter", default=0)
+    parser.add_argument("--scanmax", type=int, help="Maximum value of scan parameter", default=255)
+    parser.add_argument("--stepSize", type=int, help="Supply a step size to the scan from scanmin to scanmax", default=1)
     args = parser.parse_args()
     
     from gempython.utils.gemlogger import printRed, printYellow
@@ -57,93 +45,6 @@ if __name__ == '__main__':
         printYellow("Current value %i will roll over to 0"%(args.scanmax))
         printYellow("Seting scanmax to 255")
         args.scanmax=255
-    
-    # Open rpc connection to hw
-    from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
-    cardName = getCardName(args.shelf,args.slot)
-    from gempython.tools.vfat_user_functions_xhal import *
-    vfatBoard = HwVFAT(cardName, 0, args.debug) # Assign link 0; we will update later
-    print 'opened connection'
-    amcBoard = vfatBoard.parentOH.parentAMC
-    if amcBoard.fwVersion < 3:
-        print("SBIT Threshold Scan of v2b electronics is not supported, exiting!!!")
-        exit(os.EX_USAGE)
-
-    # Check options
-    if not inputOptionsValid(args, amcBoard.fwVersion):
-        exit(os.EX_USAGE)
-        pass
-
-    # Make output files
-    import ROOT as r
-    filename = args.filename
-    myF = r.TFile(filename,'recreate')
-    myT = r.TTree('rateTree','Tree Holding CMS GEM Sbit Rate Data')
-    
-    armDAC = array( 'i', [ 0 ] )
-    myT.Branch( 'armDAC', armDAC, 'armDAC/I' )
-
-    link = array( 'i', [ 0 ] )
-    myT.Branch( 'link', link, 'link/I' )
-
-    Rate = array( 'd', [ 0. ] )
-    myT.Branch( 'Rate', Rate, 'Rate/D' )
-    
-    shelf = array( 'i', [ 0 ] )
-    gemTree.Branch( 'shelf', self.shelf, 'shelf/I' )
-
-    slot = array( 'i', [ 0 ] )
-    gemTree.Branch( 'slot', self.slot, 'slot/I' )
-
-    vfatN = array( 'i', [ 0 ] )
-    myT.Branch( 'vfatN', vfatN, 'vfatN/I' )
-    
-    vfatCH = array( 'i', [ 0 ] )
-    myT.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
-        
-    vfatID = array( 'L', [0] )
-    gemTree.Branch( 'vfatID', self.vfatID, 'vfatID/i' ) #Hex Chip ID of VFAT
-    
-    utime = array( 'i', [ 0 ] )
-    myT.Branch( 'utime', utime, 'utime/I' )
-    
-    import datetime,time
-    utime[0] = int(time.time())
-    startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
-    print startTime
-    Date = startTime
-    
-    # Determine the per OH vfatmask
-    ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
-
-    # Setup frontends before measurement
-    for ohN in range(0, amcBoard.nOHs+1):
-        if( not ((args.ohMask >> ohN) & 0x1)):
-            continue
-                
-        # update the OH in question
-        vfatBoard.parentOH.link = ohN
-    
-        #Place chips into run mode
-        vfatBoard.setRunModeAll(ohVFATMaskArray[ohN], True, args.debug)
-    
-    #Store original CFG_SEL_COMP_MODE
-    vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
-    selCompVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-        range(0,24)))
-    
-    #Store original CFG_FORCE_EN_ZCC
-    vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", mask)
-    forceEnZCCVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-        range(0,24)))
-    
-    if args.scanARM: #Use arming comparator
-        isCFD[0]=0
-        vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE",0x1,mask)
-        vfatBoard.writeAllVFATs("CFG_FORCE_EN_ZCC",0x0,mask)
-    else:               #Use CFD Mode (default)
-        vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE",0x0,mask)
-        vfatBoard.writeAllVFATs("CFG_FORCE_EN_ZCC",0x0,mask)
     
     #determine total time in hours
     if args.perchannel:
@@ -166,126 +67,47 @@ if __name__ == '__main__':
                 break;
             else:
                 performTest=raw_input("input not understood, please enter 'yes' or 'no'")
+
+    # Open rpc connection to hw
+    from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
+    cardName = getCardName(args.shelf,args.slot)
+    from gempython.tools.vfat_user_functions_xhal import *
+    vfatBoard = HwVFAT(cardName, 0, args.debug) # Assign link 0; we will update later
+    print 'opened connection'
+    amcBoard = vfatBoard.parentOH.parentAMC
+    if amcBoard.fwVersion < 3:
+        print("SBIT Threshold Scan of v2b electronics is not supported, exiting!!!")
+        exit(os.EX_USAGE)
+
+    # Check options
+    if not inputOptionsValid(args, amcBoard.fwVersion):
+        exit(os.EX_USAGE)
+        pass
+
+    # Make output files
+    import ROOT as r
+    outF = r.TFile(args.filename,'recreate')
+    from gempython.vfatqc.utils.treeStructure import gemSbitRateTreeStructure
+    rateTree = gemDacCalTreeStructure(nameX=scanReg)
     
-    #Perform Scan
-    scanReg = "THR_ARM_DAC"
-    scanDataSizeVFAT = (args.scanmax-args.scanmin+1)/args.stepSize
-    scanDataDAC = (c_uint32 * scanDataSizeVFAT)()
-    scanDataRate = (c_uint32 * scanDataSizeVFAT)()
-    scanDataRatePerVFAT = (c_uint32 * (24 * scanDataSizeVFAT))()
-    
+    import datetime,time
+    utime[0] = int(time.time())
+    rateTree.utime[0] = int(time.time())
+
     # Scan over all channels or just a channel OR???
+    from gempython.vfatqc.utils.scanUtils import sbitRateScanAllLinks
     if args.perchannel:
         for chan in range(args.chMin,args.chMax+1):
-            print("scanning %s for all VFATs channel %i"%(scanReg, chan))
-    
-            # Perform the scan
-            rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=mask, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT, 
-                                                             dacMin=args.scanmin, dacMax=args.scanmax, stepSize=args.stepSize, 
-                                                             chan=chan, scanReg=scanReg, isParallel=True)
-             
-            if rpcResp != 0:
-                print("sbit rate scan for all VFATs channel %i failed"%(chan))
-                #raise Exception('RPC response was non-zero, sbit rate scan for VFAT%i failed'%vfat)
-                continue #For now just skip instead of crash
-    
-            #Store Output Data - Per VFAT
-            if args.debug:
-                print("VFAT\tChan\tDAC\tRate")
-            for vfat in range(0,24):
-                for idx in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
-                    try:
-                        Rate[0] = scanDataRatePerVFAT[idx]
-                        vfatCH[0] = chan
-                        vfatN[0] = vfat
-                        vth[0] = scanDataDAC[idx-vfat*scanDataSizeVFAT]
-    
-                        if args.debug:
-                            print("%i\t%i\t%i\t%i"%(vfat,chan,scanDataDAC[idx-vfat*scanDataSizeVFAT],scanDataRatePerVFAT[idx]))
-                    except IndexError:
-                        Rate[0] = -99
-                        vfatCH[0]= chan
-                        vfatN[0] = vfat
-                        vth[0] = args.scanmin+1+args.stepSize*(idx-vfat*scanDataSizeVFAT)
-                        print("Unable to index data for VFAT%i idx %i expected DAC val"%(vfat, idx, vth[0]))
-                    finally:
-                        myT.Fill()
-    
-            # Store Output Data - Overall
-            for idx in range(0, scanDataSizeVFAT):
-                try:
-                    Rate[0] = scanDataRate[idx]
-                    vfatCH[0] = chan
-                    vfatN[0] = 24
-                    vth[0] = scanDataDAC[idx]
-                except IndexError:
-                    Rate[0] = -99
-                    vfatCH[0] = chan
-                    vfatN[0] = 24
-                    vth[0] = args.scanmin+1+args.stepSize*(idx)
-                finally:
-                    myT.Fill()
-    
-            myT.AutoSave("SaveSelf")
+            sbitRateScanAllLinks(args,rateTree,vfatBoard,chan=chan)
+            pass
+        pass
     else:
-        print("scanning %s for all VFATs channel OR"%(scanReg))
-        
-        # Perform the scan
-        rpcResp = vfatBoard.parentOH.performSBitRateScan(maskOh=mask, outDataDacVal=scanDataDAC, outDataTrigRate=scanDataRate, outDataTrigRatePerVFAT=scanDataRatePerVFAT,
-                                                         dacMin=args.scanmin, dacMax=args.scanmax, stepSize=args.stepSize, 
-                                                         scanReg=scanReg, isParallel=True)
-    
-        if rpcResp != 0:
-            print("sbit rate scan failed")
-            raise Exception('RPC response was non-zero, sbit rate scan failed')
-    
-        # Store Output Data - Per VFAT
-        if args.debug:
-            print("VFAT\tidx\tDAC\tRate")
-        for vfat in range(0,24):
-            for idx in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
-                try:
-                    Rate[0] = scanDataRatePerVFAT[idx]
-                    vfatCH[0]=128
-                    vfatN[0] = vfat
-                    vth[0] = scanDataDAC[idx-vfat*scanDataSizeVFAT]
-    
-                    if args.debug:
-                        print("%i\t%i\t%i\t%i"%(vfat,idx,scanDataDAC[idx-vfat*scanDataSizeVFAT],scanDataRatePerVFAT[idx]))
-                except IndexError:
-                    Rate[0] = -99
-                    vfatCH[0]=128
-                    vfatN[0] = vfat
-                    vth[0] = args.scanmin+1+args.stepSize*(idx-vfat*scanDataSizeVFAT)
-                    print("Unable to index data for VFAT%i idx %i expected DAC val %i"%(vfat, idx, vth[0]))
-                finally:
-                    myT.Fill()
-        
-            # Store Output Data - Overall
-            for idx in range(0, scanDataSizeVFAT):
-                try:
-                    Rate[0] = scanDataRate[idx]
-                    vfatCH[0] = 128
-                    vfatN[0] = 24
-                    vth[0] = scanDataDAC[idx]
-                except IndexError:
-                    Rate[0] = -99
-                    vfatCH[0] = 128
-                    vfatN[0] = 24
-                    vth[0] = args.scanmin+1+args.stepSize*(idx)
-                    print("Unable to index data for Overall Case, idx %i expected DAC val %i"%(idx, vth[0]))
-                finally:
-                    myT.Fill()
-        
-        myT.AutoSave("SaveSelf")
-    
-    # Take chips out of run mode
-    vfatBoard.setRunModeAll(mask, False, args.debug)
-    
-    # Return to original comparator settings
-    for key,val in selCompVals_orig.iteritems():
-        if (mask >> key) & 0x1: continue
-        vfatBoard.writeVFAT(key,"CFG_SEL_COMP_MODE",val)
-    for key,val in forceEnZCCVals_orig.iteritems():
-        if (mask >> key) & 0x1: continue
-        vfatBoard.writeVFAT(key,"CFG_FORCE_EN_ZCC",val)
+        sbitRateScanAllLinks(args,rateTree,vfatBoard)
+        pass
+
+    outF.cd()
+    rateTree.autoSave("SaveSelf")
+    rateTree.write()
+    outF.Close()
+
+    print("Scan Completed. Goodbye!")
