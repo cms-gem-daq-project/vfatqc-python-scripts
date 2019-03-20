@@ -88,10 +88,9 @@ if __name__ == '__main__':
     import ROOT as r
     outF = r.TFile(args.filename,'recreate')
     from gempython.vfatqc.utils.treeStructure import gemSbitRateTreeStructure
-    rateTree = gemDacCalTreeStructure(nameX=scanReg)
+    rateTree = gemSbitRateTreeStructure(nameX="CFG_THR_ARM_DAC")
     
-    import datetime,time
-    utime[0] = int(time.time())
+    import time
     rateTree.utime[0] = int(time.time())
 
     # Scan over all channels or just a channel OR???

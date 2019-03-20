@@ -407,6 +407,15 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
 
     # Determine the per OH vfatmask
     ohVFATMaskArray = amcBoard.getMultiLinkVFATMask(args.ohMask)
+    if args.debug:
+        for ohN in range(0,amcBoard.nOHs):
+            # Skip masked OH's
+            if( not ((args.ohMask >> ohN) & 0x1)):
+                continue
+
+            print("vfatMask for OH{0} is 0x{1:x}".format(ohN,ohVFATMaskArray[ohN]))
+            pass
+        pass
 
     #print("Getting CHIP IDs of all VFATs")
     vfatIDvals = {}
@@ -436,10 +445,11 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
         pass
 
     # Make the containers
-    arraySize = amcBoard.nOHs * (args.scanmax-args.scanmin+1)/args.stepSize
+    nDACValues = (args.scanmax-args.scanmin+1)/args.stepSize
+    arraySize = amcBoard.nOHs * nDACValues
     scanDataDAC = (c_uint32 * arraySize)()
     scanDataRate = (c_uint32 * arraySize)()
-    scanDataRatePerVFAT = (c_uint32 * 24 * arraySize)() # per VFAT
+    scanDataRatePerVFAT = (c_uint32 * (24 * arraySize))() # per VFAT
 
     # Perform SBIT Rate Scan vs. scanReg
     if chan==128:
@@ -473,40 +483,47 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
 
         # Fill per VFAT rate
         for vfat in range(0,24):
-            for idx in range(ohN*vfat*scanDataSizeVFAT,ohN*(vfat+1)*scanDataSizeVFAT):
+            # Skip masked VFATs
+            if ((ohVFATMaskArray[ohN] >> vfat) & 0x1):
+                continue
 
-            rateTree.fill(
-                    dacValX = scanDataDAC[idx],
-                    link = ohN,
-                    nameX = scanReg,
-                    rate = scanDataRatePerVFAT[idx],
-                    shelf = amcBoard.getShelf(),
-                    slot = amcBoard.getSlot(),
-                    vfatCH = chan,
-                    vfatID = vfatIDvals[ohN][vfat],
-                    vfatN = vfat
-                    )
-            if args.debug:
-                print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} |".format(
-                        rateTree.link[0],
-                        rateTree.vfatN[0],
-                        rateTree.vfatID[0],
-                        rateTree.vfatCH[0],
-                        rateTree.nameX[0],
-                        rateTree.dacValX[0],
-                        rateTree.rate[0]
+            for dacVal in range(args.scanmin,args.scanmax+1,args.stepSize):
+                idxVFAT = ohN*24*nDACValues + vfat*nDACValues+(dacVal-args.scanmin)/args.stepSize;
+                idxDAC = ohN*nDACValues + (dacVal-args.scanmin)/args.stepSize
+                rateTree.fill(
+                        dacValX = scanDataDAC[idxDAC],
+                        link = ohN,
+                        nameX = scanReg,
+                        rate = scanDataRatePerVFAT[idxVFAT],
+                        shelf = amcBoard.getShelf(),
+                        slot = amcBoard.getSlot(),
+                        vfatCH = chan,
+                        vfatID = vfatIDvals[ohN][vfat],
+                        vfatN = vfat
                         )
-                    )
+                if args.debug:
+                    print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} |".format(
+                            rateTree.link[0],
+                            rateTree.vfatN[0],
+                            rateTree.vfatID[0],
+                            rateTree.vfatCH[0],
+                            rateTree.nameX[0],
+                            rateTree.dacValX[0],
+                            rateTree.rate[0]
+                            )
+                        )
+                    pass
                 pass
             pass
 
         # Fill overall rate
-        for idx in range(0,arraySize):
+        for dacVal in range(args.scanmin,args.scanmax+1,args.stepSize):
+            idxDAC = ohN*nDACValues + (dacVal-args.scanmin)/args.stepSize
             rateTree.fill(
-                    dacValX = scanDataDAC[idx],
+                    dacValX = scanDataDAC[idxDAC],
                     link = ohN,
                     nameX = scanReg,
-                    rate = scanDataRatePerVFAT[idx],
+                    rate = scanDataRate[idxDAC],
                     shelf = amcBoard.getShelf(),
                     slot = amcBoard.getSlot(),
                     vfatCH = chan,

@@ -228,7 +228,7 @@ class gemSbitRateTreeStructure(gemGenericTree):
         self.gemTree.Branch( 'nameX', self.nameX)
 
         self.rate = array( 'd', [ 0. ] )
-        self.gemTree.Branch( 'rate', rate, 'rate/D' )
+        self.gemTree.Branch( 'rate', self.rate, 'rate/D' )
 
         return
 
