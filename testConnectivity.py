@@ -371,8 +371,8 @@ def testConnectivity(args):
         printGreen("Writing Found Phases to frontend")
         setPhaseAllOHs(args.cardName, dict_phases2Save, args.ohMask, nOHs, args.debug)
         vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET",0x1)
-        
-        if (failed2FindGoodPhase):
+
+        if (failed2FindGoodPhase and not args.ignoreSyncErrs):
             printRed("GBT Phase Scans Failed to Find Proper Phases")
             printRed("List of Bad (OH,VFAT) pairs: {0}".format(listOfBadVFATs))
             printYellow("\tTry checking:")
@@ -381,6 +381,9 @@ def testConnectivity(args):
             printYellow("\t\t3. VDD on VFATs mentioned above is at least 1.20V")
             printRed("Connectivity Testing Failed")
             return
+        if (not failed2FindGoodPhase and args.ignoreSyncErrs):
+            printRed("Failed to find proper phases for some (OH,VFAT) pairs.")
+            printYellow("But I have been told to ignore sync errors")
         else:
             printGreen("GBT Phases Successfully Writtent to Frontend")
             pass
