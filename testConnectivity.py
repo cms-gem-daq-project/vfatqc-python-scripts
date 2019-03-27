@@ -351,7 +351,8 @@ def testConnectivity(args):
         # Write Found GBT Phase Values
         printGreen("Writing Found Phases to frontend")
         setPhaseAllOHs(args.cardName, dict_phases2Save, args.ohMask, nOHs, args.debug)
-
+        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET",0x1)
+        
         if (failed2FindGoodPhase):
             printRed("GBT Phase Scans Failed to Find Proper Phases")
             printRed("List of Bad (OH,VFAT) pairs: {0}".format(listOfBadVFATs))
