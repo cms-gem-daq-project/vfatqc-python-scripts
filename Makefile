@@ -56,7 +56,6 @@ preprpm: default
 	@cp -rf run_scans.py   $(ScriptDir)
 	@cp -rf sbitReadOut.py $(ScriptDir)
 	@cp -rf sbitThreshScanParallel.py $(ScriptDir)
-	@cp -rf sbitThreshScanSeries.py $(ScriptDir)
 	@cp -rf testConnectivity.py $(ScriptDir)
 	@cp -rf trimChamber.py $(ScriptDir)
 	@cp -rf trimChamberV3.py $(ScriptDir)

@@ -29,7 +29,6 @@ if __name__ == '__main__':
     parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
     
     # Optional arguments
-    from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     parser.add_argument("-d","--debug", action="store_true", dest="debug",
             help = "Print additional debugging information")
     parser.add_argument("--dacSelect", type=int, dest="dacSelect",
@@ -46,9 +45,10 @@ if __name__ == '__main__':
             help="VFATs to be masked in scan & analysis applications (e.g. 0xFFFFF masks all VFATs)")
     args = parser.parse_args()
 
+    from gempython.utils.gemlogger import printRed
     if ((args.dacSelect not in maxVfat3DACSize.keys()) and (args.dacSelect is not None)):
-        print("Input DAC selection {0} not understood".format(args.dacSelect))
-        print("possible options include:")
+        printRed("Input DAC selection {0} not understood".format(args.dacSelect))
+        printRed("possible options include:")
         printDACOptions()
         exit(os.EX_USAGE)
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     print 'opened connection'
     amcBoard = vfatBoard.parentOH.parentAMC
     if amcBoard.fwVersion < 3:
-        print("DAC Scan of v2b electronics is not supported, exiting!!!")
+        printRed("DAC Scan of v2b electronics is not supported, exiting!!!")
         exit(os.EX_USAGE)
     
     # Check options
