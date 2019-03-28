@@ -71,6 +71,8 @@ def testConnectivity(args):
         args.cardName = getCardName(args.shelf,args.slot)
     if hasattr(args, 'chConfig') is False: # Text file containing channel configuration
         args.chConfig = None
+    if hasattr(args, 'checkCSCTrigLink') is False: # Using getTriggerLinkStatus with checkCSCTrigLink set to true
+        args.checkCSCTrigLink = False
     if hasattr(args, 'compare') is False: # Just Compare frontend settings?
         args.compare = False
     if hasattr(args, 'filename') is False: # TFile containing channel configuration
@@ -95,6 +97,8 @@ def testConnectivity(args):
         args.vfatConfig = False
     if hasattr(args, 'voltageStepPulse') is False: # Default to voltageStepPulse in Scurves
         args.voltageStepPulse = True
+    if hasattr(args, 'writePhases2File') is False: # Write found GBT Phase seetings to file
+        args.writePhases2File = False
     if hasattr(args, 'zeroChan') is False: # Zero all bits in all channel registers
         args.zeroChan = False
 
@@ -107,6 +111,7 @@ def testConnectivity(args):
     
     dataPath = os.getenv('DATA_PATH')
     gbtConfigPath = "{0}/OHv3c/20180717".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
+    elogPath = os.getenv('ELOG_PATH')
 
     # Initialize Hardware
     amc = getAMCObject(args.slot,args.shelf)
@@ -236,7 +241,17 @@ def testConnectivity(args):
             pass
 
         vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TTC.GENERATOR.ENABLE",0x0)
-        
+
+        print("Checking trigger link status:")
+        for trial in range(0,args.maxIter ):
+            testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(printSummary=True, checkCSCTrigLink=args.checkCSCTrigLink, ohMask=args.ohMask)
+	    if (testLinks < 1):
+                printGreen("Trigger link to OHs in mask:{0} is good".format(hex(args.ohMask)))
+                break
+            else:
+                printYellow("Trigger link to OHs in mask:{0} failed, retrying and issuing a reset to the trigger block of GEM_AMC".format(hex(args.ohMask)))
+                vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
+
         if not fpgaCommPassed:
             printRed("FPGA Communication was not established successfully")
             printRed("Following OH's have unprogrammed FPGAs: {0}".format(listOfDeadFPGAs))
@@ -275,7 +290,11 @@ def testConnectivity(args):
 
         # Perform N GBT Phase Scans
         print("Scanning GBT Phases, this may take a moment please be patient")
-        dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=(not args.debug))
+        if args.writePhases2File:
+            fName = elogPath+'/gbtPhaseSettings.log'
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=(not args.debug), outputFile=fName)
+        else:
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=(not args.debug))
 
         # Find Good GBT Phase Values
         failed2FindGoodPhase = False
@@ -416,6 +435,17 @@ def testConnectivity(args):
             pass
         pass
         printGreen("VFAT Communication Successfully Established")
+
+    if args.writePhases2File and args.firstStep <= 4:
+        fName = elogPath+'/phases.log'
+        fPhases = open(fName,"w")
+        fPhases.write("link/i:vfatN/i:GBTPhase/i:\n")
+        for ohN in range(nOHs):
+            # Skip masked OH's
+            if( not ((args.ohMask >> ohN) & 0x1)):
+                continue
+            for vfatN in range(24):
+                fPhases.write("{0}\t{1}\t{2}\n".format(ohN,vfatN,dict_phases2Save[ohN][vfatN]))
 
     # Scan DACs
     # =================================================================
@@ -793,6 +823,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Tool for connectivity testing")
 
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
+    parser.add_argument("--checkCSCTrigLink",action="store_true",help="Check also the trigger link for the CSC trigger associated to OH in mask")
     parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead",default="0.1,0.5")
     parser.add_argument("-d","--debug",action="store_true",dest="debug",help = "Print additional debugging information")
     parser.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
@@ -805,6 +836,7 @@ if __name__ == '__main__':
     parser.add_argument("--skipDACScan",action="store_true",help="Do not perform any DAC Scans")
     parser.add_argument("--skipScurve",action="store_true",help="Do not perform any SCurves")
     parser.add_argument("-s","--slot",type=int,help="AMC slot in uTCA shelf",default=5)
+    parser.add_argument("--writePhases2File",action="store_true",help="Write found GBT Phase seetings to file")
     args = parser.parse_args()
 
     # Check inputs
