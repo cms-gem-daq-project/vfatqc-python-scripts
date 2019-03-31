@@ -480,7 +480,7 @@ def testConnectivity(args):
             dict_vfat3CalInfo[ohN] = getVFAT3CalInfo(dict_chipIDs[ohN],debug=args.debug)
             if args.debug:
                 print("dict_vfat3CalInfo[{0}]:\n{1}".format(ohN,dict_vfat3CalInfo[ohN]))
-            
+
             # Write IREF
             print("Setting CFG_IREF for all VFATs on OH{0}".format(ohN))
             for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
@@ -764,10 +764,10 @@ def testConnectivity(args):
         try:
             res = pool.map_async(anaScurveParallel,
                     itertools.izip(
-                        [scurveFiles[x] for x in range(len(ohList))],
-                        [calDacInfo[x]  for x in range(len(ohList))],
-                        [deadChan       for x in range(len(ohList))],
-                        [isVFAT3        for x in range(len(ohList))]
+                        [scurveFiles[x] for x in ohList],
+                        [calDacInfo[x]  for x in ohList],
+                        [deadChan       for x in ohList],
+                        [isVFAT3        for x in ohList]
                         )
                     )
             nDeadChanByOH = res.get(3600) # wait at most 1 hour
