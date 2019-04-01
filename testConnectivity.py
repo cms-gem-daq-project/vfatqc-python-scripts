@@ -246,9 +246,11 @@ def testConnectivity(args):
         for trial in range(0,args.maxIter ):
             testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(printSummary=True, checkCSCTrigLink=args.checkCSCTrigLink, ohMask=args.ohMask)
 	    if (testLinks < 1):
+		fpgaCommPassed = True
                 printGreen("Trigger link to OHs in mask:{0} is good".format(hex(args.ohMask)))
                 break
             else:
+		fpgaCommPassed = False
                 printYellow("Trigger link to OHs in mask:{0} failed, retrying and issuing a reset to the trigger block of GEM_AMC".format(hex(args.ohMask)))
                 vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
 
@@ -262,6 +264,9 @@ def testConnectivity(args):
             printYellow("\t\t4. Voltage on OH1 standoff is within range [0.97,1.06] Volts")
             printYellow("\t\t5. Voltage on OH2 standoff is within range [2.45,2.66] Volts")
             printYellow("\t\t6. Current limit on Power Supply is 4 Amps")
+	    printYellow("\t\t7. The trigger fibers from the optohybrid are correctly plugged into the detector patch panel")
+  	    if args.checkCSCTrigLink:
+		printYellow("\t\t8. The trigger fiber from the CSC link to the backend electronics is fully inserted to the detector patch panel")
             printRed("Connectivity Testing Failed")
             return
         else:
