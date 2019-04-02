@@ -245,17 +245,59 @@ def testConnectivity(args):
         vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TTC.GENERATOR.ENABLE",0x0)
 
         print("Checking trigger link status:")
-        for trial in range(0,args.maxIter ):
-            testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(printSummary=True, checkCSCTrigLink=args.checkCSCTrigLink, ohMask=args.ohMask)
-        if (testLinks < 1):
+        for trial in range(0,args.maxIter):
+            testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(
+                            printSummary=True, 
+                            checkCSCTrigLink=args.checkCSCTrigLink, 
+                            ohMask=args.ohMask)
+            isDead = True
+            listOfDeadFPGAs = []
+            for ohN in range(nOHs):
+                # Skip masked OH's
+                if( not ((args.ohMask >> ohN) & 0x1)):
+                    continue
+
+                # Check Trigger Link Status
+                if args.checkCSCTrigLink:
+                    if (testLinks[ohN] == 0 and testLinks[ohN+1] == 0): # All Good
+                        isDead = False
+                    if (testLinks[ohN] > 0 and testLinks[ohN+1] == 0): # GEM Trig Link is Bad
+                        isDead = True
+                        listOfDeadFPGAs.append(ohN)
+                    if (testLinks[ohN] == 0 and testLinks[ohN+1] > 0): # CSC Trig Link is Bad
+                        isDead = True
+                        listOfDeadFPGAs.append(ohN+1)
+                    else:                                              # Both trigger links are bad
+                        isDead = True
+                        listOfDeadFPGAs.append(ohN)
+                        listOfDeadFPGAs.append(ohN+1)
+                        pass
+                    pass
+                else:
+                    if (testLinks[ohN] < 1):
+                        isDead = False
+                    else:
+                        isDead = True
+                        listOfDeadFPGAs.append(ohN)
+                        pass
+                    pass
+                pass
+
+            # Trigger link status acceptable?
+            if not isDead:
                 fpgaCommPassed = True
-                printGreen("Trigger link to OHs in mask:{0} is good".format(hex(args.ohMask)))
+                printGreen("Trigger link to OHs in mask: 0x{0:x} is good".format(args.ohMask))
                 break
-            else:
-                if not args.acceptBadTrigLink:
-                    fpgaCommPassed = False
-                printYellow("Trigger link to OHs in mask:{0} failed, retrying and issuing a reset to the trigger block of GEM_AMC".format(hex(args.ohMask)))
+            elif isDead and not args.acceptBadTrigLink:
+                fpgaCommPassed = False
+                printYellow("Trigger link of OHs: {0} failed, retrying and issuing a reset to the trigger block of GEM_AMC".format(listOfDeadFPGAs))
                 vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
+            else:
+                fpgaCommPassed = True
+                printYellow("Trigger link of OHs: {0} failed, but I was told to accept bad trigger links".format(listOfDeadFPGAs))
+                break
+                pass
+            pass
 
         if not fpgaCommPassed:
             printRed("FPGA Communication was not established successfully")
