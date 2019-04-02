@@ -63,6 +63,8 @@ def testConnectivity(args):
 
     # Check if all required fields are in args; if they are not assign a default value
     from gempython.vfatqc.utils.qcutilities import getCardName
+    if hasattr(args, 'acceptBadTrigLink') is False: # Accept Bad Trigger Link Status?
+        args.acceptBadTrigLink = False
     if hasattr(args, 'assignXErrors') is False: # For DAC Scan Analysis
         args.assignXErrors = False
     if hasattr(args, 'calFileList') is False: # For DAC Scan Analysis
@@ -245,12 +247,13 @@ def testConnectivity(args):
         print("Checking trigger link status:")
         for trial in range(0,args.maxIter ):
             testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(printSummary=True, checkCSCTrigLink=args.checkCSCTrigLink, ohMask=args.ohMask)
-	    if (testLinks < 1):
-		fpgaCommPassed = True
+        if (testLinks < 1):
+                fpgaCommPassed = True
                 printGreen("Trigger link to OHs in mask:{0} is good".format(hex(args.ohMask)))
                 break
             else:
-		fpgaCommPassed = False
+                if not args.acceptBadTrigLink:
+                    fpgaCommPassed = False
                 printYellow("Trigger link to OHs in mask:{0} failed, retrying and issuing a reset to the trigger block of GEM_AMC".format(hex(args.ohMask)))
                 vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
 
@@ -264,9 +267,9 @@ def testConnectivity(args):
             printYellow("\t\t4. Voltage on OH1 standoff is within range [0.97,1.06] Volts")
             printYellow("\t\t5. Voltage on OH2 standoff is within range [2.45,2.66] Volts")
             printYellow("\t\t6. Current limit on Power Supply is 4 Amps")
-	    printYellow("\t\t7. The trigger fibers from the optohybrid are correctly plugged into the detector patch panel")
-  	    if args.checkCSCTrigLink:
-		printYellow("\t\t8. The trigger fiber from the CSC link to the backend electronics is fully inserted to the detector patch panel")
+            printYellow("\t\t7. The trigger fibers from the optohybrid are correctly plugged into the detector patch panel")
+            if args.checkCSCTrigLink:
+                printYellow("\t\t8. The trigger fiber from the CSC link to the backend electronics is fully inserted to the detector patch panel")
             printRed("Connectivity Testing Failed")
             return
         else:
@@ -833,6 +836,7 @@ if __name__ == '__main__':
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     parser.add_argument("--checkCSCTrigLink",action="store_true",help="Check also the trigger link for the CSC trigger associated to OH in mask")
     parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead",default="0.1,0.5")
+    parser.add_argument("-a","--acceptBadTrigLink",action="store_true",help="Ignore failing trigger link status checks")
     parser.add_argument("-d","--debug",action="store_true",dest="debug",help = "Print additional debugging information")
     parser.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
     parser.add_argument("-f","--firstStep",type=int,help="Starting Step of connectivity testing, to skip all initial steps enter '5'",default=1)
