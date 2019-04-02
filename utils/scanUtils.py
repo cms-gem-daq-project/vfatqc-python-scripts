@@ -89,7 +89,7 @@ def dacScanAllLinks(args, calTree, vfatBoard):
             print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
                 calTree.link[0],
                 calTree.vfatN[0],
-                str(hex(calTree.vfatID[0])).strip('L'),
+                calTree.vfatID[0],
                 calTree.dacSelect[0],
                 calTree.nameX[0],
                 calTree.dacValX[0],
