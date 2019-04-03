@@ -71,6 +71,8 @@ def testConnectivity(args):
        args.calFileList = None
     if hasattr(args, 'cardName') is False:
         args.cardName = getCardName(args.shelf,args.slot)
+    if hasattr(args, 'chamberName') is False: # User provided chamberName
+        args.chamberName = None
     if hasattr(args, 'chConfig') is False: # Text file containing channel configuration
         args.chConfig = None
     if hasattr(args, 'checkCSCTrigLink') is False: # Using getTriggerLinkStatus with checkCSCTrigLink set to true
@@ -261,10 +263,10 @@ def testConnectivity(args):
                 if args.checkCSCTrigLink:
                     if (testLinks[ohN] == 0 and testLinks[ohN+1] == 0): # All Good
                         isDead = False
-                    if (testLinks[ohN] > 0 and testLinks[ohN+1] == 0): # GEM Trig Link is Bad
+                    elif (testLinks[ohN] > 0 and testLinks[ohN+1] == 0): # GEM Trig Link is Bad
                         isDead = True
                         listOfDeadFPGAs.append(ohN)
-                    if (testLinks[ohN] == 0 and testLinks[ohN+1] > 0): # CSC Trig Link is Bad
+                    elif (testLinks[ohN] == 0 and testLinks[ohN+1] > 0): # CSC Trig Link is Bad
                         isDead = True
                         listOfDeadFPGAs.append(ohN+1)
                     else:                                              # Both trigger links are bad
@@ -552,16 +554,6 @@ def testConnectivity(args):
                 else:
                     printYellow("CFG_IREF for OH{0} VFAT{1} is {2}".format(ohN,vfat3CalInfo['vfatN'],vfat3CalInfo['iref']))
                 pass
-
-            # rpc module sets them into run mode
-            #try:
-            #    print("Setting all VFATs on OH{0} to run mode".format(ohN))
-            #    vfatBoard.setRunModeAll(dict_vfatMask[ohN])
-            #except Exception as e:
-            #    printRed("An exception has occured: {0}".format(e))
-            #    printRed("VFAT communication was not established successfully for OH{0}".format(ohN))
-            #    printRed("Conncetivity Testing Failed")
-            #    return
             pass
 
         # DAC Scan
@@ -586,6 +578,13 @@ def testConnectivity(args):
     # Analyze DACs
     # =================================================================
     from gempython.gemplotting.mapping.chamberInfo import chamber_config
+
+    # Use overwrite chamber_config[ohKey] with user provided name?
+    if args.chamberName is not None:
+        ohKey = (args.shelf,args.slot,ohN)
+        chamber_config[ohKey] = args.chamberName.replace("/","")
+        if args.debug:
+            printYellow("Setting chamber_config[{0}] with name: {1}".format(ohKey,chamber_config[ohKey]))
 
     if not args.skipDACScan:
         printYellow("="*20)
@@ -876,6 +875,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Tool for connectivity testing")
 
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
+    parser.add_argument("-c","--chamberName",type=str,help="Detector Serial Number, if provided will use this name instead of name provided in chamber_config dictionary",default=None)
     parser.add_argument("--checkCSCTrigLink",action="store_true",help="Check also the trigger link for the CSC trigger associated to OH in mask")
     parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead",default="0.1,0.5")
     parser.add_argument("-a","--acceptBadTrigLink",action="store_true",help="Ignore failing trigger link status checks")
