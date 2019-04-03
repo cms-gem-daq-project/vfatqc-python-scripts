@@ -1,6 +1,7 @@
 #!/bin/env python
 
 from gempython.tools.amc_user_functions_uhal import *
+from gempython.tools.amc_user_functions_xhal import NoUnmaskedOHException
 from gempython.tools.optohybrid_user_functions_xhal import OHRPCException
 from gempython.tools.vfat_user_functions_xhal import *
 from gempython.utils.gemlogger import colors, getGEMLogger, printGreen, printRed, printYellow
@@ -10,8 +11,17 @@ import os
 def anaScurveParallel(inputs):
     return scurveAna(*inputs)
 
-def gbtCommIsGood(vfatBoard, doReset=True, printSummary=True, ohMask=0x3ff):
-    if (not vfatBoard.parentOH.parentAMC.getGBTLinkStatus(doReset, printSummary, ohMask)):
+def gbtCommIsGood(amcBoard, doReset=True, printSummary=True, ohMask=0xfff):
+    """
+    Determines if GBT communication for all unmasked optohybrids in ohMask is good
+
+        amcBoard     - Instance of HwAMC
+        doReset      - If true (false) will (not) perform an GBT link reset
+        printSummary - If true (false) will (not) print summary information
+        ohMask       - ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered
+    """
+
+    if (not amcBoard.getGBTLinkStatus(doReset, printSummary, ohMask)):
         printRed("GBT Communication was not established successfully")
         printYellow("\tTry checking:")
         printYellow("\t\t1. Fibers from GE1/1 patch-panel to OH have correct jacket color ordering")
@@ -22,6 +32,66 @@ def gbtCommIsGood(vfatBoard, doReset=True, printSummary=True, ohMask=0x3ff):
         return False
     else: 
         return True
+
+def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
+    """
+    Determines if SCA communication for all unmasked optohybrids in ohMask is good.
+    Will make maxIter number of iterations to establish good communication.
+
+        amc     - instances of uhal device, e.g. returned by getAMCObject from 
+                  gempython.tools.amc_user_functions_uhal
+        maxIter - maximum number of iterations to be tried before failure is returned
+        ohMask  - ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered
+    """
+
+    scaCommPassed = False
+    from reg_utils.reg_interface.common.sca_utils import sca_reset 
+    from reg_utils.reg_interface.common.jtag import initJtagRegAddrs
+    initJtagRegAddrs()
+    for trial in range(0,maxIter):
+        sca_reset(ohMask)
+        scaInfo = printSystemSCAInfo(amc)
+        
+        notRdyCntOkay = True
+        for ohN in range(nOHs):
+            # Skip masked OH's
+            if( not ((ohMask >> ohN) & 0x1)):
+                continue
+            
+            # Check READY Bit
+            if( not ((scaInfo["READY"]  >> ohN) & 0x1)):
+                notRdyCntOkay = False
+                break
+
+            # Check critical error bit
+            if( (scaInfo["CRITICAL_ERROR"] >> ohN) & 0x1):
+                notRdyCntOkay = False
+                break
+
+            # Check not ready counter
+            if scaInfo["NOT_READY_CNT"][ohN] != 0x2:
+                notRdyCntOkay = False
+                break
+
+            pass
+        if not notRdyCntOkay:
+            continue
+        
+        # reaching here passes all tests for this stage
+        scaCommPassed = True
+        break
+
+    if not scaCommPassed:
+        printRed("SCA Communication was not established successfully")
+        printYellow("\tTry checking:")
+        printYellow("\t\t1. OH3 screw is properly screwed into standoff")
+        printYellow("\t\t2. OH3 standoff on the GEB is not broken")
+        printYellow("\t\t3. Voltage on OH3 standoff is within range [1.47,1.59] Volts")
+    else: 
+        printGreen("SCA Communication Established")
+        pass
+
+    return scaCommPassed
 
 def scurveAna(scurveDataFile, tuple_calInfo, tuple_deadChan, isVFAT3=True):
     """
@@ -133,7 +203,7 @@ def testConnectivity(args):
         printYellow("="*20)
 
         print("Checking GBT Communication (Before Programming GBTs)")
-        if not gbtCommIsGood(vfatBoard, doReset=True, printSummary=args.debug, ohMask=args.ohMask):
+        if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask):
             printRed("Connectivity Testing Failed")
             return
 
@@ -147,7 +217,7 @@ def testConnectivity(args):
         configGBT(cardName=args.cardName, listOfconfigFiles=gbtConfigs, ohMask=args.ohMask, nOHs=nOHs)
 
         print("Checking GBT Communication (After Programming GBTs)")
-        if not gbtCommIsGood(vfatBoard, doReset=True, printSummary=args.debug, ohMask=args.ohMask):
+        if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask):
             printRed("Connectivity Testing Failed")
             return
         else: 
@@ -162,100 +232,42 @@ def testConnectivity(args):
         printYellow("Step 2: Checking SCA Communication")
         printYellow("="*20)
 
-        scaCommPassed = False
-        from reg_utils.reg_interface.common.sca_utils import sca_reset 
-        from reg_utils.reg_interface.common.jtag import initJtagRegAddrs
-        initJtagRegAddrs()
-        for trial in range(0,args.maxIter):
-            sca_reset(args.ohMask)
-            scaInfo = printSystemSCAInfo(amc)
-            
-            notRdyCntOkay = True
-            for ohN in range(nOHs):
-                # Skip masked OH's
-                if( not ((args.ohMask >> ohN) & 0x1)):
-                    continue
-                
-                # Check READY Bit
-                if( not ((scaInfo["READY"]  >> ohN) & 0x1)):
-                    notRdyCntOkay = False
-                    break
-
-                # Check critical error bit
-                if( (scaInfo["CRITICAL_ERROR"] >> ohN) & 0x1):
-                    notRdyCntOkay = False
-                    break
-
-                # Check not ready counter
-                if scaInfo["NOT_READY_CNT"][ohN] != 0x2:
-                    notRdyCntOkay = False
-                    break
-
-                pass
-            if not notRdyCntOkay:
-                continue
-            
-            # reaching here passes all tests for this stage
-            scaCommPassed = True
-            break
+        scaCommPassed = scaCommIsGood(amc, args.maxIter, args.ohMask, nOHs)
 
         if not scaCommPassed:
-            printRed("SCA Communication was not established successfully")
-            printYellow("\tTry checking:")
-            printYellow("\t\t1. OH3 screw is properly screwed into standoff")
-            printYellow("\t\t2. OH3 standoff on the GEB is not broken")
-            printYellow("\t\t3. Voltage on OH3 standoff is within range [1.47,1.59] Volts")
             printRed("Connectivity Testing Failed")
             return
-        else: 
-            printGreen("SCA Communication Established")
-            pass
 
     # Step 3
     # Program FPGA
     # =================================================================
     if args.firstStep <= 3:
         printYellow("="*20)
-        printYellow("Step 3: Programming FPGA & Checking FPGA Communication")
+        printYellow("Step 3: Programming FPGA & Checking Trigger Links")
         printYellow("="*20)
 
-        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TTC.GENERATOR.ENABLE",0x1)
+        try:
+            listOfDeadFPGAs = vfatBoard.parentOH.parentAMC.programAllOptohybridFPGAs(args.maxIter,args.ohMask)
+        except NoUnmaskedOHException:
+            printRed("There are no optohybrids that can be programmed successfully")
+            printRed("The SCA Communication has probably died")
+            printSystemSCAInfo(amc)
+            printRed("Connectivity Testing Failed")
+            return
 
-        fpgaCommPassed = False
-        for trial in range(0,args.maxIter):
-            vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TTC.GENERATOR.SINGLE_HARD_RESET",0x1)
-            isDead = True
-            listOfDeadFPGAs = []
-            for ohN in range(nOHs):
-                # Skip masked OH's
-                if( not ((args.ohMask >> ohN) & 0x1)):
-                    continue
-                fwVerMaj = vfatBoard.parentOH.parentAMC.readRegister("GEM_AMC.OH.OH{0}.FPGA.CONTROL.RELEASE.VERSION.MAJOR".format(ohN))
-                if fwVerMaj != 0xdeaddead:
-                    isDead = False
-                else:
-                    isDead = True
-                    listOfDeadFPGAs.append(ohN)
-                    pass
-                pass
-
-            if not isDead:
-                fpgaCommPassed = True
-                break
-            pass
-
-        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TTC.GENERATOR.ENABLE",0x0)
-        if not fpgaCommPassed:
+        printYellow("SCA Communication Status After FPGA Programming Attempts Is:")
+        printSystemSCAInfo(amc)
+        
+        if len(listOfDeadFPGAs) > 0:
             printRed("FPGA Communication was not established successfully")
             printRed("Following OH's have unprogrammed FPGAs: {0}".format(listOfDeadFPGAs))
             printYellow("\tTry checking:")
-            printYellow("\t\t1. Was the OH FW loaded into the Zynq RAM on the CTP7?")
-            printYellow("\t\t2. OH1 and OH2 screws are properly screwed into their respective standoffs")
-            printYellow("\t\t3. OH1 and OH2 standoffs on the GEB are not broken")
-            printYellow("\t\t4. Voltage on OH1 standoff is within range [0.97,1.06] Volts")
-            printYellow("\t\t5. Voltage on OH2 standoff is within range [2.45,2.66] Volts")
-            printYellow("\t\t6. Current limit on Power Supply is 4 Amps")
-            #printYellow("\t\t7. Power Cycle the affected optohybrids")
+            printYellow("\t\t1. OH1 and OH2 screws are properly screwed into their respective standoffs")
+            printYellow("\t\t2. OH1 and OH2 standoffs on the GEB are not broken")
+            printYellow("\t\t3. Voltage on OH1 standoff is within range [0.97,1.06] Volts")
+            printYellow("\t\t4. Voltage on OH2 standoff is within range [2.45,2.66] Volts")
+            printYellow("\t\t5. Current limit on Power Supply is 4 Amps")
+            #printYellow("\t\t6. Power Cycle the affected optohybrids")
             printRed("Connectivity Testing Failed")
             return
         else:
@@ -263,9 +275,21 @@ def testConnectivity(args):
             pass
 
         print("Checking trigger link status:")
-        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
-        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.CNT_RESET",0x1)
         for trial in range(0,args.maxIter):
+            if args.debug:
+                print("Trial Number: {0}".format(trial))
+            
+            # Reset trigger module on CTP7 (includes counter reset)
+            print("Reseting trigger module on CTP7")
+            vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
+
+            # Reset trigger module on OH FPGA
+            for ohN in range(nOHs):
+                if( not ((args.ohMask >> ohN) & 0x1)):
+                    continue
+                print("Reset trigger module on OH{0}".format(ohN))
+                vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.OH.OH{0}.FPGA.TRIG.LINKS.RESET".format(ohN),0x1)
+
             testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(
                             printSummary=True, 
                             checkCSCTrigLink=args.checkCSCTrigLink, 
@@ -310,13 +334,15 @@ def testConnectivity(args):
                 break
             elif isDead and not args.acceptBadTrigLink:
                 fpgaCommPassed = False
-                printYellow("Trigger link of OHs: {0} failed, retrying and issuing a reset to the trigger block of GEM_AMC".format(listOfDeadFPGAs))
-                vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
+                printYellow("Trigger link of OHs: {0} failed, reprogramming OH FPGA's and retrying".format(listOfDeadFPGAs))
+                try:
+                    badFPGAsAfterFWReload = vfatBoard.parentOH.parentAMC.programAllOptohybridFPGAs(args.maxIter,args.ohMask)
+                except NoUnmaskedOHException:
+                    printYellow("Reprogramming {0} FPGA's failed, hopefully next iteration succeeds".format(badFPGAsAfterFWReload))
             else:
                 fpgaCommPassed = True
                 printYellow("Trigger link of OHs: {0} failed, but I was told to accept bad trigger links".format(listOfDeadFPGAs))
                 break
-                pass
             pass
 
         if not fpgaCommPassed:
@@ -329,9 +355,9 @@ def testConnectivity(args):
             printRed("Connectivity Testing Failed")
             return
         else:
-            printGreen("Trigger Link Not Successfully Established")
+            printGreen("Trigger Link Successfully Established")
             pass
-    
+
     # Step 4
     # Check VFAT Communication
     # =================================================================
@@ -596,7 +622,7 @@ def testConnectivity(args):
         ohKey = (args.shelf,args.slot,ohN)
         chamber_config[ohKey] = args.chamberName.replace("/","")
         if args.debug:
-            printYellow("Setting chamber_config[{0}] with name: {1}".format(ohKey,chamber_config[ohKey]))
+            print("Setting chamber_config[{0}] with name: {1}".format(ohKey,chamber_config[ohKey]))
 
     if not args.skipDACScan:
         printYellow("="*20)
@@ -895,8 +921,8 @@ if __name__ == '__main__':
     parser.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
     parser.add_argument("-f","--firstStep",type=int,help="Starting Step of connectivity testing, to skip all initial steps enter '5'",default=1)
     parser.add_argument("-i","--ignoreSyncErrs",action="store_true",help="Ignore VFAT Sync Errors When Checking Communication")
-    parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 2 & 3 will be attempted before failing (and exiting)",default=5)
-    parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=25)
+    parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 2 & 3 will be attempted before failing (and exiting)",default=10)
+    parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=100)
     parser.add_argument("-o","--ohMask",type=parseInt,help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered",default=0x1)
     parser.add_argument("--shelf",type=int,help="uTCA shelf number",default=2)
     parser.add_argument("--skipDACScan",action="store_true",help="Do not perform any DAC Scans")
@@ -928,9 +954,9 @@ if __name__ == '__main__':
         pass
 
     # Enforce a minimum number of phase scans
-    if args.nPhaseScans < 20:
-        printYellow("You've requested the number of phase scans to be {0} which is less than 20.\nThis is probably not reliable, reseting to 20".format(args.nPhaseScans))
-        args.nPhaseScans = 20
+    if args.nPhaseScans < 100:
+        printYellow("You've requested the number of phase scans to be {0} which is less than 100.\nThis is probably not reliable, reseting to 100".format(args.nPhaseScans))
+        args.nPhaseScans = 100
         pass
 
     gemlogger = getGEMLogger(__name__)
