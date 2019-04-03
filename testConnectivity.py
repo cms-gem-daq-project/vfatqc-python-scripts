@@ -245,8 +245,26 @@ def testConnectivity(args):
             pass
 
         vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TTC.GENERATOR.ENABLE",0x0)
+        if not fpgaCommPassed:
+            printRed("FPGA Communication was not established successfully")
+            printRed("Following OH's have unprogrammed FPGAs: {0}".format(listOfDeadFPGAs))
+            printYellow("\tTry checking:")
+            printYellow("\t\t1. Was the OH FW loaded into the Zynq RAM on the CTP7?")
+            printYellow("\t\t2. OH1 and OH2 screws are properly screwed into their respective standoffs")
+            printYellow("\t\t3. OH1 and OH2 standoffs on the GEB are not broken")
+            printYellow("\t\t4. Voltage on OH1 standoff is within range [0.97,1.06] Volts")
+            printYellow("\t\t5. Voltage on OH2 standoff is within range [2.45,2.66] Volts")
+            printYellow("\t\t6. Current limit on Power Supply is 4 Amps")
+            #printYellow("\t\t7. Power Cycle the affected optohybrids")
+            printRed("Connectivity Testing Failed")
+            return
+        else:
+            printGreen("FPGA Communication Established")
+            pass
 
         print("Checking trigger link status:")
+        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
+        vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.CNT_RESET",0x1)
         for trial in range(0,args.maxIter):
             testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(
                             printSummary=True, 
@@ -302,22 +320,16 @@ def testConnectivity(args):
             pass
 
         if not fpgaCommPassed:
-            printRed("FPGA Communication was not established successfully")
-            printRed("Following OH's have unprogrammed FPGAs: {0}".format(listOfDeadFPGAs))
+            printRed("FPGA trigger link is not healthy")
+            printRed("Following OH's have bad trigger links: {0}".format(listOfDeadFPGAs))
             printYellow("\tTry checking:")
-            printYellow("\t\t1. Was the OH FW loaded into the Zynq RAM on the CTP7?")
-            printYellow("\t\t2. OH1 and OH2 screws are properly screwed into their respective standoffs")
-            printYellow("\t\t3. OH1 and OH2 standoffs on the GEB are not broken")
-            printYellow("\t\t4. Voltage on OH1 standoff is within range [0.97,1.06] Volts")
-            printYellow("\t\t5. Voltage on OH2 standoff is within range [2.45,2.66] Volts")
-            printYellow("\t\t6. Current limit on Power Supply is 4 Amps")
-            printYellow("\t\t7. The trigger fibers from the optohybrid are correctly plugged into the detector patch panel")
+            printYellow("\t\t1. The trigger fibers from the optohybrid are correctly plugged into the detector patch panel")
             if args.checkCSCTrigLink:
-                printYellow("\t\t8. The trigger fiber from the CSC link to the backend electronics is fully inserted to the detector patch panel")
+                printYellow("\t\t2. The trigger fiber from the CSC link to the backend electronics is fully inserted to the detector patch panel")
             printRed("Connectivity Testing Failed")
             return
         else:
-            printGreen("FPGA Communication Established")
+            printGreen("Trigger Link Not Successfully Established")
             pass
     
     # Step 4
