@@ -267,7 +267,7 @@ def testConnectivity(args):
             printYellow("\t\t3. Voltage on OH1 standoff is within range [0.97,1.06] Volts")
             printYellow("\t\t4. Voltage on OH2 standoff is within range [2.45,2.66] Volts")
             printYellow("\t\t5. Current limit on Power Supply is 4 Amps")
-            #printYellow("\t\t6. Power Cycle the affected optohybrids")
+            printYellow("\t\t6. Power Cycle the affected optohybrids")
             printRed("Connectivity Testing Failed")
             return
         else:
@@ -350,8 +350,9 @@ def testConnectivity(args):
             printRed("Following OH's have bad trigger links: {0}".format(listOfDeadFPGAs))
             printYellow("\tTry checking:")
             printYellow("\t\t1. The trigger fibers from the optohybrid are correctly plugged into the detector patch panel")
+            printYellow("\t\t2. Power Cycle the affected optohybrids")
             if args.checkCSCTrigLink:
-                printYellow("\t\t2. The trigger fiber from the CSC link to the backend electronics is fully inserted to the detector patch panel")
+                printYellow("\t\t3. The trigger fiber from the CSC link to the backend electronics is fully inserted to the detector patch panel")
             printRed("Connectivity Testing Failed")
             return
         else:
@@ -596,6 +597,10 @@ def testConnectivity(args):
                     except Exception as e:
                         printRed("An exception has occured: {0}".format(e))
                         printRed("VFAT communication was not established successfully for OH{0} VFAT{1}".format(ohN,vfat3CalInfo['vfatN']))
+                        vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=False, printSummary=True, ohMask=args.ohMask)
+                        printYellow("\tTry checking:")
+                        printYellow("\t\t1. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
+                        printYellow("\t\t2. replacing the red VFATs shown above and then running again")
                         printRed("Conncetivity Testing Failed")
                         return
                     pass
@@ -618,6 +623,10 @@ def testConnectivity(args):
             except Exception as e:
                 printRed("An exception has occured: {0}".format(e))
                 printRed("DAC Scan for DAC {0} Failed".format(maxVfat3DACSize[dacSelect]))
+                vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=False, printSummary=True, ohMask=args.ohMask)
+                printYellow("\tTry checking:")
+                printYellow("\t\t1. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
+                printYellow("\t\t2. replacing the red VFATs shown above and then running again")
                 printRed("Conncetivity Testing Failed")
                 return
             pass
@@ -764,6 +773,10 @@ def testConnectivity(args):
             except Exception as e:
                 printRed("An exception has occured: {0}".format(e))
                 printRed("Failed to configure OH{0}".format(ohN))
+                vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=False, printSummary=True, ohMask=args.ohMask)
+                printYellow("\tTry checking:")
+                printYellow("\t\t1. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
+                printYellow("\t\t2. replacing the red VFATs shown above and then running again")
                 printRed("Conncetivity Testing Failed")
                 return
             pass
@@ -796,6 +809,10 @@ def testConnectivity(args):
             except Exception as e:
                 printRed("An exception has occured: {0}".format(e))
                 printRed("SCurve for OH{0} Failed".format(ohN))
+                vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=False, printSummary=True, ohMask=args.ohMask)
+                printYellow("\tTry checking:")
+                printYellow("\t\t1. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
+                printYellow("\t\t2. replacing the red VFATs shown above and then running again")
                 printRed("Conncetivity Testing Failed")
                 return
             pass
