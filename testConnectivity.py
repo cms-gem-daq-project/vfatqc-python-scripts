@@ -184,7 +184,7 @@ def testConnectivity(args):
     envCheck("GBT_SETTINGS")
     
     dataPath = os.getenv('DATA_PATH')
-    gbtConfigPath = "{0}/OHv3c/20180717".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
+    gbtConfigPath = "{0}/OHv3c/20180314".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
     elogPath = os.getenv('ELOG_PATH')
 
     # Initialize Hardware
@@ -209,9 +209,9 @@ def testConnectivity(args):
 
         # Program GBTs
         gbtConfigs = [
-                "{0}/GBTX_OHv3c_GBT_0__2018-07-17_FINAL.txt".format(gbtConfigPath),
-                "{0}/GBTX_OHv3c_GBT_1__2018-07-17_FINAL.txt".format(gbtConfigPath),
-                "{0}/GBTX_OHv3c_GBT_2__2018-07-17_FINAL.txt".format(gbtConfigPath)
+                "{0}/GBTX_OHv3c_GBT_0__2018-03-14_FINAL-REG35-42.txt".format(gbtConfigPath),
+                "{0}/GBTX_OHv3c_GBT_1__2018-03-14_FINAL-REG35-42.txt".format(gbtConfigPath),
+                "{0}/GBTX_OHv3c_GBT_2__2018-03-14_FINAL-REG35-42.txt".format(gbtConfigPath),
                 ]
         print("Programming GBTs")
         configGBT(cardName=args.cardName, listOfconfigFiles=gbtConfigs, ohMask=args.ohMask, nOHs=nOHs)
@@ -279,16 +279,16 @@ def testConnectivity(args):
             if args.debug:
                 print("Trial Number: {0}".format(trial))
             
-            # Reset trigger module on CTP7 (includes counter reset)
-            print("Reseting trigger module on CTP7")
-            vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
-
             # Reset trigger module on OH FPGA
             for ohN in range(nOHs):
                 if( not ((args.ohMask >> ohN) & 0x1)):
                     continue
                 print("Reset trigger module on OH{0}".format(ohN))
                 vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.OH.OH{0}.FPGA.TRIG.LINKS.RESET".format(ohN),0x1)
+
+            # Reset trigger module on CTP7 (includes counter reset)
+            print("Reseting trigger module on CTP7")
+            vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
 
             testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(
                             printSummary=True, 
