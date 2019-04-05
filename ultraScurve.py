@@ -145,7 +145,7 @@ if __name__ == '__main__':
         # Make sure no channels are receiving a cal pulse
         # This needs to be done on the CTP7 otherwise it takes an hour...
         print "stopping cal pulse to all channels"
-        vfatBoard.stopCalPulses(mask, CHAN_MIN, CHAN_MAX)
+        vfatBoard.stopCalPulses(mask, 0, 127)
     
         scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
         scanDataSizeNet = scanDataSizeVFAT * 24
