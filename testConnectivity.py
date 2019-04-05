@@ -158,7 +158,7 @@ def testConnectivity(args):
     if hasattr(args, 'printSum') is False: # For DAC Scan Analysis, do not print summary table
         args.printSum = False
     if hasattr(args, 'run') is False: # Set chips in run mode on configure?
-        args.run = True
+        args.run = False
     if hasattr(args, 'stepSize') is False:
         args.stepSize = 1
     if hasattr(args, 'vt1') is False: # CFG_THR_ARM_DAC (VThreshold1) setting to write for V3 (V2) electronics
@@ -540,6 +540,22 @@ def testConnectivity(args):
             for vfatN in range(24):
                 fPhases.write("{0}\t{1}\t{2}\n".format(ohN,vfatN,dict_phases2Save[ohN][vfatN]))
 
+    # Get the calInfo for all detectors
+    # =================================================================
+    if (not args.skipDACScan or not args.skipScurve):
+        dict_vfat3CalInfo = ndict() # key -> OH number; value -> pandas dataframe
+        for ohN in range(nOHs):
+            # Skip masked OH's
+            if( not ((args.ohMask >> ohN) & 0x1)):
+                continue
+
+            vfatBoard.parentOH.link = ohN
+
+            # Get the calibration info for this detector
+            dict_vfat3CalInfo[ohN] = getVFAT3CalInfo(dict_chipIDs[ohN],debug=args.debug)
+            if args.debug:
+                print("dict_vfat3CalInfo[{0}]:\n{1}".format(ohN,dict_vfat3CalInfo[ohN]))
+
     # Scan DACs
     # =================================================================
     if not args.skipDACScan:
@@ -558,18 +574,12 @@ def testConnectivity(args):
  
         # Place All Chips Into Run Mode and write correct Iref
         from math import isnan
-        dict_vfat3CalInfo = ndict() # key -> OH number; value -> pandas dataframe
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
             vfatBoard.parentOH.link = ohN
-
-            # Get the calibration info for this detector
-            dict_vfat3CalInfo[ohN] = getVFAT3CalInfo(dict_chipIDs[ohN],debug=args.debug)
-            if args.debug:
-                print("dict_vfat3CalInfo[{0}]:\n{1}".format(ohN,dict_vfat3CalInfo[ohN]))
 
             # Write IREF
             print("Setting CFG_IREF for all VFATs on OH{0}".format(ohN))
@@ -615,14 +625,16 @@ def testConnectivity(args):
 
     # Analyze DACs
     # =================================================================
-    from gempython.gemplotting.mapping.chamberInfo import chamber_config
-
-    # Use overwrite chamber_config[ohKey] with user provided name?
-    if args.chamberName is not None:
-        ohKey = (args.shelf,args.slot,ohN)
-        chamber_config[ohKey] = args.chamberName.replace("/","")
-        if args.debug:
-            print("Setting chamber_config[{0}] with name: {1}".format(ohKey,chamber_config[ohKey]))
+    # Use stored chamber_config or overwrite chamber_config[ohKey] with user provided name?
+    if ( (args.chamberName is not None) and (bin(args.ohMask).count("1") == 1) ):
+        chamber_config = {}
+        for ohN in range(nOHs):
+            if( (args.ohMask >> ohN) & 0x1):
+                chamber_config[(args.shelf,args.slot,ohN)] = args.chamberName.replace("/","")
+                break
+            pass
+    else:
+        from gempython.gemplotting.mapping.chamberInfo import chamber_config
 
     if not args.skipDACScan:
         printYellow("="*20)
@@ -738,6 +750,7 @@ def testConnectivity(args):
             vfatBoard.parentOH.link = ohN
             args.vfatmask = dict_vfatMask[ohN]
             try:
+                args.run = False # will be placed into run mode by the call of launchSCurve below
                 configure(args, vfatBoard)
 
                 # Ensure Gain is Medium
@@ -813,19 +826,19 @@ def testConnectivity(args):
             if os.path.isfile(calFileCALDacName):
                 calDacInfo[ohN] = parseCalFile(calFileCALDacName)
             else:
-                if not os.path.exists("{0}/{1}".format(dataPath,chamber_config[ohN])):
-                    runCommand(["mkdir", "-p", "{0}/{1}".format(dataPath,chamber_config[ohN])])
-                    runCommand(["chmod", "g+rw", "{0}/{1}".format(dataPath,chamber_config[ohN])])
+                if not os.path.exists("{0}/{1}".format(dataPath,chamber_config[ohKey])):
+                    runCommand(["mkdir", "-p", "{0}/{1}".format(dataPath,chamber_config[ohKey])])
+                    runCommand(["chmod", "g+rw", "{0}/{1}".format(dataPath,chamber_config[ohKey])])
                 calFileCALDac = open(calFileCALDacName,"w")
-                calFileADC.write("vfatN/I:slope/F:intercept/F\n")
+                calFileCALDac.write("vfatN/I:slope/F:intercept/F\n")
                 for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
-                    calFileADC.write("{0}\t{1}\t{2}\n".format(
+                    calFileCALDac.write("{0}\t{1}\t{2}\n".format(
                         vfat3CalInfo['vfatN'],
                         vfat3CalInfo['cal_dacm'],
                         vfat3CalInfo['cal_dacb'])
                         )
                     pass
-                calFileADC.close()
+                calFileCALDac.close()
                 calDacInfo[ohN] = (vfat3CalInfo['cal_dacm'],vfat3CalInfo['cal_dacb'])
                 pass
         
@@ -847,6 +860,7 @@ def testConnectivity(args):
         # Launch the pool processes
         from reg_utils.reg_interface.common.sca_common_utils import getOHlist
         ohList = getOHlist(args.ohMask)
+
         import itertools
         try:
             res = pool.map_async(anaScurveParallel,
