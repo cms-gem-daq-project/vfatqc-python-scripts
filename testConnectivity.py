@@ -11,6 +11,48 @@ import os
 def anaScurveParallel(inputs):
     return scurveAna(*inputs)
 
+def getListOfBadTrigLinks(amcBoard,checkCSCTrigLink=False,debug=False,ohMask=0xfff,printSummary=True):
+    """
+    Returns a list of OH's with bad trigger links.  A link is considered bad if the sum
+    of the link status counters (e.g. GEM_AMC.TRIGGER.OHY.LINK*) do not sum to 0x0
+
+
+    """
+    
+    trigLinkStatus = amcBoard.getTriggerLinkStatus(
+                        printSummary=printSummary, 
+                        checkCSCTrigLink=checkCSCTrigLink, 
+                        ohMask=ohMask)
+
+    listOfOHsWithBadTriggerLink = []
+    for ohN in range(amcBoard.nOHs):
+        # Skip masked OH's
+        if( not ((ohMask >> ohN) & 0x1)):
+            continue
+
+        # Check Trigger Link Status
+        if checkCSCTrigLink:
+            if (trigLinkStatus[ohN] == 0 and trigLinkStatus[ohN+1] == 0): # All Good
+                if debug:
+                    print("Trigger Link for OH{0} is Good".format(ohN))
+            elif (trigLinkStatus[ohN] > 0 and trigLinkStatus[ohN+1] == 0): # GEM Trig Link is Bad
+                listOfOHsWithBadTriggerLink.append(ohN)
+            elif (trigLinkStatus[ohN] == 0 and trigLinkStatus[ohN+1] > 0): # CSC Trig Link is Bad
+                listOfOHsWithBadTriggerLink.append(ohN+1)
+            else:                                              # Both trigger links are bad
+                listOfOHsWithBadTriggerLink.append(ohN)
+                listOfOHsWithBadTriggerLink.append(ohN+1)
+                pass
+            pass
+        else:
+            if not (trigLinkStatus[ohN] < 1):
+                listOfOHsWithBadTriggerLink.append(ohN)
+                pass
+            pass
+        pass
+
+    return listOfOHsWithBadTriggerLink
+
 def gbtCommIsGood(amcBoard, doReset=True, printSummary=True, ohMask=0xfff):
     """
     Determines if GBT communication for all unmasked optohybrids in ohMask is good
@@ -290,42 +332,13 @@ def testConnectivity(args):
             print("Reseting trigger module on CTP7")
             vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
 
-            testLinks = vfatBoard.parentOH.parentAMC.getTriggerLinkStatus(
-                            printSummary=True, 
-                            checkCSCTrigLink=args.checkCSCTrigLink, 
-                            ohMask=args.ohMask)
-            isDead = True
-            listOfDeadFPGAs = []
-            for ohN in range(nOHs):
-                # Skip masked OH's
-                if( not ((args.ohMask >> ohN) & 0x1)):
-                    continue
-
-                # Check Trigger Link Status
-                if args.checkCSCTrigLink:
-                    if (testLinks[ohN] == 0 and testLinks[ohN+1] == 0): # All Good
-                        isDead = False
-                    elif (testLinks[ohN] > 0 and testLinks[ohN+1] == 0): # GEM Trig Link is Bad
-                        isDead = True
-                        listOfDeadFPGAs.append(ohN)
-                    elif (testLinks[ohN] == 0 and testLinks[ohN+1] > 0): # CSC Trig Link is Bad
-                        isDead = True
-                        listOfDeadFPGAs.append(ohN+1)
-                    else:                                              # Both trigger links are bad
-                        isDead = True
-                        listOfDeadFPGAs.append(ohN)
-                        listOfDeadFPGAs.append(ohN+1)
-                        pass
-                    pass
-                else:
-                    if (testLinks[ohN] < 1):
-                        isDead = False
-                    else:
-                        isDead = True
-                        listOfDeadFPGAs.append(ohN)
-                        pass
-                    pass
-                pass
+            listOfOHsWithBadTriggerLink = getListOfBadTrigLinks(
+                                            vfatBoard.parentOH.parentAMC, 
+                                            args.checkCSCTrigLink, 
+                                            args.debug,
+                                            args.ohMask,
+                                            printSummary=True)
+            isDead = ( len(listOfOHsWithBadTriggerLink) > 0 )
 
             # Trigger link status acceptable?
             if not isDead:
@@ -333,21 +346,35 @@ def testConnectivity(args):
                 printGreen("Trigger link to OHs in mask: 0x{0:x} is good".format(args.ohMask))
                 break
             elif isDead and not args.acceptBadTrigLink:
-                fpgaCommPassed = False
-                printYellow("Trigger link of OHs: {0} failed, reprogramming OH FPGA's and retrying".format(listOfDeadFPGAs))
-                try:
-                    badFPGAsAfterFWReload = vfatBoard.parentOH.parentAMC.programAllOptohybridFPGAs(args.maxIter,args.ohMask)
-                except NoUnmaskedOHException:
-                    printYellow("Reprogramming {0} FPGA's failed, hopefully next iteration succeeds".format(badFPGAsAfterFWReload))
+                # First try a link reset then check status again
+                print("Trigger links for OHs {0} are bad, trying a link reset (GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET 0x1)".format(listOfOHsWithBadTriggerLink))
+                vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET",0x1)
+                listOfOHsWithBadTriggerLink = getListOfBadTrigLinks(
+                                                vfatBoard.parentOH.parentAMC, 
+                                                args.checkCSCTrigLink, 
+                                                args.debug,
+                                                args.ohMask,
+                                                printSummary=False)
+                if (len(listOfOHsWithBadTriggerLink) > 0 ):
+                    fpgaCommPassed = False
+                    printYellow("Trigger link of OHs: {0} failed, reprogramming OH FPGA's and making another attempt".format(listOfOHsWithBadTriggerLink))
+                    try:
+                        badFPGAsAfterFWReload = vfatBoard.parentOH.parentAMC.programAllOptohybridFPGAs(args.maxIter,args.ohMask)
+                    except NoUnmaskedOHException:
+                        printYellow("Reprogramming {0} FPGA's failed, hopefully next iteration succeeds".format(badFPGAsAfterFWReload))
+                else:
+                    fpgaCommPassed = True
+                    printGreen("Trigger link to OHs in mask: 0x{0:x} are now good".format(args.ohMask))
+                    break
             else:
                 fpgaCommPassed = True
-                printYellow("Trigger link of OHs: {0} failed, but I was told to accept bad trigger links".format(listOfDeadFPGAs))
+                printYellow("Trigger link of OHs: {0} failed, but I was told to accept bad trigger links".format(listOfOHsWithBadTriggerLink))
                 break
             pass
 
         if not fpgaCommPassed:
             printRed("FPGA trigger link is not healthy")
-            printRed("Following OH's have bad trigger links: {0}".format(listOfDeadFPGAs))
+            printRed("Following OH's have bad trigger links: {0}".format(listOfOHsWithBadTriggerLink))
             printYellow("\tTry checking:")
             printYellow("\t\t1. The trigger fibers from the optohybrid are correctly plugged into the detector patch panel")
             printYellow("\t\t2. Power Cycle the affected optohybrids")
