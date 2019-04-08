@@ -137,7 +137,7 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
 
 def scurveAna(scurveDataFile, tuple_calInfo, tuple_deadChan, isVFAT3=True):
     """
-    Runs scurve analysis and returns the number of dead channels found
+    Runs scurve analysis and returns the number of dead channels by VFAT found
 
     scurveDataFile  - TFile containing the scurveTree
     tuple_calInfo   - Tuple of numpy arrays which provides the CFG_CAL_DAC calibration 
@@ -157,12 +157,15 @@ def scurveAna(scurveDataFile, tuple_calInfo, tuple_deadChan, isVFAT3=True):
     deadChanCutLow = min(tuple_deadChan)
     deadChanCutHigh= max(tuple_deadChan)
 
-    nDeadChan = 0
+    nDeadChan = {}
 
     for vfat in range(0,24):
         for chan in range(0, 128):
             if (deadChanCutLow < scanFitResults[1][vfat][chan] and scanFitResults[1][vfat][chan] < deadChanCutHigh):
-                nDeadChan+=1
+                if vfat in nDeadChan.keys():
+                    nDeadChan[vfat]+=1
+                else:
+                    nDeadChan[vfat]=1
                 pass
             pass
         pass
@@ -349,6 +352,7 @@ def testConnectivity(args):
                 # First try a link reset then check status again
                 print("Trigger links for OHs {0} are bad, trying a link reset (GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET 0x1)".format(listOfOHsWithBadTriggerLink))
                 vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET",0x1)
+                vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.CNT_RESET",0x1)
                 listOfOHsWithBadTriggerLink = getListOfBadTrigLinks(
                                                 vfatBoard.parentOH.parentAMC, 
                                                 args.checkCSCTrigLink, 
@@ -937,13 +941,17 @@ def testConnectivity(args):
         else:
             printGreen("SCurve Analysis Completed Successfully")
 
-        print("| OH | N_DEAD |")
-        print("| -- | ------ |")
+        print("| OH | VFAT | N_DEAD |")
+        print("| -- | ---- | ------ |")
         tooManyDeadChan = False
-        for ohN,nDeadChan in enumerate(nDeadChanByOH):
-            print("| {0} | {1}{2}{3} |".format(ohN,colors.RED if nDeadChan > 3 else colors.GREEN,nDeadChan,colors.ENDC))
-            if nDeadChan > 3:
-                tooManyDeadChan = True
+        sumDeadChan = 0
+        for ohN,ResultsByVfat in enumerate(nDeadChanByOH):
+            for vfat,nDeadChan in ResultsByVfat.iteritems():
+                print("| {0} | {1} | {2}{3}{4} |".format(ohN,vfat,colors.RED if nDeadChan > 0 else colors.GREEN,nDeadChan,colors.ENDC))
+                sumDeadChan+=nDeadChan
+                if sumDeadChan > 3:
+                    tooManyDeadChan = True
+                    pass
                 pass
             pass
 
