@@ -344,18 +344,21 @@ def launchSCurve(**kwargs):
     
     return
 
-def makeScanDir(slot, ohN, scanType, startTime, shelf=1):
+def makeScanDir(slot, ohN, scanType, startTime, shelf=1, chamber_config=None):
     """
     Makes a directory to store the output scan data and returns the directory path
 
     ohN - optohybrid number
     scanType - scanType, see ana_config.keys() from gempython.gemplotting.utils.anaInfo
     startTime - an instance of a datetime
+    shelf - uTCA shelf number
+    chamber_config - chamber_config dictionary
     """
 
     ohKey = (shelf,slot,ohN)
 
-    from gempython.gemplotting.mapping.chamberInfo import chamber_config
+    if chamber_config is None:
+        from gempython.gemplotting.mapping.chamberInfo import chamber_config
     from gempython.gemplotting.utils.anautilities import getDirByAnaType
     if ohKey in chamber_config.keys():
         dirPath = getDirByAnaType(scanType, chamber_config[ohKey])
