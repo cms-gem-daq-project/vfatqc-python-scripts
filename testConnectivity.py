@@ -613,8 +613,13 @@ def testConnectivity(args):
 
             vfatBoard.parentOH.link = ohN
 
-            # Write IREF
+            # First apply IREF settings that are loaded in the CTP7 VFAT3 config files
+            # After this do a DB query and overwrite the IREF value
+            # This resolves the issue of the chipID having bit flips and generating a fake value causing the DB lookup to fail
+            # But it requires the $USER to have set default values on the card if this were to happen
+            # Strictly an issue for VFATs that do not use reed-muller encoded chipID's
             print("Setting CFG_IREF for all VFATs on OH{0}".format(ohN))
+            vfatBoard.biasAllVFATs(dict_vfatMask[ohN])
             for idx,vfat3CalInfo in dict_vfat3CalInfo[ohN].iterrows():
                 if((dict_vfatMask[ohN] >> vfat3CalInfo['vfatN']) & 0x1):
                     continue
