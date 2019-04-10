@@ -229,7 +229,7 @@ def testConnectivity(args):
     envCheck("GBT_SETTINGS")
     
     dataPath = os.getenv('DATA_PATH')
-    gbtConfigPath = "{0}/OHv3c/20180314".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
+    gbtConfigPath = "{0}/OHv3c/".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
     elogPath = os.getenv('ELOG_PATH')
 
     # Initialize Hardware
@@ -254,9 +254,9 @@ def testConnectivity(args):
 
         # Program GBTs
         gbtConfigs = [
-                "{0}/GBTX_OHv3c_GBT_0__2018-03-14_FINAL-REG35-42.txt".format(gbtConfigPath),
-                "{0}/GBTX_OHv3c_GBT_1__2018-03-14_FINAL-REG35-42.txt".format(gbtConfigPath),
-                "{0}/GBTX_OHv3c_GBT_2__2018-03-14_FINAL-REG35-42.txt".format(gbtConfigPath),
+                "{0}/GBTX_OHv3c_GBT_0.txt".format(gbtConfigPath),
+                "{0}/GBTX_OHv3c_GBT_1.txt".format(gbtConfigPath),
+                "{0}/GBTX_OHv3c_GBT_2.txt".format(gbtConfigPath),
                 ]
         print("Programming GBTs")
         configGBT(cardName=args.cardName, listOfconfigFiles=gbtConfigs, ohMask=args.ohMask, nOHs=nOHs)
