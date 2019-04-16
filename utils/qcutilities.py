@@ -5,6 +5,21 @@ def calcL1Ainterval(rate):
     from math import floor
     return floor((1.0 / rate) * (1e9 / 25))
 
+def crange(start,stop,modulus):
+    """crange returns a list of the elements in the appropriate range
+    x,y where x < y, y < 2*modulo: [ x, x+1 ,,, modulus-1 , 0, ,,, y%modulus ]
+    x,y where x > y [ x, x+1 ,,, modulo-1 , 0, ,,, y ]
+    all other cases are invalid
+    """
+    
+    if start < stop:
+        return [ x % modulus for x in range(start,stop) ]
+    elif stop < start:
+        return [ x for x in range(start,modulus) ] + [ x for x in range(0,stop) ]
+    else:
+        # return []
+        raise RangeError("Invalid range specified")
+
 def getCardName(shelf,slot):
     return "gem-shelf%02d-amc%02d"%(shelf,slot)
 
