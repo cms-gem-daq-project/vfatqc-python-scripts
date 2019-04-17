@@ -99,7 +99,7 @@ def dacScanAllLinks(args, calTree, vfatBoard):
                 calTree.dacValY_Err[0]))
         pass
 
-    printGreen("DAC scans for optohybrids in {0} completed".format(args.ohMask))
+    printGreen("DAC scans for optohybrids in 0x{0:x} completed".format(args.ohMask))
 
     return
 
