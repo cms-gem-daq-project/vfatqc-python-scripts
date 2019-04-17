@@ -250,6 +250,7 @@ def testConnectivity(args):
         print("Checking GBT Communication (Before Programming GBTs)")
         if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask):
             printRed("Connectivity Testing Failed")
+            printYellow("If Vmon = 8.0V than Imon must be 1.71 +/- 0.01A; if not the GBT's are not locking to the fiber link")
             return
 
         # Program GBTs
@@ -422,62 +423,53 @@ def testConnectivity(args):
         failed2FindGoodPhase = False
         dict_phases2Save = {}
         listOfBadVFATs = [ ]
+        vfats2Replace = [ ]
+        from gempython.vfatqc.utils.qcutilities import crange
+        import numpy as np
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
-
+            GBT_PHASE_RANGE = 16
+            WINDOW = 4
             dict_phases2Save[ohN] = [ 0xdeaddead for x in range(0,24) ]
             for vfat in range(0,24):
-                phaseRes_idxm0 = 0 # Holds Phase Results for phase idx
-                phaseRes_idxm1 = 0 # Holds Phase Results for phase idx-1
-                phaseRes_idxm2 = 0 # Holds Phase Results for phase idx-2
-                phaseRes_idxm3 = 0 # Holds Phase Results for phase idx-3
-                phaseRes_idxm4 = 0 # Holds Phase Results for phase idx-4
                 phase2Write = -1
-                # Initial phase2Write will be phase-1 if 3 consecutive phases are good nScan times
-                # This will be overwritten to phase-2 if a 4th consecutive phase is found to be good
-                # This will again be overwritten to phase-2 if a 5th consecutive phase is found to be good
-                # After 5 consecutive phases are good the procedure will exit
-                for phase in range(0,16):
-                    phaseRes_idxm0 = dict_phaseScanResults[ohN][vfat*16+phase]
+                phaseCounts = np.array([ dict_phaseScanResults[ohN][vfat*GBT_PHASE_RANGE+ph] for ph in range(0,GBT_PHASE_RANGE) ])
+                allBadPhases = np.where(phaseCounts!=args.nPhaseScans)[0]
+                badPhaseCounts = np.delete(allBadPhases,np.where(allBadPhases==15)[0]) ## remove 15 from the list of bad phases
+                phaseSum = 0
+                if len(badPhaseCounts) == 0:
+                    vfats2Replace.append((ohN,vfat))
+                elif len(badPhaseCounts) == 1:
+                    # only one bad phase point, search forward and backwards for most "good" phases
+                    # wraparound needs to be handled by a circular range function
+                    # phase == 15 needs to be handled, currently included in the sum
+                    frange  = crange(int(badPhaseCounts[0]+1),
+                                     int(badPhaseCounts[0])+1+WINDOW,
+                                     GBT_PHASE_RANGE)
+                    brange  = crange(int(badPhaseCounts[0])-WINDOW,
+                                     int(badPhaseCounts[0]),
+                                     GBT_PHASE_RANGE)
+                    fsum = sum(phaseCounts.take(frange, mode='wrap')) # forward  sum
+                    bsum = sum(phaseCounts.take(brange, mode='wrap')) # backward sum
+                    if fsum > bsum:
+                        phase2Write = (badPhaseCounts[0]+WINDOW)%GBT_PHASE_RANGE
+                    elif bsum > fsum:
+                        phase2Write = (badPhaseCounts[0]-WINDOW)%GBT_PHASE_RANGE
+                    else:
+                        ## choose the phase that doesn't require passing 15?
+                        phase2Write = (badPhaseCounts[0]-WINDOW)%GBT_PHASE_RANGE
+                    pass
+                elif len(badPhaseCounts) == 2:
+                    # exactly two bad phases, pick the midpoint, don't worry about wraparound
+                    # shoulw we check the distance?
+                    phase2Write = int((badPhaseCounts[1] - badPhaseCounts[0])/2+badPhaseCounts[0])
+                    pass
+                else:
+                    # more than 2 bad phases, shouldn't happen, how to treat?
+                    pass
 
-                    if (    phaseRes_idxm4 == args.nPhaseScans and
-                            phaseRes_idxm3 == args.nPhaseScans and
-                            phaseRes_idxm2 == args.nPhaseScans and 
-                            phaseRes_idxm1 == args.nPhaseScans and 
-                            phaseRes_idxm0 == args.nPhaseScans): # Found a sweet spot
-                        phase2Write = phase-2
-                        break
-                    elif (  phaseRes_idxm3 == args.nPhaseScans and
-                            phaseRes_idxm2 == args.nPhaseScans and
-                            phaseRes_idxm1 == args.nPhaseScans and
-                            phaseRes_idxm0 == args.nPhaseScans): 
-                        phaseRes_idxm4 = phaseRes_idxm3
-                        phaseRes_idxm3 = phaseRes_idxm2
-                        phaseRes_idxm2 = phaseRes_idxm1
-                        phaseRes_idxm1 = phaseRes_idxm0
-                        phase2Write = phase-2
-                    elif (  phaseRes_idxm2 == args.nPhaseScans and
-                            phaseRes_idxm1 == args.nPhaseScans and
-                            phaseRes_idxm0 == args.nPhaseScans): 
-                        phaseRes_idxm3 = phaseRes_idxm2
-                        phaseRes_idxm2 = phaseRes_idxm1
-                        phaseRes_idxm1 = phaseRes_idxm0
-                        phase2Write = phase-1
-                    elif (phaseRes_idxm1 == args.nPhaseScans and phaseRes_idxm0 == args.nPhaseScans): # Last phase and this phase are good
-                        phaseRes_idxm2 = phaseRes_idxm1
-                        phaseRes_idxm1 = phaseRes_idxm0
-                    elif (phaseRes_idxm0 == args.nPhaseScans): # Only this phase is good
-                        phaseRes_idxm1 = phaseRes_idxm0
-                    else: # Reset
-                        phaseRes_idxm0 = 0
-                        phaseRes_idxm1 = 0
-                        phaseRes_idxm2 = 0
-                        phaseRes_idxm3 = 0
-                        phaseRes_idxm4 = 0
-                        pass
-                    pass # End loop over phases
                 if phase2Write > -1:
                     printGreen("Phase {0} will be used for (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
                     dict_phases2Save[ohN][vfat] = phase2Write
@@ -501,6 +493,7 @@ def testConnectivity(args):
             printYellow("\t\t1. OH is firmly inserted into the Samtec Conncetor (press with fingers along connector vias)")
             printYellow("\t\t2. VFATs mentioned above are inserted into the 100-pin connector on the GEB")
             printYellow("\t\t3. VDD on VFATs mentioned above is at least 1.20V")
+            printYellow("\t\t4. Replace the (OH,VFAT) pairs {0} with new hybrids if possible".format(vfats2Replace))
             printRed("Connectivity Testing Failed")
             return
         if (not failed2FindGoodPhase and args.ignoreSyncErrs):
@@ -680,6 +673,8 @@ def testConnectivity(args):
             pass
     else:
         from gempython.gemplotting.mapping.chamberInfo import chamber_config
+
+    print("chamber_config = {0}", chamber_config)
 
     if not args.skipDACScan:
         printYellow("="*20)
@@ -993,7 +988,7 @@ if __name__ == '__main__':
     parser.add_argument("-f","--firstStep",type=int,help="Starting Step of connectivity testing, to skip all initial steps enter '5'",default=1)
     parser.add_argument("-i","--ignoreSyncErrs",action="store_true",help="Ignore VFAT Sync Errors When Checking Communication")
     parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 2 & 3 will be attempted before failing (and exiting)",default=10)
-    parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=100)
+    parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=50)
     parser.add_argument("-o","--ohMask",type=parseInt,help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered",default=0x1)
     parser.add_argument("--shelf",type=int,help="uTCA shelf number",default=2)
     parser.add_argument("--skipDACScan",action="store_true",help="Do not perform any DAC Scans")
@@ -1025,9 +1020,9 @@ if __name__ == '__main__':
         pass
 
     # Enforce a minimum number of phase scans
-    if args.nPhaseScans < 100:
-        printYellow("You've requested the number of phase scans to be {0} which is less than 100.\nThis is probably not reliable, reseting to 100".format(args.nPhaseScans))
-        args.nPhaseScans = 100
+    if args.nPhaseScans < 50:
+        printYellow("You've requested the number of phase scans to be {0} which is less than 50.\nThis is probably not reliable, reseting to 50".format(args.nPhaseScans))
+        args.nPhaseScans = 50
         pass
 
     gemlogger = getGEMLogger(__name__)
