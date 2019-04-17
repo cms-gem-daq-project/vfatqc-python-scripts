@@ -432,7 +432,7 @@ def testConnectivity(args):
                 continue
             GBT_PHASE_RANGE = 16
             WINDOW = 4
-            dict_phases2Save[ohN] = [ 0xdeaddead for x in range(0,24) ]
+            dict_phases2Save[ohN] = [ 0xf for x in range(0,24) ] #Start by setting all phases as bad (e.g. 15)
             for vfat in range(0,24):
                 phase2Write = -1
                 phaseCounts = np.array([ dict_phaseScanResults[ohN][vfat*GBT_PHASE_RANGE+ph] for ph in range(0,GBT_PHASE_RANGE) ])
@@ -454,26 +454,79 @@ def testConnectivity(args):
                     fsum = sum(phaseCounts.take(frange, mode='wrap')) # forward  sum
                     bsum = sum(phaseCounts.take(brange, mode='wrap')) # backward sum
                     if fsum > bsum:
-                        phase2Write = (badPhaseCounts[0]+WINDOW)%GBT_PHASE_RANGE
+                        phase2Write = int((badPhaseCounts[0]+WINDOW)%GBT_PHASE_RANGE)
                     elif bsum > fsum:
-                        phase2Write = (badPhaseCounts[0]-WINDOW)%GBT_PHASE_RANGE
+                        phase2Write = int((badPhaseCounts[0]-WINDOW)%GBT_PHASE_RANGE)
                     else:
                         ## choose the phase that doesn't require passing 15?
-                        phase2Write = (badPhaseCounts[0]-WINDOW)%GBT_PHASE_RANGE
+                        phase2Write = int((badPhaseCounts[0]-WINDOW)%GBT_PHASE_RANGE)
                     pass
                 elif len(badPhaseCounts) == 2:
                     # exactly two bad phases, pick the midpoint, don't worry about wraparound
                     # shoulw we check the distance?
                     phase2Write = int((badPhaseCounts[1] - badPhaseCounts[0])/2+badPhaseCounts[0])
                     pass
+                elif len(badPhaseCounts) == 3:
+                    # check if bad phases are sequential, if so use pick the midpoint, ignore wraparound
+                    # if bad phases are not sequential just look for the longest good window
+                    badPhasesAreSequential=False
+                    minSeqPhase = -1
+                    maxSeqPhase = -1
+                    idx2Use = [ 0, 1, 2]
+                    for idx1 in range(0,3):
+                        for idx2 in range(0,3):
+                            if not (idx1 > idx2):
+                                continue
+                            if( int(abs(badPhaseCounts[idx1]-badPhaseCounts[idx2])) == 1): #bad phases are sequential
+                                minSeqPhase = int(min(badPhaseCounts[idx1],badPhaseCounts[idx2]))
+                                maxSeqPhase = int(max(badPhaseCounts[idx1],badPhaseCounts[idx2]))
+                                idx2Use.remove(idx1)
+                                idx2Use.remove(idx2)
+                                badPhasesAreSequential=True
+                                break # exit inner loop
+                            pass
+                        if (badPhasesAreSequential):
+                            break # exit outer loop
+                        pass
+                    if (badPhasesAreSequential): # Look for midpoint
+                        if badPhaseCounts[idx2Use[0]] > maxSeqPhase:
+                            phase2Write = int((badPhaseCounts[idx2Use[0]] - maxSeqPhase)/2+maxSeqPhase)
+                        else:
+                            phase2Write = int((minSeqPhase - badPhaseCounts[idx2Use[0]])/2+badPhaseCounts[idx2Use[0]])
+                            pass
+                        pass
+                    else:                       # Look for longest good window
+                        badPhaseCounts = np.sort(badPhaseCounts)
+                        ranges = []
+                        ranges.append(crange(0,
+                                         int(badPhaseCounts[0]),
+                                         GBT_PHASE_RANGE))
+                        ranges.append(crange(int(badPhaseCounts[0])+1,
+                                         int(badPhaseCounts[1]),
+                                         GBT_PHASE_RANGE))
+                        ranges.append(crange(int(badPhaseCounts[1])+1,
+                                         int(badPhaseCounts[2]),
+                                         GBT_PHASE_RANGE))
+                        ranges.append(crange(int(badPhaseCounts[2])+1,
+                                         15,
+                                         GBT_PHASE_RANGE))
+                        rangeLengths = [ len(x) for x in ranges ]
+                        idxOfRanges = rangeLengths.index(max(rangeLengths))
+                        ranges[idxOfRanges].sort() # don't think this is necessary?
+                        phase2Write = int((ranges[idxOfRanges][-1] - ranges[idxOfRanges][0])/2 + ranges[idxOfRanges][0])
+                    pass
+                elif len(badPhaseCounts) == 4:
+                    # check if there exists two pairs of sequential bad phases, if so pick the midpoint, ignore wraparound
+                    # placeholder
+                    pass
                 else:
-                    # more than 2 bad phases, shouldn't happen, how to treat?
+                    # more than 3 bad phases, shouldn't happen, how to treat?
                     pass
 
                 if phase2Write > -1:
                     printGreen("Phase {0} will be used for (OH{1},VFAT{2})".format(phase2Write,ohN,vfat))
                     dict_phases2Save[ohN][vfat] = phase2Write
-                if dict_phases2Save[ohN][vfat] == 0xdeaddead:
+                if dict_phases2Save[ohN][vfat] == 0xf:
                     listOfBadVFATs.append((ohN,vfat))
                     printRed("I did not find a good phase for (OH{0},VFAT{1})".format(ohN,vfat))
                     failed2FindGoodPhase = True
@@ -673,8 +726,6 @@ def testConnectivity(args):
             pass
     else:
         from gempython.gemplotting.mapping.chamberInfo import chamber_config
-
-    print("chamber_config = {0}", chamber_config)
 
     if not args.skipDACScan:
         printYellow("="*20)

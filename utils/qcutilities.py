@@ -18,7 +18,7 @@ def crange(start,stop,modulus):
         return [ x for x in range(start,modulus) ] + [ x for x in range(0,stop) ]
     else:
         # return []
-        raise RangeError("Invalid range specified")
+        raise IndexError("Invalid range specified")
 
 def getCardName(shelf,slot):
     return "gem-shelf%02d-amc%02d"%(shelf,slot)
