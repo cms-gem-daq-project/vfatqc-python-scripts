@@ -2,7 +2,8 @@
 
 from gempython.tools.amc_user_functions_uhal import *
 from gempython.tools.amc_user_functions_xhal import NoUnmaskedOHException
-from gempython.tools.optohybrid_user_functions_xhal import OHRPCException
+from gempython.tools.hw_constants import gemVariants, GBT_PHASE_RANGE 
+from gempython.tools.optohybrid_user_functions_xhal import OHRPCException, OHTypeException
 from gempython.tools.vfat_user_functions_xhal import *
 from gempython.utils.gemlogger import colors, getGEMLogger, printGreen, printRed, printYellow
     
@@ -16,7 +17,11 @@ def getListOfBadTrigLinks(amcBoard,checkCSCTrigLink=False,debug=False,ohMask=0xf
     Returns a list of OH's with bad trigger links.  A link is considered bad if the sum
     of the link status counters (e.g. GEM_AMC.TRIGGER.OHY.LINK*) do not sum to 0x0
 
-
+        amcBoard         - Instance of HwAMC class
+        checkCSCTrigLink - If true checks the CSC trigger link in addition to the GEM trigger link
+        debug            - prints additional debugging info
+        ohMask           - 12 bit number, a 1 in the N^th bit means consider the N^th optohybrid
+        printSummary     - If true prints a summary table of the results
     """
     
     trigLinkStatus = amcBoard.getTriggerLinkStatus(
@@ -87,10 +92,12 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
     """
 
     scaCommPassed = False
+    from gempython.utils.registers_uhal import writeRegister
     from reg_utils.reg_interface.common.sca_utils import sca_reset 
     from reg_utils.reg_interface.common.jtag import initJtagRegAddrs
     initJtagRegAddrs()
     for trial in range(0,maxIter):
+        writeRegister(amc,"GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF",0x0)
         sca_reset(ohMask)
         scaInfo = printSystemSCAInfo(amc)
         
@@ -172,6 +179,36 @@ def scurveAna(scurveDataFile, tuple_calInfo, tuple_deadChan, isVFAT3=True):
 
     return nDeadChan
 
+def phaseIsGood(vfatBoard,vfat,phase):
+    """
+    Writes GBT phase to value 'phase' for given vfat
+    Returns true if this phrase is good
+
+    vfatBoard - Instance of HwVFAT class
+    vfat      - Number indicating vfat position in range [0,23]
+    phase     - Phase value to write in range [0,15]
+    """
+    
+    # Get hardware info
+    cardName = vfatBoard.parentOH.parentAMC.name
+    ohN      = vfatBoard.parentOH.link
+    phase    = vfatBoard.parentOH.vfatGBTPhases[vfat]
+
+    # Set GBT phase
+    from xhal.reg_interface_gem.core.gbt_utils_extended import setPhase
+    setPhase(cardName,ohN,vfat,phase)
+    
+    # Issue link reset
+    vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET",0x1)
+
+    # Check slow control with this VFAT
+    from xhal.reg_interface_gem.core.reg_extra_ops import repeatedRead
+    readErrors  = repeatedRead("GEM_AMC.OH.OH{0}.GEB.VFAT{1}.CFG_RUN".format(ohN,vfat),1000,True)
+    readErrors += repeatedRead("GEM_AMC.OH.OH{0}.GEB.VFAT{1}.HW_ID".format(ohN,vfat),1000,True)
+    readErrors += repeatedRead("GEM_AMC.OH.OH{0}.GEB.VFAT{1}.HW_ID_VER".format(ohN,vfat),1000,True)
+
+    return (readErrors == 0)
+
 def testConnectivity(args):
     # Get the scandate
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
@@ -194,6 +231,8 @@ def testConnectivity(args):
         args.checkCSCTrigLink = False
     if hasattr(args, 'compare') is False: # Just Compare frontend settings?
         args.compare = False
+    if hasattr(args, 'detType') is False:
+        args.detType = None # default to None
     if hasattr(args, 'filename') is False: # TFile containing channel configuration
         args.filename = None
     if hasattr(args, 'nPhaseScans') is False: # Number of GBT Phase Scans to Perform
@@ -206,6 +245,8 @@ def testConnectivity(args):
         args.run = False
     if hasattr(args, 'stepSize') is False:
         args.stepSize = 1
+    if hasattr(args, 'gemType') is False:
+        args.gemType = None # default to None
     if hasattr(args, 'vt1') is False: # CFG_THR_ARM_DAC (VThreshold1) setting to write for V3 (V2) electronics
         args.vt1 = 100
     if hasattr(args, 'vt1bump') is False: # Value to add to comparator setting
@@ -236,7 +277,16 @@ def testConnectivity(args):
     amc = getAMCObject(args.slot,args.shelf)
     nOHs = readRegister(amc,"GEM_AMC.GEM_SYSTEM.CONFIG.NUM_OF_OH")
     
-    vfatBoard = HwVFAT(args.cardName,0) # assign a dummy link for now
+    try:
+        vfatBoard = HwVFAT(
+                args.cardName,
+                link=0,                 # assign a dummy link for now
+                gemType=args.gemType,
+                detType="short")        # assign a dummy detType for now
+    except OHTypeException as err:       
+        printYellow(err.message)
+        printRed("Connectivity Testing Failed")
+        return
 
     # Step 1
     # Check GBT Communication
@@ -250,7 +300,7 @@ def testConnectivity(args):
         print("Checking GBT Communication (Before Programming GBTs)")
         if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask):
             printRed("Connectivity Testing Failed")
-            printYellow("If Vmon = 8.0V than Imon must be 1.71 +/- 0.01A; if not the GBT's are not locking to the fiber link")
+            printYellow("If Vmon = 8.0V then Imon must be 1.71 +/- 0.01A; if not the GBT's are not locking to the fiber link")
             return
 
         # Program GBTs
@@ -395,7 +445,7 @@ def testConnectivity(args):
     # Check VFAT Communication
     # =================================================================
     from gempython.utils.nesteddict import nesteddict as ndict
-    if args.firstStep <= 4:
+    if (args.firstStep <= 4) and not args.skipGBTPhaseScan:
         printYellow("="*20)
         printYellow("Step 4: Checking VFAT Communication")
         printYellow("="*20)
@@ -414,23 +464,46 @@ def testConnectivity(args):
         # Perform N GBT Phase Scans
         print("Scanning GBT Phases, this may take a moment please be patient")
         if args.writePhases2File:
-            fName = elogPath+'/gbtPhaseSettings.log'
-            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=(not args.debug), outputFile=fName)
+            fNameGBTPhaseScanResults = elogPath+'/gbtPhaseSettings.log'
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, outputFile=fNameGBTPhaseScanResults)
         else:
-            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=(not args.debug))
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False)
 
         # Find Good GBT Phase Values
         failed2FindGoodPhase = False
         dict_phases2Save = {}
         listOfBadVFATs = [ ]
         vfats2Replace = [ ]
+        from gempython.gemplotting.mapping.chamberInfo import GEBtype
         from gempython.vfatqc.utils.qcutilities import crange
         import numpy as np
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
-            GBT_PHASE_RANGE = 16
+
+            # Update the hardware info
+            vfatBoard.parentOH.link = ohN
+            if args.detType is not None:
+                try:
+                    vfatBoard.parentOH.setType(args.gemType, args.detType)
+                except OHTypeException as err:       
+                    printYellow(err.message)
+                    printRed("Connectivity Testing Failed")
+                    return
+                pass
+            else:
+                ohKey = (args.shelf,args.slot,ohN)
+                detType = GEBtype[ohKey]
+                try:
+                    vfatBoard.parentOH.setType(args.gemType, detType)
+                except OHTypeException as err:       
+                    printYellow(err.message)
+                    printRed("Connectivity Testing Failed")
+                    return
+                pass
+
+            #GBT_PHASE_RANGE = 16
             WINDOW = 4
             dict_phases2Save[ohN] = [ 0xf for x in range(0,24) ] #Start by setting all phases as bad (e.g. 15)
             for vfat in range(0,24):
@@ -440,7 +513,25 @@ def testConnectivity(args):
                 badPhaseCounts = np.delete(allBadPhases,np.where(allBadPhases==15)[0]) ## remove 15 from the list of bad phases
                 phaseSum = 0
                 if len(badPhaseCounts) == 0:
-                    vfats2Replace.append((ohN,vfat))
+                    # First try to set the phase from the lookup table
+                    if phaseIsGood(vfatBoard, vfat, vfatBoard.parentOH.vfatGBTPhases):
+                        phase2Write = vfatBoard.parentOH.vfatGBTPhases[vfat]
+                    else:
+                        # Wonder if this could be done with a lambda...probably not
+                        tmpPhase = -1
+                        if (vfatBoard.parentOH.vfatGBTPhases[vfat] + 4) < 15:
+                            tmpPhase = vfatBoard.parentOH.vfatGBTPhases[vfat] + 4
+                        else:
+                            tmpPhase = vfatBoard.parentOH.vfatGBTPhases[vfat] - 4
+                            pass
+
+                        if phaseIsGood(vfatBoard, vfat, tmpPhase):
+                            phase2Write = tmpPhase
+                            pass
+                        pass
+                    
+                    if (not (phase2Write > -1)):
+                        vfats2Replace.append((ohN,vfat))
                 elif len(badPhaseCounts) == 1:
                     # only one bad phase point, search forward and backwards for most "good" phases
                     # wraparound needs to be handled by a circular range function
@@ -498,18 +589,10 @@ def testConnectivity(args):
                     else:                       # Look for longest good window
                         badPhaseCounts = np.sort(badPhaseCounts)
                         ranges = []
-                        ranges.append(crange(0,
-                                         int(badPhaseCounts[0]),
-                                         GBT_PHASE_RANGE))
-                        ranges.append(crange(int(badPhaseCounts[0])+1,
-                                         int(badPhaseCounts[1]),
-                                         GBT_PHASE_RANGE))
-                        ranges.append(crange(int(badPhaseCounts[1])+1,
-                                         int(badPhaseCounts[2]),
-                                         GBT_PHASE_RANGE))
-                        ranges.append(crange(int(badPhaseCounts[2])+1,
-                                         15,
-                                         GBT_PHASE_RANGE))
+                        ranges.append(range(0,int(badPhaseCounts[0])+1))
+                        ranges.append(range(int(badPhaseCounts[0])+1,int(badPhaseCounts[1])+1))
+                        ranges.append(range(int(badPhaseCounts[1])+1,int(badPhaseCounts[2])+1))
+                        ranges.append(range(int(badPhaseCounts[2])+1,16))
                         rangeLengths = [ len(x) for x in ranges ]
                         idxOfRanges = rangeLengths.index(max(rangeLengths))
                         ranges[idxOfRanges].sort() # don't think this is necessary?
@@ -566,17 +649,25 @@ def testConnectivity(args):
         printYellow("Step 5: Checking VFAT Synchronization")
         printYellow("="*20)
 
+        if args.skipGBTPhaseScan:
+            printYellow("Some VFATs may not be synchronized since I did not perform a GBT Phase Scan")
+
         alllVFATsSyncd = vfatBoard.parentOH.parentAMC.getVFATLinkStatus(doReset=True, printSummary=True, ohMask=args.ohMask)
         if (not alllVFATsSyncd and not args.ignoreSyncErrs):
             printRed("VFATs are not properly synchronized")
-            printYellow("\tTry checking:")
-            printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
-            printYellow("\t\t2. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
-            printYellow("\t\t3. The Phase Settings written to each VFAT where in the middle of a 'good' window")
+            if args.skipGBTPhaseScan:
+                printYellow("I warned you this might happen because the GBT Phase scan was not performed.\nYou might want to call this routine again but drop the '--skipGBTPhaseScan' argument")
+            else:
+                printYellow("\tTry checking:")
+                printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
+                printYellow("\t\t2. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
+                printYellow("\t\t3. The Phase Settings written to each VFAT where in the middle of a 'good' window")
             printRed("Conncetivity Testing Failed")
             return
         if (not alllVFATsSyncd and args.ignoreSyncErrs):
             printRed("VFATs are not properly synchronized")
+            if args.skipGBTPhaseScan:
+                printYellow("I warned you this might happen because the GBT Phase scan was not performed.\nYou might want to call this routine again but drop the '--skipGBTPhaseScan' argument")
             printYellow("But I have been told to ignore sync errors")
         else:
             printGreen("VFATs are properly synchronized")
@@ -607,9 +698,9 @@ def testConnectivity(args):
         pass
         printGreen("VFAT Communication Successfully Established")
 
-    if args.writePhases2File and args.firstStep <= 4:
-        fName = elogPath+'/phases.log'
-        fPhases = open(fName,"w")
+    if args.writePhases2File and args.firstStep <= 4 and not args.skipGBTPhaseScan:
+        fNameGBTPhaseSetPts = elogPath+'/phases.log'
+        fPhases = open(fNameGBTPhaseSetPts,"w")
         fPhases.write("link/i:vfatN/i:GBTPhase/i:\n")
         for ohN in range(nOHs):
             # Skip masked OH's
@@ -617,6 +708,25 @@ def testConnectivity(args):
                 continue
             for vfatN in range(24):
                 fPhases.write("{0}\t{1}\t{2}\n".format(ohN,vfatN,dict_phases2Save[ohN][vfatN]))
+                pass
+            pass
+        fPhases.close()
+
+        from gempython.gemplotting.utils.anautilities import getPhaseScanPlots, getSinglePhaseScanPlot
+        if( (args.chamberName is not None) and (bin(args.ohMask).count("1") == 1) ):
+            # Case specific detector, make one plot
+            link = -1
+            for ohN in range(nOHs):
+                if((args.ohMask >> ohN) & 0x1):
+                    link = ohN
+                    break
+                pass
+            
+            getSinglePhaseScanPlot(link,fNameGBTPhaseScanResults,fNameGBTPhaseSetPts,args.chamberName,savePlots=True)
+        else:
+            # Case possibly multi detectors, make grid plot
+            getPhaseScanPlots(fNameGBTPhaseScanResults,fNameGBTPhaseSetPts,savePlots=True)
+            pass
 
     # Get the calInfo for all detectors
     # =================================================================
@@ -1029,22 +1139,27 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description="Tool for connectivity testing")
 
+    # Required Arguments
+    parser.add_argument("shelf",type=int,help="uTCA shelf number")
+    parser.add_argument("slot",type=int,help="AMC slot in uTCA shelf")
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
+    parser.add_argument("ohMask",type=parseInt,help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered")
+    
     parser.add_argument("-c","--chamberName",type=str,help="Detector Serial Number, if provided will use this name instead of name provided in chamber_config dictionary",default=None)
     parser.add_argument("--checkCSCTrigLink",action="store_true",help="Check also the trigger link for the CSC trigger associated to OH in mask")
     parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead",default="0.1,0.5")
     parser.add_argument("-a","--acceptBadTrigLink",action="store_true",help="Ignore failing trigger link status checks")
     parser.add_argument("-d","--debug",action="store_true",dest="debug",help = "Print additional debugging information")
+    parser.add_argument("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default=None)
     parser.add_argument("-e","--extRefADC",action="store_true",help="Use the externally referenced ADC on the VFAT3.")
-    parser.add_argument("-f","--firstStep",type=int,help="Starting Step of connectivity testing, to skip all initial steps enter '5'",default=1)
+    parser.add_argument("-f","--firstStep",type=int,help="Starting step of connectivity testing, to skip all initial steps enter '5'",default=1)
+    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
     parser.add_argument("-i","--ignoreSyncErrs",action="store_true",help="Ignore VFAT Sync Errors When Checking Communication")
     parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 2 & 3 will be attempted before failing (and exiting)",default=10)
     parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=50)
-    parser.add_argument("-o","--ohMask",type=parseInt,help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered",default=0x1)
-    parser.add_argument("--shelf",type=int,help="uTCA shelf number",default=2)
     parser.add_argument("--skipDACScan",action="store_true",help="Do not perform any DAC Scans")
+    parser.add_argument("--skipGBTPhaseScan",action="store_true",help="Do not perform any GBT Phase Scans")
     parser.add_argument("--skipScurve",action="store_true",help="Do not perform any SCurves")
-    parser.add_argument("-s","--slot",type=int,help="AMC slot in uTCA shelf",default=5)
     parser.add_argument("--writePhases2File",action="store_true",help="Write found GBT Phase seetings to file")
     args = parser.parse_args()
 
@@ -1069,6 +1184,21 @@ if __name__ == '__main__':
         printRed("This doesn't make sense; please reconsider")
         exit(os.EX_USAGE)
         pass
+
+    args.gemType = args.gemType.lower()
+    if args.gemType not in gemVariants.keys():
+        printYellow("gemType '{0}' not in the list of known gemVariants: {1}".format(args.gemType,gemVariants.keys()))
+        printYellow("please relaunch using --gemType from the above list")
+        printRed("Connectivity Testing Failed")
+        exit(os.EX_USAGE)
+
+    if args.detType is not None:
+        args.detType = args.detType.lower()
+        if args.detType not in gemVariants[args.gemType]:
+            printYellow("detType '{0}' not in the list of known detector types for gemType {1}; list of known detector types: {2}".format(args.detType, args.gemType, gemVariants[args.gemType]))
+            printYellow("please relaunch using --detType from the above list")
+            printRed("Connectivity Testing Failed")
+            exit(os.EX_USAGE)
 
     # Enforce a minimum number of phase scans
     if args.nPhaseScans < 50:
