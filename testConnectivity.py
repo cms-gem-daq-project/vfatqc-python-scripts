@@ -179,36 +179,6 @@ def scurveAna(scurveDataFile, tuple_calInfo, tuple_deadChan, isVFAT3=True):
 
     return nDeadChan
 
-def phaseIsGood(vfatBoard,vfat,phase):
-    """
-    Writes GBT phase to value 'phase' for given vfat
-    Returns true if this phrase is good
-
-    vfatBoard - Instance of HwVFAT class
-    vfat      - Number indicating vfat position in range [0,23]
-    phase     - Phase value to write in range [0,15]
-    """
-    
-    # Get hardware info
-    cardName = vfatBoard.parentOH.parentAMC.name
-    ohN      = vfatBoard.parentOH.link
-    phase    = vfatBoard.parentOH.vfatGBTPhases[vfat]
-
-    # Set GBT phase
-    from xhal.reg_interface_gem.core.gbt_utils_extended import setPhase
-    setPhase(cardName,ohN,vfat,phase)
-    
-    # Issue link reset
-    vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET",0x1)
-
-    # Check slow control with this VFAT
-    from xhal.reg_interface_gem.core.reg_extra_ops import repeatedRead
-    readErrors  = repeatedRead("GEM_AMC.OH.OH{0}.GEB.VFAT{1}.CFG_RUN".format(ohN,vfat),1000,True)
-    readErrors += repeatedRead("GEM_AMC.OH.OH{0}.GEB.VFAT{1}.HW_ID".format(ohN,vfat),1000,True)
-    readErrors += repeatedRead("GEM_AMC.OH.OH{0}.GEB.VFAT{1}.HW_ID_VER".format(ohN,vfat),1000,True)
-
-    return (readErrors == 0)
-
 def testConnectivity(args):
     # Get the scandate
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
@@ -475,7 +445,7 @@ def testConnectivity(args):
         listOfBadVFATs = [ ]
         vfats2Replace = [ ]
         from gempython.gemplotting.mapping.chamberInfo import GEBtype
-        from gempython.vfatqc.utils.qcutilities import crange
+        from gempython.vfatqc.utils.phaseUtils import getSequentialBadPhases, getPhaseFromLongestGoodWindow, phaseIsGood
         import numpy as np
         for ohN in range(nOHs):
             # Skip masked OH's
@@ -503,8 +473,6 @@ def testConnectivity(args):
                     return
                 pass
 
-            #GBT_PHASE_RANGE = 16
-            WINDOW = 4
             dict_phases2Save[ohN] = [ 0xf for x in range(0,24) ] #Start by setting all phases as bad (e.g. 15)
             for vfat in range(0,24):
                 phase2Write = -1
@@ -533,52 +501,31 @@ def testConnectivity(args):
                     if (not (phase2Write > -1)):
                         vfats2Replace.append((ohN,vfat))
                 elif len(badPhaseCounts) == 1:
-                    # only one bad phase point, search forward and backwards for most "good" phases
-                    # wraparound needs to be handled by a circular range function
-                    # phase == 15 needs to be handled, currently included in the sum
-                    frange  = crange(int(badPhaseCounts[0]+1),
-                                     int(badPhaseCounts[0])+1+WINDOW,
-                                     GBT_PHASE_RANGE)
-                    brange  = crange(int(badPhaseCounts[0])-WINDOW,
-                                     int(badPhaseCounts[0]),
-                                     GBT_PHASE_RANGE)
-                    fsum = sum(phaseCounts.take(frange, mode='wrap')) # forward  sum
-                    bsum = sum(phaseCounts.take(brange, mode='wrap')) # backward sum
-                    if fsum > bsum:
-                        phase2Write = int((badPhaseCounts[0]+WINDOW)%GBT_PHASE_RANGE)
-                    elif bsum > fsum:
-                        phase2Write = int((badPhaseCounts[0]-WINDOW)%GBT_PHASE_RANGE)
-                    else:
-                        ## choose the phase that doesn't require passing 15?
-                        phase2Write = int((badPhaseCounts[0]-WINDOW)%GBT_PHASE_RANGE)
-                    pass
+                    phase2Write = getPhaseFromLongestGoodWindow(badPhaseCounts[0],phaseCounts)
                 elif len(badPhaseCounts) == 2:
-                    # exactly two bad phases, pick the midpoint, don't worry about wraparound
-                    # shoulw we check the distance?
-                    phase2Write = int((badPhaseCounts[1] - badPhaseCounts[0])/2+badPhaseCounts[0])
+                    # check if bad phases are sequential, if so use the longest good window
+                    # if bad phases are not sequential use the midpoint, ignore wraparound
+                    tuple_seqBadPhases = getSequentialBadPhases(badPhaseCounts)
+                    
+                    badPhasesAreSequential = tuple_seqBadPhases[0]
+                    minSeqPhase = tuple_seqBadPhases[1]
+                    maxSeqPhase = tuple_seqBadPhases[2]
+
+                    if(badPhasesAreSequential):
+                        phase2Write = getPhaseFromLongestGoodWindow(minSeqPhase,phaseCounts)
+                    else:
+                        phase2Write = int((badPhaseCounts[1] - badPhaseCounts[0])/2+badPhaseCounts[0])
+                        pass
                     pass
                 elif len(badPhaseCounts) == 3:
                     # check if bad phases are sequential, if so use pick the midpoint, ignore wraparound
                     # if bad phases are not sequential just look for the longest good window
-                    badPhasesAreSequential=False
-                    minSeqPhase = -1
-                    maxSeqPhase = -1
-                    idx2Use = [ 0, 1, 2]
-                    for idx1 in range(0,3):
-                        for idx2 in range(0,3):
-                            if not (idx1 > idx2):
-                                continue
-                            if( int(abs(badPhaseCounts[idx1]-badPhaseCounts[idx2])) == 1): #bad phases are sequential
-                                minSeqPhase = int(min(badPhaseCounts[idx1],badPhaseCounts[idx2]))
-                                maxSeqPhase = int(max(badPhaseCounts[idx1],badPhaseCounts[idx2]))
-                                idx2Use.remove(idx1)
-                                idx2Use.remove(idx2)
-                                badPhasesAreSequential=True
-                                break # exit inner loop
-                            pass
-                        if (badPhasesAreSequential):
-                            break # exit outer loop
-                        pass
+                    tuple_seqBadPhases = getSequentialBadPhases(badPhaseCounts)
+
+                    badPhasesAreSequential = tuple_seqBadPhases[0]
+                    minSeqPhase = tuple_seqBadPhases[1]
+                    maxSeqPhase = tuple_seqBadPhases[2]
+
                     if (badPhasesAreSequential): # Look for midpoint
                         if badPhaseCounts[idx2Use[0]] > maxSeqPhase:
                             phase2Write = int((badPhaseCounts[idx2Use[0]] - maxSeqPhase)/2+maxSeqPhase)
