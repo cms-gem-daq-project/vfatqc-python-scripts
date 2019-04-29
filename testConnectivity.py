@@ -525,6 +525,7 @@ def testConnectivity(args):
                     badPhasesAreSequential = tuple_seqBadPhases[0]
                     minSeqPhase = tuple_seqBadPhases[1]
                     maxSeqPhase = tuple_seqBadPhases[2]
+                    idx2Use     = tuple_seqBadPhases[3]
 
                     if (badPhasesAreSequential): # Look for midpoint
                         if badPhaseCounts[idx2Use[0]] > maxSeqPhase:

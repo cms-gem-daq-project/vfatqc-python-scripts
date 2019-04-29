@@ -17,9 +17,10 @@ def getSequentialBadPhases(badPhaseCounts):
     """
     Returns a tuple containing:
 
-        (true/false, minSeqPhase, maxSeqPhase)
+        (true/false, minSeqPhase, maxSeqPhase, idx2Use)
 
-    Where the first element is true (false) if squential bad phases (do not) exist
+    Where the first element is true (false) if squential bad phases (do not) exist.
+    The last element idx2Use contains a list of nonsequential bad phases
 
     badPhaseCounts - container whose elements indicate bad GBT phase positions 
     """
@@ -47,7 +48,7 @@ def getSequentialBadPhases(badPhaseCounts):
             break # exit outer loop
         pass
 
-    return (badPhasesAreSequential, minSeqPhase, maxSeqPhase)
+    return (badPhasesAreSequential, minSeqPhase, maxSeqPhase, idx2Use)
 
 def getPhaseFromLongestGoodWindow(badPhase, phaseCounts):
     """
