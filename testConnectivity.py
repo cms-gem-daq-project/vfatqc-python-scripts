@@ -445,11 +445,11 @@ def testConnectivity(args):
         listOfBadVFATs = [ ]
         vfats2Replace = [ ]
         from gempython.gemplotting.mapping.chamberInfo import GEBtype
-        from gempython.vfatqc.utils.phaseUtils import getSequentialBadPhases, getPhaseFromLongestGoodWindow, phaseIsGood
+        from gempython.vfatqc.utils.phaseUtils import crange,getSequentialBadPhases, getPhaseFromLongestGoodWindow, phaseIsGood
         import numpy as np
         for ohN in range(nOHs):
             # Skip masked OH's
-            if( not ((args.ohMask >> ohN) & 0x1)):
+            if ( not ((args.ohMask >> ohN) & 0x1)):
                 continue
 
             # Update the hardware info
@@ -500,6 +500,33 @@ def testConnectivity(args):
                     
                     if (not (phase2Write > -1)):
                         vfats2Replace.append((ohN,vfat))
+                else:
+                    for bPhase in badPhaseCounts:
+                        WINDOW = 4 ## Good phase search window
+                        SHIFT  = 4 ## Phase shift from bad phase to set
+                        frange  = crange(int(bPhase+1),
+                                         int(bPhase+1)+WINDOW,
+                                         GBT_PHASE_RANGE)
+                        brange  = crange(int(bPhase)-WINDOW,
+                                         int(bPhase),
+                                         GBT_PHASE_RANGE)
+                        fsum = sum(phaseCounts.take(frange, mode='wrap')) # forward  sum
+                        bsum = sum(phaseCounts.take(brange, mode='wrap')) # backward sum
+                        tmpPhase = 15
+                        if fsum > phaseSum:
+                            phaseSum = fsum
+                            tmpPhase = int((bPhase+SHIFT)%GBT_PHASE_RANGE)
+                        if bsum > phaseSum:
+                            phaseSum = bsum
+                            tmpPhase = int((bPhase-SHIFT)%GBT_PHASE_RANGE)
+
+                        if tmpPhase != 15:
+                            if phaseCounts[tmpPhase] == args.nPhaseScans:
+                            # if phaseIsGood(vfatBoard, vfat, tmpPhase):
+                                phase2Write = tmpPhase
+                # FIXME REMOVE BLOCK, OLD ALGO
+                if True:
+                    pass
                 elif len(badPhaseCounts) == 1:
                     phase2Write = getPhaseFromLongestGoodWindow(badPhaseCounts[0],phaseCounts)
                 elif len(badPhaseCounts) == 2:
