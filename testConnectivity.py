@@ -96,8 +96,10 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
     from reg_utils.reg_interface.common.sca_utils import sca_reset 
     from reg_utils.reg_interface.common.jtag import initJtagRegAddrs
     initJtagRegAddrs()
+
+    writeRegister(amc,"GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF",0xfff)
+
     for trial in range(0,maxIter):
-        writeRegister(amc,"GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF",0x0)
         sca_reset(ohMask)
         scaInfo = printSystemSCAInfo(amc)
         
@@ -444,6 +446,9 @@ def testConnectivity(args):
         dict_phases2Save = {}
         listOfBadVFATs = [ ]
         vfats2Replace = [ ]
+        MAX_BAD_PHASES = 5 ## maybe migrate this, maybe not
+        PHASE_WINDOW   = 4 ## Good phase search window
+        PHASE_SHIFT    = 4 ## Phase shift from bad phase to set
         from gempython.gemplotting.mapping.chamberInfo import GEBtype
         from gempython.vfatqc.utils.phaseUtils import crange,getSequentialBadPhases, getPhaseFromLongestGoodWindow, phaseIsGood
         import numpy as np
@@ -487,10 +492,10 @@ def testConnectivity(args):
                     else:
                         # Wonder if this could be done with a lambda...probably not
                         tmpPhase = -1
-                        if (vfatBoard.parentOH.vfatGBTPhases[vfat] + 4) < 15:
-                            tmpPhase = vfatBoard.parentOH.vfatGBTPhases[vfat] + 4
+                        if (vfatBoard.parentOH.vfatGBTPhases[vfat] + PHASE_SHIFT) < 15:
+                            tmpPhase = vfatBoard.parentOH.vfatGBTPhases[vfat] + PHASE_SHIFT
                         else:
-                            tmpPhase = vfatBoard.parentOH.vfatGBTPhases[vfat] - 4
+                            tmpPhase = vfatBoard.parentOH.vfatGBTPhases[vfat] - PHASE_SHIFT
                             pass
 
                         if phaseIsGood(vfatBoard, vfat, tmpPhase):
@@ -500,28 +505,32 @@ def testConnectivity(args):
                     
                     if (not (phase2Write > -1)):
                         vfats2Replace.append((ohN,vfat))
+                elif len(badPhaseCounts) > MAX_BAD_PHASES:
+                    printRed("There were more than {0} bad phases for (OH{1},VFAT{2})".format(MAX_BAD_PHASES,ohN,vfat))
                 else:
                     for bPhase in badPhaseCounts:
-                        WINDOW = 4 ## Good phase search window
-                        SHIFT  = 4 ## Phase shift from bad phase to set
                         frange  = crange(int(bPhase+1),
-                                         int(bPhase+1)+WINDOW,
+                                         int(bPhase+1)+PHASE_WINDOW,
                                          GBT_PHASE_RANGE)
-                        brange  = crange(int(bPhase)-WINDOW,
+                        brange  = crange(int(bPhase)-PHASE_WINDOW,
                                          int(bPhase),
                                          GBT_PHASE_RANGE)
                         fsum = sum(phaseCounts.take(frange, mode='wrap')) # forward  sum
                         bsum = sum(phaseCounts.take(brange, mode='wrap')) # backward sum
                         tmpPhase = 15
                         if fsum > phaseSum:
-                            phaseSum = fsum
-                            tmpPhase = int((bPhase+SHIFT)%GBT_PHASE_RANGE)
+                            lphase = int((bPhase+PHASE_SHIFT)%GBT_PHASE_RANGE)
+                            if phaseCounts[lphase] == args.nPhaseScans:
+                                phaseSum = fsum
+                                tmpPhase = lphase
                         if bsum > phaseSum:
-                            phaseSum = bsum
-                            tmpPhase = int((bPhase-SHIFT)%GBT_PHASE_RANGE)
+                            lphase = int((bPhase-PHASE_SHIFT)%GBT_PHASE_RANGE)
+                            if phaseCounts[lphase] == args.nPhaseScans:
+                                phaseSum = bsum
+                                tmpPhase = lphase
 
                         if tmpPhase != 15:
-                            if phaseCounts[tmpPhase] == args.nPhaseScans:
+                            if phaseCounts[tmpPhase] == args.nPhaseScans:  ## now redundant, can remove
                             # if phaseIsGood(vfatBoard, vfat, tmpPhase):
                                 phase2Write = tmpPhase
                 # FIXME REMOVE BLOCK, OLD ALGO
@@ -636,7 +645,7 @@ def testConnectivity(args):
                 printYellow("\tTry checking:")
                 printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
                 printYellow("\t\t2. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
-                printYellow("\t\t3. The Phase Settings written to each VFAT where in the middle of a 'good' window")
+                printYellow("\t\t3. The Phase Settings written to each VFAT were in the middle of a 'good' window")
             printRed("Conncetivity Testing Failed")
             return
         if (not alllVFATsSyncd and args.ignoreSyncErrs):
@@ -666,7 +675,7 @@ def testConnectivity(args):
                 printYellow("\tTry checking:")
                 printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
                 printYellow("\t\t2. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
-                printYellow("\t\t3. The Phase Settings written to each VFAT where in the middle of a 'good' window")
+                printYellow("\t\t3. The Phase Settings written to each VFAT were in the middle of a 'good' window")
                 printRed("Conncetivity Testing Failed")
                 return
             pass
