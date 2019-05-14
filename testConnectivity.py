@@ -260,6 +260,9 @@ def testConnectivity(args):
         printRed("Connectivity Testing Failed")
         return
 
+    # Block L1A's before doing anything else
+    blockL1A(amc)
+
     # Step 1
     # Check GBT Communication
     # =================================================================
