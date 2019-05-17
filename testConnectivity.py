@@ -896,7 +896,7 @@ def testConnectivity(args):
                 elif dacName == "CFG_VREF_ADC":
                     continue
                 else:
-                    nomValFile='{0}/{1}/dacScans/current/NominalValues-{2}.txt'.format(dataPath,chamber_config[ohKey],dacName),
+                    nomValFile='{0}/{1}/dacScans/current/NominalValues-{2}.txt'.format(dataPath,chamber_config[ohKey],dacName)
                     updateVFAT3ConfFilesOnAMC(args.cardName,ohN,nomValFile,dacName)
                 pass
             pass

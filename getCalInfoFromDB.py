@@ -2,10 +2,10 @@
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description="Queries the DB for calibration info for all VFATs on given (shelf,slot,gtx)")
-    parser.add_argument("--shelf",type=int,help="uTCA shelf number",default=2)
-    parser.add_argument("-s","--slot",type=int,help="AMC slot in uTCA shelf",default=5)
-    parser.add_argument("-g","--gtx",type=int,help="OH on AMC slot",default=2)
+    parser = argparse.ArgumentParser(description="Queries the DB for calibration info for all VFATs on given (shelf,slot,link)")
+    parser.add_argument("shelf",type=int,help="uTCA shelf number")
+    parser.add_argument("slot",type=int,help="AMC slot in uTCA shelf")
+    parser.add_argument("link",type=int,help="OH on AMC slot")
     parser.add_argument("-d","--debug",action="store_true",help="Prints additional information")
     parser.add_argument("--write2File",action="store_true",help="If Provided data will be written to appropriate calibration files")
     parser.add_argument("--write2CTP7",action="store_true",help="If Provided IREF data will be sent to the VFAT3 config files on the CTP7")
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     
     from gempython.vfatqc.utils.qcutilities import getCardName
     cardName = getCardName(args.shelf,args.slot)
-    vfatBoard = HwVFAT(cardName,args.gtx)
+    vfatBoard = HwVFAT(cardName,args.link)
 
     mask = vfatBoard.parentOH.getVFATMask()
     chipIDs = vfatBoard.getAllChipIDs(mask)
@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     if args.write2File or args.write2CTP7:
         from gempython.gemplotting.utils.anautilities import getDataPath, getElogPath
-        ohKey = (args.shelf, args.slot, args.gtx)
+        ohKey = (args.shelf, args.slot, args.link)
         
         from gempython.gemplotting.mapping.chamberInfo import chamber_config
         if ohKey in chamber_config:
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         gemlogger.setLevel(logging.INFO)
     
         from gempython.vfatqc.utils.confUtils import updateVFAT3ConfFilesOnAMC
-        updateVFAT3ConfFilesOnAMC(cardName,args.gtx,filename_iref,"CFG_IREF")
+        updateVFAT3ConfFilesOnAMC(cardName,args.link,filename_iref,"CFG_IREF")
         pass
 
     print("goodbye")
