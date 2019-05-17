@@ -3,15 +3,6 @@ from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
 
 import os
 
-def printDACOptions():
-    print("dac\tName")
-    print("===\t====")
-    dacOptions = maxVfat3DACSize.keys()
-    dacOptions.sort()
-    for dacVal in dacOptions:
-        print("%02d\t%s"%(dacVal,maxVfat3DACSize[dacVal][1]))
-    return
-
 if __name__ == '__main__':
     """
     Script to perform DAC scans with VFAT3
@@ -49,6 +40,7 @@ if __name__ == '__main__':
     if ((args.dacSelect not in maxVfat3DACSize.keys()) and (args.dacSelect is not None)):
         printRed("Input DAC selection {0} not understood".format(args.dacSelect))
         printRed("possible options include:")
+        from gempython.vfatqc.utils.qcutilities import printDACOptions
         printDACOptions()
         exit(os.EX_USAGE)
 
