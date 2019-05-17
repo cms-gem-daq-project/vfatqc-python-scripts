@@ -436,3 +436,38 @@ def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
         pass
 
     return
+
+def updateVFAT3ConfFilesOnAMC(cardName, link, filename, dacName):
+    """
+    Updates 
+    """
+    
+    if not os.path.isfile(filename):
+        raise IOError("File {1} {0}does not exist or is not readable{1}".format(colors.READ,colors.ENDC))
+    
+    from gempython.utils.wrappers import runCommand
+    gemuserHome = "/mnt/persistent/gemuser/"
+    # Copy Files
+    copyFilesCmd = [
+            'scp',
+            filename,
+            'gemuser@{0}:{1}'.format(cardName,gemuserHome)
+            ]
+    runCommand(copyFilesCmd)
+
+    fileOnCTP7=filename.split("/")[-1]
+
+    # Update stored vfat config
+    replaceStr = "/mnt/persistent/gemdaq/scripts/replace_parameter.sh -f {0}/{1} {2} {3}".format(
+            gemuserHome,
+            fileOnCTP7,
+            dacName.replace("CFG_",""),
+            link)
+    transferCmd = [
+            'ssh',
+            'gemuser@{0}'.format(cardName),
+            'sh -c "{0}"'.format(replaceStr)
+            ]
+    runCommand(transferCmd)
+
+    return

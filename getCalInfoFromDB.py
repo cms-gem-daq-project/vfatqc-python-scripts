@@ -60,6 +60,8 @@ if __name__ == '__main__':
                 header=False,
                 index=False,
                 mode='w')
+        from gempython.utils.wrappers import runCommand
+        runCommand(["chmod", "g+rw", filename_iref])
 
         # Write ADC0 Info
         filename_adc0 = "{0}/calFile_ADC0_{1}.txt".format(outDir,cName)
@@ -73,6 +75,7 @@ if __name__ == '__main__':
                 header=False,
                 index=False,
                 mode='a')
+        runCommand(["chmod", "g+rw", filename_adc0])
 
         # Write CAL_DAC Info
         filename_caldac = "{0}/calFile_calDac_{1}.txt".format(outDir,cName)
@@ -86,12 +89,12 @@ if __name__ == '__main__':
                 header=False,
                 index=False,
                 mode='a')
+        runCommand(["chmod", "g+rw", filename_caldac])
         pass
 
     # Write CFG_IREF to VFAT3 Config Files On CTP7?    
     if args.write2CTP7:
         import os
-        from gempython.utils.wrappers import runCommand
         filename_iref = "{0}/NominalValues-CFG_IREF.txt".format(outDir)
         if not os.path.isfile(filename_iref):
             filename_iref = "{0}/NominalValues-CFG_IREF.txt".format(outDir)
@@ -103,30 +106,17 @@ if __name__ == '__main__':
                     header=False,
                     index=False,
                     mode='w')
+            from gempython.utils.wrappers import runCommand
+            runCommand(["chmod", "g+rw", filename_iref])
             pass
 
-        gemuserHome = "/mnt/persistent/gemuser/"
-        # Copy Files
-        copyFilesCmd = [
-                'scp',
-                filename_iref,
-                'gemuser@{0}:{1}'.format(cardName,gemuserHome)
-                ]
-        runCommand(copyFilesCmd)
-
-        # Update stored vfat config
-        dacName="CFG_IREF"
-        replaceStr = "/mnt/persistent/gemdaq/scripts/replace_parameter.sh -f {0}/NominalValues-{1}.txt {2} {3}".format(
-                gemuserHome,
-                dacName,
-                dacName.replace("CFG_",""),
-                args.gtx)
-        transferCmd = [
-                'ssh',
-                'gemuser@{0}'.format(cardName),
-                'sh -c "{0}"'.format(replaceStr)
-                ]
-        runCommand(transferCmd)
+        from gempython.utils.gemlogger import getGEMLogger
+        import logging
+        gemlogger = getGEMLogger(__name__)
+        gemlogger.setLevel(logging.INFO)
+    
+        from gempython.vfatqc.utils.confUtils import updateVFAT3ConfFilesOnAMC
+        updateVFAT3ConfFilesOnAMC(cardName,args.gtx,filename_iref,"CFG_IREF")
         pass
 
     print("goodbye")

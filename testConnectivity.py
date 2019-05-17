@@ -876,6 +876,7 @@ def testConnectivity(args):
     
         # Load DAC Values to Front-End
         from gempython.gemplotting.utils.anaInfo import nominalDacValues
+        from gempython.vfatqc.utils.confUtils import updateVFAT3ConfFilesOnAMC
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
@@ -895,27 +896,8 @@ def testConnectivity(args):
                 elif dacName == "CFG_VREF_ADC":
                     continue
                 else:
-                    # Copy Files
-                    copyFilesCmd = [
-                            'scp',
-                            '{0}/{1}/dacScans/current/NominalValues-{2}.txt'.format(dataPath,chamber_config[ohKey],dacName),
-                            'gemuser@{0}:{1}'.format(args.cardName,gemuserHome)
-                            ]
-                    runCommand(copyFilesCmd)
-
-                    # Update stored vfat config
-                    replaceStr = "/mnt/persistent/gemdaq/scripts/replace_parameter.sh -f {0}/NominalValues-{1}.txt {2} {3}".format(
-                            gemuserHome,
-                            dacName,
-                            dacName.replace("CFG_",""),
-                            ohN)
-                    transferCmd = [
-                            'ssh',
-                            'gemuser@{0}'.format(args.cardName),
-                            'sh -c "{0}"'.format(replaceStr)
-                            ]
-                    runCommand(transferCmd)
-                    pass
+                    nomValFile='{0}/{1}/dacScans/current/NominalValues-{2}.txt'.format(dataPath,chamber_config[ohKey],dacName),
+                    updateVFAT3ConfFilesOnAMC(args.cardName,ohN,nomValFile,dacName)
                 pass
             pass
         pass
