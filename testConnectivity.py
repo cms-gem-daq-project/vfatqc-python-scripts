@@ -1124,7 +1124,7 @@ if __name__ == '__main__':
     parser.add_argument("-f","--firstStep",type=int,help="Starting step of connectivity testing, to skip all initial steps enter '5'",default=1)
     parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
     parser.add_argument("-i","--ignoreSyncErrs",action="store_true",help="Ignore VFAT Sync Errors When Checking Communication")
-    parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 2 & 3 will be attempted before failing (and exiting)",default=10)
+    parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 2 & 3 will be attempted before failing (and exiting)",default=1)
     parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=50)
     parser.add_argument("--skipDACScan",action="store_true",help="Do not perform any DAC Scans")
     parser.add_argument("--skipGBTPhaseScan",action="store_true",help="Do not perform any GBT Phase Scans")
