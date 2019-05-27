@@ -104,3 +104,17 @@ def inputOptionsValid(options, amc_major_fw_ver):
 
     # Input options are valid
     return True
+
+def printDACOptions():
+    """
+    Prints a table illustrating the correspondence of dacSelect to DAC name for VFAT3 DAC Monitoring
+    Taken from VFAT3 Manual 'Table 25: GBL CFG CTR 4 : Monitoring settings'
+    """
+    print("dac\tName")
+    print("===\t====")
+    from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
+    dacOptions = maxVfat3DACSize.keys()
+    dacOptions.sort()
+    for dacVal in dacOptions:
+        print("%02d\t%s"%(dacVal,maxVfat3DACSize[dacVal][1]))
+    return

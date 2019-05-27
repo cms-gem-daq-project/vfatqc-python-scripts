@@ -48,18 +48,19 @@ preprpm: default
 	@cp -rf config/scriptlets/installrpm.sh pkg/
 	$(MakeDir) $(ScriptDir)
 	@cp -rf checkSbitMappingAndRate.py $(ScriptDir)
-	@cp -rf conf*.py       $(ScriptDir)
+	@cp -rf conf*.py $(ScriptDir)
 	@cp -rf dacScanV3.py $(ScriptDir)
 	@cp -rf fastLatency.py $(ScriptDir)
 	@cp -rf getCalInfoFromDB.py $(ScriptDir)
 	@cp -rf monitorTemperatures.py $(ScriptDir)
-	@cp -rf run_scans.py   $(ScriptDir)
+	@cp -rf run_scans.py $(ScriptDir)
 	@cp -rf sbitReadOut.py $(ScriptDir)
 	@cp -rf sbitThreshScanParallel.py $(ScriptDir)
 	@cp -rf testConnectivity.py $(ScriptDir)
 	@cp -rf trimChamber.py $(ScriptDir)
 	@cp -rf trimChamberV3.py $(ScriptDir)
-	@cp -rf ultra*.py      $(ScriptDir)
+	@cp -rf ultra*.py $(ScriptDir)
+	@cp -rf updateVFAT3ConfFiles.py $(ScriptDir)
 	-cp -rf README.md LICENSE CHANGELOG.md MANIFEST.in requirements.txt $(PackageDir)
 	-cp -rf README.md LICENSE CHANGELOG.md MANIFEST.in requirements.txt pkg
 
