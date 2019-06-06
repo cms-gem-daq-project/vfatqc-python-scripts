@@ -187,6 +187,8 @@ def testConnectivity(args):
 
     # Check if all required fields are in args; if they are not assign a default value
     from gempython.vfatqc.utils.qcutilities import getCardName
+    if hasattr(args, 'acceptBadDACBiases') is False: # Accept Bad cases where a VFAT DAC cannot reach correct bias voltage/current
+        args.acceptBadDACBiases = False
     if hasattr(args, 'acceptBadTrigLink') is False: # Accept Bad Trigger Link Status?
         args.acceptBadTrigLink = False
     if hasattr(args, 'assignXErrors') is False: # For DAC Scan Analysis
@@ -865,8 +867,18 @@ def testConnectivity(args):
 
         # Analyze DAC Scan
         from gempython.gemplotting.utils.anautilities import dacAnalysis
+        from gempython.gemplotting.utils.exceptions import VFATDACBiasCannotBeReached
         try:
             dacAnalysis(args, calTree.gemTree, chamber_config, scandate=startTime)
+        except VFATDACBiasCannotBeReached as e:
+            printRed("One or more VFATs is unable to reach the correct bias voltage/current setpoint")
+            printRed(e.message)
+            if not args.acceptBadDACBiases:
+                printRed("DAC Scan Analysis Failed")
+                printRed("Conncetivity Testing Failed")
+                return
+            else:
+                printYellow("I've been told to ignore cases of VFATs failing to hit the correct bias voltage/current setpoints; results may not be so good")
         except ValueError as e:
             printRed("ValueError has occurred")
             printRed(e.message)
@@ -1130,6 +1142,7 @@ if __name__ == '__main__':
     parser.add_argument("-c","--chamberName",type=str,help="Detector Serial Number, if provided will use this name instead of name provided in chamber_config dictionary",default=None)
     parser.add_argument("--checkCSCTrigLink",action="store_true",help="Check also the trigger link for the CSC trigger associated to OH in mask")
     parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead",default="0.1,0.5")
+    parser.add_argument("--acceptBadDACBiases",action="store_true",help="Ignore failures where a VFAT DAC cannot reach the correct bias voltage/current")
     parser.add_argument("-a","--acceptBadTrigLink",action="store_true",help="Ignore failing trigger link status checks")
     parser.add_argument("-d","--debug",action="store_true",dest="debug",help = "Print additional debugging information")
     parser.add_argument("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default=None)
