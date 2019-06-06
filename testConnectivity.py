@@ -867,8 +867,21 @@ def testConnectivity(args):
         from gempython.gemplotting.utils.anautilities import dacAnalysis
         try:
             dacAnalysis(args, calTree.gemTree, chamber_config, scandate=startTime)
+        except ValueError as e:
+            printRed("ValueError has occurred")
+            printRed(e.message)
+            printRed("DAC Scan Analysis Failed")
+            printRed("Conncetivity Testing Failed")
+            return
+        except RuntimeError as e:
+            printRed("Runtime Error has occurred")
+            printRed(e.message)
+            printRed("DAC Scan Analysis Failed")
+            printRed("Conncetivity Testing Failed")
+            return
         except Exception as e:
-            printRed("An exception has occured: {0}".format(e))
+            printRed("An unexpected exception has occured: {0}".format(e))
+            printRed(e.message)
             printRed("DAC Scan Analysis Failed")
             printRed("Conncetivity Testing Failed")
             return
