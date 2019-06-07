@@ -2,11 +2,12 @@
 
 from gempython.tools.amc_user_functions_uhal import *
 from gempython.tools.amc_user_functions_xhal import NoUnmaskedOHException
-from gempython.tools.hw_constants import gemVariants, GBT_PHASE_RANGE 
+from gempython.tools.hw_constants import gemVariants, GBT_PHASE_RANGE, vfatsPerGemVariant
 from gempython.tools.optohybrid_user_functions_xhal import OHRPCException, OHTypeException
 from gempython.tools.vfat_user_functions_xhal import *
 from gempython.utils.gemlogger import colors, getGEMLogger, printGreen, printRed, printYellow
-    
+#from gempython.utils.wrappers import runCommand
+
 import os
 
 def anaScurveParallel(inputs):
@@ -23,10 +24,10 @@ def getListOfBadTrigLinks(amcBoard,checkCSCTrigLink=False,debug=False,ohMask=0xf
         ohMask           - 12 bit number, a 1 in the N^th bit means consider the N^th optohybrid
         printSummary     - If true prints a summary table of the results
     """
-    
+
     trigLinkStatus = amcBoard.getTriggerLinkStatus(
-                        printSummary=printSummary, 
-                        checkCSCTrigLink=checkCSCTrigLink, 
+                        printSummary=printSummary,
+                        checkCSCTrigLink=checkCSCTrigLink,
                         ohMask=ohMask)
 
     listOfOHsWithBadTriggerLink = []
@@ -58,7 +59,7 @@ def getListOfBadTrigLinks(amcBoard,checkCSCTrigLink=False,debug=False,ohMask=0xf
 
     return listOfOHsWithBadTriggerLink
 
-def gbtCommIsGood(amcBoard, doReset=True, printSummary=True, ohMask=0xfff):
+def gbtCommIsGood(amcBoard, doReset=True, printSummary=True, ohMask=0xfff, gemType="ge11"):
     """
     Determines if GBT communication for all unmasked optohybrids in ohMask is good
 
@@ -77,7 +78,7 @@ def gbtCommIsGood(amcBoard, doReset=True, printSummary=True, ohMask=0xfff):
         printYellow("\t\t4. OH3 standoff on the GEB is not broken")
         printYellow("\t\t5. Voltage on OH3 standoff is within range [1.47,1.59] Volts")
         return False
-    else: 
+    else:
         return True
 
 def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
@@ -85,7 +86,7 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
     Determines if SCA communication for all unmasked optohybrids in ohMask is good.
     Will make maxIter number of iterations to establish good communication.
 
-        amc     - instances of uhal device, e.g. returned by getAMCObject from 
+        amc     - instances of uhal device, e.g. returned by getAMCObject from
                   gempython.tools.amc_user_functions_uhal
         maxIter - maximum number of iterations to be tried before failure is returned
         ohMask  - ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered
@@ -93,7 +94,7 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
 
     scaCommPassed = False
     from gempython.utils.registers_uhal import writeRegister
-    from reg_utils.reg_interface.common.sca_utils import sca_reset 
+    from reg_utils.reg_interface.common.sca_utils import sca_reset
     from reg_utils.reg_interface.common.jtag import initJtagRegAddrs
     initJtagRegAddrs()
 
@@ -107,13 +108,13 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
     for trial in range(0,maxIter):
         sca_reset(ohMask)
         scaInfo = printSystemSCAInfo(amc)
-        
+
         notRdyCntOkay = True
         for ohN in range(nOHs):
             # Skip masked OH's
             if( not ((ohMask >> ohN) & 0x1)):
                 continue
-            
+
             # Check READY Bit
             if( not ((scaInfo["READY"]  >> ohN) & 0x1)):
                 notRdyCntOkay = False
@@ -132,7 +133,7 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
             pass
         if not notRdyCntOkay:
             continue
-        
+
         # reaching here passes all tests for this stage
         scaCommPassed = True
         break
@@ -143,7 +144,7 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
         printYellow("\t\t1. OH3 screw is properly screwed into standoff")
         printYellow("\t\t2. OH3 standoff on the GEB is not broken")
         printYellow("\t\t3. Voltage on OH3 standoff is within range [1.47,1.59] Volts")
-    else: 
+    else:
         printGreen("SCA Communication Established")
         pass
 
@@ -154,20 +155,20 @@ def scurveAna(scurveDataFile, tuple_calInfo, tuple_deadChan, isVFAT3=True):
     Runs scurve analysis and returns the number of dead channels by VFAT found
 
     scurveDataFile  - TFile containing the scurveTree
-    tuple_calInfo   - Tuple of numpy arrays which provides the CFG_CAL_DAC calibration 
-                      where index 0 (1) of the tuple corresponds to the slope (intercept) 
+    tuple_calInfo   - Tuple of numpy arrays which provides the CFG_CAL_DAC calibration
+                      where index 0 (1) of the tuple corresponds to the slope (intercept)
                       array; arrays expected to indexed by VFAT position.
     tuple_deadChan  - Tuple containing scurve sigma range to consider a channel dead/disconnected
     isVFAT3         - True (False) if data comes from VFAT3 (VFAT2)
     """
-    
+
     if len(tuple_deadChan) != 2:
         raise Exception("Length of Provided tuple {0} not equal to 2",os.EX_USAGE)
 
     # Analyze the scurve
     from gempython.gemplotting.fitting.fitScanData import fitScanData
     scanFitResults = fitScanData(treeFileName=scurveDataFile, isVFAT3=True, calTuple=tuple_calInfo)
-    
+
     deadChanCutLow = min(tuple_deadChan)
     deadChanCutHigh= max(tuple_deadChan)
 
@@ -227,7 +228,7 @@ def testConnectivity(args):
     if hasattr(args, 'stepSize') is False:
         args.stepSize = 1
     if hasattr(args, 'gemType') is False:
-        args.gemType = None # default to None
+        args.gemType = "ge11" # default to ge11
     if hasattr(args, 'vt1') is False: # CFG_THR_ARM_DAC (VThreshold1) setting to write for V3 (V2) electronics
         args.vt1 = 100
     if hasattr(args, 'vt1bump') is False: # Value to add to comparator setting
@@ -249,22 +250,35 @@ def testConnectivity(args):
     envCheck('DATA_PATH')
     envCheck('ELOG_PATH')
     envCheck("GBT_SETTINGS")
-    
+
     dataPath = os.getenv('DATA_PATH')
-    gbtConfigPath = "{0}/OHv3c/".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
+    #if ars.gemType == "ge21":
+    #    gbtConfigPath = ""
+    #else:
+    if args.gemType == "ge11":
+        gbtConfigPath = "{0}/OHv3c/".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
+    elif args.gemType == "ge21":
+        gbtConfigPath = "{0}/OHGE21/".format(os.getenv("GBT_SETTINGS"))
+    else:
+        print("me0 gemType not currently implemented, exiting.")
+        printRed("Connectvity Testing Failed")
+        return
+
+
     elogPath = os.getenv('ELOG_PATH')
 
     # Initialize Hardware
     amc = getAMCObject(args.slot,args.shelf)
-    nOHs = readRegister(amc,"GEM_AMC.GEM_SYSTEM.CONFIG.NUM_OF_OH")
-    
+    #nOHs = readRegister(amc,"GEM_AMC.GEM_SYSTEM.CONFIG.NUM_OF_OH")
+    nOHs = 1#FIXME
+
     try:
         vfatBoard = HwVFAT(
                 args.cardName,
                 link=0,                 # assign a dummy link for now
                 gemType=args.gemType,
-                detType="short")        # assign a dummy detType for now
-    except OHTypeException as err:       
+                detType=args.detType)        # assign a dummy detType for now
+    except OHTypeException as err:
         printYellow(err.message)
         printRed("Connectivity Testing Failed")
         return
@@ -282,25 +296,35 @@ def testConnectivity(args):
         printYellow("="*20)
 
         print("Checking GBT Communication (Before Programming GBTs)")
-        if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask):
+        if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask, gemType=args.gemType):
             printRed("Connectivity Testing Failed")
             printYellow("If Vmon = 8.0V then Imon must be 1.71 +/- 0.01A; if not the GBT's are not locking to the fiber link")
             return
 
         # Program GBTs
-        gbtConfigs = [
+        if args.gemType == "ge11":
+            gbtConfigs = [
                 "{0}/GBTX_OHv3c_GBT_0.txt".format(gbtConfigPath),
                 "{0}/GBTX_OHv3c_GBT_1.txt".format(gbtConfigPath),
                 "{0}/GBTX_OHv3c_GBT_2.txt".format(gbtConfigPath),
                 ]
+        elif args.gemType == "ge21":
+            gbtConfigs = [
+                "{0}/GBTX_GE21_OHv1_GBT_0_minimal_2019-01-24.txt".format(gbtConfigPath),
+                "{0}/GBTX_GE21_OHv1_GBT_1_minimal_2019-01-24.txt".format(gbtConfigPath),
+                ]
+        else:
+            print("me0 gemType not currently implemented, exiting.")
+            exit(os.EX_USAGE)
+
         print("Programming GBTs")
         configGBT(cardName=args.cardName, listOfconfigFiles=gbtConfigs, ohMask=args.ohMask, nOHs=nOHs)
 
         print("Checking GBT Communication (After Programming GBTs)")
-        if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask):
+        if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask, gemType="ge11"):
             printRed("Connectivity Testing Failed")
             return
-        else: 
+        else:
             printGreen("GBT Communication Established")
             pass
 
@@ -337,7 +361,7 @@ def testConnectivity(args):
 
         printYellow("SCA Communication Status After FPGA Programming Attempts Is:")
         printSystemSCAInfo(amc)
-        
+
         if len(listOfDeadFPGAs) > 0:
             printRed("FPGA Communication was not established successfully")
             printRed("Following OH's have unprogrammed FPGAs: {0}".format(listOfDeadFPGAs))
@@ -358,7 +382,7 @@ def testConnectivity(args):
         for trial in range(0,args.maxIter):
             if args.debug:
                 print("Trial Number: {0}".format(trial))
-            
+
             # Reset trigger module on OH FPGA
             for ohN in range(nOHs):
                 if( not ((args.ohMask >> ohN) & 0x1)):
@@ -371,8 +395,8 @@ def testConnectivity(args):
             vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.MODULE_RESET",0x1)
 
             listOfOHsWithBadTriggerLink = getListOfBadTrigLinks(
-                                            vfatBoard.parentOH.parentAMC, 
-                                            args.checkCSCTrigLink, 
+                                            vfatBoard.parentOH.parentAMC,
+                                            args.checkCSCTrigLink,
                                             args.debug,
                                             args.ohMask,
                                             printSummary=True)
@@ -389,8 +413,8 @@ def testConnectivity(args):
                 vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET",0x1)
                 vfatBoard.parentOH.parentAMC.writeRegister("GEM_AMC.TRIGGER.CTRL.CNT_RESET",0x1)
                 listOfOHsWithBadTriggerLink = getListOfBadTrigLinks(
-                                                vfatBoard.parentOH.parentAMC, 
-                                                args.checkCSCTrigLink, 
+                                                vfatBoard.parentOH.parentAMC,
+                                                args.checkCSCTrigLink,
                                                 args.debug,
                                                 args.ohMask,
                                                 printSummary=False)
@@ -441,7 +465,7 @@ def testConnectivity(args):
             printYellow("\t\t1. Current limit on Power Supply is 4 Amps")
             printRed("Connectivity Testing Failed")
             return
-        else: 
+        else:
             printGreen("GBT Communication Is Stil Good")
             pass
 
@@ -474,7 +498,7 @@ def testConnectivity(args):
             if args.detType is not None:
                 try:
                     vfatBoard.parentOH.setType(args.gemType, args.detType)
-                except OHTypeException as err:       
+                except OHTypeException as err:
                     printYellow(err.message)
                     printRed("Connectivity Testing Failed")
                     return
@@ -484,14 +508,14 @@ def testConnectivity(args):
                 detType = GEBtype[ohKey]
                 try:
                     vfatBoard.parentOH.setType(args.gemType, detType)
-                except OHTypeException as err:       
+                except OHTypeException as err:
                     printYellow(err.message)
                     printRed("Connectivity Testing Failed")
                     return
                 pass
 
-            dict_phases2Save[ohN] = [ 0xf for x in range(0,24) ] #Start by setting all phases as bad (e.g. 15)
-            for vfat in range(0,24):
+            dict_phases2Save[ohN] = [ 0xf for x in range(0,vfatsPerGemVariant[args.gemType]) ] #Start by setting all phases as bad (e.g. 15)
+            for vfat in range(vfatsPerGemVariant[args.gemType]):
                 phase2Write = -1
                 phaseCounts = np.array([ dict_phaseScanResults[ohN][vfat*GBT_PHASE_RANGE+ph] for ph in range(0,GBT_PHASE_RANGE) ])
                 allBadPhases = np.where(phaseCounts!=args.nPhaseScans)[0]
@@ -514,7 +538,7 @@ def testConnectivity(args):
                             phase2Write = tmpPhase
                             pass
                         pass
-                    
+
                     if (not (phase2Write > -1)):
                         vfats2Replace.append((ohN,vfat))
                 elif len(badPhaseCounts) > MAX_BAD_PHASES:
@@ -554,7 +578,7 @@ def testConnectivity(args):
                     # check if bad phases are sequential, if so use the longest good window
                     # if bad phases are not sequential use the midpoint, ignore wraparound
                     tuple_seqBadPhases = getSequentialBadPhases(badPhaseCounts)
-                    
+
                     badPhasesAreSequential = tuple_seqBadPhases[0]
                     minSeqPhase = tuple_seqBadPhases[1]
                     maxSeqPhase = tuple_seqBadPhases[2]
@@ -702,7 +726,7 @@ def testConnectivity(args):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
-            for vfatN in range(24):
+            for vfatN in range(vfatsPerGemVariant[args.gemType]):
                 fPhases.write("{0}\t{1}\t{2}\n".format(ohN,vfatN,dict_phases2Save[ohN][vfatN]))
                 pass
             pass
@@ -717,7 +741,7 @@ def testConnectivity(args):
                     link = ohN
                     break
                 pass
-            
+
             getSinglePhaseScanPlot(link,fNameGBTPhaseScanResults,fNameGBTPhaseSetPts,args.chamberName,savePlots=True)
         else:
             # Case possibly multi detectors, make grid plot
@@ -752,16 +776,21 @@ def testConnectivity(args):
                         name="dacScanTree",
                         nameX="dummy", # temporary name, will be over-ridden
                         nameY=("ADC1" if args.extRefADC else "ADC0"),
-                        dacSelect=-1, #temporary value, will be over-ridden 
+                        dacSelect=-1, #temporary value, will be over-ridden
                         description="GEM DAC Calibration of VFAT3 DAC"
                 )
- 
+
+        printYellow("CAlTree retrieved")
         # Place All Chips Into Run Mode and write correct Iref
         from math import isnan
+        printYellow("isnan imported")
         for ohN in range(nOHs):
+            printRed("Checking whether OH%s is masked" %(ohN))
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
+
+            printRed("Working with OH%s" %(ohN))
 
             vfatBoard.parentOH.link = ohN
 
@@ -799,7 +828,7 @@ def testConnectivity(args):
 
         # DAC Scan
         from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
-        from gempython.vfatqc.utils.scanUtils import dacScanAllLinks 
+        from gempython.vfatqc.utils.scanUtils import dacScanAllLinks
         for dacSelect in maxVfat3DACSize.keys():
             # Skip unnecessary DAC's
             if(dacSelect == 1 or dacSelect == 14 or dacSelect == 15 or dacSelect > 34):
@@ -915,7 +944,7 @@ def testConnectivity(args):
             printRed("Conncetivity Testing Failed")
             return
         pass
-    
+
         # Load DAC Values to Front-End
         from gempython.gemplotting.utils.anaInfo import nominalDacValues
         from gempython.vfatqc.utils.confUtils import updateVFAT3ConfFilesOnAMC
@@ -991,9 +1020,9 @@ def testConnectivity(args):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
-            
+
             ohKey = (args.shelf,args.slot,ohN)
-        
+
             dirPath = makeScanDir(args.slot, ohN, "scurve", startTime, args.shelf, chamber_config)
             logFile = "%s/scanLog.log"%(dirPath)
             scurveFiles[ohN] = "{0}/{1}/scurve/{2}/SCurveData.root".format(dataPath,chamber_config[ohKey],startTime)
@@ -1037,7 +1066,7 @@ def testConnectivity(args):
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
-        
+
             ohKey = (args.shelf,args.slot,ohN)
 
             # If the cal file exists parse it; otherwise write it from the DB query
@@ -1060,17 +1089,17 @@ def testConnectivity(args):
                 calFileCALDac.close()
                 calDacInfo[ohN] = (vfat3CalInfo['cal_dacm'],vfat3CalInfo['cal_dacb'])
                 pass
-        
+
         # Dead chan
         deadChan = tuple([float(x) for x in args.deadChanCuts.split(",")])
 
         # Setup a pool
         from multiprocessing import Pool
         original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
-        
+
         pool = Pool(bin(args.ohMask).count("1"))
         signal.signal(signal.SIGINT, original_sigint_handler)
-        
+
         if vfatBoard.parentOH.parentAMC.fwVersion > 1:
             isVFAT3 = True
         else:
@@ -1097,18 +1126,18 @@ def testConnectivity(args):
             printRed("Caught KeyboardInterrupt, terminating workers")
             pool.terminate()
             printRed("Conncetivity Testing Failed")
-            return 
+            return
         except Exception as e:
             print("Caught Exception %s, terminating workers"%(str(e)))
             pool.terminate()
             printRed("Conncetivity Testing Failed")
-            return 
+            return
         except: # catch *all* exceptions
             e = sys.exc_info()[0]
             print("Caught non-Python Exception %s"%(e))
             pool.terminate()
             printRed("Conncetivity Testing Failed")
-            return 
+            return
         else:
             printGreen("SCurve Analysis Completed Successfully")
 
@@ -1129,7 +1158,7 @@ def testConnectivity(args):
         if tooManyDeadChan:
             printRed("Too Many Dead Channels")
             printRed("Conncetivity Testing Failed")
-            return 
+            return
         else:
             printGreen("Number of Dead Channels is Acceptable")
             pass
@@ -1154,7 +1183,7 @@ if __name__ == '__main__':
     parser.add_argument("slot",type=int,help="AMC slot in uTCA shelf")
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     parser.add_argument("ohMask",type=parseInt,help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered")
-    
+
     parser.add_argument("-c","--chamberName",type=str,help="Detector Serial Number, if provided will use this name instead of name provided in chamber_config dictionary",default=None)
     parser.add_argument("--checkCSCTrigLink",action="store_true",help="Check also the trigger link for the CSC trigger associated to OH in mask")
     parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead",default="0.1,0.5")
