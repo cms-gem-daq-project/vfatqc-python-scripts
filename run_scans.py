@@ -328,8 +328,13 @@ def trimChamberV3(args):
         # Additional optional arguments
         if args.armDAC is not None:
             cmd.append("--armDAC={}".format(args.armDAC))
-        if args.vfatConfig is not None:
-            cmd.append("--vfatConfig={}".format(args.vfatConfig))
+        else:
+            # Check to see if a vfatConfig exists
+            vfatConfigFile = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,chamber_config[ohKey])
+            if os.path.isfile(vfatConfigFile):
+                cmd.append("--vfatConfig={}".format(vfatConfigFile))
+                pass
+            pass
 
         # Execute
         executeCmd(cmd,dirPath)
@@ -617,10 +622,11 @@ if __name__ == '__main__':
     parser_trim.add_argument("-n","--nevts",type=int,default=100,help="Number of events for each scan position")
     parser_trim.add_argument("--trimPoints", type=str,default="-63,0,63",help="comma separated list of trim values to use in trimming, a set of scurves will be taken at each point")
     parser_trim.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are determined at runtime automatically.")
+    parser_trim.add_argument("--armDAC",type=int,help="CFG_THR_ARM_DAC value to write to all VFATs. If not provided we will look under $DATA_PATH/configs for a vfatConfig_<DetectorName>.txt file where DetectorNames are from the chamber_config dictionary")
 
-    armDacGroup = parser_trim.add_mutually_exclusive_group()
-    armDacGroup.add_argument("--armDAC",type=int,help="CFG_THR_ARM_DAC value to write to all VFATs")
-    armDacGroup.add_argument("--vfatConfig",type=str,help="Specify file containing CFG_THR_ARM_DAC settings")
+    #armDacGroup = parser_trim.add_mutually_exclusive_group()
+    #armDacGroup.add_argument("--armDAC",type=int,help="CFG_THR_ARM_DAC value to write to all VFATs")
+    #armDacGroup.add_argument("--vfatConfig",type=str,help="Specify file containing CFG_THR_ARM_DAC settings")
 
     parser_trim.set_defaults(func=trimChamberV3)
 
