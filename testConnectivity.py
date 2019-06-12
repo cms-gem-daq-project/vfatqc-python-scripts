@@ -97,7 +97,7 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
     from reg_utils.reg_interface.common.jtag import initJtagRegAddrs
     initJtagRegAddrs()
 
-    writeRegister(amc,"GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF",0xfff)
+    writeRegister(amc,"GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF",0xffffffff)
 
     for trial in range(0,maxIter):
         sca_reset(ohMask)
