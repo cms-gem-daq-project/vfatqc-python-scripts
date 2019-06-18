@@ -473,9 +473,9 @@ def testConnectivity(args):
         print("Scanning GBT Phases, this may take a moment please be patient")
         if args.writePhases2File:
             fNameGBTPhaseScanResults = elogPath+'/gbtPhaseSettings.log'
-            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, outputFile=fNameGBTPhaseScanResults)
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, outputFile=fNameGBTPhaseScanResults, nVFAT=vfatsPerGemVariant[args.gemType])
         else:
-            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False)
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, nVFAT=vfatsPerGemVariant[args.gemType])
 
         # Find Good GBT Phase Values
         failed2FindGoodPhase = False
