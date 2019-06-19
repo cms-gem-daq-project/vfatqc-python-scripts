@@ -117,8 +117,8 @@ if __name__ == '__main__':
     parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse",
                       help="V3 electronics only. Calibration Module is set to use voltage step pulsing instead of default current pulse injection",
                       metavar="voltageStepPulse")
-    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
-    parser.add_argument("--detType",type=str,
+    parser.add_option("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_option("--detType",type=str,
                         help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default=None)
 
     (options, args) = parser.parse_args()
