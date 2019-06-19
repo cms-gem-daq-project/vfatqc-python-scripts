@@ -91,6 +91,7 @@ if __name__ == '__main__':
     from ctypes import *
     from gempython.tools.optohybrid_user_functions_uhal import scanmode
     from gempython.tools.vfat_user_functions_xhal import *
+    from gempython.tools.hw_constants import vfatsPerGemVariant
 
     from gempython.vfatqc.utils.qcoptions import parser
 
@@ -189,38 +190,38 @@ if __name__ == '__main__':
 
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
-            calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,24)))
+            calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,vfatsPerGemVariant[options.gemType])))
 
             vals = vfatBoard.readAllVFATs("ContReg2",    0x0)
-            msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),range(0,24)))
+            msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),range(0,vfatsPerGemVariant[options.gemType])))
 
             vals = vfatBoard.readAllVFATs("ContReg3",    0x0)
-            trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),range(0,24)))
+            trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),range(0,vfatsPerGemVariant[options.gemType])))
 
             vals = vfatBoard.readAllVFATs("Latency",    0x0)
-            latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+            latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,vfatsPerGemVariant[options.gemType])))
 
             #vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
 
             vals  = vfatBoard.readAllVFATs("VThreshold1", 0x0)
-            vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+            vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,vfatsPerGemVariant[options.gemType])))
 
             vals  = vfatBoard.readAllVFATs("VThreshold2", 0x0)
-            vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+            vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,vfatsPerGemVariant[options.gemType])))
 
-            vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),range(0,24)))
+            vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),range(0,vfatsPerGemVariant[options.gemType])))
         else:
             vals = vfatBoard.readAllVFATs("CFG_CAL_PHI",   mask)
-            calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,24)))
+            calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,vfatsPerGemVariant[options.gemType])))
 
             vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
-            msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),range(0,24)))
+            msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),range(0,vfatsPerGemVariant[options.gemType])))
 
             vals = vfatBoard.readAllVFATs("CFG_LATENCY",    mask)
-            latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+            latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,vfatsPerGemVariant[options.gemType])))
 
             vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", mask)
-            vthrvals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+            vthrvals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,vfatsPerGemVariant[options.gemType])))
 
             chanRegData = getChannelRegisters(vfatBoard,mask)
             vfatIDvals = vfatBoard.getAllChipIDs(mask)
@@ -233,7 +234,7 @@ if __name__ == '__main__':
         vfatBoard.stopCalPulses(mask, 0, 127)
 
         scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
-        scanDataSizeNet = scanDataSizeVFAT * 24
+        scanDataSizeNet = scanDataSizeVFAT * vfatsPerGemVariant[options.gemType]
         scanData = (c_uint32 * scanDataSizeNet)()
         for chan in range(CHAN_MIN,CHAN_MAX):
             print "Channel #"+str(chan)
@@ -262,7 +263,7 @@ if __name__ == '__main__':
             if rpcResp != 0:
                 raise Exception('RPC response was non-zero, scurve for channel %i failed'%chan)
 
-            for vfat in range(0,24):
+            for vfat in range(0,vfatsPerGemVariant[options.gemType]):
                 if (mask >> vfat) & 0x1: continue
                 for vcalDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                     try:
