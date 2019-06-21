@@ -1,5 +1,5 @@
 #!/bin/env python
-from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
+from gempython.tools.hw_constants import maxVfat3DACSize
 
 import os
 
