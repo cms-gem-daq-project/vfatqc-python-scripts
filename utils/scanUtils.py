@@ -347,7 +347,7 @@ def launchSCurve(**kwargs):
 
     if debug:
         cmd.append("--debug")
-        
+
     # launch the command
     if debug:
         print("launching an scurve with command:")
@@ -406,6 +406,8 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
     scanReg - Name of the VFAT register to scan against
     """
 
+    nVFATs = vfatBoard.parentOH.nVFATs
+
     # Check to make sure required parameters exist, if not provide a default
     if hasattr(args, 'debug') is False: # debug
         args.debug = False
@@ -460,11 +462,11 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
 
         #Store original CFG_SEL_COMP_MODE
         vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", ohVFATMaskArray[ohN])
-        selCompVals_orig[ohN] =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+        selCompVals_orig[ohN] =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,nVFATs)))
 
         #Store original CFG_FORCE_EN_ZCC
         vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", ohVFATMaskArray[ohN])
-        forceEnZCCVals_orig[ohN] =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+        forceEnZCCVals_orig[ohN] =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,nVFATs)))
         pass
 
     # Make the containers
@@ -472,7 +474,7 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
     arraySize = 12 * nDACValues
     scanDataDAC = (c_uint32 * arraySize)()
     scanDataRate = (c_uint32 * arraySize)()
-    scanDataRatePerVFAT = (c_uint32 * (24 * arraySize))() # per VFAT
+    scanDataRatePerVFAT = (c_uint32 * (nVFATs * arraySize))() # per VFAT
 
     # Perform SBIT Rate Scan vs. scanReg
     if chan==128:
@@ -506,13 +508,13 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
             continue
 
         # Fill per VFAT rate
-        for vfat in range(0,24):
+        for vfat in range(0,nVFATs):
             # Skip masked VFATs
             if ((ohVFATMaskArray[ohN] >> vfat) & 0x1):
                 continue
 
             for dacVal in range(args.scanmin,args.scanmax+1,args.stepSize):
-                idxVFAT = ohN*24*nDACValues + vfat*nDACValues+(dacVal-args.scanmin)/args.stepSize;
+                idxVFAT = ohN*nVFATs*nDACValues + vfat*nDACValues+(dacVal-args.scanmin)/args.stepSize;
                 idxDAC = ohN*nDACValues + (dacVal-args.scanmin)/args.stepSize
                 rateTree.fill(
                         dacValX = scanDataDAC[idxDAC],
@@ -557,7 +559,7 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
                     slot = amcBoard.getSlot(),
                     vfatCH = chan,
                     vfatID = 0xdead,
-                    vfatN = 24
+                    vfatN = nVFATs
                     )
             if args.debug:
                 print("| {0} | {1} | {2} | 0x{3:x} | {4} | {5} | {6} | {7} |".format(

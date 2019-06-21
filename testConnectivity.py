@@ -196,7 +196,7 @@ def testConnectivity(args):
     if hasattr(args, 'acceptBadDACBiases') is False: # Accept Bad cases where a VFAT DAC cannot reach correct bias voltage/current
         args.acceptBadDACBiases = False
     if hasattr(args, 'acceptBadDACFits') is False: # Accept Bad cases where a VFAT DAC cannot reach correct bias voltage/current
-        args.acceptBadDACFits = False        
+        args.acceptBadDACFits = False
     if hasattr(args, 'acceptBadTrigLink') is False: # Accept Bad Trigger Link Status?
         args.acceptBadTrigLink = False
     if hasattr(args, 'assignXErrors') is False: # For DAC Scan Analysis
@@ -214,7 +214,7 @@ def testConnectivity(args):
     if hasattr(args, 'compare') is False: # Just Compare frontend settings?
         args.compare = False
     if hasattr(args, 'detType') is False:
-        args.detType = None # default to None
+        args.detType = "short" # default to short
     if hasattr(args, 'filename') is False: # TFile containing channel configuration
         args.filename = None
     if hasattr(args, 'nPhaseScans') is False: # Number of GBT Phase Scans to Perform
@@ -269,8 +269,7 @@ def testConnectivity(args):
 
     # Initialize Hardware
     amc = getAMCObject(args.slot,args.shelf)
-    #nOHs = readRegister(amc,"GEM_AMC.GEM_SYSTEM.CONFIG.NUM_OF_OH")
-    nOHs = 1#FIXME
+    nOHs = readRegister(amc,"GEM_AMC.GEM_SYSTEM.CONFIG.NUM_OF_OH")
 
     try:
         vfatBoard = HwVFAT(
@@ -473,9 +472,9 @@ def testConnectivity(args):
         print("Scanning GBT Phases, this may take a moment please be patient")
         if args.writePhases2File:
             fNameGBTPhaseScanResults = elogPath+'/gbtPhaseSettings.log'
-            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, outputFile=fNameGBTPhaseScanResults, nVFAT=vfatsPerGemVariant[args.gemType])
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, outputFile=fNameGBTPhaseScanResults, nVFAT=vfatsPerGemVariant[args.gemType], nVerificationReads=args.nVerificationReads)
         else:
-            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, nVFAT=vfatsPerGemVariant[args.gemType])
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, nVFAT=vfatsPerGemVariant[args.gemType], nVerificationReads=args.nVerificationReads)
 
         # Find Good GBT Phase Values
         failed2FindGoodPhase = False
@@ -904,7 +903,7 @@ def testConnectivity(args):
         # Analyze DAC Scan
         from gempython.gemplotting.utils.anautilities import dacAnalysis
         from gempython.gemplotting.utils.exceptions import VFATDACBiasCannotBeReached
-        from gempython.gemplotting.utils.exceptions import VFATDACFitLargeChisquare        
+        from gempython.gemplotting.utils.exceptions import VFATDACFitLargeChisquare
         try:
             dacAnalysis(args, calTree.gemTree, chamber_config, scandate=startTime)
         except VFATDACFitLargeChisquare as e:
@@ -915,7 +914,7 @@ def testConnectivity(args):
                 printRed("Conncetivity Testing Failed")
                 return
             else:
-                printYellow("I've been told to ignore cases of VFATs having bad DAC vs ADC fits; results may not be so good")            
+                printYellow("I've been told to ignore cases of VFATs having bad DAC vs ADC fits; results may not be so good")
         except VFATDACBiasCannotBeReached as e:
             printRed("One or more VFATs is unable to reach the correct bias voltage/current setpoint")
             printRed(e.message)
@@ -1036,7 +1035,9 @@ def testConnectivity(args):
                         link = ohN,
                         logFile = logFile,
                         vfatmask = dict_vfatMask[ohN],
-                        voltageStepPulse = args.voltageStepPulse)
+                        voltageStepPulse = args.voltageStepPulse,
+                        gemType = args.gemType,
+                        detType = args.detType)
             except Exception as e:
                 printRed("An exception has occured: {0}".format(e))
                 printRed("SCurve for OH{0} Failed".format(ohN))
@@ -1188,7 +1189,7 @@ if __name__ == '__main__':
     parser.add_argument("--checkCSCTrigLink",action="store_true",help="Check also the trigger link for the CSC trigger associated to OH in mask")
     parser.add_argument("--deadChanCuts",type=str,help="Comma separated pair of integers specifying in fC the scurve width to consider a channel dead",default="0.1,0.5")
     parser.add_argument("--acceptBadDACBiases",action="store_true",help="Ignore failures where a VFAT DAC cannot reach the correct bias voltage/current")
-    parser.add_argument("--acceptBadDACFits",action="store_true",help="Ignore cases where a VFAT DAC vs ADC fit has a large chisquare")    
+    parser.add_argument("--acceptBadDACFits",action="store_true",help="Ignore cases where a VFAT DAC vs ADC fit has a large chisquare")
     parser.add_argument("-a","--acceptBadTrigLink",action="store_true",help="Ignore failing trigger link status checks")
     parser.add_argument("-d","--debug",action="store_true",dest="debug",help = "Print additional debugging information")
     parser.add_argument("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default=None)
@@ -1198,6 +1199,7 @@ if __name__ == '__main__':
     parser.add_argument("-i","--ignoreSyncErrs",action="store_true",help="Ignore VFAT Sync Errors When Checking Communication")
     parser.add_argument("-m","--maxIter",type=int,help="Maximum number of iterations steps 2 & 3 will be attempted before failing (and exiting)",default=1)
     parser.add_argument("-n","--nPhaseScans",type=int,help="Number of gbt phase scans to perform when determining vfat phase assignment",default=50)
+    parser.add_argument("--nVerificationReads",type=int,help="Number of verification reads to be performed during GBT phase scan",default=10)
     parser.add_argument("--skipDACScan",action="store_true",help="Do not perform any DAC Scans")
     parser.add_argument("--skipGBTPhaseScan",action="store_true",help="Do not perform any GBT Phase Scans")
     parser.add_argument("--skipScurve",action="store_true",help="Do not perform any SCurves")
@@ -1242,10 +1244,10 @@ if __name__ == '__main__':
             exit(os.EX_USAGE)
 
     # Enforce a minimum number of phase scans
-    if args.nPhaseScans < 50:
-        printYellow("You've requested the number of phase scans to be {0} which is less than 50.\nThis is probably not reliable, reseting to 50".format(args.nPhaseScans))
-        args.nPhaseScans = 50
-        pass
+    #if args.nPhaseScans < 50:
+    #    printYellow("You've requested the number of phase scans to be {0} which is less than 50.\nThis is probably not reliable, reseting to 50".format(args.nPhaseScans))
+    #    args.nPhaseScans = 50
+    #    pass
 
     gemlogger = getGEMLogger(__name__)
     gemlogger.setLevel(logging.INFO)

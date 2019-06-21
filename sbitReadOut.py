@@ -26,7 +26,7 @@ Positional arguments
     uTCA crate shelf number
 
 .. option:: slot
-   
+
     AMC slot number in the uTCA crate
 
 .. option:: ohMask
@@ -109,6 +109,10 @@ if __name__ == '__main__':
             help="Set up for using AMC13 T3 trigger inpiut")
     parser.add_argument("--vfatmask", type=parseInt, dest="vfatmask",default=0x0,
             help="VFATs to be masked, a 1 in the N^th bit signifies the N^th vfat will not be used", metavar="vfatmask")
+    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_argument("--detType",type=str,
+                        help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default="short")
+
     args = parser.parse_args()
     options = vars(args)
 
@@ -118,7 +122,7 @@ if __name__ == '__main__':
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.vfatqc.utils.qcutilities import getCardName
     cardName = getCardName(args.shelf,args.slot)
-    vfatBoard = HwVFAT(args.cardName, args.ohN, args.debug)
+    vfatBoard = HwVFAT(args.cardName, args.ohN, args.debug, args.gemType, args.detType)
     print 'opened connection'
 
     # Check options
@@ -145,7 +149,7 @@ if __name__ == '__main__':
     amc13board.resetCounters()
     print("stopping triggers to CTP7")
     vfatBoard.parentOH.parentAMC.blockL1A()
-    
+
     # Get original optohybrid trigger mask and then overwrite it with the vfat mask
     origOhTrigMask = vfatBoard.parentOH.getSBitMask()
     vfatBoard.parentOH.setSBitMask(mask)
