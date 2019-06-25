@@ -92,6 +92,7 @@ Then execute:
 from gempython.gemplotting.mapping.chamberInfo import chamber_config
 from gempython.utils.wrappers import runCommand
 from gempython.tools.amc_user_functions_xhal import *
+from gempython.tools.hw_constants import gemVariants
 from gempython.vfatqc.utils.qcutilities import getCardName
 from gempython.vfatqc.utils.scanUtils import makeScanDir
 

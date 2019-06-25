@@ -2,6 +2,7 @@
 
 if __name__ == '__main__':
     import argparse
+    from gempython.tools.hw_constants import gemVariants
     parser = argparse.ArgumentParser(description="Queries the DB for calibration info for all VFATs on given (shelf,slot,link)")
     parser.add_argument("shelf",type=int,help="uTCA shelf number")
     parser.add_argument("slot",type=int,help="AMC slot in uTCA shelf")

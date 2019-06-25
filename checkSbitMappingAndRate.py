@@ -83,6 +83,7 @@ if __name__ == '__main__':
     from ctypes import *
 
     from gempython.tools.vfat_user_functions_xhal import *
+    from gempython.tools.hw_constants import gemVariants
 
     from gempython.vfatqc.utils.qcoptions import parser
 

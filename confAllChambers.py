@@ -84,6 +84,7 @@ def launchArgs(shelf,slot,link,run,armDAC,armDACBump,configType,cName,debug=Fals
 if __name__ == '__main__':
 
     import argparse
+    from gempython.tools.hw_constants import gemVariants
     parser = argparse.ArgumentParser(description="Tool for configuring all front-end electronics")
     parser.add_argument("--armDAC", type=int,default = 100,help="CFG_THR_ARM_DAC value to write to all VFATs")
     parser.add_argument("--armDACBump", type=int,help="CFG_THR_ARM_DAC value for all VFATs", default=0)

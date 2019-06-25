@@ -10,6 +10,7 @@ if __name__ == '__main__':
 
     from array import array
     from gempython.tools.vfat_user_functions_xhal import *
+    from gempython.tools.hw_constants import gemVariants
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     from gempython.vfatqc.utils.confUtils import configure, readBackCheckV3, setChannelRegisters
 

@@ -87,6 +87,7 @@ if __name__ == '__main__':
     parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
 
     # Optional arguments
+    from gempython.tools.hw_constants import gemVariants
     parser.add_argument("-d","--debug", action="store_true", dest="debug",
             help = "Print additional debugging information")
     parser.add_argument("--extTempVFAT", action="store_true", dest="extTempVFAT",
