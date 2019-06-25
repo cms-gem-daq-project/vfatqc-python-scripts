@@ -84,7 +84,7 @@ if __name__ == '__main__':
     parser.add_argument("shelf", type=int, help="uTCA shelf to access")
     parser.add_argument("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered", metavar="ohMask")
-    
+
     # Optional arguments
     parser.add_argument("-d","--debug", action="store_true", dest="debug",
             help = "Print additional debugging information")
@@ -96,10 +96,12 @@ if __name__ == '__main__':
             help = "Specify output filename to store data in.")
     parser.add_argument("--series", action="store_true", dest="series",
             help = "Scan nonzero links in ohMask in series (successive RPC calls) instead of in parallel (one RPC call)")
-    parser.add_argument("--stepSize", type=int, dest="stepSize",default=1, 
+    parser.add_argument("--stepSize", type=int, dest="stepSize",default=1,
                   help="Supply a step size for the scan")
     parser.add_argument("-v","--vfatmask",type=parseInt,dest="vfatmask",default=None,
             help="VFATs to be masked in scan & analysis applications (e.g. 0xFFFFF masks all VFATs)")
+    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_argument("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default=None)
     args = parser.parse_args()
 
     from gempython.utils.gemlogger import printRed
@@ -114,28 +116,28 @@ if __name__ == '__main__':
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     cardName = getCardName(args.shelf,args.slot)
     from gempython.tools.vfat_user_functions_xhal import *
-    vfatBoard = HwVFAT(cardName, 0, args.debug) # Assign link 0; we will update later
+    vfatBoard = HwVFAT(cardName, 0, args.debug, args.gemType, args.detType) # Assign link 0; we will update later
     print 'opened connection'
     amcBoard = vfatBoard.parentOH.parentAMC
     if amcBoard.fwVersion < 3:
         printRed("DAC Scan of v2b electronics is not supported, exiting!!!")
         exit(os.EX_USAGE)
-    
+
     # Check options
     if not inputOptionsValid(args, amcBoard.fwVersion):
         exit(os.EX_USAGE)
         pass
-    
+
     # Make output files
     import ROOT as r
     outF = r.TFile(args.filename,"RECREATE")
-    from gempython.vfatqc.utils.scanUtils import dacScanAllLinks, dacScanSingleLink 
+    from gempython.vfatqc.utils.scanUtils import dacScanAllLinks, dacScanSingleLink
     from gempython.vfatqc.utils.treeStructure import gemDacCalTreeStructure
     calTree = gemDacCalTreeStructure(
                     name="dacScanTree",
                     nameX="dummy", # temporary name, will be over-ridden
                     nameY=("ADC1" if args.extRefADC else "ADC0"),
-                    dacSelect=-1, #temporary value, will be over-ridden 
+                    dacSelect=-1, #temporary value, will be over-ridden
                     description="GEM DAC Calibration of VFAT3 DAC"
             )
 
