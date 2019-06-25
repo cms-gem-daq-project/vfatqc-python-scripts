@@ -127,6 +127,8 @@ def checkSbitMappingAndRate(args):
         # Build Command
         cmd = [
                 "checkSbitMappingAndRate.py",
+                "--gemType {}".format(args.gemType),
+                "--detType {}".format(args.detType),
                 "--shelf={}".format(args.shelf),
                 "--slot={}".format(args.slot),
                 "-f {}/SBitMappingAndRateData.root".format(dirPath),
@@ -165,6 +167,8 @@ def dacScanV3(args):
     # Build Command
     cmd = [
             "dacScanV3.py",
+            "--gemType {}".format(args.gemType),
+            "--detType {}".format(args.detType),
             "-f {}/dacScanV3.root".format(dirPath),
             str(args.shelf),
             str(args.slot),
@@ -222,6 +226,8 @@ def monitorT(args):
     # Build Command
     cmd = [
             "monitorTemperatures.py",
+            "--gemType {}".format(args.gemType),
+            "--detType {}".format(args.detType),
             "-f {}/temperatureData.root".format(dirPath),
             "--noOHs",
             "--noVFATs",
@@ -273,6 +279,8 @@ def sbitReadOut(args):
         # Build Command
         cmd = [
                 "sbitReadOut.py",
+                "--gemType {}".format(args.gemType),
+                "--detType {}".format(args.detType),
                 "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
                 str(args.shelf),
                 str(args.slot),
@@ -316,6 +324,8 @@ def sbitThreshScan(args):
     # Build Command
     cmd = [
             "sbitThreshScan.py",
+            "--gemType {}".format(args.gemType),
+            "--detType {}".format(args.detType),
             "-f {}/SBitRateData.root".format(dirPath),
             "--scanmax={}".format(args.scanmax),
             "--scanmin={}".format(args.scanmin),
@@ -378,6 +388,8 @@ def trimChamberV3(args):
         # Get base command
         cmd = [
                 "trimChamberV3.py",
+                "--gemType {}".format(args.gemType),
+                "--detType {}".format(args.detType),
                 "--calFileCAL={}".format(calDacCalFile),
                 "--chMax={}".format(args.chMax),
                 "--chMin={}".format(args.chMin),
@@ -528,6 +540,8 @@ def ultraLatency(args):
         # Get base command
         cmd = [
                 "ultraLatency.py",
+                "--gemType {}".format(args.gemType),
+                "--detType {}".format(args.detType),
                 "--filename={}/LatencyScanData.root".format(dirPath),
                 "-g {}".format(ohN),
                 "--mspl={}".format(args.mspl),
@@ -610,7 +624,9 @@ def ultraScurve(args):
                 nevts = args.nevts,
                 setChanRegs = False,
                 vfatmask = (args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN)),
-                voltageStepPulse = True)
+                voltageStepPulse = True,
+                gemType = args.gemType,
+                detType = args.detType)
 
         # Execute
         runCommand( ["chmod","-R","g+r",dirPath] )
@@ -648,6 +664,8 @@ def ultraThreshold(args):
         # Build Command
         cmd = [
                 "ultraThreshold.py",
+                "--gemType {}".format(args.gemType),
+                "--detType {}".format(args.detType),
                 "--chMax={}".format(args.chMax),
                 "--chMin={}".format(args.chMin),
                 "-f {0}/ThresholdScanData.root".format(dirPath),
