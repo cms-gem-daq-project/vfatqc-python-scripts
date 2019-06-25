@@ -7,7 +7,7 @@ if __name__ == '__main__':
     Modified by: Eklavya Sarkar eklavya.sarkar@cern.ch
                  Brian Dorney brian.l.dorney@cern.ch
     """
-    
+
     from array import array
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     import argparse
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     parser = argparse.ArgumentParser(description="Tool for configuring front-end electronics")
-    
+
     parser.add_argument("--applyMasks", action="store_true", help="Channel masks defined in chConfig will be applied if this option is provided; otherwise no channel masks will be set")
     parser.add_argument("--chConfig", type=str, dest="chConfig", default=None,
                       help="Specify file containing channel settings from anaUltraSCurve.py")
@@ -48,17 +48,19 @@ if __name__ == '__main__':
                       help="VThreshold1 DAC bump value for all VFATs", default=0)
     parser.add_argument("--zeroChan", action="store_true", dest="zeroChan",
                       help="Zero all channel registers")
+    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_argument("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default=None)
     args = parser.parse_args()
-    
+
     import subprocess,datetime
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     print startTime
     Date = startTime
-    
+
     cardName = getCardName(args.shelf,args.slot)
-    vfatBoard = HwVFAT(cardName, args.gtx, args.debug)
+    vfatBoard = HwVFAT(cardName, link=args.gtx, debug=args.debug, gemType=args.gemType, detType=args.detType)
     print('opened connection')
-    
+
     # Check args
     if not inputOptionsValid(args, vfatBoard.parentOH.parentAMC.fwVersion):
         print("input options are not valid, exiting")

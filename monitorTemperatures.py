@@ -99,6 +99,8 @@ if __name__ == '__main__':
             help = "Do not print VFAT temperatures to terminal; if --filename isp provided VFAT temperatures are still read and stored in the output file")
     parser.add_argument("-t","--timeInterval", type=int, dest="timeInterval", default=60,
             help ="Time interval, in seconds, to wait in between temperature reads",metavar="timeInterval")
+    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_argument("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default=None)
     args = parser.parse_args()
 
     if args.filename is not None:
@@ -113,7 +115,7 @@ if __name__ == '__main__':
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.vfatqc.utils.qcutilities import getCardName
     cardName = getCardName(args.shelf,args.slot)
-    vfatBoard = HwVFAT(cardName, 0, args.debug) # Set a dummy link for now
+    vfatBoard = HwVFAT(cardName, 0, args.debug, args.gemType, args.detType) # Set a dummy link for now
     amcBoard = vfatBoard.parentOH.parentAMC
     print('opened connection')
 
@@ -148,8 +150,8 @@ if __name__ == '__main__':
 
     from time import sleep, time
     from ctypes import *
-    adcDataIntRefMultiLinks = (c_uint32 * (24 * 12))()
-    adcDataExtRefMultiLinks = (c_uint32 * (24 * 12))()
+    adcDataIntRefMultiLinks = (c_uint32 * (vfatBoard.parentOH.nVFATs * 12))()
+    adcDataExtRefMultiLinks = (c_uint32 * (vfatBoard.parentOH.nVFATs * 12))()
     try:
         print("Reading and recording temperature data, press Ctrl+C to stop")
 
@@ -181,8 +183,8 @@ if __name__ == '__main__':
                 for ohN in range(0,12):
                     if( not ((args.ohMask >> ohN) & 0x1)):
                         continue
-                    for vfat in range(0,24):
-                        idx = ohN * 24 + vfat
+                    for vfat in range(0,vfatBoard.parentOH.nVFATs):
+                        idx = ohN * vfatBoard.parser.nVFATs + vfat
                         print("| {0} | {1} | {2} | {3} | {4} |".format(
                             ohN,
                             vfat,
@@ -221,8 +223,8 @@ if __name__ == '__main__':
                 for ohN in range(0,12):
                     if( not ((args.ohMask >> ohN) & 0x1)):
                         continue
-                    for vfat in range(0,24):
-                        idx = ohN * 24 + vfat
+                    for vfat in range(0,vfatBoard.parser.nVFATs):
+                        idx = ohN * vfatBoard.parser.nVFATs + vfat
 
                         gemTempDataVFAT.fill(
                                 adcTempIntRef = adcDataIntRefMultiLinks[idx],
@@ -258,7 +260,7 @@ if __name__ == '__main__':
                 gemTempDataOH.autoSave("SaveSelf")
                 gemTempDataVFAT.autoSave("SaveSelf")
 
-            # Wait 
+            # Wait
             sleep(args.timeInterval)
             pass
     except KeyboardInterrupt:

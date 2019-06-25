@@ -6,7 +6,6 @@ from gempython.tools.hw_constants import gemVariants, GBT_PHASE_RANGE, vfatsPerG
 from gempython.tools.optohybrid_user_functions_xhal import OHRPCException, OHTypeException
 from gempython.tools.vfat_user_functions_xhal import *
 from gempython.utils.gemlogger import colors, getGEMLogger, printGreen, printRed, printYellow
-#from gempython.utils.wrappers import runCommand
 
 import os
 
@@ -252,9 +251,6 @@ def testConnectivity(args):
     envCheck("GBT_SETTINGS")
 
     dataPath = os.getenv('DATA_PATH')
-    #if ars.gemType == "ge21":
-    #    gbtConfigPath = ""
-    #else:
     if args.gemType == "ge11":
         gbtConfigPath = "{0}/OHv3c/".format(os.getenv("GBT_SETTINGS")) # Ideally this would be a DB read...
     elif args.gemType == "ge21":
@@ -263,7 +259,6 @@ def testConnectivity(args):
         print("me0 gemType not currently implemented, exiting.")
         printRed("Connectvity Testing Failed")
         return
-
 
     elogPath = os.getenv('ELOG_PATH')
 
@@ -320,7 +315,7 @@ def testConnectivity(args):
         configGBT(cardName=args.cardName, listOfconfigFiles=gbtConfigs, ohMask=args.ohMask, nOHs=nOHs)
 
         print("Checking GBT Communication (After Programming GBTs)")
-        if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask, gemType="ge11"):
+        if not gbtCommIsGood(vfatBoard.parentOH.parentAMC, doReset=True, printSummary=args.debug, ohMask=args.ohMask, gemType=args.gemType):
             printRed("Connectivity Testing Failed")
             return
         else:
@@ -472,7 +467,7 @@ def testConnectivity(args):
         print("Scanning GBT Phases, this may take a moment please be patient")
         if args.writePhases2File:
             fNameGBTPhaseScanResults = elogPath+'/gbtPhaseSettings.log'
-            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, outputFile=fNameGBTPhaseScanResults, nVFAT=vfatsPerGemVariant[args.gemType], nVerificationReads=args.nVerificationReads)
+            dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, outputFile=fNameGBTPhaseScanResults, nVFAT=vfatBoard.parentOH.nVFATs, nVerificationReads=args.nVerificationReads)
         else:
             dict_phaseScanResults = gbtPhaseScan(cardName=args.cardName, ohMask=args.ohMask, nOHs=nOHs,nOfRepetitions=args.nPhaseScans, silent=False, nVFAT=vfatsPerGemVariant[args.gemType], nVerificationReads=args.nVerificationReads)
 
@@ -782,15 +777,11 @@ def testConnectivity(args):
         printYellow("CAlTree retrieved")
         # Place All Chips Into Run Mode and write correct Iref
         from math import isnan
-        printYellow("isnan imported")
         for ohN in range(nOHs):
             printRed("Checking whether OH%s is masked" %(ohN))
             # Skip masked OH's
             if( not ((args.ohMask >> ohN) & 0x1)):
                 continue
-
-            printRed("Working with OH%s" %(ohN))
-
             vfatBoard.parentOH.link = ohN
 
             # First apply IREF settings that are loaded in the CTP7 VFAT3 config files
@@ -1242,12 +1233,6 @@ if __name__ == '__main__':
             printYellow("please relaunch using --detType from the above list")
             printRed("Connectivity Testing Failed")
             exit(os.EX_USAGE)
-
-    # Enforce a minimum number of phase scans
-    #if args.nPhaseScans < 50:
-    #    printYellow("You've requested the number of phase scans to be {0} which is less than 50.\nThis is probably not reliable, reseting to 50".format(args.nPhaseScans))
-    #    args.nPhaseScans = 50
-    #    pass
 
     gemlogger = getGEMLogger(__name__)
     gemlogger.setLevel(logging.INFO)
