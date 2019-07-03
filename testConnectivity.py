@@ -304,8 +304,8 @@ def testConnectivity(args):
                 ]
         elif args.gemType == "ge21":
             gbtConfigs = [
-                "{0}/GBTX_GE21_OHv1_GBT_0_minimal_2019-01-24.txt".format(gbtConfigPath),
-                "{0}/GBTX_GE21_OHv1_GBT_1_minimal_2019-01-24.txt".format(gbtConfigPath),
+                "{0}/GBTX_GE21_OHv1_GBT_0.txt".format(gbtConfigPath),
+                "{0}/GBTX_GE21_OHv1_GBT_1.txt".format(gbtConfigPath),
                 ]
         else:
             print("me0 gemType not currently implemented, exiting.")
