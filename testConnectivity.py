@@ -97,7 +97,12 @@ def scaCommIsGood(amc, maxIter=5, ohMask=0xfff, nOHs=12):
     from reg_utils.reg_interface.common.jtag import initJtagRegAddrs
     initJtagRegAddrs()
 
-    writeRegister(amc,"GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF",0xffffffff)
+    try:
+        writeRegister(amc,"GEM_AMC.SLOW_CONTROL.SCA.ADC_MONITORING.MONITORING_OFF",0xffffffff)
+    except uhal._core.exception:
+        printYellow("An exception has been caught while attempting to disable the ADC monitoring.")
+        printYellow("If you use a CTP7 with a firmware version higher than 3.8.3 you can safely ignore this warning.")
+        pass
 
     for trial in range(0,maxIter):
         sca_reset(ohMask)
