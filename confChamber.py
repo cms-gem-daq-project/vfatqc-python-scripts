@@ -17,6 +17,7 @@ if __name__ == '__main__':
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
     parser = argparse.ArgumentParser(description="Tool for configuring front-end electronics")
     
+    parser.add_argument("--applyMasks", action="store_true", help="Channel masks defined in chConfig will be applied if this option is provided; otherwise no channel masks will be set")
     parser.add_argument("--chConfig", type=str, dest="chConfig", default=None,
                       help="Specify file containing channel settings from anaUltraSCurve.py")
     parser.add_argument("--compare", action="store_true", dest="compare",
