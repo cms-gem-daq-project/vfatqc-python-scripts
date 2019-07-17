@@ -30,23 +30,23 @@ def launchArgs(shelf,slot,link,run,armDAC,armDACBump,configType,cName,debug=Fals
             )
 
     from gempython.utils.gemlogger import printYellow
-    if ((configType & 0x1) == 0x1):         # Set vfatConfig
+    if (configType & 0x1):          # Set vfatConfig
         vfatConfig = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,cName)
 
         if os.path.isfile(vfatConfig):
             args.vfatConfig = vfatConfig
         else:
             printYellow("No vfat configuration exists for {0}".format(cName))
-    if (((configType >> 1) & 0x1) == 0x1):  # Set chConfig and potentially channel masks
+    if ( (configType & 0x2) > 0):   # Set chConfig and potentially channel masks
         chConfig = "{0}/configs/chConfig_{1}.txt".format(dataPath,cName)
 
         if os.path.isfile(chConfig):
             args.chConfig = chConfig
-            if (((configType >> 2) & 0x1) == 0x1):
+            if ( (configType & 0x4) > 0):
                 args.applyMasks = True
         else:
             printYellow("No channel configuration exists for {0}".format(cName))
-    if (((configType >> 3) & 0x1) == 0x1):  # Zero all channel registers
+    if ( (configType & 0x8) > 0):   # Zero all channel registers
         args.chConfig = None
         args.applyMasks = False
         args.zeroChan = True
@@ -95,13 +95,13 @@ if __name__ == '__main__':
     # [3] -> zero channels
     configType=0x0
     if args.vfatConfig:
-        configType += 0x1
+        configType |= 0x1
     if args.chConfig:
-        configType += (0x1 << 1)
+        configType |= 0x2
         if args.applyMasks:
-            configType += (0x1 << 2)
+            configType |= 0x4
     if args.zeroChan:
-        configType += (0x1 << 3)
+        configType |= 0x8
         pass
 
     # consider only the shelf of interest
