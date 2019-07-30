@@ -10,6 +10,7 @@ def configure(args, vfatBoard):
 
     args - namespace returned by ArgumentParser::parse_args(), expects to contain following fields:
 
+        applyMasks  - If True channel masks in chConfig will be applied
         chConfig    - Text file containing the channel configuration register information
         compare     - If True only compares provided config file(s) with currently loaded parameters in frontend, does not write
         debug       - Prints additional debugging information
@@ -60,11 +61,14 @@ def configure(args, vfatBoard):
             chTree = inF.Get("scurveFitTree")
             if not args.compare:
                 print 'Configuring Channel Registers on (shelf{0}, slot{1}, OH{2}) based on {3}'.format(shelf,slot,ohN, args.filename)
-                setChannelRegisters(vfatBoard, chTree, args.vfatmask)
+                setChannelRegisters(vfatBoard, chTree, args.vfatmask, args.applyMasks)
 
             dict_readBack = {}
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
+                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
+                if args.applyMasks:
+                    dict_readBack["mask"]="VFAT_CHANNELS.CHANNEL"
+
                 print 'Comparing Currently Stored Channel Registers with %s'%args.chConfig
                 readBackCheckV3(chTree, dict_readBack, vfatBoard, args.vfatmask)
     
@@ -79,11 +83,13 @@ def configure(args, vfatBoard):
             chTree.ReadFile(args.chConfig)
             if not args.compare:
                 print 'Configuring Channel Registers on (shelf{0}, slot{1}, OH{2}) based on {3}'.format(shelf,slot,ohN,args.chConfig)
-                setChannelRegisters(vfatBoard, chTree, args.vfatmask)
+                setChannelRegisters(vfatBoard, chTree, args.vfatmask, args.applyMasks)
 
             dict_readBack = {}
             if vfatBoard.parentOH.parentAMC.fwVersion > 2:
-                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "mask":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
+                dict_readBack = { "trimDAC":"VFAT_CHANNELS.CHANNEL", "trimPolarity":"VFAT_CHANNELS.CHANNEL", "vfatID":"HW_CHIP_ID" }
+                if args.applyMasks:
+                    dict_readBack["mask"]="VFAT_CHANNELS.CHANNEL"
                 print 'Comparing Currently Stored Channel Registers on (shelf{0}, slot{1}, OH{2}) with {3}'.format(shelf,slot,ohN,args.chConfig)
                 readBackCheckV3(chTree, dict_readBack, vfatBoard, args.vfatmask)
     
@@ -392,11 +398,12 @@ def readBackCheckV3(rootTree, dict_Names, vfatBoard, mask=0x0, vt1bump=0):
 
     return
 
-def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
+def setChannelRegisters(vfatBoard, chTree, mask, applyMasks=False, debug=False):
     """
     vfatBoard - an instance of the HwVFAT class
     chTree - TTree generated from a chConfig.txt file
     mask - vfat mask to apply
+    applyMasks - Apply channel masks when setting channel registers if True
     debug - print additional information if True
     """
     
@@ -411,7 +418,7 @@ def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
             continue
 
         if (vfatBoard.parentOH.parentAMC.fwVersion > 2):
-            cArray_Masks[128*event.vfatN+event.vfatCH] = event.mask
+            cArray_Masks[128*event.vfatN+event.vfatCH] = (event.mask * applyMasks) # Logical AND of event.mask and applyMasks
             cArray_trimVal[128*event.vfatN+event.vfatCH] = event.trimDAC
             cArray_trimPol[128*event.vfatN+event.vfatCH] = event.trimPolarity
         else:
@@ -419,7 +426,7 @@ def setChannelRegisters(vfatBoard, chTree, mask, debug=False):
                 vfatBoard.writeVFAT(ohboard, options.gtx, int(event.vfatN), "ContReg3", int(event.trimRange),options.debug)
             if event.mask==0 and event.trimDAC==0:
                 continue
-            vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask), trimARM=int(event.trimDAC), debug=options.debug)
+            vfatBoard.setChannelRegister(chip=int(event.vfatN), chan=int(event.vfatCH), mask=int(event.mask*applyMasks), trimARM=int(event.trimDAC), debug=options.debug)
             pass
         pass
     
