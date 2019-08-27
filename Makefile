@@ -52,6 +52,7 @@ preprpm: default
 	@cp -rf dacScanV3.py $(ScriptDir)
 	@cp -rf fastLatency.py $(ScriptDir)
 	@cp -rf getCalInfoFromDB.py $(ScriptDir)
+	@cp -rf iterativeTrim.py $(ScriptDir)
 	@cp -rf monitorTemperatures.py $(ScriptDir)
 	@cp -rf run_scans.py $(ScriptDir)
 	@cp -rf sbitReadOut.py $(ScriptDir)

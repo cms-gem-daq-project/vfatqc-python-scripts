@@ -983,7 +983,6 @@ def testConnectivity(args):
             ohKey = (args.shelf,args.slot,ohN)
         
             dirPath = makeScanDir(args.slot, ohN, "scurve", startTime, args.shelf, chamber_config)
-            dirPath += "/{}".format(startTime)
             logFile = "%s/scanLog.log"%(dirPath)
             scurveFiles[ohN] = "{0}/{1}/scurve/{2}/SCurveData.root".format(dataPath,chamber_config[ohKey],startTime)
 

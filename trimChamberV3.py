@@ -306,9 +306,6 @@ if __name__ == '__main__':
         # Determine scurve point of interest by channel
         print("fitting trimDAC vs. scurve mean for vfat %d"%vfat)
         for chan in range(chMin,chMax):
-            #print("fitting trimDAC vs. scurve mean for vfat %d chan"%(vfat,chan))
-            idx = 128*vfat + chan
-
             # Declare the TGraphErrors storing the trimDAC calibration for this ARM DAC
             g_TrimDAC_vs_scurveMean = r.TGraphErrors(len(dict_scurveFitResults))
             g_TrimDAC_vs_scurveMean.SetName("gCal_trimARM_vs_scurveMean_vfat%d_chan%d_gblArmDAC%d"%(vfat,chan,dict_thrArmDacPerVFAT[vfat]))

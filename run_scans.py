@@ -33,7 +33,6 @@ def checkSbitMappingAndRate(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(args.slot, ohN, "sbitMonInt", startTime, args.shelf)
-        dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
@@ -72,7 +71,6 @@ def dacScanV3(args):
 
     # Make output directory
     dirPath = makeScanDir(args.slot, -1, "dacScanV3", startTime, args.shelf)
-    dirPath += "/{}".format(startTime)
 
     # Build Command
     cmd = [
@@ -130,7 +128,6 @@ def monitorT(args):
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
 
     dirPath = makeScanDir(args.slot, -1, "temperature", startTime, args.shelf)
-    dirPath += "/{}".format(startTime)
 
     # Build Command
     cmd = [
@@ -182,7 +179,6 @@ def sbitReadOut(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(args.slot, ohN, "sbitMonRO", startTime, args.shelf)
-        dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [
@@ -226,7 +222,6 @@ def sbitThreshScan(args):
     
     # Make output directory
     dirPath = makeScanDir(args.slot, -1, "sbitRateor", startTime, args.shelf)
-    dirPath += "/{}".format(startTime)
 
     # Build Command
     cmd = [
@@ -277,7 +272,6 @@ def trimChamberV3(args):
         
         # Get & make the output directory
         dirPath = makeScanDir(args.slot, ohN, "trimV3", startTime, args.shelf)
-        dirPath += "/{}".format(startTime)
 
         # Check to make sure calFiles exist
         armCalFile = "{0}/{1}/calFile_thrArmDAC_{1}.txt".format(dataPath,chamber_config[ohKey])
@@ -368,7 +362,6 @@ def ultraLatency(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(args.slot, ohN, "latency", startTime, args.shelf)
-        dirPath += "/{}".format(startTime)
         
         # Get base command
         cmd = [
@@ -439,7 +432,6 @@ def ultraScurve(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(args.slot, ohN, "scurve", startTime, args.shelf)
-        dirPath += "/{}".format(startTime)
         logFile = "%s/scanLog.log"%(dirPath)
 
         # Launch the scurve
@@ -490,7 +482,6 @@ def ultraThreshold(args):
 
         # Get & make the output directory
         dirPath = makeScanDir(args.slot, ohN, "thresholdch", startTime, args.shelf)
-        dirPath += "/{}".format(startTime)
         
         # Build Command
         cmd = [

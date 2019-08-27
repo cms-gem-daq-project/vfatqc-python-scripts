@@ -373,7 +373,7 @@ def makeScanDir(slot, ohN, scanType, startTime, shelf=1, chamber_config=None):
     for cmd in setupCmds:
         runCommand(cmd)
 
-    return dirPath
+    return "{:s}/{:s}".format(dirPath,startTime)
 
 def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_ARM_DAC"):
     """
