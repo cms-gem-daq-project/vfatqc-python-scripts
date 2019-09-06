@@ -338,6 +338,84 @@ def trimChamberV3(args):
 
     return
 
+def iterTrim(args):
+    """
+    Launches a call of iterativeTrim.py
+    
+    args - object returned by argparse.ArgumentParser.parse_args() 
+    """
+    
+    startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
+    
+    # Determine number of OH's
+    cardName = getCardName(args.shelf,args.slot)
+    amcBoard = HwAMC(cardName, args.debug)
+    print("opened connection")
+
+    # Get DATA_PATH
+    dataPath = os.getenv("DATA_PATH")
+
+    for ohN in range(0,amcBoard.nOHs+1):
+        # Skip masked OH's        
+        if( not ((args.ohMask >> ohN) & 0x1)):
+            continue
+   
+        ohKey = (args.shelf,args.slot,ohN)
+        print("iterativeTrimming shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
+        
+        # Get & make the output directory
+        dirPath = makeScanDir(args.slot, ohN, "iterTrim", startTime, args.shelf)
+
+        calDacCalFile = "{0}/{1}/calFile_calDac_{1}.txt".format(dataPath,chamber_config[ohKey])
+        calDacCalFileExists = os.path.isfile(calDacCalFile)
+        if not calDacCalFileExists:
+            print("Skipping shelf{0} slot{1} OH{2}, detector {3}, missing CFG_CAL_DAC Calibration file:\n\t{2}".format(
+                args.shelf,
+                args.slot,
+                ohN,
+                chamber_config[ohKey],
+                calDacCalFile))
+            continue
+
+        # Get base command
+        cmd = [
+                "iterativeTrim.py",
+                "{}".format(args.shelf),
+                "{}".format(args.slot),
+                "{}".format(ohN),
+                "--calFileCAL={}".format(calDacCalFile),
+                "--chMax={}".format(args.chMax),
+                "--chMin={}".format(args.chMin),
+                "--dirPath={}".format(dirPath),
+                "--latency={}".format(args.latency),
+                "--maxIter={}".format(args.maxIter),
+                "--nevts={}".format(args.nevts),
+                "--vfatmask=0x{:x}".format(args.vfatmask if (args.vfatmask is not None) else amcBoard.getLinkVFATMask(ohN) ),
+                ]
+
+        # debug flag raised?
+        if args.debug:
+            cmd.append("-d")
+        
+        # Additional optional arguments
+        if args.armDAC is not None:
+            cmd.append("--armDAC={}".format(args.armDAC))
+        else:
+            # Check to see if a vfatConfig exists
+            vfatConfigFile = "{0}/configs/vfatConfig_{1}.txt".format(dataPath,chamber_config[ohKey])
+            if os.path.isfile(vfatConfigFile):
+                cmd.append("--vfatConfig={}".format(vfatConfigFile))
+                pass
+            pass
+
+        # Execute
+        executeCmd(cmd,dirPath)
+        print("Finished iterativeTrimming shelf{0} slot{1} OH{2} detector {3}".format(args.shelf,args.slot,ohN,chamber_config[ohKey]))
+
+    print("Finished iterativeTrimming all optohybrids on shelf{0} slot{1} in ohMask: 0x{2:x}".format(args.shelf,args.slot,args.ohMask))
+
+    return
+
 def ultraLatency(args):
     """
     Launches a call of ultraLatency.py
@@ -620,7 +698,20 @@ if __name__ == '__main__':
     #armDacGroup.add_argument("--vfatConfig",type=str,help="Specify file containing CFG_THR_ARM_DAC settings")
 
     parser_trim.set_defaults(func=trimChamberV3)
+    
+    # Create subparser for iterativeTrim
+    parser_itertrim = subparserCmds.add_parser("itertrim", help="Launches a trim run using the iterativeTrim.py tool", parents = [parent_parser])
+    parser_itertrim.add_argument("--chMax",type=int,default=127,help="Specify maximum channel number to scan")
+    parser_itertrim.add_argument("--chMin",type=int,default=0,help="Specify minimum channel number to scan")
+    parser_itertrim.add_argument("-l","--latency",type=int,default=33,help="Setting of CFG_LATENCY register")
+    parser_itertrim.add_argument("--maxIter", type=int, help="Maximum number of iterations to perform (e.g. number of scurves to take)", default=4)
+    parser_itertrim.add_argument("-m","--mspl",type=int,default=3,help="Setting of CFG_PULSE_STRETCH register")
+    parser_itertrim.add_argument("-n","--nevts",type=int,default=100,help="Number of events for each scan position")
+    parser_itertrim.add_argument("--vfatmask",type=parseInt,default=None,help="If specified this will use this VFAT mask for all unmasked OH's in ohMask.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.  If this argument is not specified VFAT masks are determined at runtime automatically.")
+    parser_itertrim.add_argument("--armDAC",type=int,help="CFG_THR_ARM_DAC value to write to all VFATs. If not provided we will look under $DATA_PATH/configs for a vfatConfig_<DetectorName>.txt file where DetectorNames are from the chamber_config dictionary")
 
+    parser_itertrim.set_defaults(func=iterTrim)
+    
     # Check env
     from gempython.utils.wrappers import envCheck
     envCheck('DATA_PATH')

@@ -388,6 +388,6 @@ if __name__ == '__main__':
         pass
 
     # Store iterative trim results
-    dfTrimResults.to_csv("iterativeTrimResults.csv",header=True,index=False)
+    dfTrimResults.to_csv(dirPath + "/iterativeTrimResults.csv",header=True,index=False)
 
     print("Trimming procedure completed")
