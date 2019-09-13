@@ -31,6 +31,10 @@ class gemGenericTree(object):
 
         self.slot = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'slot', self.slot, 'slot/I' )
+
+        self.detName = r.vector('string')()
+        self.detName.push_back("X-X-X-X-X")        
+        self.gemTree.Branch( 'detName', self.detName)
         
         self.utime = array( 'i', [ 0 ] )
         self.gemTree.Branch( 'utime', self.utime, 'utime/i' )
@@ -64,6 +68,8 @@ class gemGenericTree(object):
 
         if "iref" in kwargs:
             self.iref[0] = kwargs["iref"]
+        if "detName" in kwargs:
+            self.detName[0] = kwargs["detName"]            
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "Nev" in kwargs:
@@ -97,6 +103,10 @@ class gemGenericTree(object):
         self.slot[0] = options.slot
         self.utime[0] = time
 
+        from gempython.gemplotting.mapping.chamberInfo import chamber_config
+
+        self.detName[0] = chamber_config[(options.shelf,options.slot,options.gtx)]
+        
         return
 
     def write(self):
@@ -178,6 +188,8 @@ class gemDacCalTreeStructure(gemGenericTree):
             self.dacValY_Err[0] = kwargs["dacValY_Err"]
         if "iref" in kwargs:
             self.iref[0] = kwargs["iref"]
+        if "detName" in kwargs:
+            self.detName[0] = kwargs["detName"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "dacSelect" in kwargs:
@@ -243,6 +255,8 @@ class gemSbitRateTreeStructure(gemGenericTree):
         
         if "dacValX" in kwargs:
             self.dacValX[0] = kwargs["dacValX"]
+        if "detName" in kwargs:
+            self.detName[0] = kwargs["detName"]
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "nameX" in kwargs:
@@ -297,6 +311,8 @@ class gemTemepratureVFATTree(gemGenericTree):
             self.adcTempExtRef[0] = kwargs["adcTempExtRef"]
         if "iref" in kwargs:
             self.iref[0] = kwargs["iref"]
+        if "detName" in kwargs:
+            self.link[0] = kwargs["detName"]            
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "shelf" in kwargs:
@@ -386,6 +402,8 @@ class  gemTemepratureOHTree(gemGenericTree):
             self.ohBoardTemp9[0] = kwargs["ohBoardTemp9"]
         if "fpgaCoreTemp" in kwargs:
             self.fpgaCoreTemp[0] = kwargs["fpgaCoreTemp"]
+        if "detName" in kwargs:
+            self.link[0] = kwargs["detName"]            
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "scaTemp" in kwargs:
@@ -498,6 +516,8 @@ class gemTreeStructure(gemGenericTree):
             self.l1aTime[0] = kwargs["l1aTime"]
         if "latency" in kwargs:
             self.latency[0] = kwargs["latency"]
+        if "detName" in kwargs:
+            self.detName[0] = kwargs["detName"]            
         if "link" in kwargs:
             self.link[0] = kwargs["link"]
         if "pDel" in kwargs:

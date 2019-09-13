@@ -1,5 +1,6 @@
 from ctypes import *
 
+from gempython.gemplotting.mapping.chamberInfo import chamber_config
 from gempython.tools.amc_user_functions_xhal import maxVfat3DACSize
 from gempython.tools.vfat_user_functions_xhal import *
 from gempython.utils.gemlogger import printGreen
@@ -60,8 +61,8 @@ def dacScanAllLinks(args, calTree, vfatBoard):
 
     #try:
     if args.debug:
-        print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
-        print("| :--: | :---: | :----: | :-------: |:-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
+        print("| detName | link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
+        print("| :-----: | :--: | :---: | :----: | :-------: |:-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
     for dacWord in scanData:
         # Get OH and skip if not in args.ohMask
         ohN  = ((dacWord >> 23) & 0xf)
@@ -79,6 +80,7 @@ def dacScanAllLinks(args, calTree, vfatBoard):
                 dacValY = ((dacWord >> 8) & 0x3ff),
                 dacValY_Err = 1, # convert to physical units in analysis, LSB is the error on Y
                 iref = irefVals[ohN][vfat],
+                detName = chamber_config[(amcBoard.getShelf(),amcBoard.getSlot(),ohN)],  
                 link = ohN,
                 shelf = amcBoard.getShelf(),
                 slot = amcBoard.getSlot(),
@@ -86,7 +88,8 @@ def dacScanAllLinks(args, calTree, vfatBoard):
                 vfatN = vfat
                 )
         if args.debug:
-            print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
+            print("| {0} | {1} | {2} | 0x{3:x} | {4} | {5} | {6} | {7} | {8} | {9} | {10} |".format(
+                calTree.detName[0],                
                 calTree.link[0],
                 calTree.vfatN[0],
                 calTree.vfatID[0],
@@ -155,8 +158,8 @@ def dacScanSingleLink(args, calTree, vfatBoard):
 
     #try:
     if args.debug:
-        print("| link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
-        print("| :--: | :---: | :----: | :-------: | :-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
+        print("| detName | link | vfatN | vfatID | dacSelect | nameX | dacValX | dacValX_Err | nameY | dacValY | dacValY_Err |")
+        print("| :-----: | :--: | :---: | :----: | :-------: | :-----: | :-----: | :---------: | :--: | :-----: | :---------: |")
     for dacWord in scanData:
         vfat = (dacWord >>18) & 0x1f
         calTree.fill(
@@ -169,7 +172,8 @@ def dacScanSingleLink(args, calTree, vfatBoard):
                 vfatN = vfat
                 )
         if args.debug:
-            print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} | {7} | {8} |".format(
+            print("| {0} | {1} | {2} | 0x{3:x} | {4} | {5} | {6} | {7} | {8} | {9} |".format(
+                calTree.detName[0],                
                 calTree.link[0],
                 calTree.vfatN[0],
                 calTree.vfatID[0],
@@ -477,8 +481,8 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
 
     # place holder
     if args.debug:
-        print("| link | vfatN | vfatID | vfatCH | nameX | dacValX | rate |")
-        print("| :--: | :---: | :----: | :----: | :---: | :-----: | :--: |")
+        print("| detName | link | vfatN | vfatID | vfatCH | nameX | dacValX | rate |")
+        print("| :-----: | :--: | :---: | :----: | :----: | :---: | :-----: | :--: |")
     for ohN in range(0,amcBoard.nOHs):
         # Skip masked OH's
         if( not ((args.ohMask >> ohN) & 0x1)):
@@ -495,6 +499,7 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
                 idxDAC = ohN*nDACValues + (dacVal-args.scanmin)/args.stepSize
                 rateTree.fill(
                         dacValX = scanDataDAC[idxDAC],
+                        detName = chamber_config[(amcBoard.getShelf(),amcBoard.getSlot(),ohN)],
                         link = ohN,
                         nameX = scanReg,
                         rate = scanDataRatePerVFAT[idxVFAT],
@@ -505,7 +510,8 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
                         vfatN = vfat
                         )
                 if args.debug:
-                    print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} |".format(
+                    print("| {0} | {1} | {2} | 0x{3:x} | {4} | {5} | {6} | {7} |".format(
+                            rateTree.detName[0],                        
                             rateTree.link[0],
                             rateTree.vfatN[0],
                             rateTree.vfatID[0],
@@ -524,6 +530,7 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
             idxDAC = ohN*nDACValues + (dacVal-args.scanmin)/args.stepSize
             rateTree.fill(
                     dacValX = scanDataDAC[idxDAC],
+                    detName = chamber_config[(amcBoard.getShelf(),amcBoard.getSlot(),ohN)],
                     link = ohN,
                     nameX = scanReg,
                     rate = scanDataRate[idxDAC],
@@ -534,7 +541,8 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
                     vfatN = 24
                     )
             if args.debug:
-                print("| {0} | {1} | 0x{2:x} | {3} | {4} | {5} | {6} |".format(
+                print("| {0} | {1} | {2} | 0x{3:x} | {4} | {5} | {6} | {7} |".format(
+                        rateTree.detName[0],
                         rateTree.link[0],
                         rateTree.vfatN[0],
                         rateTree.vfatID[0],
