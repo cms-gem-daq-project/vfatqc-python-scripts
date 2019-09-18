@@ -32,6 +32,7 @@ if __name__ == '__main__':
     parser.add_argument("--scanmin", type=int, help="Minimum value of scan parameter", default=0)
     parser.add_argument("--scanmax", type=int, help="Maximum value of scan parameter", default=255)
     parser.add_argument("--stepSize", type=int, help="Supply a step size to the scan from scanmin to scanmax", default=1)
+    parser.add_argument("--waitTime", type=int, help="Length of the time window within which the rate is measured, in milliseconds",default=1000)
     args = parser.parse_args()
     
     from gempython.utils.gemlogger import printRed, printYellow

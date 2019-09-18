@@ -472,7 +472,8 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
             chan=chan,
             dacMin=args.scanmin, 
             dacMax=args.scanmax, 
-            dacStep=args.stepSize, 
+            dacStep=args.stepSize,
+            waitTime=args.waitTime,
             ohMask=args.ohMask, 
             scanReg=scanReg)
     
