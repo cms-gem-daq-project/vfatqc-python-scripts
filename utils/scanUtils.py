@@ -467,15 +467,15 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
     print("scanning {0} for all VFATs in ohMask 0x{1:x} {2}".format(scanReg,args.ohMask,strChannels))
     rpcResp = amcBoard.performSBITRateScanMultiLink(
             scanDataDAC, 
-            scanDataRate, 
-            scanDataRatePerVFAT, 
+            scanDataRate, #this is actually a rate i.e. it has units of Hz
+            scanDataRatePerVFAT, #this is actually not a rate - it is an integrated count
             chan=chan,
             dacMin=args.scanmin, 
             dacMax=args.scanmax, 
             dacStep=args.stepSize,
-            waitTime=args.waitTime,
             ohMask=args.ohMask, 
-            scanReg=scanReg)
+            scanReg=scanReg,
+            waitTime=args.waitTime)
     
     if rpcResp != 0:
         raise Exception('RPC response was non-zero, sbit rate scan failed')
@@ -503,7 +503,8 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
                         detName = chamber_config[(amcBoard.getShelf(),amcBoard.getSlot(),ohN)],
                         link = ohN,
                         nameX = scanReg,
-                        rate = scanDataRatePerVFAT[idxVFAT],
+                        #as mentioned above, scanDataRatePerVFAT is actually a count, unlike scanDateRate which is already a rate 
+                        rate = scanDataRatePerVFAT[idxVFAT]/float(args.waitTime),
                         shelf = amcBoard.getShelf(),
                         slot = amcBoard.getSlot(),
                         vfatCH = chan,
@@ -534,6 +535,7 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
                     detName = chamber_config[(amcBoard.getShelf(),amcBoard.getSlot(),ohN)],
                     link = ohN,
                     nameX = scanReg,
+                    #as mentioned above, scanDataRate is already a rate, unlike scanDataRatePerVFAT which is actually a count 
                     rate = scanDataRate[idxDAC],
                     shelf = amcBoard.getShelf(),
                     slot = amcBoard.getSlot(),
