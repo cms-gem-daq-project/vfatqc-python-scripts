@@ -230,6 +230,7 @@ def sbitThreshScan(args):
             "--scanmax={}".format(args.scanmax),
             "--scanmin={}".format(args.scanmin),
             "--stepSize={}".format(args.stepSize),
+            "--waitTime={}".format(args.waitTime),        
             str(args.shelf),
             str(args.slot),
             "0x{:x}".format(args.ohMask)
@@ -661,6 +662,7 @@ if __name__ == '__main__':
     parser_sbitThresh.add_argument("--scanmin",type=int,default=0,help="Minimum CFG_THR_ARM_DAC")
     parser_sbitThresh.add_argument("--scanmax",type=int,default=255,help="Maximum CFG_THR_ARM_DAC")
     parser_sbitThresh.add_argument("--stepSize",type=int,default=1,help="Step size to use when scanning CFG_THR_ARM_DAC")
+    parser_sbitThresh.add_argument("--waitTime",type=int,default=1,help="Length of the time window within which the rate is measured, in seconds")
     parser_sbitThresh.set_defaults(func=sbitThreshScan)
 
 
