@@ -1,4 +1,73 @@
 #!/bin/env python
+r"""
+SBit Threshold
+==============
+
+Launch an sbit rate vs. CFG_THR_ARM_DAC scan using ``sbitThreshScanParallel.py``
+
+``sbitTHreshScanParallel.py``
+=============================
+
+Synopsis
+--------
+
+**run_scans.py** **sbitThresh** [-**h**] [--**scanmin** *SCANMIN*] [--**scanmax** *SCANMAX*] [--**stepSize** *STEPSIZE*] shelf slot ohMask
+
+Mandatory arguments
+-------------------
+
+.. program:: run_Scans.py sbitThresh
+
+Positional arguments
+--------------------
+
+.. option:: shelf
+
+    uTCA crate shelf number
+
+.. option:: slot
+   
+    AMC slot number in the uTCA crate
+
+.. option:: ohMask
+
+    optohybrid mask to apply, a 1 in the n^{th} bit indicates the n^{th} OH should be considered
+
+Optional arguments
+------------------
+
+.. option:: -h, --help
+
+    show the help message and exit
+
+.. option:: --scanmin <SCANMIN>
+
+    Minimum ``CFG_THR_ARM_DAC``
+
+.. option:: --scanmax <SCANMAX>
+
+    Maximum ``CFG_THR_ARM_DAC``
+
+.. option:: --stepSize <STEPSIZE>
+
+    Step size to use when scanning ``CFG_THR_ARM_DAC``
+
+Environment
+-----------
+
+The following `$SHELL` variables should be defined beforehand:
+
+.. glossary::
+
+:envvar: `BUILD_HOME`
+    the location of your ``vfatqc-python-scripts`` directory
+:envvar: `DATA_PATH`
+    the location of input data
+
+Then execute:
+
+`source $BUILD_HOME/vfatqc-python-scripts/setup/paths.sh`
+"""
 
 if __name__ == '__main__':
     """

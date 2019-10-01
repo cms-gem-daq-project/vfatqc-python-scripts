@@ -1,5 +1,85 @@
 #!/bin/env python
+r"""
+SBit Readout
+============
 
+Investigate the sbit mapping and rate measurement in OH \& CTP7 FPGA. What does this mean? Who knows?
+
+``sbitReadOut.py``
+==============================
+
+Synopsis
+--------
+
+**run_scans.py** **sbitReadOut** [-**h**] [--**amc13local**] [--**fakeTTC**] [-**s** *SHELF*] [--**t3trig**] [--**vfatmask** *VFATMASK*] shelf slot ohMask time
+
+Mandatory arguments
+-------------------
+
+.. program:: run_Scans.py sbitReadOut
+
+Positional arguments
+--------------------
+
+.. option:: shelf
+
+    uTCA crate shelf number
+
+.. option:: slot
+   
+    AMC slot number in the uTCA crate
+
+.. option:: ohMask
+
+    optohybrid mask to apply, a 1 in the n^{th} bit indicates the n^{th} OH should be considered
+
+.. option:: time
+
+    time in seconds to acquire sbits for
+
+Optional arguments
+------------------
+
+.. option:: -h, --help
+
+    show the help message and exit
+
+.. option:: --amc13local
+
+    use AMC13 local trigger generator
+
+.. option:: --fakeTTC
+
+    set up for using AMC13 local TTC generator
+
+.. option:: -s, --shelf <SHELF>
+
+    uTCA shelf cardName is located in
+
+.. option:: --t3trig
+
+    take L1As from AMC13 T3 trigger input
+
+.. option:: --vfatmask <VFATMASK>
+
+    If specified, this will use this VFAT mask for all unmasked OptoHybrids in ohMask. Here this is a 24 bit number, where a 1 in the N^{th} bit means ignore the N^{th} VFAT. If this argument is not specified, VFAT masks are determined at runtime automatically.
+
+Environment
+-----------
+
+The following `$SHELL` variables should be defined beforehand:
+
+.. glossary::
+
+:envvar: `BUILD_HOME`
+    the location of your ``vfatqc-python-scripts`` directory
+:envvar: `DATA_PATH`
+    the location of input data
+
+Then execute:
+
+`source $BUILD_HOME/vfatqc-python-scripts/setup/paths.sh`
+"""
 if __name__ == '__main__':
     """
     Script to readout sbits

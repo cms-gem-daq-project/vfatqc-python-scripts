@@ -1,4 +1,77 @@
 #!/bin/env python
+r"""
+SBit Map Rate
+=============
+
+Investigate the sbit mapping and rate measurement in OH \& CTP7 FPGA. What does this mean? Who knows?
+
+``checkSbitMappingAndRate.py``
+==============================
+
+Synopsis
+--------
+
+**run_scans.py** **monitorT** [-**h**] [--**extTempVFAT**] [-**t** *TIME*] shelf slot ohMask
+
+Mandatory arguments
+-------------------
+
+.. program:: run_Scans.py monitorT
+
+Positional arguments
+--------------------
+
+.. option:: shelf
+
+    uTCA crate shelf number
+
+.. option:: slot
+   
+    AMC slot number in the uTCA crate
+
+.. option:: ohMask
+
+    optohybrid mask to apply, a 1 in the n^{th} bit indicates the n^{th} OH should be considered
+
+Optional arguments
+------------------
+
+.. option:: -h, --help
+
+    show the help message and exit
+
+.. option:: -n, --nevts <NEVTS>
+
+    Number of pulses for each channel
+
+.. option:: -r, --rates <RATES>
+
+    Comma separated list of floats that specifies the pulse rates to be considered
+
+.. option:: -t, --time <TIME>
+
+    Acquire time per point in milliseconds
+
+.. option:: --vfatmask <VFATMASK>
+
+    If specified, this will use this VFAT mask for all unmasked OptoHybrids in ohMask. Here this is a 24 bit number, where a 1 in the N^{th} bit means ignore the N^{th} VFAT. If this argument is not specified, VFAT masks are determined at runtime automatically.
+
+Environment
+-----------
+
+The following `$SHELL` variables should be defined beforehand:
+
+.. glossary::
+
+:envvar: `BUILD_HOME`
+    the location of your ``vfatqc-python-scripts`` directory
+:envvar: `DATA_PATH`
+    the location of input data
+
+Then execute:
+
+`source $BUILD_HOME/vfatqc-python-scripts/setup/paths.sh`
+"""
 
 if __name__ == '__main__':
     """
