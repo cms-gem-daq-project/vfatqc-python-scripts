@@ -5,7 +5,7 @@ By: Brian Dorney (brian.l.dorney@cern.ch)
 """
 
 if __name__ == '__main__':
-    from gempython.gemplotting.utils.anautilities import parseCalFile, parseArmDacCalFile
+    from gempython.gemplotting.utils.anautilities import parseCalFile
     from ctypes import *
     from gempython.gemplotting.fitting.fitScanData import fitScanData
     from gempython.tools.vfat_user_functions_xhal import *
@@ -24,9 +24,6 @@ if __name__ == '__main__':
     parser.add_option("--calFileCAL", type="string", dest="calFileCAL", default=None,
                       help="File specifying CAL_DAC to fC equations per VFAT",
                       metavar="calFileCAL")
-    parser.add_option("--calFileARM", type="string", dest="calFileARM", default=None,
-                      help="File specifying THR_ARM_DAC to fC equations per VFAT",
-                      metavar="calFileARM")
     parser.add_option("--calSF", type="int", dest = "calSF", default = 0,
                       help="Value of the CFG_CAL_FS register", metavar="calSF")
     parser.add_option("--chMin", type="int", dest = "chMin", default = 0,
@@ -68,48 +65,6 @@ if __name__ == '__main__':
 
     # Make the ohKey
     ohKey = (options.shelf,options.slot,options.gtx)
-
-    # Get the calibration for the CFG_THR_ARM_DAC register    
-    if options.calFileARM is None:
-        envCheck('DATA_PATH')
-        dataPath = os.getenv('DATA_PATH')
-        calFileBase = "{0}/{1}/calFile_CFG_THR_ARM_DAC_{1}".format(dataPath,chamber_config[ohKey])
-        if os.path.isfile(calFileBase + ".root"):
-            TFile_calInfo = r.TFile(calFileBase + ".root")
-            for vfat in range(0,24):
-                for key in TFile_calInfo.GetDirectory("VFAT{0}".format(vfat)).GetListOfKeys():
-                    if "func_ScurveMean_vs_CFG_THR_ARM_DAC_" in key.GetName() and "_vfatN{0}_".format(vfat) in key.GetName():
-                        dict_func_scurveMeanVsThrDac[vfat] = TFile_calInfo.GetDirectory("VFAT{0}".format(vfat)).Get(key.GetName())
-                        break
-        elif os.path.isfile(calFileBase + ".txt"):            
-            tuple_calInfo = parseArmDacCalFile(calFileBase + ".txt")
-            for vfat in range(0,24):
-                dict_func_scurveMeanVsThrDac[vfat] = r.TF1("func_scurveMeanVsThrDac_vfat%d"%(vfat),"[0]*x^4+[1]*x^3+[2]*x^2+[3]*x+[4]")
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(0,tuple_calInfo[0][vfat])
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(1,tuple_calInfo[1][vfat])
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(2,tuple_calInfo[2][vfat])
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(3,tuple_calInfo[3][vfat])
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(4,tuple_calInfo[4][vfat])
-        else:
-            print("Needed CFG_THR_ARM_DAC calibration file not found in the expected location and not provided via --calFileARM.")
-            exit(os.EX_USAGE)
-    else:
-        if options.calFileARM[-4:] == ".txt":
-            tuple_calInfo = parseArmDacCalFile(options.calFileARM)
-            for vfat in range(0,24):
-                dict_func_scurveMeanVsThrDac[vfat] = r.TF1("func_scurveMeanVsThrDac_vfat%d"%(vfat),"[0]*x^4+[1]*x^3+[2]*x^2+[3]*x+[4]")
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(0,tuple_calInfo[0][vfat])
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(1,tuple_calInfo[1][vfat])
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(2,tuple_calInfo[2][vfat])
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(3,tuple_calInfo[3][vfat])
-                dict_func_scurveMeanVsThrDac[vfat].SetParameter(4,tuple_calInfo[4][vfat])
-        elif options.calFileARM[-5:] == ".root":
-            TFile_calInfo = r.TFile(options.calFileARM)
-            for vfat in range(0,24):
-                for key in TFile_calInfo.GetDirectory("VFAT{0}".format(vfat)).GetListOfKeys():
-                    if "func_ScurveMean_vs_CFG_THR_ARM_DAC_" in key.GetName() and "_vfatN{0}_".format(vfat) in key.GetName():
-                        dict_func_scurveMeanVsThrDac[vfat] = TFile_calInfo.GetDirectory("VFAT{0}".format(vfat)).Get(key.GetName())
-                        break
 
     chMin = options.chMin
     chMax = options.chMax + 1
@@ -274,14 +229,6 @@ if __name__ == '__main__':
             description='Tree holding CFG_CAL_DAC Calibration')
     calDacCalTree.setDefaults(options, thisTime)
 
-    armDacCalTree = gemDacCalTreeStructure(
-            name='thrArmDacCalibration',
-            nameX='CFG_THR_ARM_DAC',
-            nameY='scurve mean #left(fC#right)',
-            storeRoot=True,
-            description='Tree holding CFG_THR_ARM_DAC Calibration;')
-    armDacCalTree.setDefaults(options, thisTime)
-
     print("Determining trimDAC to fC Calibration")
     dict_cal_trimDAC2fC_graph = ndict() # dict_cal_trimDAC2fC[vfat][chan] = TGraphErrors object
     dict_cal_trimDAC2fC_func = ndict() # dict_cal_trimDAC2fC[vfat][chan] = TF1 object
@@ -297,12 +244,33 @@ if __name__ == '__main__':
                 func_dacFit=func_charge_vs_calDac,
                 vfatID = vfatIDvals[vfat],
                 vfatN = vfat)
-        
-        armDacCalTree.fill(
-                func_dacFit=dict_func_scurveMeanVsThrDac[vfat],
-                vfatID = vfatIDvals[vfat],
-                vfatN = vfat)
 
+        scurveMeansList = []
+        for chan in range(chMin,chMax):
+            scurveMeansList.append(dict_scurveFitResults[(0,0)][0][vfat][chan])
+
+        thisVFAT_ThreshMean = np.mean(scurveMeansList)
+        thisVFAT_ThreshStd = np.std(scurveMeansList)
+
+        scurveMeansAxisMin = thisVFAT_ThreshMean - 5. * thisVFAT_ThreshStd
+        scurveMeansAxisMax = thisVFAT_ThreshMean - 5. * thisVFAT_ThreshStd
+        
+        histScurveMeans = r.TH1F("scurveMean_vfat%i"%vfat,"VFAT %i;S-Curve Mean #left(fC#right);N"%vfat, 
+                            40, scurveMeansAxisMin, scurveMeansAxisMax )
+
+        #fill histogram with the scurve means
+        for scurveMean in scurveMeansList:
+            histScurveMeans.Fill(scurveMean)
+
+        graphScurveMeans = r.TGraphErrors(histScurveMeans)    
+            
+        arrayX = np.array(graphScurveMeans.GetX())
+        funcScurveMean = r.TF1("func","gaus",scurveMeansAxisMin,scurveMeansAxisMax)
+
+        graphScurveMeans.Fit(funcScurveMean,"QR")
+
+        thisVfatMeanScurveMeans = funcScurveMean.GetParameter("Mean")
+        
         # Determine scurve point of interest by channel
         print("fitting trimDAC vs. scurve mean for vfat %d"%vfat)
         for chan in range(chMin,chMax):
@@ -355,8 +323,7 @@ if __name__ == '__main__':
                     else:
                         # Determine the trim value and polarity to shift this channel to the
                         # global arm dac threshold (CFG_THR_ARM_DAC) for this VFAT
-                        armDacCharge = dict_func_scurveMeanVsThrDac[vfat].Eval(dict_thrArmDacPerVFAT[vfat])
-                        trimVal = func_TrimDAC_vs_scurveMean.Eval(armDacCharge)
+                        trimVal = func_TrimDAC_vs_scurveMean.Eval(thisVfatMeanScurveMeans)
                         if trimVal > 0:
                             cArray_trimPol[128*vfat+chan] = 0
                         else:
@@ -398,7 +365,6 @@ if __name__ == '__main__':
     outFile.cd()
     trimDacArmTree.write()
     calDacCalTree.write()
-    armDacCalTree.write()
 
     # Now take an scurve using the new trim settings
     filename = "%s/SCurveData_Trimmed.root"%(dirPath)
