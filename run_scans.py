@@ -363,18 +363,6 @@ def trimChamberV3(args):
         # Get & make the output directory
         dirPath = makeScanDir(args.slot, ohN, "trimV3", startTime, args.shelf)
 
-        # Check to make sure calFiles exist
-        armCalFile = "{0}/{1}/calFile_thrArmDAC_{1}.txt".format(dataPath,chamber_config[ohKey])
-        armCalFileExists = os.path.isfile(armCalFile)
-        if not armCalFileExists:
-            print("Skipping shelf{0} slot{1} OH{2}, detector {3}, missing CFG_THR_ARM_DAC Calibration file:\n\t{2}".format(
-                args.shelf,
-                args.slot,
-                ohN,
-                chamber_config[ohKey],
-                armCalFile))
-            continue
-
         calDacCalFile = "{0}/{1}/calFile_calDac_{1}.txt".format(dataPath,chamber_config[ohKey])
         calDacCalFileExists = os.path.isfile(calDacCalFile)
         if not calDacCalFileExists:
@@ -389,7 +377,6 @@ def trimChamberV3(args):
         # Get base command
         cmd = [
                 "trimChamberV3.py",
-                "--calFileARM={}".format(armCalFile),
                 "--calFileCAL={}".format(calDacCalFile),
                 "--chMax={}".format(args.chMax),
                 "--chMin={}".format(args.chMin),
