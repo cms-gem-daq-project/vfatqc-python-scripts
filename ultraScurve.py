@@ -3,7 +3,7 @@ r"""
 Scurves
 =======
 
-Launch an scurve scan using ``ultraScurve.py``
+FIXME Add detailed description
 
 ``ultraScurve.py``
 ==================

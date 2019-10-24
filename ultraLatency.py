@@ -3,8 +3,7 @@ r"""
 Latency
 =======
 
-Launches a latency scan. What's a latency scan? What does this tool really do?
-Find out next time on Dragonball Z.
+WIP
 
 ``UltraLatency.py``
 ===================

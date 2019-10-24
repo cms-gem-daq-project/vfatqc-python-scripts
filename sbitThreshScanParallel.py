@@ -3,7 +3,7 @@ r"""
 SBit Threshold
 ==============
 
-Launch an sbit rate vs. CFG_THR_ARM_DAC scan using ``sbitThreshScanParallel.py``
+FIXME Add detailed description
 
 ``sbitTHreshScanParallel.py``
 =============================

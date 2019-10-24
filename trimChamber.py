@@ -3,7 +3,7 @@ r"""
 Trim Chamber
 ============
 
-Launches a trim run using ``trimChamber.py``
+FIXME Add detailed description
 
 ``trimChamber.py``
 =====================

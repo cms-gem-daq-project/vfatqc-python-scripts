@@ -3,7 +3,7 @@ r"""
 Threshold DAC
 =============
 
-Investigate the sbit mapping and rate measurement in OH \& CTP7 FPGA. What does this mean? Who knows?
+FIXME Add detailed description
 
 ``ultraThreshold.py``
 =====================

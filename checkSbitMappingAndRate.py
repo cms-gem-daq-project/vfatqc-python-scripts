@@ -3,7 +3,7 @@ r"""
 SBit Map Rate
 =============
 
-Investigate the sbit mapping and rate measurement in OH \& CTP7 FPGA. What does this mean? Who knows?
+Produce a geometric map of the rate of s-bit triggering for each part of the detector.
 
 ``checkSbitMappingAndRate.py``
 ==============================
@@ -11,12 +11,12 @@ Investigate the sbit mapping and rate measurement in OH \& CTP7 FPGA. What does 
 Synopsis
 --------
 
-**run_scans.py** **monitorT** [-**h**] [--**extTempVFAT**] [-**t** *TIME*] shelf slot ohMask
+**run_scans.py** **sbitMapNRate** [-**h**] [--**extTempVFAT**] [-**t** *TIME*] shelf slot ohMask
 
 Mandatory arguments
 -------------------
 
-.. program:: run_Scans.py monitorT
+.. program:: run_Scans.py sbitMapNRate
 
 Positional arguments
 --------------------

@@ -3,8 +3,8 @@ r"""
 Dac Scan
 ========
 
-Performs a VFAT3 DAC scan on all unmasked optohybrids. What's a DAC scan? What does this tool really do?
-Find out next time on Dragonball Z.
+Performs a VFAT3 DAC scan on all unmasked optohybrids. Measures the correspondence between DAC units 
+and physical values (in fC, uA, or V depending on the register of interest).
 
 ``dacScanV3.py``
 ================
