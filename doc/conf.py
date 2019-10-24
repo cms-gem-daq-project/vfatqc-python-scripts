@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# vfatqc-python documentation build configuration file, created by
+# VFATQC documentation build configuration file, created by
 # sphinx-quickstart on Wed May 23 14:52:11 2018.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -65,7 +65,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'gempython.vfatqc-python'
+project = u'gempython.vfatqc'
 copyright = '%d %s' % (datetime.date.today().year, string.join(authors, ', '))
 
 # The version info for the project you're documenting, acts as replacement for
@@ -189,7 +189,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'vfatqc-python-doc'
+htmlhelp_basename = 'vfatqc-doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -208,7 +208,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'vfatqc-python.tex', u'vfatqc-python Documentation',
+  ('index', 'vfatqc.tex', u'VFATQC Documentation',
    string.join(authors, ', '), 'manual'),
 ]
 
@@ -238,7 +238,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'vfatqc-python', u'vfatqc-python Documentation',
+    ('index', 'vfatqc', u'VFATQC Documentation',
      authors, 1),
     ('man/dacScanV3', 'dacScanV3.py', u'Perform a VFAT3 DAC scan on all unmasked optohybrids',
      authors, 1),
@@ -270,8 +270,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'vfatqc-python', u'vfatqc-python Documentation',
-   string.join(authors, ', '), 'vfatqc-python', 'VFATQC Scanning tools.',
+  ('index', 'vfatqc', u'VFATQC Documentation',
+   string.join(authors, ', '), 'vfatqc', 'VFATQC Scanning tools.',
    'Miscellaneous'),
 ]
 
