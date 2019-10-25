@@ -1,4 +1,124 @@
 #!/bin/env python
+r"""
+Latency
+=======
+
+WIP
+
+``UltraLatency.py``
+===================
+
+Synopsis
+--------
+
+**run_scans.py** **lat** [-**h**] [--**amc13local**] [-**c** *CHAN*] [-**chMax** *CHMAX*] [-**chMin** *CHHMIN*] [-**i**] [-**m** *MSPL*] [-**n** *NEVTS*] [-**randoms** *RANDOMS*] [-**scanmin** *SCANMIN*] [-**scanmax** *SCANMAX*] [-**stepSize** *STEPSIZE*] [-**t3trig**] [-**throttle** *THROTTLE*] [-**v** *VCAL*] [-**vfatmask** *VFATMASK*] shelf slot ohMask
+
+Mandatory arguments
+-------------------
+
+.. program:: run_Scans.py lat
+
+Positional arguments
+--------------------
+
+.. option:: shelf
+
+    uTCA crate shelf number
+
+.. option:: slot
+   
+    AMC slot number in the uTCA crate
+
+.. option:: ohMask
+
+    optohybrid mask to apply, a 1 in the n^{th} bit indicates the n^{th} OH should be considered
+
+Optional arguments
+------------------
+
+.. option:: -h, --help
+
+    show the help message and exit
+
+.. option:: --amc13local
+
+    use AMC13 local trigger generator
+
+.. option:: -c CHAN, --chan <CHAN>
+
+    Channel on VFATs to run the latency scan. Only applies when calling with --internal; otherwise OR of all channels is used.
+
+.. option:: --chMax <CHMAX>
+
+    Specify maximum channel number to scan
+
+.. option:: --chMin <CHMIN>
+
+    Specify minimum channel number to scan
+
+.. option:: -i, --internal
+
+    Run scan using calibration module
+
+.. option:: -m, --mspl <MSPL>
+
+    Setting of ``CFG_PULSE_STRETCH`` register
+
+.. option:: -n, --nevts <NEVTS>
+
+    Number of events for each scan position
+
+.. option:: --randoms <RANDOMS>
+
+    Generate random triggers using AMC13 local trigger generator at specified rate
+
+.. option:: --scanmin <SCANMIN>
+
+    Minimum ``CFG_LATENCY``
+
+.. option:: --scanmax <SCANMAX>
+
+    Maximum ``CFG_LATENCY``
+
+.. option:: -stepSize <STEPSIZE>
+
+    Step size to use when scanning ``CFG_LATENCY``
+
+.. option:: --t3trig
+
+    take L1As from AMC13 T3 trigger input
+
+.. option:: --throttle <THROTTLE>
+
+    factor by which to throttle the input L1A rate, e.g.
+    new trig rate = L1A rate / throttle
+
+.. option:: -v, --vcal <VCAL>
+
+    Height of CalPulse in DAC units for all VFATs
+
+.. option:: --vfatmask <VFATMASK>
+
+    If specified, this will use this VFAT mask for all unmasked OptoHybrids in ohMask. 
+    Here this is a 24 bit number, where a 1 in the N^{th} bit means ignore the N^{th} VFAT.
+    If this argument is not specified, VFAT masks are determined at runtime automatically.
+
+Environment
+-----------
+
+The following `$SHELL` variables should be defined beforehand:
+
+.. glossary::
+
+:envvar: `BUILD_HOME`
+    the location of your ``vfatqc-python-scripts`` directory
+:envvar: `DATA_PATH`
+    the location of input data
+
+Then execute:
+
+`source $BUILD_HOME/vfatqc-python-scripts/setup/paths.sh`
+"""
 
 if __name__ == '__main__':
     """

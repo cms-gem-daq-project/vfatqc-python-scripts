@@ -1,4 +1,69 @@
 #!/bin/env python
+r"""
+Monitor Temperature
+===================
+
+Records temperature data to a file until a KeyboardInterrupt is used
+
+``monitorTemperatures.py``
+==========================
+
+Synopsis
+--------
+
+**run_scans.py** **monitorT** [-**h**] [--**extTempVFAT**] [-**t** *TIME*] shelf slot ohMask
+
+Mandatory arguments
+-------------------
+
+.. program:: run_Scans.py monitorT
+
+Positional arguments
+--------------------
+
+.. option:: shelf
+
+    uTCA crate shelf number
+
+.. option:: slot
+   
+    AMC slot number in the uTCA crate
+
+.. option:: ohMask
+
+    optohybrid mask to apply, a 1 in the n^{th} bit indicates the n^{th} OH should be considered
+
+Optional arguments
+------------------
+
+.. option:: -h, --help
+
+    show the help message and exit
+
+.. option:: --extTempVFAT
+
+    Use external PT100 sensors on VFAT4 hybrid; note only available in HV3b_V3 hybrids or later.
+
+.. option:: -t, --time <TIME>
+
+    Time, in seconds, to wait in between readings
+
+Environment
+-----------
+
+The following `$SHELL` variables should be defined beforehand:
+
+.. glossary::
+
+:envvar: `BUILD_HOME`
+    the location of your ``vfatqc-python-scripts`` directory
+:envvar: `DATA_PATH`
+    the location of input data
+
+Then execute:
+
+`source $BUILD_HOME/vfatqc-python-scripts/setup/paths.sh`
+"""
 
 if __name__ == '__main__':
     """

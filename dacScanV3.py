@@ -1,4 +1,70 @@
 #!/bin/env python
+r"""
+Dac Scan
+========
+
+Performs a VFAT3 DAC scan on all unmasked optohybrids. Measures the correspondence between DAC units 
+and physical values (in fC, uA, or V depending on the register of interest).
+
+``dacScanV3.py``
+================
+
+Synopsis
+--------
+
+**run_scans.py** **dacScanV3** [-**h**] [--**dacSelect** *DACSELECT*] [-**e**] shelf slot ohMask
+
+Mandatory arguments
+-------------------
+
+.. program:: run_Scans.py dacScanV3
+
+Positional arguments
+--------------------
+
+.. option:: shelf
+
+    uTCA crate shelf number
+
+.. option:: slot
+   
+    AMC slot number in the uTCA crate
+
+.. option:: ohMask
+
+    optohybrid mask to apply, a 1 in the n^{th} bit indicates the n^{th} OH should be considered
+
+Optional arguments
+------------------
+
+.. option:: -h, --help
+
+    show the help message and exit
+
+.. option:: --dacSelect <DACSELECT>
+
+    DAC Selection, see `The VFAT3 Manual <https://espace.cern.ch/cms-project-GEMElectronics/VFAT3/Forms/AllItems.aspx>`_
+
+.. option:: -e, --extRefADC
+
+    Use the externally referenced ADC on the VFAT3
+
+Environment
+-----------
+
+The following `$SHELL` variables should be defined beforehand:
+
+.. glossary::
+
+:envvar: `BUILD_HOME`
+    the location of your ``vfatqc-python-scripts`` directory
+:envvar: `DATA_PATH`
+    the location of input data
+
+Then execute:
+
+`source $BUILD_HOME/vfatqc-python-scripts/setup/paths.sh`
+"""
 from gempython.tools.hw_constants import maxVfat3DACSize
 
 import os

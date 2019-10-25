@@ -1,5 +1,94 @@
 #!/bin/env python
+r"""
+``run_Scans.py``
+================
 
+Synopsis
+--------
+
+**run_scans.py** [-**h**] [-**d**] [--**gemType** *GEMTYPE*] [--**detType** *DETTYPE*] {**dacScanV3**, **lat**, **monitorR**, **sbitMapNRate**, **sbitReadOut**, **sbitThres**, **scurve**, **thrDac**, **trim**}
+
+Mandatory arguments
+-------------------
+
+.. program:: run_scans.py
+
+Positional arguments
+--------------------
+
+.. option:: dacScanV3
+
+    Uses the dacScanV3.py tool to perform a VFAT3 DAC scan on all unmasked optohybrids.
+
+.. option:: lat
+   
+    Launches a latency scan using the ultraLatency.py tool
+
+.. option:: monitorT
+
+    Uses the monitorTemperatures.py tool to record temperature data to a file until a KeyboardInterrupt is used
+
+.. option:: sbitMapNRate
+
+    Uses the checkSbitMappingAndRate.py tool to investigate the sbit mapping and rate measurement in OH \& CTP7 FPGA
+
+.. option:: sbitReadOut
+
+    Uses the sbitReadOut.py tool to readout sbits
+
+.. option:: sbitThresh
+
+    Launches an sbit rate vs. CFG_THR_ARM_DAC scan using the sbitThreshScanParallel.py tool
+
+.. option:: scurve
+
+    Launches an scurve scan using the ultraScurve.py tool
+
+.. option:: thrDac
+
+    Launches a threshold DAC scan using the ultraThreshold.py tool
+
+.. option:: trim
+
+    Launches a trim run using the trimChamber.py tool
+
+Optional arguments
+------------------
+
+.. option:: -h, --help
+
+    show the help message and exit
+
+.. option:: -d, --debug
+
+    Print debugging information
+
+.. option:: --gemType <GEMTYPE>
+
+    String defining the GEM variant, available options: [`'ge21'`, `'me0'`, `'ge11'`]
+
+.. option:: --detType <DETTYPE>
+
+    Detector type within gemType. If gemType is `'ge11'`, then this should be from the list [`'short'`, `'long'`]
+    If gemType is `'ge21'`, this should be from the list [`'m1'`, `'m2'`, `'m3'`, `'m4'`, `'m5'`, `'m6'`, `'m7`', `'m8'`]
+    If gemType is `'me0'`, this should be from the list `null`
+
+Environment
+-----------
+
+The following `$SHELL` variables should be defined beforehand:
+
+.. glossary::
+
+:envvar: `BUILD_HOME`
+    the location of your ``vfatqc-python-scripts`` directory
+:envvar: `DATA_PATH`
+    the location of input data
+
+Then execute:
+
+`source $BUILD_HOME/vfatqc-python-scripts/setup/paths.sh`
+"""
 from gempython.gemplotting.mapping.chamberInfo import chamber_config
 from gempython.utils.wrappers import runCommand
 from gempython.tools.amc_user_functions_xhal import *
