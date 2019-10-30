@@ -453,7 +453,7 @@ def sbitRateScanAllLinks(args, rateTree, vfatBoard, chan=128, scanReg="CFG_THR_A
 
     # Make the containers
     nDACValues = (args.scanmax-args.scanmin+1)/args.stepSize
-    arraySize = amcBoard.nOHs * nDACValues
+    arraySize = 12 * nDACValues
     scanDataDAC = (c_uint32 * arraySize)()
     scanDataRate = (c_uint32 * arraySize)()
     scanDataRatePerVFAT = (c_uint32 * (24 * arraySize))() # per VFAT
