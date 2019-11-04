@@ -203,7 +203,7 @@ if __name__ == '__main__':
             vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
             vfatTree.ReadFile(args.vfatConfig)
             
-            for event in vfatTree :
+            for event in vfatTree:
                 # Skip masked vfats
                 if (args.vfatmask >> int(event.vfatN)) & 0x1:
                     continue
@@ -212,8 +212,9 @@ if __name__ == '__main__':
                 print('Set link {0} VFAT{1} CFG_THR_ARM_DAC to {2}'.format(args.link,event.vfatN,event.vt1))
                 vfatBoard.setVFATThreshold(chip=int(event.vfatN), vt1=int(event.vt1))
         except IOError as e:
-            print('{0} does not seem to exist or is not readable'.format(options.filename))
+            print('{0} does not seem to exist or is not readable'.format(args.vfatConfig))
             print(e)
+
     else:
         vfatBoard.setVFATThresholdAll(mask=args.vfatmask, vt1=args.armDAC)
     
