@@ -172,7 +172,9 @@ if __name__ == '__main__':
     parser.add_argument("-p","--pulseStretch", type=int, help="CFG_PULSE_STRETCH value to be used",default=3)
     parser.add_argument("-v","--vfatmask",type=parseInt,default=0x0,help="Specifies which VFATs, if any, should be masked.  Here this is a 24 bit number, where a 1 in the N^th bit means ignore the N^th VFAT.")
     parser.add_argument("-z","--zeroChan",action="store_true",help="Zero all channel registers before beginning iterative trim procedure")
-
+    parser.add_argument("--armDAC", type=int, default = 100,help="CFG_THR_ARM_DAC value to write to all VFATs", metavar="armDAC")
+    parser.add_argument("--vfatConfig", type=str, default=None,help="Specify file containing VFAT settings from anaUltraThreshold", metavar="vfatConfig")
+    
     args = parser.parse_args()
 
     # make scandir
@@ -195,6 +197,27 @@ if __name__ == '__main__':
     vfatBoard = HwVFAT(cardName, args.link, args.debug)
     print("Opened connection")
 
+    if args.vfatConfig is not None:
+        try:
+            print('Configuring VFAT Registers based on {0}'.format(args.vfatConfig))
+            vfatTree = r.TTree('vfatTree','Tree holding VFAT Configuration Parameters')
+            vfatTree.ReadFile(args.vfatConfig)
+            
+            for event in vfatTree:
+                # Skip masked vfats
+                if (args.vfatmask >> int(event.vfatN)) & 0x1:
+                    continue
+                    
+                # Write CFG_THR_ARM_DAC
+                print('Set link {0} VFAT{1} CFG_THR_ARM_DAC to {2}'.format(args.link,event.vfatN,event.vt1))
+                vfatBoard.setVFATThreshold(chip=int(event.vfatN), vt1=int(event.vt1))
+        except IOError as e:
+            print('{0} does not seem to exist or is not readable'.format(args.vfatConfig))
+            print(e)
+
+    else:
+        vfatBoard.setVFATThresholdAll(mask=args.vfatmask, vt1=args.armDAC)
+    
     # Get all chip IDs
     vfatIDvals = vfatBoard.getAllChipIDs(args.vfatmask)
 
