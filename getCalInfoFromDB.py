@@ -8,8 +8,13 @@ if __name__ == '__main__':
     parser.add_argument("link",type=int,help="OH on AMC slot")
     parser.add_argument("-d","--debug",action="store_true",help="Prints additional information")
     parser.add_argument("--write2File",action="store_true",help="If Provided data will be written to appropriate calibration files")
-    parser.add_argument("--write2CTP7",action="store_true",help="If Provided IREF data will be sent to the VFAT3 config files on the CTP7")
+    parser.add_argument("--write2CTP7",action="store_true",help="If Provided VREF_ADC and IREF data will be sent to the VFAT3 config files on the CTP7 (implies --write2File)")
     args = parser.parse_args()
+
+    # Update the files on the DAQ machine whenever an update on the CTP7 is requested
+    # This avoids sending stale data on the CTP7 if --write2File is not set
+    if args.write2CTP7:
+        args.write2File = True
 
     from gempython.tools.vfat_user_functions_xhal import *
     
@@ -35,11 +40,14 @@ if __name__ == '__main__':
     dbInfo.info()
     print(dbInfo)
 
-    if args.write2File or args.write2CTP7:
+    # Write calibration info to disk?
+    if args.write2File:
         from gempython.gemplotting.utils.anautilities import getDataPath, getElogPath
-        ohKey = (args.shelf, args.slot, args.link)
-        
         from gempython.gemplotting.mapping.chamberInfo import chamber_config
+        from gempython.utils.wrappers import runCommand
+
+        ohKey = (args.shelf, args.slot, args.link)
+
         if ohKey in chamber_config:
             cName = chamber_config[ohKey]
             outDir="{0}/{1}".format(getDataPath(),chamber_config[ohKey])
@@ -48,8 +56,18 @@ if __name__ == '__main__':
             outDir=getElogPath()
             pass
 
-    # Write calibration info to disk?
-    if args.write2File:
+        # Write VREF_ADC Info
+        filename_vref_adc = "{0}/NominalValues-CFG_VREF_ADC.txt".format(outDir)
+        print("Writing 'CFG_VREF_ADC' to file: {0}".format(filename_vref_adc))
+        dbInfo.to_csv(
+                path_or_buf=filename_vref_adc,
+                sep="\t",
+                columns=['vfatN','vref_adc'],
+                header=False,
+                index=False,
+                mode='w')
+        runCommand(["chmod", "g+rw", filename_vref_adc])
+
         # Write IREF Info
         filename_iref = "{0}/NominalValues-CFG_IREF.txt".format(outDir)
         print("Writing 'CFG_IREF' to file: {0}".format(filename_iref))
@@ -60,7 +78,6 @@ if __name__ == '__main__':
                 header=False,
                 index=False,
                 mode='w')
-        from gempython.utils.wrappers import runCommand
         runCommand(["chmod", "g+rw", filename_iref])
 
         # Write ADC0 Info
@@ -92,24 +109,8 @@ if __name__ == '__main__':
         runCommand(["chmod", "g+rw", filename_caldac])
         pass
 
-    # Write CFG_IREF to VFAT3 Config Files On CTP7?    
+    # Write CFG_VREF_ADC and CFG_IREF to VFAT3 Config Files On CTP7?
     if args.write2CTP7:
-        import os
-        filename_iref = "{0}/NominalValues-CFG_IREF.txt".format(outDir)
-        if not os.path.isfile(filename_iref):
-            filename_iref = "{0}/NominalValues-CFG_IREF.txt".format(outDir)
-            print("Writing 'CFG_IREF' to file: {0}".format(filename_iref))
-            dbInfo.to_csv(
-                    path_or_buf=filename_iref,
-                    sep="\t",
-                    columns=['vfatN','iref'],
-                    header=False,
-                    index=False,
-                    mode='w')
-            from gempython.utils.wrappers import runCommand
-            runCommand(["chmod", "g+rw", filename_iref])
-            pass
-
         from gempython.utils.gemlogger import getGEMLogger
         import logging
         gemlogger = getGEMLogger(__name__)
@@ -117,6 +118,7 @@ if __name__ == '__main__':
     
         from gempython.vfatqc.utils.confUtils import updateVFAT3ConfFilesOnAMC
         updateVFAT3ConfFilesOnAMC(cardName,args.link,filename_iref,"CFG_IREF")
+        updateVFAT3ConfFilesOnAMC(cardName,args.link,filename_vref_adc,"CFG_VREF_ADC")
         pass
 
     print("goodbye")
