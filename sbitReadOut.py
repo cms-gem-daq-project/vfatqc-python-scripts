@@ -92,8 +92,8 @@ if __name__ == '__main__':
 
     # Positional arguments
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
-    parser.add_option("shelf", type=int, help="uTCA shelf to access")
-    parser.add_option("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
+    parser.add_argument("shelf", type=int, help="uTCA shelf to access")
+    parser.add_argument("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("ohN", type=int, help="optohybrid to readout sbits from", metavar="ohN")
     parser.add_argument("acquireTime", type=int, help="time in seconds to acquire sbits for", metavar="acquireTime")
     parser.add_argument("filePath", type=str, help="Filepath where data is stored", metavar="filePath")
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.vfatqc.utils.qcutilities import getCardName
     cardName = getCardName(args.shelf,args.slot)
-    vfatBoard = HwVFAT(args.cardName, args.ohN, args.debug, args.gemType, args.detType)
+    vfatBoard = HwVFAT(cardName, args.ohN, args.debug, args.gemType, args.detType)
     print 'opened connection'
 
     # Check options
@@ -157,15 +157,12 @@ if __name__ == '__main__':
     # Configure local triggers?
     if args.amc13local:
         print("configuring the amc13 for local mode")
-        #amcMask = amc13board.parseInputEnableList("%s"%(args.slot), True)
-        amcMask = amc13board.parseInputEnableList("{0}".format(0xFFF), True)
         amc13board.reset(amc13board.Board.T1)
         amc13board.resetCounters()
         amc13board.resetDAQ()
         if args.fakeTTC:
             print("configuring amc13 for fakeTTC")
             amc13board.localTtcSignalEnable(args.fakeTTC)
-        amc13board.AMCInputEnable(amcMask)
         amc13board.startRun()
         if args.t3trig:
             print("configuring the amc13 to use the T3 Trigger input")
