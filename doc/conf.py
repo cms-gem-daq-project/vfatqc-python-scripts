@@ -250,13 +250,15 @@ man_pages = [
      authors, 1),
     ('man/sbitReadOut', 'sbitReadOut.py', u'Readout sbits',
      authors, 1),
-    ('man/sbitThreshScanParallel', 'sbitThreshScanParallel.py', u'Launch an Sbit Rate vs. `CFG_THR_ARM_DAC` Scan',
+    ('man/sbitThreshScan', 'sbitThreshScan.py', u'Launch an Sbit Rate vs. `CFG_THR_ARM_DAC` Scan',
      authors, 1),
     ('man/ultraScurve', 'ultraScurve.py', u'Launch an Scurve Scan',
      authors, 1),
     ('man/ultraThreshold', 'ultraThreshold.py', u'Launch a Threshold DAC Scan',
      authors, 1),
     ('man/trimChamber', 'trimChamber.py', u'Launch a Trim Run',
+     authors, 1)
+    ('man/iterativeTrim', 'iterativeTrim.py', u'Launch an Iterative Trim Run',
      authors, 1)
 ]
 

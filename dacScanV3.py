@@ -143,7 +143,7 @@ if __name__ == '__main__':
         for dacSelect in maxVfat3DACSize.keys():
             args.dacSelect = dacSelect
             if args.series:
-                for ohN in range(0, amcBoard.nOHs+1):
+                for ohN in range(0, amcBoard.nOHs):
                     if( not ((args.ohMask >> ohN) & 0x1)):
                         continue
 
@@ -157,7 +157,7 @@ if __name__ == '__main__':
                 dacScanAllLinks(args, calTree, vfatBoard)
     else: # Specific DAC Requested; scan only this DAC
         if args.series:
-            for ohN in range(0, amcBoard.nOHs+1):
+            for ohN in range(0, amcBoard.nOHs):
                 if( not ((args.ohMask >> ohN) & 0x1)):
                     continue
 

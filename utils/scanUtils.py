@@ -332,6 +332,9 @@ def launchSCurve(**kwargs):
     else:
         cmd.append("--calSF=%i"%(calSF) )
 
+    if debug:
+        cmd.append("--debug")
+        
     # launch the command
     if debug:
         print("launching an scurve with command:")
