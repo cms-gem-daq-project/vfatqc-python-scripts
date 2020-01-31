@@ -54,10 +54,12 @@ def iterativeTrim(args,dict_dirPaths,identifier,dict_chanRegData=None,dict_calFi
             cArray_trimPol = None
         else:
             setChanRegs = True
-            cArray_trimVal = (c_uint32*vfatsPerGemVariant[GEBtype[ohKey]]*CHANNELS_PER_VFAT)(*dict_chanRegData[ohN]["ARM_TRIM_AMPLITUDE"])
-            cArray_trimPol = (c_uint32*vfatsPerGemVariant[GEBtype[ohKey]]*CHANNELS_PER_VFAT)(*dict_chanRegData[ohN]["ARM_TRIM_POLARITY"])
+            detName = chamber_config[ohKey]
+            gemType = detName[:detName.find('-')].lower()
+            cArray_trimVal = (c_uint32*vfatsPerGemVariant[gemType]*CHANNELS_PER_VFAT)(*dict_chanRegData[ohN]["ARM_TRIM_AMPLITUDE"])
+            cArray_trimPol = (c_uint32*vfatsPerGemVariant[gemType]*CHANNELS_PER_VFAT)(*dict_chanRegData[ohN]["ARM_TRIM_POLARITY"])
             pass
-        
+
         # Set filename of this scurve
         isZombie = True
         filename = "{:s}/SCurveData_{:s}.root".format(dict_dirPaths[ohN],identifier)
@@ -424,7 +426,9 @@ if __name__ == '__main__':
             chConfig.write('vfatN/I:vfatID/I:vfatCH/I:trimDAC/I:trimPolarity/I:mask/I:maskReason/I\n')
 
             # Define current channel register array container
-            currentChanRegArray = np.zeros(vfatsPerGemVariant[GEBtype[ohKey]]*CHANNELS_PER_VFAT, dtype=dataType)
+            detName = chamber_config[ohKey]
+            gemType = detName[:detName.find('-')].lower()            
+            currentChanRegArray = np.zeros(vfatsPerGemVariant[gemType]*CHANNELS_PER_VFAT, dtype=dataType)
             for entry in dataType:
                 if ((entry[0] == "ARM_TRIM_POLARITY") or (entry[0] == "ARM_TRIM_AMPLITUDE")):
                     continue
