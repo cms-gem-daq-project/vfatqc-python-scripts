@@ -56,8 +56,8 @@ def iterativeTrim(args,dict_dirPaths,identifier,dict_chanRegData=None,dict_calFi
             setChanRegs = True
             detName = chamber_config[ohKey]
             gemType = detName[:detName.find('-')].lower()
-            cArray_trimVal = (c_uint32*vfatsPerGemVariant[gemType]*CHANNELS_PER_VFAT)(*dict_chanRegData[ohN]["ARM_TRIM_AMPLITUDE"])
-            cArray_trimPol = (c_uint32*vfatsPerGemVariant[gemType]*CHANNELS_PER_VFAT)(*dict_chanRegData[ohN]["ARM_TRIM_POLARITY"])
+            cArray_trimVal = (c_uint32*(vfatsPerGemVariant[gemType]*CHANNELS_PER_VFAT))(*dict_chanRegData[ohN]["ARM_TRIM_AMPLITUDE"])
+            cArray_trimPol = (c_uint32*(vfatsPerGemVariant[gemType]*CHANNELS_PER_VFAT))(*dict_chanRegData[ohN]["ARM_TRIM_POLARITY"])
             pass
 
         # Set filename of this scurve
