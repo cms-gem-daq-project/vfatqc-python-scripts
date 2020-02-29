@@ -284,7 +284,8 @@ if __name__ == '__main__':
     
     dict_dirPaths = {}
     dict_calFiles = {}
-
+    dict_vfatIDvals = {}
+    
     cardName = getCardName(args.shelf,args.slot)
     amcBoard = HwAMC(cardName, args.debug)
     print("Opened connection")
@@ -337,7 +338,7 @@ if __name__ == '__main__':
                     vfatBoard.setVFATThreshold(chip=int(event.vfatN), vt1=int(event.vt1))
                     
         # Get all chip IDs
-        vfatIDvals = vfatBoard.getAllChipIDs(args.vfatmask)
+        dict_vfatIDvals[ohN] = vfatBoard.getAllChipIDs(args.vfatmask)
 
         # Get CFG_CAL_DAC calibration constants
         if args.calFileCAL:
@@ -441,7 +442,7 @@ if __name__ == '__main__':
             for vfat in range(24):
                 # Skip masked VFATs
                 if (args.vfatmask >> vfat) & 0x1: 
-                    writeChConfig(chConfig,vfat,vfatIDvals[vfat],np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8))
+                    writeChConfig(chConfig,vfat,dict_vfatIDvals[ohN][vfat],np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8))
                     continue
 
                 # Get the last trim DAC and Polarity values
@@ -487,13 +488,13 @@ if __name__ == '__main__':
                     stdToAlignValues = np.std(toAlignValues)
                     avgToAlignValues = np.mean(toAlignValues)                
                 else:
-                    printYellow("Warning: all scurve means are zoer for VFAT{} which is not in vfatmask 0x{:x}. Skipping".format(vfat,args.vfatmask))
+                    printYellow("Warning: all scurve means are zero for VFAT{} which is not in vfatmask 0x{:x}. Skipping".format(vfat,args.vfatmask))
                     dict_chanRegArray[iterNum][ohN]["ARM_TRIM_POLARITY"][vfat*128:(vfat+1)*128] = dict_chanRegArray[iterNum-1][ohN]["ARM_TRIM_POLARITY"][vfat*128:(vfat+1)*128]
                     dict_chanRegArray[iterNum][ohN]["ARM_TRIM_AMPLITUDE"][vfat*128:(vfat+1)*128] = dict_chanRegArray[iterNum-1][ohN]["ARM_TRIM_AMPLITUDE"][vfat*128:(vfat+1)*128]
                     dfTrimResults = dfTrimResults.append(
                         {   "iterN":iterNum,
                             "vfatN":vfat,
-                            "vfatID":vfatIDvals[vfat],
+                            "vfatID":dict_vfatIDvals[ohN][vfat],
                             "avg":np.nan,
                             "std":np.nan,
                             "max":np.nan,
@@ -502,7 +503,7 @@ if __name__ == '__main__':
                             "n_trimmed":np.nan
                             },
                         ignore_index=True)
-                    writeChConfig(chConfig,vfat,vfatIDvals[vfat],np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8))
+                    writeChConfig(chConfig,vfat,dict_vfatIDvals[ohN][vfat],np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8),np.zeros(128,dtype=np.uint8))
                     continue
 
                 # Update maxSpread?
@@ -558,7 +559,7 @@ if __name__ == '__main__':
                 dict_dfTrimResults[ohN] = dict_dfTrimResults[ohN].append(
                     {   "iterN":iterNum,
                         "vfatN":vfat,
-                        "vfatID":vfatIDvals[vfat],
+                        "vfatID":dict_vfatIDvals[ohN][vfat],
                         "avg":avgToAlignValues,
                         "std":stdToAlignValues,
                         "max":maxToAlignValues,
@@ -569,7 +570,7 @@ if __name__ == '__main__':
                     ignore_index=True)
 
                 # Write this info to chConfig file
-                writeChConfig(chConfig,vfat,vfatIDvals[vfat],currentTrimDACs,currentTrimPols,channelMasks,channelMaskReasons)
+                writeChConfig(chConfig,vfat,dict_vfatIDvals[ohN][vfat],currentTrimDACs,currentTrimPols,channelMasks,channelMaskReasons)
                 pass # end loop over VFATs
 
             chConfig.close()
