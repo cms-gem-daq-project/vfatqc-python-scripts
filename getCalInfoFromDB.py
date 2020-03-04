@@ -9,7 +9,7 @@ if __name__ == '__main__':
     parser.add_argument("link",type=int,help="OH on AMC slot")
     parser.add_argument("-d","--debug",action="store_true",help="Prints additional information")
     parser.add_argument("--write2File",action="store_true",help="If Provided data will be written to appropriate calibration files")
-    parser.add_argument("--write2CTP7",action="store_true",help="If Provided IREF data will be sent to the VFAT3 config files on the CTP7")
+    parser.add_argument("--write2CTP7",action="store_true",help="If Provided VREF_ADC and IREF data will be sent to the VFAT3 config files on the CTP7 (implies --write2File)")
     parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
     parser.add_argument("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default="short")
     args = parser.parse_args()
