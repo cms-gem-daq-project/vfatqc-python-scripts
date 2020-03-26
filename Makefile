@@ -41,10 +41,14 @@ default:
 	@cp -rf __init__.py $(PackageDir)
 
 # need to ensure that the python only stuff is packaged into RPMs
-.PHONY: clean preprpm doc
+.PHONY: clean preprpm
 
+.PHONY: doc cleandoc
 doc:
-	make html
+	$(MAKE) -C $@ docs
+
+cleandoc:
+	$(MAKE) -C doc cleanall
 
 _rpmprep: preprpm
 	@echo "Running _rpmprep target"

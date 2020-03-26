@@ -1,4 +1,4 @@
-.. automodule:: sbitThreshScanParallel
+.. automodule:: sbitThreshScan
     :members:
     :undoc-members:
     :show-inheritance:

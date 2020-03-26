@@ -17,8 +17,8 @@ Welcome to the VFATQC documentation!
 
 
 .. toctree::
-   :caption: Links to other documentation
    :hidden:
+   :caption: Links to other documentation
    :maxdepth: 1
 
    CMS GEM DAQ project page <http://0.0.0.0:8000>
@@ -28,13 +28,18 @@ Welcome to the VFATQC documentation!
 
 
 .. toctree::
-   :caption: Links to API documentation
    :hidden:
+   :caption: Links to API documentation
    :maxdepth: 1
 
+   cmsgemos <http://0.0.0.0:8000/SITE_ROOT/docs/api/cmsgemos/latest>
    gemplotting <http://0.0.0.0:8000/SITE_ROOT/docs/api/gemplotting/latest>
    vfatqc (this site) <http://0.0.0.0:8000/SITE_ROOT/docs/api/vfatqc/latest>
-   reg-utils <http://0.0.0.0:8000/SITE_ROOT/docs/api/reg-utils/latest>
+   ctp7_modules <http://0.0.0.0:8000/SITE_ROOT/docs/api/ctp7_modules/latest>
+   reg_utils <http://0.0.0.0:8000/SITE_ROOT/docs/api/reg_utils/latest>
+   xhal <http://0.0.0.0:8000/SITE_ROOT/docs/api/xhal/latest>
+   reg_interface_gem <http://0.0.0.0:8000/SITE_ROOT/docs/api/reg_interface_gem/latest>
+   reedmuller-c <http://0.0.0.0:8000/SITE_ROOT/docs/api/reedmuller-c/latest>
 
 
 Indices and tables
