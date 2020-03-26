@@ -26,7 +26,7 @@ Positional arguments
     uTCA crate shelf number
 
 .. option:: slot
-   
+
     AMC slot number in the uTCA crate
 
 .. option:: ohMask
@@ -80,16 +80,17 @@ if __name__ == '__main__':
         Jared Sturdy  (sturdy@cern.ch)
         Brian Dorney (brian.l.dorney@cern.ch)
     """
-    
+
     import sys, os, random, time
     from array import array
     from ctypes import *
-    
+
     from gempython.tools.optohybrid_user_functions_uhal import scanmode
     from gempython.tools.vfat_user_functions_xhal import *
-    
+    from gempython.tools.hw_constants import vfatsPerGemVariant
+
     from gempython.vfatqc.utils.qcoptions import parser
-    
+
     parser.add_option("--chMin", type="int", dest = "chMin", default = 0,
                       help="Specify minimum channel number to scan", metavar="chMin")
     parser.add_option("--chMax", type="int", dest = "chMax", default = 127,
@@ -104,18 +105,21 @@ if __name__ == '__main__':
                       help="Specify VT2 to use", metavar="vt2")
     parser.add_option("--zcc", action="store_true", dest="scanZCC",
                       help="V3 Electronics only, scan the threshold on the ZCC instead of the ARM comparator", metavar="scanZCC")
-    
+    parser.add_option("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_option("--detType",type=str,
+                        help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default="short")
+
     (options, args) = parser.parse_args()
-    
+
     remainder = (options.scanmax-options.scanmin+1) % options.stepSize
     if remainder != 0:
         options.scanmax = options.scanmax + remainder
         print "extending scanmax to: ", options.scanmax
-    
+
     import ROOT as r
     filename = options.filename
     myF = r.TFile(filename,'recreate')
-    
+
     import subprocess,datetime,time
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     print startTime
@@ -129,9 +133,9 @@ if __name__ == '__main__':
     # Open rpc connection to hw
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     cardName = getCardName(options.shelf,options.slot)
-    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug, options.gemType, options.detType)
     print 'opened connection'
-    
+
     # Check options
     from gempython.vfatqc.utils.confUtils import getChannelRegisters
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
@@ -142,102 +146,102 @@ if __name__ == '__main__':
         print("Scan parameters must be in range [0,255] and min < max")
         exit(1)
         pass
-    
+
     CHAN_MIN = options.chMin
     CHAN_MAX = options.chMax + 1
     if options.debug:
         CHAN_MAX = 5
         pass
-    
+
     mask = options.vfatmask
-    
+
     try:
         vfatBoard.setVFATLatencyAll(mask=options.vfatmask, lat=0, debug=options.debug)
         vfatBoard.setRunModeAll(mask, True, options.debug)
         vfatBoard.setVFATThresholdAll(mask=options.vfatmask, vt1=100, vt2=options.vt2, debug=options.debug)
-    
+
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             print "getting trigger source"
             trgSrc = vfatBoard.parentOH.getTriggerSource()
-                
+
         scanReg = "THR_ARM_DAC"
         if vfatBoard.parentOH.parentAMC.fwVersion >= 3:
             vals = vfatBoard.readAllVFATs("CFG_CAL_PHI", mask)
-            calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,24)))
-            
+            calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")), range(0,vfatsPerGemVariant[options.gemType])))
+
             vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
-            msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),range(0,24)))
-            
+            msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),range(0,vfatsPerGemVariant[options.gemType])))
+
             vals = vfatBoard.readAllVFATs("CFG_LATENCY", mask)
-            latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
+            latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,vfatsPerGemVariant[options.gemType])))
 
             #Store original CFG_SEL_COMP_MODE
             vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
             selCompVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                range(0,24)))
-    
+                range(0,vfatsPerGemVariant[options.gemType])))
+
             #Store original CFG_FORCE_EN_ZCC
             vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", mask)
             forceEnZCCVals_orig =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                range(0,24)))
-    
+                range(0,vfatsPerGemVariant[options.gemType])))
+
             if options.scanZCC:
                 isZCC[0] = 1
-    
+
                 #Reset scanReg
                 scanReg = "THR_ZCC_DAC"
-                
+
                 print "Setting CFG_SEL_COMP_MODE to 0x2 (ZCC Mode)"
                 vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE", 0x2, mask)
                 vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
                 selCompVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                    range(0,24)))
-    
+                    range(0,vfatsPerGemVariant[options.gemType])))
+
                 print "Forcing the ZCC output to be enabled independent of the ARM comparator"
                 vfatBoard.writeAllVFATs("CFG_FORCE_EN_ZCC", 0x1, mask)
                 vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", mask)
                 forceEnZCCVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                    range(0,24)))
+                    range(0,vfatsPerGemVariant[options.gemType])))
             else:
                 print "Setting CFG_SEL_COMP_MODE to 0x1 (ARM Mode)"
                 vfatBoard.writeAllVFATs("CFG_SEL_COMP_MODE", 0x1, mask)
                 vals  = vfatBoard.readAllVFATs("CFG_SEL_COMP_MODE", mask)
                 selCompVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                    range(0,24)))
-    
+                    range(0,vfatsPerGemVariant[options.gemType])))
+
                 print "Do not force ZCC output"
                 vfatBoard.writeAllVFATs("CFG_FORCE_EN_ZCC", 0x0, mask)
                 vals = vfatBoard.readAllVFATs("CFG_FORCE_EN_ZCC", mask)
                 forceEnZCCVals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                    range(0,24)))
+                    range(0,vfatsPerGemVariant[options.gemType])))
                 pass
 
             chanRegData = getChannelRegisters(vfatBoard,mask)
             vfatIDvals = vfatBoard.getAllChipIDs(mask)
         else:
             vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
-            calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),range(0,24)))
-            
-            vals = vfatBoard.readAllVFATs("ContReg2",    0x0)    
-            msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),range(0,24)))
-                    
+            calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),range(0,vfatsPerGemVariant[options.gemType])))
+
+            vals = vfatBoard.readAllVFATs("ContReg2",    0x0)
+            msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),range(0,vfatsPerGemVariant[options.gemType])))
+
             vals = vfatBoard.readAllVFATs("ContReg3",    0x0)
-            trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),range(0,24)))
-                            
+            trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),range(0,vfatsPerGemVariant[options.gemType])))
+
             vals = vfatBoard.readAllVFATs("Latency",    0x0)
-            latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
-                                    
+            latvals = dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,vfatsPerGemVariant[options.gemType])))
+
             #vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
-            
+
             vals  = vfatBoard.readAllVFATs("VThreshold2", 0x0)
-            vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,24)))
-                
-            vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),range(0,24)))
+            vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),range(0,vfatsPerGemVariant[options.gemType])))
+
+            vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),range(0,vfatsPerGemVariant[options.gemType])))
             pass
-    
-        if options.perchannel: 
+
+        if options.perchannel:
             gemData.mode[0] = scanmode.THRESHCH
-            
+
             # Set Trigger Source for v2b electronics
             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                 print "setting trigger source"
@@ -249,17 +253,17 @@ if __name__ == '__main__':
                 print "TTC configured successfully"
             else:
                 raise Exception('RPC response was non-zero, TTC configuration failed')
-        
+
             scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
-            scanDataSizeNet = scanDataSizeVFAT * 24
+            scanDataSizeNet = scanDataSizeVFAT * vfatsPerGemVariant[options.gemType]
             scanData = (c_uint32 * scanDataSizeNet)()
             for chan in range(CHAN_MIN,CHAN_MAX):
                 print "Channel #"+str(chan)
-            
+
                 # Reset scanReg if needed
                 if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                     scanReg = "VThreshold1PerChan"
-    
+
                 # Perform the scan
                 rpcResp = vfatBoard.parentOH.performCalibrationScan(
                         chan=chan,
@@ -271,14 +275,14 @@ if __name__ == '__main__':
                         outData=scanData,
                         scanReg=scanReg,
                         stepSize=options.stepSize)
-    
+
                 if rpcResp != 0:
                     raise Exception('RPC response was non-zero, threshold scan for channel %i failed'%chan)
-                
+
                 sys.stdout.flush()
-                for vfat in range(0,24):
+                for vfat in range(0,vfatsPerGemVariant[options.gemType]):
                     if (mask >> vfat) & 0x1: continue
-                    
+
                     for threshDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT):
                         try:
                             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
@@ -288,7 +292,7 @@ if __name__ == '__main__':
                                         latency = latvals[vfat],
                                         mspl = msplvals[vfat],
                                         Nev = options.nevts,
-                                        Nhits = (int(scanData[threshDAC] & 0xffffff)), 
+                                        Nhits = (int(scanData[threshDAC] & 0xffffff)),
                                         #trimDAC = trimDAC,
                                         trimRange = trimRangevals[vfat],
                                         vfatCH = chan,
@@ -306,7 +310,7 @@ if __name__ == '__main__':
                                     # what happens if we don't scan from 0 to 255?
                                     vthr = threshDAC - vfat*scanDataSizeVFAT
                                     pass
-                                
+
                                 gemData.fill(
                                         calPhase = calPhasevals[vfat],
                                         latency = latvals[vfat],
@@ -327,7 +331,7 @@ if __name__ == '__main__':
                     pass
                 gemData.autoSave()
                 pass
-    
+
             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                 vfatBoard.parentOH.setTriggerSource(trgSrc)
             vfatBoard.parentOH.parentAMC.toggleTTCGen(options.gtx, False)
@@ -337,15 +341,15 @@ if __name__ == '__main__':
                 print "For v3 electronics please use the --perchannel option"
                 print "Exiting"
                 sys.exit(os.EX_USAGE)
-    
+
             if options.trkdata:
                 gemData.mode[0] = scanmode.THRESHTRK
 
                 print "setting trigger source"
                 vfatBoard.parentOH.setTriggerSource(0x1)
-                
+
                 scanReg = "VThreshold1Trk"
-                
+
                 # Configure TTC
                 print "attempting to configure TTC"
                 if 0 == vfatBoard.parentOH.parentAMC.configureTTC(pulseDelay=0,L1Ainterval=250,ohN=options.gtx,enable=True):
@@ -357,11 +361,11 @@ if __name__ == '__main__':
 
                 scanReg = "VThreshold1"
                 pass
-    
+
             scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
-            scanDataSizeNet = scanDataSizeVFAT * 24
+            scanDataSizeNet = scanDataSizeVFAT * vfatsPerGemVariant[options.gemType]
             scanData = (c_uint32 * scanDataSizeNet)()
-            
+
             # Perform the scan
             rpcResp = vfatBoard.parentOH.performCalibrationScan(
                     chan=0,
@@ -373,12 +377,12 @@ if __name__ == '__main__':
                     outData=scanData,
                     scanReg=scanReg,
                     stepSize=options.stepSize)
-    
+
             if rpcResp != 0:
                 raise Exception('RPC response was non-zero, threshold scan failed')
-    
+
             sys.stdout.flush()
-            for vfat in range(0,24):
+            for vfat in range(0,vfatsPerGemVariant[options.gemType]):
                 if (mask >> vfat) & 0x1: continue
                 for threshDAC in range(vfat*scanDataSizeVFAT,(vfat+1)*scanDataSizeVFAT,options.stepSize):
                     if vfatBoard.parentOH.parentAMC.fwVersion < 3:
@@ -387,7 +391,7 @@ if __name__ == '__main__':
                                 latency = latvals[vfat],
                                 mspl = msplvals[vfat],
                                 Nev = options.nevts,
-                                Nhits = (int(scanData[threshDAC] & 0xffffff)), 
+                                Nhits = (int(scanData[threshDAC] & 0xffffff)),
                                 trimRange = trimRangevals[vfat],
                                 #vfatID = vfatIDvals[vfat],
                                 vfatN = vfat,
@@ -418,17 +422,17 @@ if __name__ == '__main__':
                     pass
                 pass
             gemData.autoSave("SaveSelf")
-    
+
             if options.trkdata:
                 if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                     vfatBoard.parentOH.setTriggerSource(trgSrc)
                 vfatBoard.parentOH.parentAMC.toggleTTCGen(options.gtx, False)
                 pass
             pass
-    
+
         # Place VFATs back in sleep mode
         vfatBoard.setRunModeAll(mask, False, options.debug)
-    
+
         # Return to original comparator settings
         if vfatBoard.parentOH.parentAMC.fwVersion >= 3:
             for key,val in selCompVals_orig.iteritems():
@@ -437,7 +441,7 @@ if __name__ == '__main__':
             for key,val in forceEnZCCVals_orig.iteritems():
                 if (mask >> key) & 0x1: continue
                 vfatBoard.writeVFAT(key,"CFG_FORCE_EN_ZCC",val)
-    
+
     except Exception as e:
         gemData.autoSave()
         print "An exception occurred", e

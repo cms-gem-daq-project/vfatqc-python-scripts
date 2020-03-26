@@ -26,7 +26,7 @@ Positional arguments
     uTCA crate shelf number
 
 .. option:: slot
-   
+
     AMC slot number in the uTCA crate
 
 .. option:: ohMask
@@ -92,8 +92,8 @@ if __name__ == '__main__':
 
     # Positional arguments
     from reg_utils.reg_interface.common.reg_xml_parser import parseInt
-    parser.add_option("shelf", type=int, help="uTCA shelf to access")
-    parser.add_option("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
+    parser.add_argument("shelf", type=int, help="uTCA shelf to access")
+    parser.add_argument("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("ohN", type=int, help="optohybrid to readout sbits from", metavar="ohN")
     parser.add_argument("acquireTime", type=int, help="time in seconds to acquire sbits for", metavar="acquireTime")
     parser.add_argument("filePath", type=str, help="Filepath where data is stored", metavar="filePath")
@@ -109,6 +109,10 @@ if __name__ == '__main__':
             help="Set up for using AMC13 T3 trigger inpiut")
     parser.add_argument("--vfatmask", type=parseInt, dest="vfatmask",default=0x0,
             help="VFATs to be masked, a 1 in the N^th bit signifies the N^th vfat will not be used", metavar="vfatmask")
+    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_argument("--detType",type=str,
+                        help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default="short")
+
     args = parser.parse_args()
     options = vars(args)
 
@@ -118,7 +122,7 @@ if __name__ == '__main__':
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.vfatqc.utils.qcutilities import getCardName
     cardName = getCardName(args.shelf,args.slot)
-    vfatBoard = HwVFAT(args.cardName, args.ohN, args.debug)
+    vfatBoard = HwVFAT(cardName, args.ohN, args.debug, args.gemType, args.detType)
     print 'opened connection'
 
     # Check options
@@ -145,7 +149,7 @@ if __name__ == '__main__':
     amc13board.resetCounters()
     print("stopping triggers to CTP7")
     vfatBoard.parentOH.parentAMC.blockL1A()
-    
+
     # Get original optohybrid trigger mask and then overwrite it with the vfat mask
     origOhTrigMask = vfatBoard.parentOH.getSBitMask()
     vfatBoard.parentOH.setSBitMask(mask)
@@ -153,15 +157,12 @@ if __name__ == '__main__':
     # Configure local triggers?
     if args.amc13local:
         print("configuring the amc13 for local mode")
-        #amcMask = amc13board.parseInputEnableList("%s"%(args.slot), True)
-        amcMask = amc13board.parseInputEnableList("{0}".format(0xFFF), True)
         amc13board.reset(amc13board.Board.T1)
         amc13board.resetCounters()
         amc13board.resetDAQ()
         if args.fakeTTC:
             print("configuring amc13 for fakeTTC")
             amc13board.localTtcSignalEnable(args.fakeTTC)
-        amc13board.AMCInputEnable(amcMask)
         amc13board.startRun()
         if args.t3trig:
             print("configuring the amc13 to use the T3 Trigger input")

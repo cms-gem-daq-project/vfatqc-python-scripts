@@ -26,7 +26,7 @@ Positional arguments
     uTCA crate shelf number
 
 .. option:: slot
-   
+
     AMC slot number in the uTCA crate
 
 .. option:: ohMask
@@ -75,13 +75,13 @@ if __name__ == '__main__':
     By: Brian Dorney (brian.l.dorney@cern.ch)
         Evaldas Juska (evaldas.juska@cern.ch)
     """
-    
+
     import sys, os
     from array import array
     from ctypes import *
-    
+
     from gempython.tools.vfat_user_functions_xhal import *
-    
+
     # create the parser
     import argparse
     parser = argparse.ArgumentParser(description="For each unmasked optohybrid this script will scan the CFG_THR_ARM_DAC register for each VFAT on the optohybrid. At each DAC point it will measure the rate of SBITs being sent to the optohybrid.  All links will be measured simultaneously.")
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument("shelf", type=int, help="uTCA shelf to access")
     parser.add_argument("slot", type=int,help="slot in the uTCA of the AMC you are connceting too")
     parser.add_argument("ohMask", type=parseInt, help="ohMask to apply, a 1 in the n^th bit indicates the n^th OH should be considered")
-    
+
     # Optional arguments
     parser.add_argument("--chMin", type=int, help="Specify minimum channel number to scan", default=0)
     parser.add_argument("--chMax", type=int, help="Specify maximum channel number to scan", default=127)
@@ -102,28 +102,32 @@ if __name__ == '__main__':
     parser.add_argument("--scanmax", type=int, help="Maximum value of scan parameter", default=255)
     parser.add_argument("--stepSize", type=int, help="Supply a step size to the scan from scanmin to scanmax", default=1)
     parser.add_argument("--waitTime", type=int, help="Length of the time window within which the rate is measured, in seconds",default=1)
+    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_argument("--detType",type=str,
+                        help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default="short")
+
     args = parser.parse_args()
-    
+
     from gempython.utils.gemlogger import printRed, printYellow
     remainder = (args.scanmax-args.scanmin+1) % args.stepSize
     if remainder != 0:
         args.scanmax = args.scanmax - remainder
         printYellow("Reducing scanmax to: {0}".format(args.scanmax))
-   
+
     if args.scanmax > 255:
         printYellow("CFG_THR_ARM_DAC and CFG_THR_ZCC_DAC only go up to 0xff (255)")
         printYellow("Current value %i will roll over to 0"%(args.scanmax))
         printYellow("Seting scanmax to 255")
         args.scanmax=255
-    
+
     #determine total time in hours
     if args.perchannel:
         totalTime=(args.scanmax-args.scanmin)*(args.chMax-args.chMin)*(1./3600.)
-        
+
         print("I see you've asked for a perchannel scan")
         print("Right now this is done in series, are you sure you want to continue?")
         print("I expect this will take: %f hours"%totalTime)
-        
+
         bInputUnderstood=False
         performTest=raw_input("Do you want to continue? (yes/no)")
         while(not bInputUnderstood):
@@ -142,7 +146,7 @@ if __name__ == '__main__':
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     cardName = getCardName(args.shelf,args.slot)
     from gempython.tools.vfat_user_functions_xhal import *
-    vfatBoard = HwVFAT(cardName, 0, args.debug) # Assign link 0; we will update later
+    vfatBoard = HwVFAT(cardName, 0, args.debug, args.gemType, args.detType)
     print 'opened connection'
     amcBoard = vfatBoard.parentOH.parentAMC
     if amcBoard.fwVersion < 3:
@@ -159,7 +163,7 @@ if __name__ == '__main__':
     outF = r.TFile(args.filename,'recreate')
     from gempython.vfatqc.utils.treeStructure import gemSbitRateTreeStructure
     rateTree = gemSbitRateTreeStructure(nameX="CFG_THR_ARM_DAC")
-    
+
     import time
     rateTree.utime[0] = int(time.time())
 

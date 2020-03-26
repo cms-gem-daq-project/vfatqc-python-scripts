@@ -83,7 +83,8 @@ if __name__ == '__main__':
     from ctypes import *
 
     from gempython.tools.vfat_user_functions_xhal import *
-    
+    from gempython.tools.hw_constants import gemVariants
+
     from gempython.vfatqc.utils.qcoptions import parser
 
     parser.add_option("--calSF", type="int", dest = "calSF", default = 0,
@@ -101,15 +102,17 @@ if __name__ == '__main__':
                       help="Acquire time per point in milliseconds", metavar="time")
     parser.add_option("--vcal", type="int", dest="vcal",
                       help="Height of CalPulse in DAC units for all VFATs", metavar="vcal", default=250)
-    parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
-                      help="V3 electronics only. Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
+    parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse",
+                      help="V3 electronics only. Calibration Module is set to use voltage step pulsing instead of default current pulse injection",
                       metavar="voltageStepPulse")
+    parser.add_option("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_option("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default="short")
     (options, args) = parser.parse_args()
 
     import ROOT as r
     filename = options.filename
     myF = r.TFile(filename,'recreate')
-    
+
     import subprocess,datetime,time
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     print startTime
@@ -147,16 +150,16 @@ if __name__ == '__main__':
 
     sbitObserved = array( 'i', [ 0 ] ) #SBIT Observed
     sbitDataTree.Branch( 'vfatSBIT', sbitObserved, 'vfatSBIT/I' )
-    
+
     vfatCH = array( 'i', [ 0 ] ) # Channel Pulsed
     sbitDataTree.Branch( 'vfatCH', vfatCH, 'vfatCH/I' )
-    
+
     vfatID = array( 'L', [0] )
     sbitDataTree.Branch( 'vfatID', vfatID, 'vfatID/i' ) #Hex Chip ID of VFAT
 
     vfatN = array( 'i', [ -1 ] ) # VFAT Pulsed
     sbitDataTree.Branch( 'vfatN', vfatN, 'vfatN/I' )
-    
+
     vfatObserved = array( 'i', [ 0 ] ) #VFAT Observed
     sbitDataTree.Branch( 'vfatObserved', vfatObserved, 'vfatObserved/I')
 
@@ -170,7 +173,7 @@ if __name__ == '__main__':
     # Open rpc connection to hw
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     cardName = getCardName(options.shelf,options.slot)
-    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug, options.gemType, options.detType)
     print 'opened connection'
 
     # Check options

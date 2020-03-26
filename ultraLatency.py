@@ -26,7 +26,7 @@ Positional arguments
     uTCA crate shelf number
 
 .. option:: slot
-   
+
     AMC slot number in the uTCA crate
 
 .. option:: ohMask
@@ -99,7 +99,7 @@ Optional arguments
 
 .. option:: --vfatmask <VFATMASK>
 
-    If specified, this will use this VFAT mask for all unmasked OptoHybrids in ohMask. 
+    If specified, this will use this VFAT mask for all unmasked OptoHybrids in ohMask.
     Here this is a 24 bit number, where a 1 in the N^{th} bit means ignore the N^{th} VFAT.
     If this argument is not specified, VFAT masks are determined at runtime automatically.
 
@@ -127,17 +127,18 @@ if __name__ == '__main__':
         Cameron Bravo (c.bravo@cern.ch)
         Brian Dorney (brian.l.dorney@cern.ch)
     """
-    
+
     import sys, os, random, time
     from array import array
     from ctypes import *
-    
+
     from gempython.tools.vfat_user_functions_xhal import *
     from gempython.tools.vfat_user_functions_uhal import * #remove this later after making it so amc13 communication doesn't spit bullshit messages
     from gempython.tools.optohybrid_user_functions_uhal import scanmode
-    
+    from gempython.tools.hw_constants import vfatsPerGemVariant
+
     from gempython.vfatqc.utils.qcoptions import parser
-    
+
     parser.add_option("--amc13local", action="store_true", dest="amc13local",
                       help="Set up for using AMC13 local trigger generator", metavar="amc13local")
     parser.add_option("--chan", type="int", dest="chan",
@@ -163,52 +164,54 @@ if __name__ == '__main__':
                       help="factor by which to throttle the input L1A rate, e.g. new trig rate = L1A rate / throttle", metavar="throttle")
     parser.add_option("--vcal", type="int", dest="vcal",
                       help="Height of CalPulse in DAC units for all VFATs", metavar="vcal", default=250)
-    parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse", 
-                      help="Calibration Module is set to use voltage step pulsing instead of default current pulse injection", 
+    parser.add_option("--voltageStepPulse", action="store_true",dest="voltageStepPulse",
+                      help="Calibration Module is set to use voltage step pulsing instead of default current pulse injection",
                       metavar="voltageStepPulse")
     parser.add_option("--vt2", type="int", dest="vt2",
-                      help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0) 
-
+                      help="VThreshold2 DAC value for all VFATs (v2b electronics only)", metavar="vt2", default=0)
+    parser.add_option("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_option("--detType",type=str,
+                        help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default="short")
     parser.set_defaults(scanmin=153,scanmax=172,nevts=500)
     (options, args) = parser.parse_args()
-    
+
     remainder = (options.scanmax-options.scanmin+1) % options.stepSize
     if remainder != 0:
         options.scanmax = options.scanmax + remainder
         print "extending scanmax to: ", options.scanmax
-    
+
     if options.debug:
         uhal.setLogLevelTo(uhal.LogLevel.INFO)
     else:
         uhal.setLogLevelTo(uhal.LogLevel.ERROR)
-    
+
     from ROOT import TFile,TTree
     filename = options.filename
     myF = TFile(filename,'recreate')
-    
+
     import subprocess,datetime,time
     startTime = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M")
     print(startTime)
     Date = startTime
-    
+
     # Track the current pulse
     isCurrentPulse = (not options.voltageStepPulse)
-    
+
     # Setup the output TTree
     from gempython.vfatqc.utils.treeStructure import gemTreeStructure
     gemData = gemTreeStructure('latTree','Tree Holding CMS GEM Latency Data',scanmode.LATENCY)
     gemData.setDefaults(options, int(time.time()))
-    
+
     import amc13
     connection_file = "%s/connections.xml"%(os.getenv("GEM_ADDRESS_TABLE_PATH"))
     amc13base  = "gem.shelf%02d.amc13"%(options.shelf)
     amc13board = amc13.AMC13(connection_file,"%s.T1"%(amc13base),"%s.T2"%(amc13base))
-    
+
     from gempython.vfatqc.utils.qcutilities import getCardName, inputOptionsValid
     cardName = getCardName(options.shelf,options.slot)
-    vfatBoard = HwVFAT(cardName, options.gtx, options.debug)
+    vfatBoard = HwVFAT(cardName, options.gtx, options.debug, options.gemType, options.detType)
     print 'opened connection'
-    
+
     # Check options
     if not inputOptionsValid(options, vfatBoard.parentOH.parentAMC.fwVersion):
         exit(os.EX_USAGE)
@@ -225,48 +228,48 @@ if __name__ == '__main__':
             print("Scan parameters must be in range [0,1024] and min < max")
             exit(1)
             pass
-    
+
     mask = options.vfatmask
-    
+
     try:
         vfatBoard.setRunModeAll(mask, True, options.debug)
         vfatBoard.setVFATMSPLAll(mask, options.MSPL, options.debug)
-        
+
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vfatBoard.writeAllVFATs("VThreshold2", options.vt2, mask)
-    
+
             vals = vfatBoard.readAllVFATs("CalPhase",   0x0)
             calPhasevals = dict(map(lambda slotID: (slotID, bin(vals[slotID]).count("1")),
-                                range(0,24)))
+                                range(0,vfatsPerGemVariant[options.gemType])))
             vals = vfatBoard.readAllVFATs("ContReg2",    0x0)
             msplvals =  dict(map(lambda slotID: (slotID, (1+(vals[slotID]>>4)&0x7)),
-                                range(0,24)))
+                                range(0,vfatsPerGemVariant[options.gemType])))
             vals = vfatBoard.readAllVFATs("ContReg3",    0x0)
             trimRangevals = dict(map(lambda slotID: (slotID, (0x07 & vals[slotID])),
-                                range(0,24)))
+                                range(0,vfatsPerGemVariant[options.gemType])))
             #vfatIDvals = getAllChipIDs(ohboard, options.gtx, 0x0)
             vals  = vfatBoard.readAllVFATs("VThreshold1", 0x0)
             vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                                range(0,24)))
+                                range(0,vfatsPerGemVariant[options.gemType])))
             vals  = vfatBoard.readAllVFATs("VThreshold2", 0x0)
             vt2vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                                range(0,24)))
+                                range(0,vfatsPerGemVariant[options.gemType])))
             vthvals =  dict(map(lambda slotID: (slotID, vt2vals[slotID]-vt1vals[slotID]),
-                                range(0,24)))
+                                range(0,vfatsPerGemVariant[options.gemType])))
         else:
             vals  = vfatBoard.readAllVFATs("CFG_THR_ARM_DAC", mask)
             vt1vals =  dict(map(lambda slotID: (slotID, vals[slotID]&0xff),
-                                range(0,24)))
+                                range(0,vfatsPerGemVariant[options.gemType])))
             vals = vfatBoard.readAllVFATs("CFG_PULSE_STRETCH", mask)
             msplvals =  dict(map(lambda slotID: (slotID, vals[slotID]),
-                                 range(0,24)))
+                                 range(0,vfatsPerGemVariant[options.gemType])))
             vfatIDvals = vfatBoard.getAllChipIDs(mask)
-    
+
         # Stop triggers
         vfatBoard.parentOH.parentAMC.blockL1A()
         amc13board.enableLocalL1A(False)
         amc13board.resetCounters()
-    
+
         # Check to see if an ultra scan is already running
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             scanBase = "GEM_AMC.OH.OH%d.ScanController.ULTRA"%(options.gtx)
@@ -275,19 +278,19 @@ if __name__ == '__main__':
                 vfatBoard.parentOH.parentAMC.writeRegister("%s.RESET"%(scanBase),0x1)
                 time.sleep(0.1)
                 pass
-        
+
         amc13nL1A = (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_HI") << 32) | (amc13board.read(amc13board.Board.T1, "STATUS.GENERAL.L1A_COUNT_LO"))
         amcnL1A = vfatBoard.parentOH.parentAMC.getL1ACount()
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             ohnL1A = vfatBoard.parentOH.getL1ACount()
-        
+
         print "Initial L1A counts:"
         print "AMC13: %s"%(amc13nL1A)
         print "AMC: %s"%(amcnL1A)
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             print "OH%s: %s"%(options.gtx,ohnL1A)
         sys.stdout.flush()
-    
+
         scanChan=128
         enableCalPulse=False
         if options.internal:
@@ -295,14 +298,14 @@ if __name__ == '__main__':
             scanChan=options.chan
             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                 vfatBoard.parentOH.setTriggerSource(0x1)
-            
+
             print "stopping cal pulse to all channels"
             vfatBoard.stopCalPulses(mask, 0, 128)
-            
+
             print "Setting channel %i to calpulse"%(scanChan)
             vfatBoard.setSpecificChannelAllRegisters(chan=scanChan, chMask=0, pulse=1, trimARM=0, vfatMask=mask)
             vfatBoard.setVFATCalHeightAll(mask, options.vcal, currentPulse=isCurrentPulse)
-    
+
             # Configure TTC
             print "attempting to configure TTC"
             if 0 == vfatBoard.parentOH.parentAMC.configureTTC(options.pDel,options.L1Atime,options.gtx,1,0,0,True):
@@ -339,27 +342,27 @@ if __name__ == '__main__':
                     amc13board.startContinuousL1A()
                     pass
                 pass
-            
+
             print "attempting to configure TTC"
             if vfatBoard.parentOH.parentAMC.fwVersion < 3:
                 vfatBoard.parentOH.setTriggerSource(0x5) # GBT, 0x0 for GTX
             print "TTC configured successfully"
             pass
-    
+
         # Throttle the trigger if requested
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             vfatBoard.parentOH.setTriggerThrottle(options.throttle)
         sys.stdout.flush()
-        
+
         scanDataSizeVFAT = (options.scanmax-options.scanmin+1)/options.stepSize
-        scanDataSizeNet = scanDataSizeVFAT * 24
+        scanDataSizeNet = scanDataSizeVFAT * vfatsPerGemVariant[options.gemType]
         scanData = (c_uint32 * scanDataSizeNet)()
-            
+
         # Determine the scanReg
         scanReg = "LATENCY"
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             scanReg = "Latency"
-     
+
         # Perform the scan
         if options.internal:
             print("Starting scan for channel %i; pulseDelay: %i; L1Atime: %i"%(scanChan, options.pDel, options.L1Atime))
@@ -380,11 +383,11 @@ if __name__ == '__main__':
                 scanReg=scanReg,
                 stepSize=options.stepSize,
                 useExtTrig=(not options.internal))
-    
+
         if rpcResp != 0:
             raise Exception('RPC response was non-zero, this inidcates an RPC exception occurred')
         print("Done scanning, processing output")
-        
+
         print "Final L1A counts:"
         amc13board.enableLocalL1A(False)
         vfatBoard.parentOH.parentAMC.blockL1A()
@@ -394,10 +397,10 @@ if __name__ == '__main__':
             ohnL1Af = vfatBoard.parentOH.getL1ACount()
         print "AMC13: %s, difference %s"%(amc13nL1Af,amc13nL1Af-amc13nL1A)
         print "AMC: %s, difference %s"%(amcnL1Af,amcnL1Af-amcnL1A)
-        
+
         if vfatBoard.parentOH.parentAMC.fwVersion < 3:
             print "OH%s: %s, difference %s"%(options.gtx,ohnL1Af,ohnL1Af-ohnL1A)
-    
+
         print("Information on CRC packets")
         print("\tActually still needs to be implemented (oops) - Brian")
         # this is the way to do this for v2b
@@ -406,11 +409,11 @@ if __name__ == '__main__':
         #for i in range(24):
         #  print "Number of CRC errors for VFAT%s on link %s is %s"%(i, options.gtx, readRegister(ohboard,"GEM_AMC.OH.OH%d.COUNTERS.CRC.INCORRECT.VFAT%d"%(options.gtx,i)))
         # for v3 evaldas says I can count number of good & bad CRC eventss w/DAQ_MONITPR as well as number of L1As received by the CTP7 and forwarded to the VFATs with GEM_AMC.TTC.CMD_COUNTERS.L1A
-    
+
         #amc13board.enableLocalL1A(True)
         sys.stdout.flush()
         print("parsing scan data")
-        for vfat in range(0,24):
+        for vfat in range(0,vfatsPerGemVariant[options.gemType]):
             if (mask >> vfat) & 0x1: continue
             if options.debug:
                 sys.stdout.flush()
@@ -433,7 +436,7 @@ if __name__ == '__main__':
                     else:
                         gemData.fill(
                                 isCurrentPulse = isCurrentPulse,
-                                latency = (options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize), 
+                                latency = (options.scanmin + (latReg - vfat*scanDataSizeVFAT) * options.stepSize),
                                 mspl = msplvals[vfat],
                                 Nev = (scanData[latReg] & 0xffff),
                                 Nhits = ((scanData[latReg]>>16) & 0xffff),
@@ -442,7 +445,7 @@ if __name__ == '__main__':
                                 vth1 = vt1vals[vfat]
                                 )
                         pass
-    
+
                 except IndexError:
                     print 'Unable to index data for channel %i'%chan
                     print scanData[latReg]
@@ -456,7 +459,7 @@ if __name__ == '__main__':
                 pass
             pass
         gemData.autoSave("SaveSelf")
-    
+
         vfatBoard.setRunModeAll(mask, False, options.debug)
         if options.internal:
             vfatBoard.parentOH.parentAMC.toggleTTCGen(options.gtx, False)

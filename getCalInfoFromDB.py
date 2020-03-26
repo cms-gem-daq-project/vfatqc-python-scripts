@@ -2,6 +2,7 @@
 
 if __name__ == '__main__':
     import argparse
+    from gempython.tools.hw_constants import gemVariants
     parser = argparse.ArgumentParser(description="Queries the DB for calibration info for all VFATs on given (shelf,slot,link)")
     parser.add_argument("shelf",type=int,help="uTCA shelf number")
     parser.add_argument("slot",type=int,help="AMC slot in uTCA shelf")
@@ -9,6 +10,8 @@ if __name__ == '__main__':
     parser.add_argument("-d","--debug",action="store_true",help="Prints additional information")
     parser.add_argument("--write2File",action="store_true",help="If Provided data will be written to appropriate calibration files")
     parser.add_argument("--write2CTP7",action="store_true",help="If Provided VREF_ADC and IREF data will be sent to the VFAT3 config files on the CTP7 (implies --write2File)")
+    parser.add_argument("--gemType",type=str,help="String that defines the GEM variant, available from the list: {0}".format(gemVariants.keys()),default="ge11")
+    parser.add_argument("--detType",type=str,help="Detector type within gemType. If gemType is 'ge11' then this should be from list {0}; if gemType is 'ge21' then this should be from list {1}; and if type is 'me0' then this should be from the list {2}".format(gemVariants['ge11'],gemVariants['ge21'],gemVariants['me0']),default="short")
     args = parser.parse_args()
 
     # Update the files on the DAQ machine whenever an update on the CTP7 is requested
@@ -17,15 +20,15 @@ if __name__ == '__main__':
         args.write2File = True
 
     from gempython.tools.vfat_user_functions_xhal import *
-    
+
     from gempython.vfatqc.utils.qcutilities import getCardName
     cardName = getCardName(args.shelf,args.slot)
-    vfatBoard = HwVFAT(cardName,args.link)
+    vfatBoard = HwVFAT(cardName, link=args.link, gemType=args.gemType, detType=args.detType)
 
     mask = vfatBoard.parentOH.getVFATMask()
     chipIDs = vfatBoard.getAllChipIDs(mask)
 
-    while(len(chipIDs) != 24):
+    while(len(chipIDs) < vfatBoard.parentOH.nVFATs):
         chipIDs.append(0)
 
     if args.debug:
@@ -115,7 +118,7 @@ if __name__ == '__main__':
         import logging
         gemlogger = getGEMLogger(__name__)
         gemlogger.setLevel(logging.INFO)
-    
+
         from gempython.vfatqc.utils.confUtils import updateVFAT3ConfFilesOnAMC
         updateVFAT3ConfFilesOnAMC(cardName,args.link,filename_iref,"CFG_IREF")
         updateVFAT3ConfFilesOnAMC(cardName,args.link,filename_vref_adc,"CFG_VREF_ADC")
