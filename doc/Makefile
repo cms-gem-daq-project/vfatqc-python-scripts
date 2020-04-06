@@ -14,14 +14,18 @@ EOS_SITE_PATH?=/tmp/$(USER)/$(EOS_SITE_NAME)
 
 export EOS_SITE_URL?=https://$(EOS_SITE_NAME).web.cern.ch/$(EOS_SITE_NAME)
 export GEM_DOCS_URL?=$(EOS_SITE_URL)
+export PYTHONSOURCE=$(shell dirname `pwd`)/pkg/gempython
+
+$(info PYTHONSOURCE is $(PYTHONSOURCE))
 
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .PHONY: autoapi
+# Implicitly depends on the 'package' target, which populates the python package directory structure
 autoapi:
-	$(SPHINXAPIBUILD) -M -o "$(SOURCEDIR)/sphinx-api" ../pkg/gempython
+	$(SPHINXAPIBUILD) -M -o "$(SOURCEDIR)/sphinx-api" $(PYTHONSOURCE)
 
 .PHONY: cleanapi
 cleanapi:

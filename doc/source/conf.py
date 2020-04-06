@@ -19,9 +19,9 @@ import string
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # Root of the package
-sys.path.insert(1, os.path.abspath("../../pkg"))
+sys.path.insert(1, os.path.abspath("{}/..".format(os.getenv("PYTHONSOURCE"))))
 # Scripts directory
-sys.path.insert(1, os.path.abspath("../../pkg/gempython/scripts"))
+sys.path.insert(1, os.path.abspath("{}/scripts".format(os.getenv("PYTHONSOURCE"))))
 
 import sphinx_rtd_theme
 
