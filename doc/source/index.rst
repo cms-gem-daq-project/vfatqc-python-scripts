@@ -15,6 +15,13 @@ Welcome to the VFATQC documentation!
    runscans
    virtualenv-p5
 
+.. toctree::
+   :caption: API documentation
+   :maxdepth: 1
+   :glob:
+
+   autoapi/gempython/vfatqc/index
+   scripts
 
 .. toctree::
    :hidden:

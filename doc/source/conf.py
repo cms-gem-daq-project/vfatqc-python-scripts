@@ -19,9 +19,11 @@ import string
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # Root of the package
-sys.path.insert(1, os.path.abspath("{}/..".format(os.getenv("PYTHONSOURCE"))))
+sys.path.insert(1, os.path.abspath("{}".format(os.getenv("PYTHONSOURCE"))))
 # Scripts directory
-sys.path.insert(1, os.path.abspath("{}/scripts".format(os.getenv("PYTHONSOURCE"))))
+sys.path.insert(
+    1, os.path.abspath("{}/gempython/scripts".format(os.getenv("PYTHONSOURCE")))
+)
 
 import sphinx_rtd_theme
 
@@ -44,7 +46,6 @@ authorlist = [
 
 project = u"gempython.vfatqc"
 authors = ", ".join(authorlist)
-# copyright = u"2020, CMS GEM DAQ Project"
 copyright = u"2016--{:d} {:s}".format(datetime.date.today().year, authors)
 
 # The version info for the project you're documenting, acts as replacement for
@@ -67,7 +68,6 @@ print("Release {}".format(release))
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
@@ -81,7 +81,27 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_tabs.tabs",
     "sphinx_rtd_theme",
+    "autoapi.extension",
+    #    "sphinx.ext.autodoc",
+    # "sphinx.ext.inheritance_diagram",
 ]
+
+autoapi_type = "python"
+autoapi_python_use_implicit_namespaces = True  ## default False
+autoapi_dirs = ["{}/gempython".format(os.getenv("PYTHONSOURCE"))]
+autoapi_add_toctree_entry = False
+autoapi_keep_files = True  ## default False
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "private-members",
+    "show-inheritance",
+    "special-members",
+    "show-inheritance-diagram",
+    "show-module-summary",
+]
+autoapi_ignore = ["*migrations*", "*conf.py", "*setup.py"]
+autoapi_template_dir = "_templates/autoapi"
 
 # Disable numpy docstrings for Napoleon, because they eat headers such as
 # "Examples"
@@ -273,46 +293,58 @@ latex_documents = [
 man_pages = [
     ("index", "vfatqc", u"VFATQC Documentation", authors, 1),
     (
-        "man/dacScanV3",
+        "autoapi/dacScanV3/index",
         "dacScanV3.py",
         u"Perform a VFAT3 DAC scan on all unmasked optohybrids",
         authors,
         1,
     ),
-    ("man/ultrLatency", "ultraLatency.py", u"Perform a Latency Scan", authors, 1),
     (
-        "man/monitorTemperatures",
+        "autoapi/ultrLatency/index",
+        "ultraLatency.py",
+        u"Perform a Latency Scan",
+        authors,
+        1,
+    ),
+    (
+        "autoapi/monitorTemperatures/index",
         "monitorTemperatures.py",
         u"Record Temperature Data",
         authors,
         1,
     ),
     (
-        "man/checkSbitMappingAndRate",
+        "autoapi/checkSbitMappingAndRate/index",
         "checkSbitMappingAndRate.py",
         u"Investigate sbit Mapping and Rate Measurement",
         authors,
         1,
     ),
-    ("man/sbitReadOut", "sbitReadOut.py", u"Readout sbits", authors, 1),
+    ("autoapi/sbitReadOut/index", "sbitReadOut.py", u"Readout sbits", authors, 1),
     (
-        "man/sbitThreshScan",
+        "autoapi/sbitThreshScan/index",
         "sbitThreshScan.py",
         u"Launch an Sbit Rate vs. `CFG_THR_ARM_DAC` Scan",
         authors,
         1,
     ),
-    ("man/ultraScurve", "ultraScurve.py", u"Launch an Scurve Scan", authors, 1),
     (
-        "man/ultraThreshold",
+        "autoapi/ultraScurve/index",
+        "ultraScurve.py",
+        u"Launch an Scurve Scan",
+        authors,
+        1,
+    ),
+    (
+        "autoapi/ultraThreshold/index",
         "ultraThreshold.py",
         u"Launch a Threshold DAC Scan",
         authors,
         1,
     ),
-    ("man/trimChamber", "trimChamber.py", u"Launch a Trim Run", authors, 1),
+    ("autoapi/trimChamber/index", "trimChamber.py", u"Launch a Trim Run", authors, 1),
     (
-        "man/iterativeTrim",
+        "autoapi/iterativeTrim/index",
         "iterativeTrim.py",
         u"Launch an Iterative Trim Run",
         authors,

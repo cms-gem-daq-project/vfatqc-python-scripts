@@ -5,7 +5,7 @@
 !*.rst
 
 # Ignore auto-generated files
-source/sphinx-api/*
+source/autoapi/*
 
 # Don't ignore configuration files
 !source/conf.py

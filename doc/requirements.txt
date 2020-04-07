@@ -1,0 +1,14 @@
+setuptools<46.0; python_version < '3.0'
+setuptools>=28.0; python_version > '2.7'
+sphinx==1.8.5; python_version < '3.0'
+sphinx>=2.0; python_version > '2.7'
+sphinx_rtd_theme
+sphinxcontrib-websupport<1.2.0; python_version < '3.0'
+sphinxcontrib-napoleon
+sphinxcontrib-osexample
+sphinxcontrib-srclinks
+sphinx-tabs
+sphinx-copybutton
+m2r
+sphinx_autoapi
+pygments-markdown-lexer

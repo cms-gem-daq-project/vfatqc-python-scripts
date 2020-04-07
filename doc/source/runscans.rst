@@ -7,15 +7,15 @@ The following tools exist for running scans:
 .. toctree::
    :maxdepth: 0
 
-   man/dacScanV3
-   man/ultraLatency
-   man/monitorTemperatures
-   man/checkSbitMappingAndRate
-   man/sbitReadOut
-   man/sbitThreshScan
-   man/ultraScurve
-   man/ultraThreshold
-   man/trimChamber
+   autoapi/dacScanV3/index
+   autoapi/ultraLatency/index
+   autoapi/monitorTemperatures/index
+   autoapi/checkSbitMappingAndRate/index
+   autoapi/sbitReadOut/index
+   autoapi/sbitThreshScan/index
+   autoapi/ultraScurve/index
+   autoapi/ultraThreshold/index
+   autoapi/trimChamber/index
 
 
 
