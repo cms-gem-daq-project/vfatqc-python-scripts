@@ -37,6 +37,15 @@ help:
 .PHONY: docs
 docs: html
 
+.PHONY: deploy
+deploy: docs
+	find $(BUILD_DIR)/html -type f -iname '*.html' -print0 -exec \
+		perl -pi -e "s|SITE_ROOT|$(EOS_SITE_NAME)|g" {} \+
+	find $(BUILD_DIR)/html -type f -iname '*.html' -print0 -exec \
+		perl -pi -e "s|http://0.0.0.0:8000/|/|g" {} \+
+	find $(BUILD_DIR)/html -type f -iname '*.html' -print0 -exec \
+		perl -pi -e "s|http://0.0.0.0:8000|/|g" {} \+
+
 condasetup.$(ENV_NAME).env:
 	. $(CONDA_ENV_FILE) && \
 	conda config --append envs_dirs $(CONDA_DIR) && \
