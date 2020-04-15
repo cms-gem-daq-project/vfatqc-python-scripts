@@ -385,7 +385,6 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/", None,),
     "cmsgemos": (os.getenv("EOS_SITE_URL") + "/docs/api/cmsgemos/latest", None,),
     "gemplotting": (os.getenv("EOS_SITE_URL") + "/docs/api/gemplotting/latest", None,),
     "ctp7_modules": (
@@ -394,12 +393,4 @@ intersphinx_mapping = {
     ),
     "reg_utils": (os.getenv("EOS_SITE_URL") + "/docs/api/reg_utils/latest", None,),
     "xhal": (os.getenv("EOS_SITE_URL") + "/docs/api/xhal/latest", None,),
-    "reg_interface_gem": (
-        os.getenv("EOS_SITE_URL") + "/docs/api/reg_interface_gem/latest",
-        None,
-    ),
-    "reedmuller-c": (
-        os.getenv("EOS_SITE_URL") + "/docs/api/reedmuller-c/latest",
-        None,
-    ),
 }
