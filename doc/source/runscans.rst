@@ -12,7 +12,7 @@ The following tools exist for running scans:
    man/monitorTemperatures
    man/checkSbitMappingAndRate
    man/sbitReadOut
-   man/sbitThreshScanParallel
+   man/sbitThreshScan
    man/ultraScurve
    man/ultraThreshold
    man/trimChamber
