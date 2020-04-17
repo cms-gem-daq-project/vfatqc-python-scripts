@@ -388,8 +388,8 @@ def trimChamberV3(args):
         # Get base command
         cmd = [
                 "trimChamberV3.py",
-                "--gemType {}".format(args.gemType),
-                "--detType {}".format(args.detType),
+                "--gemType={}".format(args.gemType),
+                "--detType={}".format(args.detType),
                 "--calFileCAL={}".format(calDacCalFile),
                 "--chMax={}".format(args.chMax),
                 "--chMin={}".format(args.chMin),
