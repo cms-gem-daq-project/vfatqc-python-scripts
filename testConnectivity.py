@@ -257,7 +257,7 @@ def testConnectivity(args):
         gbtConfigPath = "{0}/OHGE21/".format(os.getenv("GBT_SETTINGS"))
     else:
         print("me0 gemType not currently implemented, exiting.")
-        printRed("Connectvity Testing Failed")
+        printRed("Connectivity Testing Failed")
         return
 
     elogPath = os.getenv('ELOG_PATH')
@@ -676,7 +676,7 @@ def testConnectivity(args):
                 printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
                 printYellow("\t\t2. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
                 printYellow("\t\t3. The Phase Settings written to each VFAT were in the middle of a 'good' window")
-            printRed("Conncetivity Testing Failed")
+            printRed("Connectivity Testing Failed")
             return
         if (not alllVFATsSyncd and args.ignoreSyncErrs):
             printRed("VFATs are not properly synchronized")
@@ -706,7 +706,7 @@ def testConnectivity(args):
                 printYellow("\t\t1. Each of the VFAT FEASTs (FQA, FQB, FQC, and FQD) are properly inserted (make special care to check that the FEAST is *not?* shifted by one pinset)")
                 printYellow("\t\t2. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
                 printYellow("\t\t3. The Phase Settings written to each VFAT were in the middle of a 'good' window")
-                printRed("Conncetivity Testing Failed")
+                printRed("Connectivity Testing Failed")
                 return
             pass
         pass
@@ -808,7 +808,7 @@ def testConnectivity(args):
                         printYellow("\tTry checking:")
                         printYellow("\t\t1. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
                         printYellow("\t\t2. replacing the red VFATs shown above and then running again")
-                        printRed("Conncetivity Testing Failed")
+                        printRed("Connectivity Testing Failed")
                         return
                     pass
                 else:
@@ -834,7 +834,7 @@ def testConnectivity(args):
                 printYellow("\tTry checking:")
                 printYellow("\t\t1. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
                 printYellow("\t\t2. replacing the red VFATs shown above and then running again")
-                printRed("Conncetivity Testing Failed")
+                printRed("Connectivity Testing Failed")
                 return
             pass
         pass
@@ -893,45 +893,50 @@ def testConnectivity(args):
 
         # Analyze DAC Scan
         from gempython.gemplotting.utils.anautilities import dacAnalysis
-        from gempython.gemplotting.utils.exceptions import VFATDACBiasCannotBeReached
-        from gempython.gemplotting.utils.exceptions import VFATDACFitLargeChisquare
+        from gempython.gemplotting.utils.exceptions import DACAnalysisException
         try:
             dacAnalysis(args, calTree.gemTree, chamber_config, scandate=startTime)
-        except VFATDACFitLargeChisquare as e:
-            printRed("One or more VFATs has a bad (large chisquare) DAC vs ADC fit")
+        except DACAnalysisException as e:
+            if e.isBadFit:            
+                printRed("One or more VFATs has a bad (large chisquare) DAC vs ADC fit")
+
+            if e.isBadBias:
+                printRed("One or more VFATs is unable to reach the correct bias voltage/current setpoint")
+                
             printRed(e.message)
-            if not args.acceptBadDACFits:
-                printRed("DAC Scan Analysis Failed")
-                printRed("Conncetivity Testing Failed")
-                return
-            else:
-                printYellow("I've been told to ignore cases of VFATs having bad DAC vs ADC fits; results may not be so good")
-        except VFATDACBiasCannotBeReached as e:
-            printRed("One or more VFATs is unable to reach the correct bias voltage/current setpoint")
-            printRed(e.message)
-            if not args.acceptBadDACBiases:
-                printRed("DAC Scan Analysis Failed")
-                printRed("Conncetivity Testing Failed")
-                return
-            else:
-                printYellow("I've been told to ignore cases of VFATs failing to hit the correct bias voltage/current setpoints; results may not be so good")
+            
+            if e.isBadFit:
+                if not args.acceptBadDACFits:
+                    printRed("DAC Scan Analysis Failed")
+                    printRed("Connectivity Testing Failed")
+                    return
+                else:
+                    printYellow("I've been told to ignore cases of VFATs having bad DAC vs ADC fits; results may not be so good")
+
+            if e.isBadBias:        
+                if not args.acceptBadDACBiases:
+                    printRed("DAC Scan Analysis Failed")
+                    printRed("Connectivity Testing Failed")
+                    return
+                else:
+                    printYellow("I've been told to ignore cases of VFATs failing to hit the correct bias voltage/current setpoints; results may not be so good")
         except ValueError as e:
             printRed("ValueError has occurred")
             printRed(e.message)
             printRed("DAC Scan Analysis Failed")
-            printRed("Conncetivity Testing Failed")
+            printRed("Connectivity Testing Failed")
             return
         except RuntimeError as e:
             printRed("Runtime Error has occurred")
             printRed(e.message)
             printRed("DAC Scan Analysis Failed")
-            printRed("Conncetivity Testing Failed")
+            printRed("Connectivity Testing Failed")
             return
         except Exception as e:
             printRed("An unexpected exception has occured: {0}".format(e))
             printRed(e.message)
             printRed("DAC Scan Analysis Failed")
-            printRed("Conncetivity Testing Failed")
+            printRed("Connectivity Testing Failed")
             return
         pass
 
@@ -999,7 +1004,7 @@ def testConnectivity(args):
                 printYellow("\tTry checking:")
                 printYellow("\t\t1. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
                 printYellow("\t\t2. replacing the red VFATs shown above and then running again")
-                printRed("Conncetivity Testing Failed")
+                printRed("Connectivity Testing Failed")
                 return
             pass
         printGreen("All Chambers Configured")
@@ -1036,7 +1041,7 @@ def testConnectivity(args):
                 printYellow("\tTry checking:")
                 printYellow("\t\t1. The Power Delivered on the VDD (Digital Power) to each VFAT is greater than 1.2V but does not exceed 1.35V")
                 printYellow("\t\t2. replacing the red VFATs shown above and then running again")
-                printRed("Conncetivity Testing Failed")
+                printRed("Connectivity Testing Failed")
                 return
             pass
         printGreen("All SCurves Completed")
@@ -1117,18 +1122,18 @@ def testConnectivity(args):
         except KeyboardInterrupt:
             printRed("Caught KeyboardInterrupt, terminating workers")
             pool.terminate()
-            printRed("Conncetivity Testing Failed")
+            printRed("Connectivity Testing Failed")
             return
         except Exception as e:
             print("Caught Exception %s, terminating workers"%(str(e)))
             pool.terminate()
-            printRed("Conncetivity Testing Failed")
+            printRed("Connectivity Testing Failed")
             return
         except: # catch *all* exceptions
             e = sys.exc_info()[0]
             print("Caught non-Python Exception %s"%(e))
             pool.terminate()
-            printRed("Conncetivity Testing Failed")
+            printRed("Connectivity Testing Failed")
             return
         else:
             printGreen("SCurve Analysis Completed Successfully")
@@ -1149,7 +1154,7 @@ def testConnectivity(args):
 
         if tooManyDeadChan:
             printRed("Too Many Dead Channels")
-            printRed("Conncetivity Testing Failed")
+            printRed("Connectivity Testing Failed")
             return
         else:
             printGreen("Number of Dead Channels is Acceptable")
