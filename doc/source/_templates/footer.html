@@ -1,0 +1,9 @@
+{%- extends "sphinx_rtd_theme/footer.html" %}
+
+{% block extrafooter %}
+{%- if last_updated %}
+<span class="lastupdated">
+  {% trans last_updated=last_updated|e %}Last updated: {{ last_updated }}{% endtrans %}
+</span>
+{%- endif %}
+{% endblock %}

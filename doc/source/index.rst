@@ -13,7 +13,6 @@ Welcome to the VFATQC documentation!
    setup
    coding
    runscans
-   virtualenv-p5
 
 .. toctree::
    :caption: API documentation
