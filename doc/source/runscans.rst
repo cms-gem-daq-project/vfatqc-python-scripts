@@ -1,4 +1,6 @@
+.. _vfaqc-scans:
 
+=============
 Running Scans
 =============
 

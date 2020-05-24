@@ -1,13 +1,14 @@
+.. _vfaqc-coding:
+
+======
 Coding
 ======
 
 Coding is done from within your ``virtualenv``, ideally on one of the 904 DAQ
-machines; ``lxplus`` is only supported on a *best-effort* basis. Follow the
-:doc:`setup instructions <setup>` first (or :doc:`Setting up a virtualenv at P5
-<virtualenv-p5>` if you
-need to work there). It is recommended that you use a separate ``virtualenv``
-for development. The instructions below assume that your ``virtualenv`` is
-installed and activated.
+machines; ``lxplus`` is only supported on a *best-effort* basis.
+Follow the :doc:`setup instructions <setup>` first. It is recommended that you
+use a separate ``virtualenv`` for development.
+The instructions below assume that your ``virtualenv`` is created and activated.
 
 First, install the dependencies for development:
 
@@ -15,7 +16,7 @@ First, install the dependencies for development:
 
     pip install -r requirements.txt
 
-.. note::
+.. tip::
 
     In case ``bash`` cannot find ``pip``, try ``python -m pip ...`` instead.
 
@@ -23,17 +24,9 @@ Clone the repository and move to the code directory:
 
 .. code-block:: bash
 
-    git clone git@github.com:cms-gem-daq-project/vfatqc-python-scripts.git
+    git clone --recurse-submodules -b release/legacy git@github.com:cms-gem-daq-project/vfatqc-python-scripts.git
     cd vfatqc-python-scripts
 
-Then, you need to import some code from the `gembuild`_ project:
-
-.. code-block:: bash
-
-    git submodule init
-    git submodule update
-
-This enables the use of the ``Makefile``.
 
 Building and installing
 -----------------------
@@ -44,17 +37,6 @@ It is done by building a ``pip`` package:
 .. code-block:: bash
 
     make pip
-
-.. note::
-
-    In case you encounter strange build errors, try to run the following command
-    first:
-
-    .. code-block:: bash
-
-        git submodule update
-
-    This will update your local version of `gembuild`_.
 
 Once the package is built, it can be installed using:
 
@@ -199,8 +181,8 @@ to get you started, in no particular order:
   * https://thomas-cokelaer.info/tutorials/sphinx/rest_syntax.html
   * http://www.sphinx-doc.org/en/stable/markup/para.html
 
-The structure of the documentation is created by hand using ```.rst``` files
-located in the ```doc``` folder. ``man`` pages are created from files located in
+The structure of the documentation is created by hand using ``.rst`` files
+located in the ``doc`` folder. ``man`` pages are created from files located in
 ``doc/man`` and must be listed in ``doc/conf.py`` to be generated.
 
 Cross-referencing (links *within* the documentation) is achieved using so-called
@@ -255,7 +237,6 @@ Tips
 
 .. Link targets
 
-.. _gembuild: https://github.com/cms-gem-daq-project/gembuild
 .. _Golden rebase rules: https://www.atlassian.com/git/tutorials/merging-vs-rebasing#the-golden-rule-of-rebasing
 .. _Google style: https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 .. _lynx: http://lynx.invisible-island.net/
